@@ -38,5 +38,22 @@ class Schema(unittest.TestCase):
         self.assertEqual(len(fks), 6)
 
 
+class Plant(unittest.TestCase):
+    def test_learn_values_match_spec(self):
+        V = g.plant_values(1912)
+        self.assertEqual(V["plate"], "75-2041")
+        self.assertEqual(V["fence_address"], "27 rue des Martyrs")
+        self.assertEqual(V["shell_account"], 88213)
+        self.assertEqual(V["lupin_alias"], "Rupert Blakeney")
+        self.assertEqual(V["theft_date"], 19120518)
+
+    def test_other_seed_differs_and_is_deterministic(self):
+        a, b, c = g.plant_values(1913), g.plant_values(1913), g.plant_values(1912)
+        self.assertEqual(a, b)
+        self.assertNotEqual(a["plate"], c["plate"])
+        self.assertNotEqual(a["shell_account"], c["shell_account"])
+        self.assertEqual(a["lupin_alias"], c["lupin_alias"])   # cast is fixed, values move
+
+
 if __name__ == "__main__":
     unittest.main()
