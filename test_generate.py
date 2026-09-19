@@ -39,6 +39,7 @@ class Schema(unittest.TestCase):
         self.assertIn(("bank_transaction", "counterparty_id", "bank_account"), fks)
         self.assertIn(("luggage", "ticket_id", "train_ticket"), fks)
         self.assertEqual(len(fks), 6)
+        conn.close()
 
 
 class Plant(unittest.TestCase):
@@ -179,6 +180,7 @@ class Erd(unittest.TestCase):
         self.assertEqual(s.count('class="fk"'), 6)
         self.assertIn('data-table="lift_log"', s)
         s.encode("ascii")
+        conn.close()
 
 
 if __name__ == "__main__":
