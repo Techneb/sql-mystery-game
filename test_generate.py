@@ -111,5 +111,21 @@ class PartII(unittest.TestCase):
         self.assertEqual(n, 1)
 
 
+class Text(unittest.TestCase):
+    def test_every_chapter_has_all_text_and_formats(self):
+        V = g.plant_values(1912)
+        for ch in plot.CHAPTERS:
+            for k in ["title", "story", "objective", "answer_form", "hints", "telegram"]:
+                self.assertIn(k, ch, ch["n"])
+            self.assertEqual(len(ch["hints"]), 3, ch["n"])
+            self.assertIn("____", ch["hints"][2], ch["n"])
+            for s in [ch["title"], ch["story"], ch["objective"], ch["answer_form"], ch["telegram"], *ch["hints"]]:
+                s.format(**V).encode("ascii")
+        self.assertEqual(len(plot.CAST), 6)
+        for k, s in plot.WRONG_SUSPECTS.items():
+            s.encode("ascii")
+            self.assertEqual(k, g.normalise(k))
+
+
 if __name__ == "__main__":
     unittest.main()
