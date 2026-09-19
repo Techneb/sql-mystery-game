@@ -91,5 +91,25 @@ class PartI(unittest.TestCase):
             g.check_chapter(self.conn, self.V, ch)   # asserts naive_rows and that the naive query misses
 
 
+class PartII(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.conn, cls.V = g.build_db(1912)
+
+    def test_solutions(self):
+        for ch in plot.CHAPTERS[8:]:
+            rows = self.conn.execute(ch["solution"].format(**self.V)).fetchall()
+            self.assertEqual(len(rows), 1, ch["n"])
+            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key"]])), ch["n"])
+
+    def test_traps(self):
+        for ch in plot.CHAPTERS[8:]:
+            g.check_chapter(self.conn, self.V, ch)
+
+    def test_part2_code_is_in_a_telegram(self):
+        n = self.conn.execute("SELECT COUNT(*) FROM telegram WHERE text LIKE ?", ("%" + self.V["part2_code"] + "%",)).fetchone()[0]
+        self.assertEqual(n, 1)
+
+
 if __name__ == "__main__":
     unittest.main()

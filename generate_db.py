@@ -298,7 +298,68 @@ def plant_part1(conn, V, r):
 
 
 def plant_part2(conn, V, r):
-    pass  # Task 6
+    c = conn.cursor()
+    T = V["theft_date"]
+    # --- the Part II code, hidden in a noise telegram (Egg Hunter)
+    c.execute("INSERT INTO telegram VALUES (9001,'Central',19120519,1512,'A. L.','TO THE CURIOUS CLERK',NULL,?)",
+              ("%s STOP THE CODE IS THE FIRST FOUR WORDS STOP" % V["part2_code"],))
+    # --- ch9: Ashcombe's trunks. Three under his own ticket; one under a ticket bought by Mr. Grey.
+    c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
+    c.execute("INSERT INTO train_ticket VALUES (2,10,19120519,'Boat Train 9:15','London')")   # Mr. Grey, person 10
+    for i, trunk in enumerate(["A-1", "A-2", "A-3"]):
+        c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, 30 + i))
+    c.execute("INSERT INTO luggage VALUES (4,2,?,'Lord Ashcombe',12)", (V["trunk_no"],))
+    # --- ch10: Blakeney and Mr. Grey alternate weeks Jan-Apr in the same suite, never overlapping.
+    #     Two other frequent guests stay only in Grey's weeks, plus one single night inside a Blakeney week.
+    c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<19120515", (V["lupin_suite"],))
+    day, rid, who = 19120106, 20000, 0
+    names = ["Rupert Blakeney", "Mr. Grey"]
+    while day < 19120501:
+        c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, names[who], V["lupin_suite"], day, _add_days(day, 6)))
+        rid += 1; who ^= 1; day = _add_days(day, 7)
+    for i, name in enumerate(["Baron von Stroheim", "Cornelius Bell"]):
+        d = 19120113 + i     # Grey's weeks start on the 13th
+        for k in range(7):
+            c.execute("INSERT INTO hotel_register VALUES (?,?,?,3,80,?,?)", (rid, name, 301 + i, d, _add_days(d, 4))); rid += 1
+            d = _add_days(d, 14)
+        c.execute("INSERT INTO hotel_register VALUES (?,?,?,3,80,19120111,19120112)", (rid, name, 301 + i)); rid += 1
+    # noise guests are frequent too (few names, many stays): give every one that never met Blakeney one night that does
+    ch10 = [ch for ch in plot.CHAPTERS if ch["n"] == 10][0]
+    for (name,) in c.execute(ch10["solution"].format(**V)).fetchall():
+        if name != V["double_alias"]:
+            c.execute("INSERT INTO hotel_register VALUES (?,?,303,3,80,19120111,19120112)", (rid, name)); rid += 1
+    # --- ch11: the night of the theft. Lupin's suite is silent 02:05-03:10 (lift down, lift up), then
+    #     champagne at 03:20 and the telegram at 03:30. Every other second-floor suite has a lift event
+    #     inside the window; suite 407 has a longer silence, 03:10-05:55, after the window.
+    c.execute("DELETE FROM lift_log WHERE date=? AND time<600", (T,))
+    c.execute("DELETE FROM telegram WHERE date=? AND time<600 AND suite IS NOT NULL AND id<>?", (T, V["night_telegram_id"]))
+    c.execute("INSERT INTO lift_log VALUES (1,?,205,2,?,'down')", (T, V["lupin_suite"]))
+    c.execute("INSERT INTO lift_log VALUES (2,?,310,2,?,'up')", (T, V["lupin_suite"]))
+    lid = 10
+    for t in (130, 230, 330):
+        for s in FLOOR2:
+            if s != V["lupin_suite"]:
+                c.execute("INSERT INTO lift_log VALUES (?,?,?,2,?,?)", (lid, T, t, s, r.choice(["up", "down"]))); lid += 1
+    c.execute("INSERT INTO lift_log VALUES (90,?,310,4,407,'up')", (T,))
+    c.execute("INSERT INTO lift_log VALUES (91,?,555,4,407,'down')", (T,))
+    # --- ch12: the money chain, seven hops of 98%, one hop split in two, one shell with unrelated
+    #     traffic the same day, crossing into June. The last account belongs to the Comtesse (person 9).
+    amt, acct, chain, day = V["chain_amount"], V["shell_account"], [], 19120520
+    hops = r.sample(range(60000, 69999), 7)
+    for h, nxt in enumerate(hops):
+        c.execute("INSERT INTO bank_account VALUES (?,?,?)", (nxt, 9 if h == 6 else None, r.choice(["Societe Generale", "Banque de Paris", "Comptoir National"])))
+        amt = round(amt * 0.98)
+        if h == 3:   # split hop
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (90000 + h, acct, nxt, day, amt // 2))
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (90100 + h, acct, nxt, day, amt - amt // 2))
+        else:
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (90000 + h, acct, nxt, day, amt))
+        if h == 4:   # unrelated money in and out of the same shell account, same day
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'deposit')", (90200, r.randint(100, 4000), nxt, day, 900))
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (90201, nxt, r.randint(100, 4000), day, 850))
+        chain.append((nxt, amt)); acct = nxt; day = _add_days(day, 3)   # 20 May + 3*6 = 7 June
+    V["chain"] = chain
+    conn.commit()
 
 
 def build_db(seed):
