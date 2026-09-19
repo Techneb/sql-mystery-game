@@ -309,9 +309,11 @@ def plant_part2(conn, V, r):
     # --- the Part II code, hidden in a noise telegram (Egg Hunter)
     c.execute("INSERT INTO telegram VALUES (9001,'Central',19120519,1512,'A. L.','TO THE CURIOUS CLERK',NULL,?)",
               ("%s STOP THE CODE IS THE FIRST FOUR WORDS STOP" % V["part2_code"],))
-    # --- ch9: Ashcombe's trunks. Three under his own ticket; one under a ticket bought by Mr. Grey.
+    # --- ch9: Ashcombe's trunks. Three under his own ticket; one under a ticket bought for cash by an
+    #     unnamed regular (so chapter 10 has to deduce Mr. Grey from the register, not read him here).
     c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
-    c.execute("INSERT INTO train_ticket VALUES (2,10,19120519,'Boat Train 9:15','London')")   # Mr. Grey, person 10
+    c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,'none',NULL)")
+    c.execute("INSERT INTO train_ticket VALUES (2,17,19120519,'Boat Train 9:15','London')")
     for i, trunk in enumerate(["A-1", "A-2", "A-3"]):
         c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, 30 + i))
     c.execute("INSERT INTO luggage VALUES (4,2,?,'Lord Ashcombe',12)", (V["trunk_no"],))

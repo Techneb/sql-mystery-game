@@ -263,7 +263,7 @@
    "story": "Ganimard has gone home to his cat. You have not. The Blue Star 'sends regards from London': the boat train left the Gare du Nord on the 19th and Lord Ashcombe was on it, with his trunks. So was somebody else's ticket. Every trunk in the baggage car is entered under an owner's name and a ticket number, and nobody at the Compagnie du Nord checks that the two agree. Find the trunk that says Ashcombe on the label but travelled on a ticket bought by a man who is not Ashcombe.",
    "objective": "Using a CTE, list the trunks in luggage whose owner_name is Lord Ashcombe together with the person_id of their train_ticket, then keep the one whose ticket holder (in person) is not Lord Ashcombe.",
    "answer_form": "the trunk number (a letter, a dash, a digit)",
-   "telegram": "MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A MAN IN GREY STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L",
+   "telegram": "MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L",
    "n": 9,
    "part": 2,
    "construct": "CTE + JOIN",
@@ -280,7 +280,7 @@
   },
   {
    "title": "Never Seen Together",
-   "story": "The ticket was bought by a Mr. Grey. The Ritz knows a Mr. Grey: a quiet Englishman, excellent coat, who has stayed often since January. So has Mr. Blakeney. You have a suspicion of the theatrical kind: two names, one man, and a man cannot sleep in two suites on the same night. Among the regular guests, six stays or more, find the one who has never once been in the hotel on the same night as Blakeney. Beware: the Baron and Mr. Bell each crossed him for exactly one night, and one night is enough to be two people.",
+   "story": "The ticket was bought for cash. The clerk remembers only 'a regular, monsieur, English, excellent coat', which describes half the second floor. The Ritz has a handful of regulars who have stayed often since January. So has Mr. Blakeney. You have a suspicion of the theatrical kind: two names, one man, and a man cannot sleep in two suites on the same night. Among the regular guests, six stays or more, find the one who has never once been in the hotel on the same night as Blakeney. Beware: the Baron and Mr. Bell each crossed him for exactly one night, and one night is enough to be two people.",
    "objective": "In hotel_register, among guests with at least 6 stays, find the one (other than Rupert Blakeney) whose stays never overlap a stay of Rupert Blakeney. Two stays overlap when x.checkin < y.checkout AND y.checkin < x.checkout.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L",
