@@ -1,3 +1,4 @@
+import json
 import random
 import unittest
 
@@ -22,7 +23,7 @@ FIXTURE = [
 
 class Normalise(unittest.TestCase):
     def test_fixture(self):
-        for raw, want in FIXTURE:
+        for raw, want in FIXTURE + g.FIXTURE:
             self.assertEqual(g.normalise(raw), want, raw)
 
 
@@ -125,6 +126,30 @@ class Text(unittest.TestCase):
         for k, s in plot.WRONG_SUSPECTS.items():
             s.encode("ascii")
             self.assertEqual(k, g.normalise(k))
+
+
+class Outputs(unittest.TestCase):
+    def test_chapters_json_has_hashes_and_no_answers(self):
+        conn, V = g.build_db(1912)
+        j = g.chapters_json(V)
+        self.assertEqual(len(j["chapters"]), 12)
+        for ch in j["chapters"]:
+            self.assertEqual(len(ch["answer_sha256"]), 64)
+            self.assertNotIn("solution", ch)
+            self.assertNotIn("naive", ch)
+        dump = json.dumps(j)
+        for secret in [V["plate"], str(V["shell_account"]), V["trunk_no"]]:
+            self.assertNotIn(secret, dump)
+        self.assertEqual(j["chapters"][7]["answer_sha256"], g.sha(V["lupin_alias"]))
+        self.assertEqual(g.normalise(json.loads(dump)["normalise_fixture"][0][0]), "rupert blakeney")
+
+    def test_solution_sql_runs_per_chapter(self):
+        conn, V = g.build_db(1912)
+        blocks = [b for b in g.solution_sql(V).split("\n\n") if any(not l.startswith("--") for l in b.strip().splitlines())]
+        self.assertEqual(len(blocks), 12)
+        for b in blocks:
+            sql = "\n".join(l for l in b.splitlines() if not l.startswith("--")).rstrip(";\n")
+            self.assertEqual(len(conn.execute(sql).fetchall()), 1)
 
 
 if __name__ == "__main__":

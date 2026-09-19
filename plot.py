@@ -95,8 +95,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L"),
  3: dict(
   title="A Plate Beginning With {plate_prefix}",
-  story="{neighbour}, when woken, is displeased but useful. His valet saw a man in an English coat leave by the service door and take a motor-cab on the Place Vendome. The plate began with {plate_prefix}; the rest, he says, was in the dark, and the fellow tipped in English coins. 'Forty cabs in Paris begin with {plate_prefix},' says Ganimard. 'The company keeps a book. Find me the one that left the Place Vendome after two in the morning.'",
-  objective="Read {neighbour}'s statement in interview, then find in cab_ride the ride picked up at Place Vendome on 19120518 after 02:00 (time >= 200) whose plate begins with {plate_prefix}.",
+  story="His Lordship, when woken, is displeased but useful. His valet saw a man in an English coat leave by the service door and take a motor-cab on the Place Vendome. The plate began with {plate_prefix}; the rest, he says, was in the dark, and the fellow tipped in English coins. 'Forty cabs in Paris begin with {plate_prefix},' says Ganimard. 'The company keeps a book. Find me the one that left the Place Vendome after two in the morning.'",
+  objective="Read the neighbour's statement in interview, then find in cab_ride the ride picked up at Place Vendome on 19120518 after 02:00 (time >= 200) whose plate begins with {plate_prefix}.",
   answer_form="the plate (75-2 and three digits)",
   hints=["The concierge: 'Statements go in interview, monsieur, and cabs in cab_ride: plate, date, time, pickup, dropoff. The company is very proud of its book.'",
          "The chambermaid: 'You do not know the whole plate? Then do not ask for the whole plate. LIKE, monsieur, with the percent sign for the part you do not know: plate LIKE '{plate_prefix}%'. And say where and when, or you will get forty.'",
@@ -104,8 +104,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
-  story="The driver of {plate} has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. Twice. Three times. Find me the address this cab dropped at three times or more that week. I do not want the list. I want the address.'",
-  objective="In cab_ride, for plate {plate} between 19120513 and 19120519, find the dropoff address visited at least three times.",
+  story="The driver of the cab has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. Twice. Three times. Find me the address this cab dropped at three times or more that week. I do not want the list. I want the address.'",
+  objective="In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, find the dropoff address visited at least three times.",
   answer_form="the address (number and street)",
   hints=["The concierge: 'Same book, monsieur. cab_ride. Sixty lines for that plate that week. The dropoff column is the one to count.'",
          "The chambermaid: 'Counting by hand is for constables. GROUP BY dropoff, and COUNT(*). Then keep only the groups with three or more: HAVING COUNT(*) >= 3. WHERE cannot do it, monsieur, WHERE does not know how to count.'",
@@ -113,8 +113,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(
   title="The Boarding House",
-  story="{fence_address} is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. The Prefecture has never put the two together. You will.'",
-  objective="Join person to address (person.address_id = address.id). Find the tenant at number {fence_number}, {fence_street}, whose occupation is jeweller.",
+  story="The address is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. The Prefecture has never put the two together. You will.'",
+  objective="Join person to address (person.address_id = address.id). Find the tenant at the address of chapter 4 (number and street are two columns of address) whose occupation is jeweller.",
   answer_form="the person's name",
   hints=["The concierge: 'The Prefecture keeps person, with the occupation, and address, with the number and the street. Each person carries an address_id. That is the thread, monsieur.'",
          "The chambermaid: 'Two ledgers, one question: JOIN address AS a ON p.address_id = a.id. Then WHERE the number, the street and the occupation. Without the occupation you arrest five people, and one of them is a seamstress.'",
@@ -122,8 +122,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L"),
  6: dict(
   title="Follow the Francs",
-  story="{fence} keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. Twenty-four payments in May, to a dozen people. 'A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
-  objective="Join person, bank_account (bank_account.person_id = person.id) and bank_transaction (bank_transaction.account_id = bank_account.id). For {fence}, in May 1912 (date between 19120501 and 19120531), find the counterparty_id that received the largest total amount.",
+  story="The jeweller keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. Twenty-four payments in May, to a dozen people. 'A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
+  objective="Join person, bank_account (bank_account.person_id = person.id) and bank_transaction (bank_transaction.account_id = bank_account.id). For the jeweller of chapter 5, in May 1912 (date between 19120501 and 19120531), find the counterparty_id that received the largest total amount.",
   answer_form="the account number (five digits)",
   hints=["The concierge: 'Three ledgers this time, monsieur: person, then bank_account, then bank_transaction. counterparty_id is who received the money. The bank is very proud of its columns.'",
          "The chambermaid: 'Two JOINs in a row, one ON each. Then GROUP BY counterparty_id, SUM(amount), and ORDER BY that sum, DESC. The largest single payment is a decoy, monsieur. Fences are not stupid, only greedy.'",
@@ -131,7 +131,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="A Wire Before Dawn",
-  story="The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Sort them into my four boxes and bring me the one sent at night. The sender confirms a payment to {shell_account}. He signs with one letter, which is one more than he needs.'",
+  story="The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Sort them into my four boxes and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, which is one more than he needs.'",
   objective="In telegram, for office Ritz on 19120518, classify each wire by time as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
   answer_form="the telegram id (a number)",
   hints=["The concierge: 'The desk keeps telegram: office, date, time, sender, recipient, text. Times are four digits stored as a number, monsieur: 245 is a quarter to three in the morning.'",
@@ -176,8 +176,8 @@ TEXT = {
   telegram="MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L"),
  12: dict(
   title="Follow the Money",
-  story="The last of the forty thousand francs reached account {shell_account} on the 21st; the first of it had already left on the 20th. From there the money moves every three days, less two percent at every door, through shell accounts at four banks, into June. One hop was paid in two halves. One shell account did other business the same day. Follow the ninety-eight percent, and only the ninety-eight percent, seven doors down, and read the name on the last account. Ganimard will not like it.",
-  objective="With a recursive CTE, start from account {shell_account} and {chain_amount} F and follow, hop by hop, the transfer (or the sum of the transfers between the same two accounts) whose amount is within 1 F of 98% of the previous hop, using bank_transaction from 19120518 on. Find the person who owns the account at hop 7.",
+  story="The last of the forty thousand francs reached the shell account of chapter 6 on the 21st; the first of it had already left on the 20th. From there the money moves every three days, less two percent at every door, through shell accounts at four banks, into June. One hop was paid in two halves. One shell account did other business the same day. Follow the ninety-eight percent, and only the ninety-eight percent, seven doors down, and read the name on the last account. Ganimard will not like it.",
+  objective="With a recursive CTE, start from the account of chapter 6 with {chain_amount} F at hop 0 and follow, hop by hop, the transfer (or the sum of the transfers between the same two accounts) whose amount is within 1 F of 98% of the previous hop, using bank_transaction from 19120518 on. Find the person who owns the account at hop 7.",
   answer_form="the person's name",
   hints=["The night porter: 'The money is in bank_transaction, monsieur: account_id pays counterparty_id. bank_account tells you whose account it is, when it is anybody's. Most of them are nobody's.'",
          "The chambermaid: 'First a CTE that SUMs the transfers per account_id and counterparty_id, because one hop was split. Then WITH RECURSIVE chain(account_id, amount, hop): the anchor is the shell account and its forty thousand at hop 0; each step joins the sums and keeps ABS(amount - previous * 0.98) <= 1. Hop 7, then bank_account, then person.'",

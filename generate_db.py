@@ -1,8 +1,14 @@
 """Builds the Ritz Affair database, chapters.json, schema.svg and solution.sql. Stdlib only."""
+import argparse
 import datetime
+import hashlib
+import json
+import os
 import random
 import re
 import sqlite3
+
+import erd
 
 import plot
 from plot import STOP_WORDS
@@ -383,3 +389,86 @@ def check_chapter(conn, V, ch):
         "chapter %d: naive returned %d rows, expected %d" % (ch["n"], len(rows), ch["naive_rows"])
     assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d: trap does not bite" % ch["n"]
     return len(rows)
+
+
+def sha(s):
+    return hashlib.sha256(normalise(str(s)).encode()).hexdigest()
+
+
+# shipped in chapters.json for the page's ?selftest: uses no planted value
+FIXTURE = [("  Rupert Blakeney, Esq. ", "rupert blakeney"), ("rupert   blakeney", "rupert blakeney"),
+           ("Lord Ashcombe", "ashcombe"), ("ASHCOMBE", "ashcombe"), ("75-9999", "759999"), ("75 9999", "759999"),
+           ("12 rue de la Paix", "12 la paix"), ("Suite 305", "305"), ("Mr. Grey", "grey"),
+           ("Comtesse de Cagliostro", "cagliostro"), ("Cagliostro", "cagliostro"), ("Trunk no B-3", "b 3")]
+
+TEXT_KEYS = ["title", "story", "objective", "answer_form", "telegram"]
+
+
+def chapters_json(V, mode="learn"):
+    chapters = []
+    for ch in plot.CHAPTERS:
+        d = {k: ch[k].format(**V) for k in TEXT_KEYS}
+        d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"],
+                 hints=[h.format(**V) for h in ch["hints"]], answer_sha256=sha(V[ch["answer_key"]]))
+        chapters.append(d)
+    return dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,
+                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
+                endings={k: v.format(**V) for k, v in plot.ENDINGS.items()},
+                part2_code_sha256=sha(V["part2_code"]), chapters=chapters)
+
+
+def solution_sql(V):
+    out = ["-- The Ritz Affair: reference path (seed %d). One query per chapter; each answer is the next chapter's key." % V["seed"]]
+    for ch in plot.CHAPTERS:
+        out.append("-- %02d. %s (%s) -> %s: %s\n%s;" % (ch["n"], ch["title"].format(**V), ch["construct"],
+                   ch["answer_form"].format(**V), V[ch["answer_key"]], ch["solution"].format(**V)))
+    return "\n\n".join(out) + "\n"
+
+
+def write_outputs(conn, V, site_dir="site", mode="learn"):
+    stem = "mystery" if mode == "learn" else "season-%d" % V["seed"]
+    path = os.path.join(site_dir, stem + ".sqlite")
+    if os.path.exists(path):
+        os.remove(path)
+    disk = sqlite3.connect(path)
+    conn.backup(disk)
+    disk.close()
+    with open(os.path.join(site_dir, ("chapters" if mode == "learn" else stem) + ".json"), "w") as f:
+        json.dump(chapters_json(V, mode), f, indent=1, ensure_ascii=True)
+    if mode == "learn":
+        with open("solution.sql", "w") as f:
+            f.write(solution_sql(V))
+        with open(os.path.join(site_dir, "schema.svg"), "w") as f:
+            f.write(erd.svg(conn))
+        corr = os.path.join("..", "SQL", "3-Corrections", "8. Correction SQL Mystery Game.sql")
+        if os.path.isdir(os.path.dirname(corr)):
+            with open(corr, "w") as f:
+                f.write(solution_sql(V))
+
+
+def self_check(conn, V):
+    """The plot's test: every solution yields its answer, every trap bites, everything is ASCII."""
+    for ch in plot.CHAPTERS:
+        check_chapter(conn, V, ch)
+    for t in [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]:
+        for row in conn.execute("SELECT * FROM %s" % t):
+            for v in row:
+                if isinstance(v, str):
+                    v.encode("ascii")
+    json.dumps(chapters_json(V)).encode("ascii")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--seed", type=int, default=1912)
+    ap.add_argument("--season", type=int, help="build season-N.* for compete mode (re-draws the planted values)")
+    a = ap.parse_args(argv)
+    seed, mode = (a.season, "compete") if a.season else (a.seed, "learn")
+    conn, V = build_db(seed)
+    self_check(conn, V)
+    write_outputs(conn, V, mode=mode)
+    print("ok: seed %d, %d chapters" % (seed, len(plot.CHAPTERS)))
+
+
+if __name__ == "__main__":
+    main()
