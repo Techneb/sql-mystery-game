@@ -1,3 +1,4 @@
+import random
 import unittest
 
 import generate_db as g
@@ -53,6 +54,24 @@ class Plant(unittest.TestCase):
         self.assertNotEqual(a["plate"], c["plate"])
         self.assertNotEqual(a["shell_account"], c["shell_account"])
         self.assertEqual(a["lupin_alias"], c["lupin_alias"])   # cast is fixed, values move
+
+
+class Noise(unittest.TestCase):
+    def test_volumes_and_ascii(self):
+        conn = g.empty_db()
+        V = g.plant_values(1912)
+        g.fill_noise(conn, V, random.Random(1))
+        counts = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                  for t in ["person", "cab_ride", "bank_transaction", "telegram", "hotel_register"]}
+        self.assertGreaterEqual(counts["person"], 5000)
+        self.assertGreaterEqual(counts["cab_ride"], 20000)
+        self.assertGreaterEqual(counts["hotel_register"], 9000)
+        for t in ["person", "telegram", "interview", "police_report", "cab_ride"]:
+            for row in conn.execute(f"SELECT * FROM {t}"):
+                for v in row:
+                    if isinstance(v, str):
+                        v.encode("ascii")   # raises on non-ASCII
+        self.assertIsNone(conn.execute("SELECT id FROM police_report WHERE id=?", (V["report_id"],)).fetchone())
 
 
 if __name__ == "__main__":
