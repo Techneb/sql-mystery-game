@@ -49,7 +49,7 @@ necessary. "Tables revealed" lists what appears in the ERD when the chapter open
 | # | Construct | Beat and what the query finds | Answer | Tables revealed | Trap |
 |---|---|---|---|---|---|
 | 1 | SELECT / WHERE | The police report: Ritz, 18 May 1912, theft. Text: "porter heard the lift at 02:10; thief came over the balcony of the neighbouring suite" | report id | `police_report` | 3,000 reports, several at the Ritz on other dates |
-| 2 | ORDER BY / LIMIT | Neighbouring suite = the priciest on floor 2 that night | `Lord Ashcombe` | `hotel_register` | prices are close; floor 2 only; 30 nights of registers |
+| 2 | ORDER BY / LIMIT | Neighbouring suite = the priciest on floor 2 that night | `Lord Ashcombe` | `hotel_register` | prices are close; floor 2 only; six months of registers |
 | 3 | LIKE | Ashcombe's interview: valet saw a man in an English coat take a cab, "plate 75-2 something". Then the cab from Place Vendome after 02:00 | `75-2041` | `interview`, `cab_ride` | 40 plates start with 75-2; one from Vendome that night |
 | 4 | GROUP BY / HAVING | That cab's week: the drop-off address visited 3+ times | `27 rue des Martyrs` | none | 60 rides that week; two addresses twice, one three times |
 | 5 | JOIN (2 tables) | Who lives there: a boarding house; the tenant whose occupation is jeweller, Ernest Grimaud, known fence | `Ernest Grimaud` | `person`, `address` | 5 tenants; `occupation` is on `person`, the address on `address` |
@@ -66,7 +66,7 @@ telegram; grows past 12 the same way)
 | # | Construct | Beat | Answer | Tables revealed | Trap |
 |---|---|---|---|---|---|
 | 9 | CTE + self-join / `NOT IN` | The Trunk: the sapphire left in Lord Ashcombe's own luggage on the boat train to London | trunk number | `train_ticket`, `luggage` | Ashcombe has several trunks; one was checked by someone else's ticket |
-| 10 | `NOT EXISTS` / self-join | Never Seen Together: Blakeney and "Mr. Grey" stayed at the Ritz in alternating weeks all year and never overlapped by one night | `Mr. Grey` | none | other pairs overlap by exactly one night |
+| 10 | `NOT EXISTS` / self-join | Never Seen Together: Blakeney and "Mr. Grey" stayed at the Ritz in alternating weeks since January and never overlapped by one night | `Mr. Grey` | none | other pairs overlap by exactly one night |
 | 11 | `LAG()` / gaps-and-islands | The Silence: per suite, the longest gap between any two events (room service, telegram, lift log) in the night; one suite is silent exactly 02:05-03:10 | suite number | `lift_log` | a noise suite has a longer gap, but outside the theft window |
 | 12 | `WITH RECURSIVE` | Follow the Money: 88213 forwards the 40,000 F minus 2% per hop through seven shell accounts at four banks; the last account belongs to the Comtesse de Cagliostro, who staged her own theft for the insurance (as in Leblanc) | `Comtesse de Cagliostro` | none | one hop is split into two transfers (sum per hop); one shell account also receives unrelated money the same day (filter by amount within 1 F of 98%); the chain crosses into June |
 
@@ -85,7 +85,7 @@ primary keys, names in `TEXT`. No solution query needs `||`, `CONCAT`, `DATE_FOR
 (SQLite/MySQL portability, see the backlog's trap list).
 
 Noise volume: `person` ~5,000, `cab_ride` ~20,000, `bank_transaction` ~30,000, `telegram` ~3,000,
-`room_service` ~5,000, `hotel_register` ~1,500, `lift_log` ~10,000. Enough that `SELECT *` without
+`room_service` ~5,000, `hotel_register` ~10,000 (Jan-Jun 1912, needed by ch. 10), `lift_log` ~10,000. Enough that `SELECT *` without
 `WHERE` is not a strategy.
 
 Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `person`, a noise telegram
