@@ -241,8 +241,8 @@ def plant_part1(conn, V, r):
          "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
          "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
     # two decoy Ritz reports on other dates
-    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (V["report_id"] - 400, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
-    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (V["report_id"] - 200, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
+    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
+    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
     # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
     c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
     others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
