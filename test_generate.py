@@ -2,6 +2,7 @@ import random
 import unittest
 
 import generate_db as g
+import plot
 
 FIXTURE = [
     ("  Rupert Blakeney, Esq. ", "rupert blakeney"),
@@ -72,6 +73,22 @@ class Noise(unittest.TestCase):
                     if isinstance(v, str):
                         v.encode("ascii")   # raises on non-ASCII
         self.assertIsNone(conn.execute("SELECT id FROM police_report WHERE id=?", (V["report_id"],)).fetchone())
+
+
+class PartI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.conn, cls.V = g.build_db(1912)
+
+    def test_each_chapter_solution_returns_exactly_the_answer(self):
+        for ch in plot.CHAPTERS[:8]:
+            rows = self.conn.execute(ch["solution"].format(**self.V)).fetchall()
+            self.assertEqual(len(rows), 1, ch["n"])
+            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key"]])), ch["n"])
+
+    def test_each_trap_bites(self):
+        for ch in plot.CHAPTERS[:8]:
+            g.check_chapter(self.conn, self.V, ch)   # asserts naive_rows and that the naive query misses
 
 
 if __name__ == "__main__":

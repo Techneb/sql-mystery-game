@@ -4,6 +4,7 @@ import random
 import re
 import sqlite3
 
+import plot
 from plot import STOP_WORDS
 
 
@@ -194,3 +195,130 @@ def fill_noise(conn, V, r):
         [(100 + i, _date(r, 5, 5), _time(r), r.randint(1, 5), r.choice(range(101, 525)), r.choice(["up", "down"]))
          for i in range(10000)])
     conn.commit()
+
+
+CAST_PERSONS = [  # id, name, nationality, born, occupation  (address_id set in plant_part1)
+    (1, "Lord Ashcombe", "English", 1861, "peer"),
+    (2, "Paul Sernine", "French", 1874, "rentier"),
+    (3, "Horace Velmont", "French", 1870, "painter"),
+    (4, "Raul Ortega", "Argentine", 1868, "cattle baron"),
+    (5, "Ines de Almagro", "Spanish", 1879, "none"),
+    (6, "Rupert Blakeney", "English", 1872, "gentleman"),
+    (7, "Ernest Grimaud", "French", 1858, "jeweller"),
+    (8, "Marcel Duroc", "French", 1880, "night porter"),
+    (9, "Comtesse de Cagliostro", "Italian", 1875, "none"),
+    (10, "Mr. Grey", "English", 1872, "gentleman"),
+    (11, "Ganimard", "French", 1855, "inspector"),
+    (12, "Minou Ganimard", "French", 1908, "cat"),
+]
+FLOOR2 = [202, 204, 206, 208, 210, 212, 216, 218, 220, 222, 224]
+
+
+def plant_part1(conn, V, r):
+    c = conn.cursor()
+    T, E = V["theft_date"], V["eve_date"]
+    # --- people and addresses of the cast; noise must not share the fence's address
+    c.execute("UPDATE address SET number = number + 200 WHERE number=? AND street=?", (V["fence_number"], V["fence_street"]))
+    c.execute("INSERT INTO address VALUES (1,?,?,9)", (V["fence_number"], V["fence_street"]))
+    for pid, name, nat, born, occ in CAST_PERSONS:
+        c.execute("INSERT INTO person VALUES (?,?,?,?,?,?)", (pid, name, nat, born, occ, r.randint(100, 1299)))
+    # boarding house at the fence's address: 5 tenants, one jeweller
+    c.execute("UPDATE person SET address_id=1 WHERE id=7")
+    for i in range(4):
+        c.execute("INSERT INTO person VALUES (?,?,?,?,?,1)",
+                  (13 + i, _name(r), "French", r.randint(1850, 1890), r.choice(["clerk", "seamstress", "waiter", "student"])))
+    # --- ch1: the report (no noise theft at the Ritz that day)
+    c.execute("DELETE FROM police_report WHERE place='Hotel Ritz' AND date=? AND type='theft'", (T,))
+    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)",
+        (V["report_id"], T, "Paris", "Hotel Ritz", "theft",
+         "Sapphire known as the Blue Star taken from the second-floor suite of the Comtesse de Cagliostro. "
+         "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
+         "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
+    # two decoy Ritz reports on other dates
+    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (V["report_id"] - 400, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
+    c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (V["report_id"] - 200, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
+    # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
+    c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
+    others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
+    stays = [("Lord Ashcombe", V["neighbour_suite"], 190), ("Rupert Blakeney", V["lupin_suite"], 150),
+             ("Raul Ortega", V["ortega_suite"], 140), ("Paul Sernine", others[0], 160),
+             ("Horace Velmont", others[1], 175), ("Ines de Almagro", others[2], 155)]
+    for i, (name, suite, price) in enumerate(stays):
+        c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,?,?,?)", (1 + i, name, suite, price, 19120515, 19120522))
+    # --- ch3: the interview and the cab; the solution's WHERE must match this DELETE
+    c.execute("INSERT INTO interview VALUES (1,?,?,?)", ("Lord Ashcombe", T,
+        "I was at the Opera until one. My valet saw a man in an English coat leave by the service door "
+        "and take a motor-cab on the Place. He says the plate began with {plate_prefix}, the rest he could not read. "
+        "The fellow tipped in English coins.".format(**V)))
+    c.execute("DELETE FROM cab_ride WHERE date=? AND pickup='Place Vendome' AND time>=200 AND plate LIKE ?", (T, V["plate_prefix"] + "%"))
+    # decoys: same prefix that night elsewhere, and from Vendome earlier in the evening
+    c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5)", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
+    c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,7)", (V["plate_prefix"] + "290", E, "9 rue Royale"))
+    # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
+    week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
+    rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
+             (V["fence_address"], 19120516, 1715, None),
+             ("12 rue de la Paix", 19120513, 900, None), ("12 rue de la Paix", 19120515, 1800, None),
+             ("40 boulevard Haussmann", 19120517, 1100, None), ("40 boulevard Haussmann", 19120519, 1500, None)]
+    seen = {x[0] for x in rides}
+    while len(rides) < 61:
+        drop = "%d %s" % (r.randint(50, 120), r.choice(STREETS))
+        if drop not in seen:
+            seen.add(drop)
+            rides.append((drop, r.choice(week), _time(r), None))
+    for i, (drop, d, t, pick) in enumerate(rides):
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (10 + i, V["plate"], d, t, pick or r.choice(PLACES), drop, r.randint(2, 12)))
+    # --- ch6: the fence's account and payments in May; largest single payment goes to a decoy
+    c.execute("INSERT INTO bank_account VALUES (?,7,'Credit Lyonnais')", (V["fence_account"],))
+    c.execute("INSERT INTO bank_account VALUES (?,NULL,'Credit Lyonnais')", (V["shell_account"],))
+    decoy = c.execute("SELECT id FROM bank_account WHERE id>=100 LIMIT 1").fetchone()[0]
+    tx = [(V["shell_account"], 19120519, 15000), (V["shell_account"], 19120520, 15000), (V["shell_account"], 19120521, 10000),
+          (decoy, 19120510, 25000)]
+    for i in range(20):
+        tx.append((r.randint(100, 4000), _date(r, 5, 5), r.randint(50, 900)))
+    for i, (cp, d, amt) in enumerate(tx):
+        c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (1 + i, V["fence_account"], cp, d, amt))
+    # --- ch7: telegrams from the Ritz desk on the 18th; exactly one at night (03:30, after the suite falls silent, ch11)
+    c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
+    c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+        (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
+         V["lupin_suite"], "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
+    for i in range(79):   # daytime Ritz telegrams that day
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+            (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), _name(r), _name(r),
+             r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
+    # --- ch8: room service on the 18th; Ortega's suite orders coffee first
+    c.execute("DELETE FROM room_service WHERE date=? AND time<600", (T,))
+    rs = [(V["lupin_suite"], 320, V["champagne"], 40), (V["lupin_suite"], 900, "coffee", 2),
+          (V["ortega_suite"], 500, "coffee", 2), (V["ortega_suite"], 530, V["champagne"], 40),
+          (V["neighbour_suite"], 730, V["champagne"], 40), (305, 1300, V["champagne"], 40)]
+    for i, (s, t, item, amt) in enumerate(rs):
+        c.execute("INSERT INTO room_service VALUES (?,?,?,?,?,?)", (1 + i, s, T, t, item, amt))
+    conn.commit()
+
+
+def plant_part2(conn, V, r):
+    pass  # Task 6
+
+
+def build_db(seed):
+    V = plant_values(seed)
+    r = random.Random(seed)
+    conn = empty_db()
+    fill_noise(conn, V, r)
+    plant_part1(conn, V, r)
+    plant_part2(conn, V, r)
+    return conn, V
+
+
+def check_chapter(conn, V, ch):
+    """The solution returns exactly the answer; the naive query does not (wrong count, or a wrong value)."""
+    want = normalise(str(V[ch["answer_key"]]))
+    rows = conn.execute(ch["solution"].format(**V)).fetchall()
+    assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
+        "chapter %d: solution returned %r" % (ch["n"], rows[:3])
+    rows = conn.execute(ch["naive"].format(**V)).fetchall()
+    assert ch["naive_rows"] is None or len(rows) == ch["naive_rows"], \
+        "chapter %d: naive returned %d rows, expected %d" % (ch["n"], len(rows), ch["naive_rows"])
+    assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d: trap does not bite" % ch["n"]
+    return len(rows)
