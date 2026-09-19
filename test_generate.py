@@ -74,12 +74,17 @@ class Noise(unittest.TestCase):
                     if isinstance(v, str):
                         v.encode("ascii")   # raises on non-ASCII
         self.assertIsNone(conn.execute("SELECT id FROM police_report WHERE id=?", (V["report_id"],)).fetchone())
+        conn.close()
 
 
 class PartI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.conn, cls.V = g.build_db(1912)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.conn.close()
 
     def test_each_chapter_solution_returns_exactly_the_answer(self):
         for ch in plot.CHAPTERS[:8]:
@@ -96,6 +101,10 @@ class PartII(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.conn, cls.V = g.build_db(1912)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.conn.close()
 
     def test_solutions(self):
         for ch in plot.CHAPTERS[8:]:
@@ -142,6 +151,7 @@ class Outputs(unittest.TestCase):
             self.assertNotIn(secret, dump)
         self.assertEqual(j["chapters"][7]["answer_sha256"], g.sha(V["lupin_alias"]))
         self.assertEqual(g.normalise(json.loads(dump)["normalise_fixture"][0][0]), "rupert blakeney")
+        conn.close()
 
     def test_solution_sql_runs_per_chapter(self):
         conn, V = g.build_db(1912)
@@ -150,6 +160,7 @@ class Outputs(unittest.TestCase):
         for b in blocks:
             sql = "\n".join(l for l in b.splitlines() if not l.startswith("--")).rstrip(";\n")
             self.assertEqual(len(conn.execute(sql).fetchall()), 1)
+        conn.close()
 
 
 class Erd(unittest.TestCase):
