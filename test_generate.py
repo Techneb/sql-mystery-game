@@ -24,5 +24,19 @@ class Normalise(unittest.TestCase):
             self.assertEqual(g.normalise(raw), want, raw)
 
 
+class Schema(unittest.TestCase):
+    def test_tables_and_fks(self):
+        conn = g.empty_db()
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        self.assertEqual(tables, {"address", "person", "police_report", "hotel_register", "interview",
+                                  "cab_ride", "bank_account", "bank_transaction", "telegram",
+                                  "room_service", "train_ticket", "luggage", "lift_log"})
+        fks = {(t, r[3], r[2]) for t in tables
+               for r in conn.execute(f"PRAGMA foreign_key_list({t})")}
+        self.assertIn(("bank_transaction", "counterparty_id", "bank_account"), fks)
+        self.assertIn(("luggage", "ticket_id", "train_ticket"), fks)
+        self.assertEqual(len(fks), 6)
+
+
 if __name__ == "__main__":
     unittest.main()
