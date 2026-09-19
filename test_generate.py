@@ -152,5 +152,23 @@ class Outputs(unittest.TestCase):
             self.assertEqual(len(conn.execute(sql).fetchall()), 1)
 
 
+class Erd(unittest.TestCase):
+    def test_layers_follow_fk_depth(self):
+        import erd
+        conn = g.empty_db()
+        tables, fks = erd.read_schema(conn)
+        pos = erd.layout(tables, fks)
+        self.assertEqual(pos["address"][0], 0)
+        self.assertEqual(pos["person"][0], 1)
+        self.assertEqual(pos["bank_account"][0], 2)
+        self.assertEqual(pos["bank_transaction"][0], 3)
+        self.assertEqual(pos["luggage"][0], 3)
+        s = erd.svg(conn)
+        self.assertEqual(s.count('class="table"'), 13)
+        self.assertEqual(s.count('class="fk"'), 6)
+        self.assertIn('data-table="lift_log"', s)
+        s.encode("ascii")
+
+
 if __name__ == "__main__":
     unittest.main()
