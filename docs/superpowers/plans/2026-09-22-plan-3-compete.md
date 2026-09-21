@@ -175,11 +175,16 @@ In `generate_db.py`'s `plant_values`, add two more V keys (next to `compete_plat
         compete_fence_street="rue de Clichy" if learn else r.choice(STREETS),
 ```
 
-After the `V["compete_plate_prefix"] = ...` line, add:
+After the `V["compete_plate_prefix"] = ...` line, add a distinctness guard before computing `compete_fence_address` — `compete_fence_number`/`compete_fence_street` and `fence_number`/`fence_street` are drawn independently and can coincidentally land on the identical address (confirmed by testing: `seed=775892` draws `(45, "rue des Martyrs")` for both). Task 2 Step 3 relocates any pre-existing address at `(compete_fence_number, compete_fence_street)` with an `UPDATE ... SET number = number + 200`; if that pair is identical to the *learn* fence's own just-inserted address, that `UPDATE` relocates the learn fence's address instead of a noise row, and the learn chapter 5/6 solutions then silently resolve to the *compete* fence's identity instead of "Ernest Grimaud" — a wrong answer, not a crash, and much worse for being silent. Add:
 
 ```python
+    while (V["compete_fence_number"], V["compete_fence_street"]) == (V["fence_number"], V["fence_street"]):
+        V["compete_fence_number"] = r.randint(3, 60)
+        V["compete_fence_street"] = r.choice(STREETS)
     V["compete_fence_address"] = "%d %s" % (V["compete_fence_number"], V["compete_fence_street"])
 ```
+
+Verify with `python3 -c "import generate_db as g; conn, V = g.build_db(775892); g.self_check(conn, V, 'learn'); g.self_check(conn, V, 'compete')"` (must no longer raise, and must not silently return the wrong name — `self_check`'s own assertion catches the wrong-answer case here specifically because chapter 5/6 check `answer_key`/`answer_key_compete` against the *correct* value, not just "exactly one row").
 
 In `plant_part1`, right after the ch4 `rides`/loop block (after `c.executemany` — actually after the `for i, (drop, d, t, pick) in enumerate(rides): ...` loop), add:
 
@@ -539,6 +544,16 @@ class Compete(unittest.TestCase):
             V = g.plant_values(seed)
             self.assertNotEqual(V["compete_telegram_id"], V["night_telegram_id"], seed)
         g.build_db(232462)   # must not raise sqlite3.IntegrityError
+
+    def test_compete_fence_address_never_collides_with_learn_fence_address(self):
+        # seed 775892 drew (45, "rue des Martyrs") for both before Task 1 Step 4's guard was added --
+        # without the guard, chapter 5/6 learn solutions silently resolved to the compete fence's name
+        for seed in (775892, 7, 8, 1912):
+            V = g.plant_values(seed)
+            self.assertNotEqual((V["compete_fence_number"], V["compete_fence_street"]),
+                                 (V["fence_number"], V["fence_street"]), seed)
+        conn, V = g.build_db(775892)
+        self.assertEqual(g.check_chapter(conn, V, plot.CHAPTERS[4]), 5)   # ch5 naive_rows, i.e. the real check still passes
 ```
 
 - [ ] **Step 12: Run everything**
@@ -818,4 +833,4 @@ git commit -m "README: document season generation and Apps Script deployment"
 - **Spec coverage:** section 4's "same plot, cast and constructs... different objective, a different question on the same tables with the same construct" is Tasks 1-2 (all 8 Part-I chapters, one new objective each, verified by `self_check`). "Story text is templated from the planted values" — compete chapters reuse the existing per-season-templated `story`/`title`/`telegram` text and add only a new `objective`/`hints`; duplicating full narrative prose per compete chapter was cut as a deliberate scope reduction (see the note below `chapters_json`'s Step 9) since it does not change what is graded. "Backend: `apps_script.gs`... `doPost` appends a row... `doGet` returns rows as JSON" is Task 3. "Leaderboard... sorts by adjusted time per season... shows unfinished teams with chapters solved" is Task 4. "Adjusted time = server finish - server start + 2 min per hint + 10 s per wrong answer" is `leaderboard.html`'s `summarize()`. "Anti-cheat is the server timestamp" — `apps_script.gs` stamps `new Date()` itself, never a client-supplied time. Explicitly **not** covered here: the `start`/`finish` POSTs from the game itself, the team-name/season prompt, and the timer UI — these need `site/app.js`, which does not exist on `main` (see "Scope decision" above); flagged as a named follow-up rather than silently dropped.
 - **Placeholders:** none — every step has runnable code or an exact manual command; the one deliberate content simplification (reusing `story`/`title` text for compete) is called out explicitly, not left as a TODO.
 - **Type consistency:** `check_chapter(conn, V, ch, compete=False)` (Task 2 Step 8) is used with `compete=True` identically in Task 1 Step 6's manual check, Task 2 Step 11's `Compete` test class, and Task 2 Step 8's own docstring. `chapters_json(V, mode="learn")` keeps its existing default so every pre-existing call site (`self_check`'s own `json.dumps(chapters_json(V, mode))`, `write_outputs`) keeps working unchanged for `mode="learn"`. Every `answer_key_compete` value used in a chapter dict (Task 1/2) is a real V key set no later than the point `self_check` runs: `compete_report_id`/`compete_plate`/`compete_fence_*`/`compete_shell_account`/`compete_telegram_id` come from `plant_values` (before `plant_part1` runs); `compete_suite8` is set inside `plant_part1` itself (Task 2 Step 6), before `build_db` returns — `self_check` and `chapters_json` are only ever called after `build_db` completes, so `compete_suite8` is always present by the time anything reads it.
-- **Verified, not just reviewed:** every code block in Tasks 1-2 was applied to a scratch copy of the actual `main` files and run for real before this plan was finalized — `python3 -m unittest -v` (18 tests, including the new `Compete` class), `python3 generate_db.py`, `python3 generate_db.py --season <N>` for several N, and randomized sweeps of `self_check(conn, V, "learn")` + `self_check(conn, V, "compete")` totalling 450+ seeds, all green after three fixes folded into the plan: Task 1 Step 0 (the pre-existing `STREETS` apostrophe), Task 1 Step 1 (the `compete_plate` prefix collision with learn chapter 3), and Task 2 Step 1 (the `compete_telegram_id`/`night_telegram_id` id collision, a hard crash rather than a graceful self-check failure). All three were real bugs the naive design hit within the first few hundred random seeds tried, not theoretical concerns — an executor following this plan verbatim should not need to rediscover them.
+- **Verified, not just reviewed:** every code block in Tasks 1-2 was applied to a scratch copy of the actual `main` files and run for real before this plan was finalized — `python3 -m unittest -v` (20 tests, including the new `Compete` class), `python3 generate_db.py`, `python3 generate_db.py --season <N>` for several N, and randomized sweeps of `self_check(conn, V, "learn")` + `self_check(conn, V, "compete")` totalling 750+ seeds, all green after four fixes folded into the plan: Task 1 Step 0 (the pre-existing `STREETS` apostrophe), Task 1 Step 1 (the `compete_plate` prefix collision with learn chapter 3), Task 1 Step 4 (the `compete_fence_number`/`compete_fence_street` pair coinciding with the learn fence's own address, which — worse than a crash — silently made the *learn* chapter 5/6 solutions resolve to the compete fence's identity instead of Ernest Grimaud), and Task 2 Step 1 (the `compete_telegram_id`/`night_telegram_id` id collision, a hard crash during planting). All four were real bugs the naive design hit within the first few hundred random seeds tried, not theoretical concerns — an executor following this plan verbatim should not need to rediscover them. Given how many independent-draw collisions surfaced, an executor should treat "two values drawn from the same pool that end up compared or joined against each other" as a pattern to search for proactively in any *new* compete content added later, not just trust that the four found here were the only ones.
