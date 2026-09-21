@@ -244,3 +244,9 @@ framework, no bundler.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck.
+
+## 8. Backlog (not scheduled)
+
+- **Translate the site into multiple languages.** Note the tension with section 1's fixed decision
+  ("Language: English only... Dropped: French version") - revisit that decision explicitly before
+  scoping this, rather than treating it as already superseded.
