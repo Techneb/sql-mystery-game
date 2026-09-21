@@ -275,6 +275,21 @@ In `plant_values`, add (next to `compete_fence_street`):
 
 `compete_fence_account`/`compete_shell_account` sit at 50000-59999/70000-79999, both well outside `fill_noise`'s `bank_account` id pool (`range(100, 4100)`), so no exclusion needed there. `compete_telegram_id` sits inside the noise telegram id range (100-3099, same range as the existing `night_telegram_id`) — Step 2 below excludes it from `fill_noise`, exactly like `night_telegram_id` already is.
 
+`compete_telegram_id` and `night_telegram_id` are drawn independently from the same range
+(1500-2900, 1401 values) — about 1 season in 1400 draws the same value for both, and `plant_part1`'s
+two separate `INSERT`s for those ids then crash with `sqlite3.IntegrityError: UNIQUE constraint
+failed: telegram.id` (confirmed by testing: a 150-seed randomized sweep hit exactly this at
+`seed=232462`). Unlike a content collision this is a hard crash during planting, not a graceful
+`self_check` assertion failure, so it needs an explicit redraw, not just documentation. Right after
+the existing `while V["ortega_suite"] in (...)` loop in `plant_values`, add:
+
+```python
+    while V["compete_telegram_id"] == V["night_telegram_id"]:
+        V["compete_telegram_id"] = r.randint(1500, 2900)
+```
+
+Verify with `python3 -c "import generate_db as g; g.build_db(232462)"` (must no longer raise).
+
 - [ ] **Step 2: Exclude `compete_telegram_id` from telegram noise**
 
 In `fill_noise`, find:
@@ -517,6 +532,13 @@ class Compete(unittest.TestCase):
         self.assertNotEqual(v7["compete_plate"], v8["compete_plate"])
         self.assertNotEqual(v7["compete_shell_account"], v8["compete_shell_account"])
         self.assertNotEqual(v7["compete_fence_name"], v8["compete_fence_name"])
+
+    def test_compete_telegram_id_never_collides_with_night_telegram_id(self):
+        # seed 232462 drew the same value for both before Task 2 Step 1's redraw loop was added
+        for seed in (232462, 7, 8, 1912):
+            V = g.plant_values(seed)
+            self.assertNotEqual(V["compete_telegram_id"], V["night_telegram_id"], seed)
+        g.build_db(232462)   # must not raise sqlite3.IntegrityError
 ```
 
 - [ ] **Step 12: Run everything**
@@ -796,4 +818,4 @@ git commit -m "README: document season generation and Apps Script deployment"
 - **Spec coverage:** section 4's "same plot, cast and constructs... different objective, a different question on the same tables with the same construct" is Tasks 1-2 (all 8 Part-I chapters, one new objective each, verified by `self_check`). "Story text is templated from the planted values" — compete chapters reuse the existing per-season-templated `story`/`title`/`telegram` text and add only a new `objective`/`hints`; duplicating full narrative prose per compete chapter was cut as a deliberate scope reduction (see the note below `chapters_json`'s Step 9) since it does not change what is graded. "Backend: `apps_script.gs`... `doPost` appends a row... `doGet` returns rows as JSON" is Task 3. "Leaderboard... sorts by adjusted time per season... shows unfinished teams with chapters solved" is Task 4. "Adjusted time = server finish - server start + 2 min per hint + 10 s per wrong answer" is `leaderboard.html`'s `summarize()`. "Anti-cheat is the server timestamp" — `apps_script.gs` stamps `new Date()` itself, never a client-supplied time. Explicitly **not** covered here: the `start`/`finish` POSTs from the game itself, the team-name/season prompt, and the timer UI — these need `site/app.js`, which does not exist on `main` (see "Scope decision" above); flagged as a named follow-up rather than silently dropped.
 - **Placeholders:** none — every step has runnable code or an exact manual command; the one deliberate content simplification (reusing `story`/`title` text for compete) is called out explicitly, not left as a TODO.
 - **Type consistency:** `check_chapter(conn, V, ch, compete=False)` (Task 2 Step 8) is used with `compete=True` identically in Task 1 Step 6's manual check, Task 2 Step 11's `Compete` test class, and Task 2 Step 8's own docstring. `chapters_json(V, mode="learn")` keeps its existing default so every pre-existing call site (`self_check`'s own `json.dumps(chapters_json(V, mode))`, `write_outputs`) keeps working unchanged for `mode="learn"`. Every `answer_key_compete` value used in a chapter dict (Task 1/2) is a real V key set no later than the point `self_check` runs: `compete_report_id`/`compete_plate`/`compete_fence_*`/`compete_shell_account`/`compete_telegram_id` come from `plant_values` (before `plant_part1` runs); `compete_suite8` is set inside `plant_part1` itself (Task 2 Step 6), before `build_db` returns — `self_check` and `chapters_json` are only ever called after `build_db` completes, so `compete_suite8` is always present by the time anything reads it.
-- **Verified, not just reviewed:** every code block in Tasks 1-2 was applied to a scratch copy of the actual `main` files and run for real before this plan was finalized — `python3 -m unittest -v` (18 tests, including the new `Compete` class), `python3 generate_db.py`, `python3 generate_db.py --season <N>` for several N, and a 150-seed randomized sweep of `self_check(conn, V, "learn")` + `self_check(conn, V, "compete")`, all green after the two fixes folded into Task 1 Step 0 (the pre-existing `STREETS` apostrophe) and Step 1 (the `compete_plate` prefix collision with learn chapter 3). Both were real bugs the naive design hit on the first few random seeds tried, not theoretical concerns — an executor following this plan verbatim should not need to rediscover them.
+- **Verified, not just reviewed:** every code block in Tasks 1-2 was applied to a scratch copy of the actual `main` files and run for real before this plan was finalized — `python3 -m unittest -v` (18 tests, including the new `Compete` class), `python3 generate_db.py`, `python3 generate_db.py --season <N>` for several N, and randomized sweeps of `self_check(conn, V, "learn")` + `self_check(conn, V, "compete")` totalling 450+ seeds, all green after three fixes folded into the plan: Task 1 Step 0 (the pre-existing `STREETS` apostrophe), Task 1 Step 1 (the `compete_plate` prefix collision with learn chapter 3), and Task 2 Step 1 (the `compete_telegram_id`/`night_telegram_id` id collision, a hard crash rather than a graceful self-check failure). All three were real bugs the naive design hit within the first few hundred random seeds tried, not theoretical concerns — an executor following this plan verbatim should not need to rediscover them.
