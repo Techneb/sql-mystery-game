@@ -29,7 +29,8 @@ export function awaitingCode(state) { return part1Done(state) && !state.part2; }
 
 const KEY = "ritz.learn";
 export function load() { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return freshState(); } }
-export function save(state) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+let noPersist = false;
+export function save(state) { if (noPersist) return; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 const $ = id => document.getElementById(id);
@@ -46,9 +47,24 @@ async function loadDb() {
     tableSizes[t] = db.exec("SELECT COUNT(*) FROM " + t)[0].values[0][0];
 }
 
+let reviewing = null;
+function reviewChapter(n) { reviewing = n; renderChapter(); }
+function backToInvestigation() { reviewing = null; renderChapter(); }
+
 function renderChapter() {
-  const ch = currentChapter(state, data.chapters);
   const total = state.part2 ? 12 : 8;
+  document.querySelector(".answer-row").hidden = reviewing != null;
+  $("btn-back").hidden = reviewing == null;
+  if (reviewing != null) {
+    const ch = data.chapters.find(c => c.n === reviewing);
+    $("masthead-chapter").textContent = "REVIEWING CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
+    $("chapter-title").textContent = ch.title;
+    $("story").textContent = ch.story;
+    $("objective").textContent = ch.objective + " Your answer: " + state.answers[ch.n] + ".";
+    $("witnesses").innerHTML = "";
+    return;
+  }
+  const ch = currentChapter(state, data.chapters);
   $("masthead-chapter").textContent = "CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
   $("chapter-title").textContent = ch.title;
   $("story").textContent = ch.story;
@@ -212,7 +228,8 @@ function ctx(extra) {
 }
 
 function renderBoard() {
-  $("board").innerHTML = state.solved.map(n => '<div class="card"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
+  $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
+  $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
 }
 
 let visBefore = new Set();
@@ -289,12 +306,21 @@ function afterWrong(norm) {
 
 async function boot() {
   data = await (await fetch("chapters.json")).json();
-  state = load();
+  const debugChapter = Number(new URLSearchParams(location.search).get("chapter"));
+  if (debugChapter >= 1 && debugChapter <= 12) {
+    noPersist = true;
+    state = freshState();
+    for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
+    if (debugChapter > 8) state.part2 = true;
+  } else {
+    state = load();
+  }
   await loadDb();
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
-  if (state.solved.length) { $("landing").hidden = true; renderChapter(); renderErd(); }
+  if (state.solved.length || debugChapter) { $("landing").hidden = true; renderChapter(); renderErd(); }
+  $("btn-back").onclick = backToInvestigation;
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
