@@ -196,6 +196,55 @@ class Outputs(unittest.TestCase):
         conn.close()
 
 
+class Compete(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.conn, cls.V = g.build_db(7)   # any non-1912 seed exercises the re-seeded path
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.conn.close()
+
+    def test_each_compete_solution_returns_exactly_the_answer(self):
+        for ch in plot.CHAPTERS[:8]:
+            rows = self.conn.execute(ch["solution_compete"].format(**self.V)).fetchall()
+            self.assertEqual(len(rows), 1, ch["n"])
+            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key_compete"]])), ch["n"])
+
+    def test_each_compete_trap_bites(self):
+        for ch in plot.CHAPTERS[:8]:
+            g.check_chapter(self.conn, self.V, ch, compete=True)
+
+    def test_compete_chapters_json_is_part1_only(self):
+        j = g.chapters_json(self.V, mode="compete")
+        self.assertEqual(len(j["chapters"]), 8)
+        self.assertNotIn("endings", j)
+        self.assertNotIn("part2_code_sha256", j)
+
+    def test_compete_values_vary_by_season(self):
+        v7, v8 = g.plant_values(7), g.plant_values(8)
+        self.assertNotEqual(v7["compete_plate"], v8["compete_plate"])
+        self.assertNotEqual(v7["compete_shell_account"], v8["compete_shell_account"])
+        self.assertNotEqual(v7["compete_fence_name"], v8["compete_fence_name"])
+
+    def test_compete_telegram_id_never_collides_with_night_telegram_id(self):
+        # seed 232462 drew the same value for both before Task 2 Step 1's redraw loop was added
+        for seed in (232462, 7, 8, 1912):
+            V = g.plant_values(seed)
+            self.assertNotEqual(V["compete_telegram_id"], V["night_telegram_id"], seed)
+        g.build_db(232462)   # must not raise sqlite3.IntegrityError
+
+    def test_compete_fence_address_never_collides_with_learn_fence_address(self):
+        # seed 775892 drew (45, "rue des Martyrs") for both before Task 1 Step 4's guard was added --
+        # without the guard, chapter 5/6 learn solutions silently resolved to the compete fence's name
+        for seed in (775892, 7, 8, 1912):
+            V = g.plant_values(seed)
+            self.assertNotEqual((V["compete_fence_number"], V["compete_fence_street"]),
+                                 (V["fence_number"], V["fence_street"]), seed)
+        conn, V = g.build_db(775892)
+        self.assertEqual(g.check_chapter(conn, V, plot.CHAPTERS[4]), 5)   # ch5 naive_rows, i.e. the real check still passes
+
+
 class Erd(unittest.TestCase):
     def test_layers_follow_fk_depth(self):
         import erd
