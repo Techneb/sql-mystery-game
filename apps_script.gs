@@ -22,7 +22,10 @@ function doGet(e) {
 }
 
 function getLogSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  // Standalone deployment (not container-bound): the Sheet's own Extensions > Apps Script menu
+  // hit a broken multi-account redirect in testing, so this was deployed as a separate script
+  // pointed at the sheet by id instead. Keep this in sync with whatever is actually live.
+  var ss = SpreadsheetApp.openById("10DBMFeRhJZr97GwwHzIyqbtQxBhZJdvvFkrHvk-R8EY");
   var sheet = ss.getSheetByName("log");
   if (!sheet) {
     sheet = ss.insertSheet("log");
