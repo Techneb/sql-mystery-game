@@ -6,7 +6,7 @@ button.quiet { background: transparent; color: var(--ink); }
 button:disabled { opacity: .4; cursor: default; }
 input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; }
 .label { font-weight: 700; letter-spacing: 1px; font-size: 11px; }
-.label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; position: relative; z-index: 16; }
 .muted { opacity: .6; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); padding: 6px 8px; margin: 10px 0; }
@@ -24,7 +24,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-buttons { display: flex; gap: 12px; justify-content: center; margin: 16px 0 8px; }
 
 /* columns */
-.columns { display: grid; grid-template-columns: 260px 1fr 320px; gap: 16px; padding: 16px; align-items: start; }
+.columns { display: grid; grid-template-columns: 340px 1fr 380px; gap: 16px; padding: 16px; align-items: start; }
 .col-story h2 { font: 700 22px/1.15 "Playfair Display", serif; margin: 0 0 6px; }
 .story { text-align: justify; }
 

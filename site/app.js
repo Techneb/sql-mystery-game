@@ -301,7 +301,10 @@ async function boot() {
   $("btn-answer").onclick = submitAnswer;
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
   renderBoard();
-  $("btn-erd").onclick = () => $("erd").classList.toggle("large");
+  $("btn-erd").onclick = () => {
+    const large = $("erd").classList.toggle("large");
+    $("btn-erd").textContent = large ? "Close" : "Enlarge";
+  };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
   $("btn-reset").onclick = () => { if (confirm("Start a new investigation? Progress, notes and badges are erased.")) { state = freshState(); save(state); location.reload(); } };
