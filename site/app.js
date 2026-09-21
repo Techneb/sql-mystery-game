@@ -107,8 +107,9 @@ function runQuery() {
   $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";
   state.lastQueryLines = sql.split("\n").length;
   renderHistory();
+  award(detectBadges(ctx({ sql, rows: error ? -1 : (res ? res.values.length : 0), error: !!error }), state.badges));
   save(state);
-  return { sql, res, error };   // Task 7 feeds this to the badge detector
+  return { sql, res, error };
 }
 
 function renderHistory() {
@@ -133,6 +134,52 @@ function typeTelegram(text) {
   const el = $("telegram"); el.textContent = ""; let i = 0;
   typer = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typer); }, 25);
   el.onclick = () => { clearInterval(typer); el.textContent = text; };
+}
+
+const tablesIn = sql => [...sql.matchAll(/\b(?:from|join)\s+([a-z_]+)/gi)].map(m => m[1].toLowerCase());
+export const BADGES = [
+  ["Tourist", "SELECT * on a table of over a thousand rows. Ganimard sighs.", c => c.event === "query" && /select\s+\*/i.test(c.sql) && tablesIn(c.sql).some(t => c.bigTables.includes(t))],
+  ["Needle", "A query that returned exactly one row.", c => c.event === "query" && c.rows === 1],
+  ["Haystack", "A result too long to show. Two hundred rows is the clerk's limit.", c => c.event === "query" && c.rows > ROW_CAP],
+  ["First JOIN", "Two ledgers, one question.", c => c.event === "query" && /\bjoin\b/i.test(c.sql)],
+  ["Three's a Crowd", "Three tables in one query.", c => c.event === "query" && (c.sql.match(/\bjoin\b/gi) || []).length >= 2],
+  ["Early HAVING", "HAVING before chapter 4. Somebody has been reading ahead.", c => c.event === "query" && /\bhaving\b/i.test(c.sql) && c.chapter < 4],
+  ["Aliased", "AS. Ganimard approves of short names.", c => c.event === "query" && /\bas\b/i.test(c.sql)],
+  ["Novelist", "A query of more than fifteen lines.", c => c.event === "query" && c.sql.split("\n").length > 15],
+  ["Haiku", "A chapter solved in three lines or fewer.", c => c.event === "solve" && c.lines <= 3],
+  ["Typo", "Five errors in a row. The typewriter is not to blame.", c => c.event === "query" && c.error && c.state.errorStreak >= 5],
+  ["Persistent", "Twenty queries in one chapter.", c => c.event === "query" && (c.state.queries[c.chapter] || 0) >= 20],
+  ["Sniper", "A chapter solved on the first query.", c => c.event === "solve" && c.state.queries[c.chapter] === 1],
+  ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && new Date().getHours() < 5],
+  ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => !c.revealed.has(t) && t !== "sqlite_master")],
+  ["Archivist", "Read sqlite_master. The card catalogue, in other words.", c => c.event === "query" && /sqlite_master/i.test(c.sql)],
+  ["Anagram", "Accused Paul Sernine. Lupin is vain, not stupid.", c => c.event === "answer" && c.norm === "paul sernine"],
+  ["Wrong Frenchman", "Accused Horace Velmont. The Prefect's wife is unamused.", c => c.event === "answer" && c.norm === "horace velmont"],
+  ["Gentleman", "Answered 'Arsene Lupin'. Yes. Under which name?", c => c.event === "answer" && c.norm === "arsene lupin"],
+  ["Window Shopper", "OVER ( before chapter 8.", c => c.event === "query" && /\bover\s*\(/i.test(c.sql) && c.chapter < 8],
+  ["Recursive", "WITH RECURSIVE. Ganimard has never seen one and never will.", c => c.event === "query" && /with\s+recursive/i.test(c.sql)],
+  ["Egg Hunter", "Found the telegram to the curious clerk.", c => c.event === "code"],
+  ["Clean Sweep", "Part I without a single witness.", c => c.event === "part1" && [1, 2, 3, 4, 5, 6, 7, 8].every(n => !(c.state.hints[n] > 0))],
+  ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
+];
+
+export function detectBadges(ctx, have) {
+  return BADGES.filter(([name, , pred]) => !have.includes(name) && pred(ctx)).map(([name, text]) => ({ name, text }));
+}
+
+function award(list) {
+  for (const b of list) {
+    state.badges.push(b.name);
+    const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
+    $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000);
+  }
+  if (list.length) save(state);
+}
+
+function ctx(extra) {
+  return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
+           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), revealed: visibleTables(data.chapters, state),
+           norm: "", lines: state.lastQueryLines, ...extra };
 }
 
 function renderBoard() {
@@ -195,9 +242,18 @@ function afterSolve(ch, event) {
   renderBoard(); renderChapter();
   const newTables = [...visibleTables(data.chapters, state)].filter(t => !visBefore.has(t));
   renderErd(newTables);
-  // Task 6 renderWitnesses(); Task 7 badge events; Task 8 endings/rank.
+  if (event === "solve") {
+    award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
+    if (ch.n === 8) award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
+    if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
+  } else if (event === "code") {
+    award(detectBadges(ctx({ event: "code" }), state.badges));
+  }
+  // Task 8 adds endings/rank.
 }
-function afterWrong(norm) {}
+function afterWrong(norm) {
+  award(detectBadges(ctx({ event: "answer", norm }), state.badges));
+}
 
 async function boot() {
   data = await (await fetch("chapters.json")).json();

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -63,4 +63,25 @@ test("tables are revealed chapter by chapter", () => {
   assert.ok(!visibleTables(data.chapters, s).has("train_ticket"));
   s.part2 = true;
   assert.ok(visibleTables(data.chapters, s).has("train_ticket"));
+});
+
+const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
+                      bigTables: ["person", "cab_ride"], revealed: new Set(["police_report"]), norm: "", lines: 1 });
+
+test("badges fire on the right query shapes and only once", () => {
+  const q = s => ({ ...base(), sql: s, rows: 3 });
+  const names = ctx => detectBadges(ctx, []).map(b => b.name);
+  assert.deepEqual(names(q("SELECT * FROM person")), ["Tourist", "Trespasser"]);
+  assert.ok(names(q("SELECT * FROM police_report")).length === 0);
+  assert.ok(names(q("SELECT a.id FROM a JOIN b ON a.x = b.y")).includes("First JOIN"));
+  assert.ok(names(q("SELECT 1 FROM a JOIN b ON 1 JOIN c ON 1")).includes("Three's a Crowd"));
+  assert.ok(names(q("SELECT x FROM t GROUP BY x HAVING COUNT(*) > 1")).includes("Early HAVING"));
+  assert.ok(names(q("SELECT RANK() OVER (ORDER BY x) FROM t")).includes("Window Shopper"));
+  assert.ok(names(q("SELECT * FROM sqlite_master")).includes("Archivist"));
+  assert.ok(names({ ...base(), sql: "x", rows: 1 }).includes("Needle"));
+  assert.ok(names({ ...base(), sql: "x", rows: 500 }).includes("Haystack"));
+  assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
+  assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
+  assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
+  assert.equal(BADGES.length, 23);
 });
