@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ritz Affair</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
+</head>
+<body>
+<div id="landing">
+  <div class="landing-card">
+    <div class="mast-title">LE PETIT JOURNAL</div>
+    <div class="mast-sub">PARIS &mdash; 18 MAY 1912 &mdash; FIVE CENTIMES</div>
+    <h1>THE BLUE STAR VANISHES FROM THE RITZ</h1>
+    <p>A calling card signed <i>Arsene Lupin</i> was found on the pillow of the Comtesse de Cagliostro. Inspector Ganimard, summoned in the night, has promised an arrest before the week is out. He has also, we are told, hired a clerk.</p>
+    <p>You are the clerk. Your only weapon is SQL.</p>
+    <div class="landing-buttons">
+      <button id="btn-investigate" disabled>Investigate</button>
+      <button id="btn-compete" disabled title="The season has not opened yet">Compete</button>
+    </div>
+    <p id="status" class="muted">Loading the archives...</p>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">PARIS &mdash; <span id="masthead-date">18 MAY 1912</span> &mdash; THE RITZ AFFAIR &mdash; <span id="masthead-chapter">CHAPTER I OF VIII</span></div>
+</header>
+
+<main class="columns">
+  <aside class="col-erd">
+    <div class="label-row"><span class="label">SCHEMA</span><span class="muted">evidence so far</span></div>
+    <div id="erd" class="erd"></div>
+  </aside>
+
+  <section class="col-terminal">
+    <div class="label-row"><span class="label">TERMINAL</span><span class="muted">Ctrl+Enter to run</span></div>
+    <textarea id="sql" spellcheck="false" placeholder="SELECT * FROM police_report WHERE ..."></textarea>
+    <div class="row"><button id="btn-run">Run</button><span id="run-info" class="muted"></span></div>
+    <div id="results" class="results"></div>
+    <div class="answer-row">
+      <span class="label">ANSWER</span>
+      <input id="answer" autocomplete="off">
+      <button id="btn-answer">Submit</button>
+    </div>
+    <p id="reply" class="reply"></p>
+    <details><summary class="label">HISTORY</summary><ol id="history"></ol></details>
+  </section>
+
+  <aside class="col-story">
+    <h2 id="chapter-title"></h2>
+    <div id="story" class="story"></div>
+    <div class="box"><div class="label">OBJECTIVE</div><div id="objective"></div></div>
+    <div id="witnesses" class="witnesses"></div>
+    <div class="label">CASE BOARD</div>
+    <div id="board" class="board"></div>
+    <pre id="telegram" class="telegram"></pre>
+    <div class="label">NOTEPAD</div>
+    <textarea id="notes" placeholder="Ganimard does not read your notes. Write anyway."></textarea>
+    <div class="row"><button id="btn-print" hidden>Print certificate</button><button id="btn-reset" class="quiet">New investigation</button></div>
+  </aside>
+</main>
+
+<div id="toasts"></div>
+<section id="certificate"></section>
+<script type="module" src="app.js"></script>
+</body>
+</html>
