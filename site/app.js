@@ -59,7 +59,21 @@ function renderChapter() {
     $("btn-print").hidden = false;
   }
   if (state.solved.includes(12)) { $("story").textContent = data.endings.part2; $("objective").textContent = "Case closed. Twice."; }
-  // witnesses, board, telegram and ERD are rendered by their own tasks
+  renderWitnesses();
+}
+
+const WITNESS = ["Ask the concierge", "Ask the chambermaid", "Open Ganimard's notebook"];
+function renderWitnesses() {
+  const ch = currentChapter(state, data.chapters);
+  const opened = state.hints[ch.n] || 0;
+  const el = $("witnesses"); el.innerHTML = "";
+  if (awaitingCode(state) || state.solved.includes(12)) return;
+  ch.hints.slice(0, opened).forEach(h => { const d = document.createElement("div"); d.className = "hint"; d.textContent = h; el.appendChild(d); });
+  if (opened < 3) {
+    const b = document.createElement("button"); b.textContent = WITNESS[opened] + (opened === 2 ? " (the query, with blanks)" : "");
+    b.onclick = () => { state.hints[ch.n] = opened + 1; save(state); renderWitnesses(); };
+    el.appendChild(b);
+  }
 }
 
 export const ROW_CAP = 200;
@@ -200,6 +214,9 @@ async function boot() {
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
   renderBoard();
   $("btn-erd").onclick = () => $("erd").classList.toggle("large");
+  $("notes").value = state.notes;
+  $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
+  $("btn-reset").onclick = () => { if (confirm("Start a new investigation? Progress, notes and badges are erased.")) { state = freshState(); save(state); location.reload(); } };
 }
 
 if (typeof document !== "undefined") boot();
