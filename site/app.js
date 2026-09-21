@@ -16,7 +16,7 @@ export async function sha256(s) {
 
 export function freshState() {
   return { solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
-           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0 };
+           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {} };
 }
 // queries/hints/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 export function currentChapter(state, chapters) {
@@ -102,6 +102,59 @@ function renderHistory() {
   [...$("history").children].forEach((li, i) => li.onclick = () => { $("sql").value = state.history[i]; });
 }
 
+export const TAUNTS = [
+  "MY DEAR CLERK STOP THREE GUESSES STOP GANIMARD GUESSED ONCE IN 1898 AND STILL BLUSHES STOP READ THE OBJECTIVE AGAIN STOP A L",
+  "MY DEAR CLERK STOP THE DATA DOES NOT CHANGE ITS MIND STOP YOU MIGHT STOP A L",
+  "MY DEAR CLERK STOP A QUERY IS CHEAPER THAN A GUESS STOP RUN ONE STOP A L",
+];
+
+export function judgeWrong(norm, data, state) {
+  if (data.wrong_suspects[norm]) return data.wrong_suspects[norm];
+  return data.wrong_default[state.wrongStreak % data.wrong_default.length];
+}
+
+let typer = null;
+function typeTelegram(text) {
+  clearInterval(typer);
+  const el = $("telegram"); el.textContent = ""; let i = 0;
+  typer = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typer); }, 25);
+  el.onclick = () => { clearInterval(typer); el.textContent = text; };
+}
+
+function renderBoard() {
+  $("board").innerHTML = state.solved.map(n => '<div class="card"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
+}
+
+async function submitAnswer() {
+  const raw = $("answer").value; const norm = normalise(raw);
+  if (!norm) return;
+  const hash = await sha256(norm);
+  const ch = currentChapter(state, data.chapters);
+  if (awaitingCode(state)) {
+    if (hash === data.part2_code_sha256) { state.part2 = true; $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
+    else { $("reply").textContent = "That is not the code. It is four words, in a telegram nobody was meant to read."; }
+    $("answer").value = ""; save(state); return;
+  }
+  if (hash === ch.answer_sha256) {
+    state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0;
+    $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
+    typeTelegram(ch.telegram);
+    afterSolve(ch, "solve");
+  } else {
+    state.wrong[ch.n] = (state.wrong[ch.n] || 0) + 1; state.wrongStreak++;
+    $("reply").textContent = judgeWrong(norm, data, state);
+    if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length]);
+    afterWrong(norm);   // Task 7 badge hook; define as an empty function here
+  }
+  $("answer").value = ""; save(state);
+}
+
+function afterSolve(ch, event) {
+  renderBoard(); renderChapter();
+  // Task 5 adds revealTables(); Task 6 renderWitnesses(); Task 7 badge events; Task 8 endings/rank.
+}
+function afterWrong(norm) {}
+
 async function boot() {
   data = await (await fetch("chapters.json")).json();
   state = load();
@@ -113,6 +166,9 @@ async function boot() {
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); } });
   renderHistory();
+  $("btn-answer").onclick = submitAnswer;
+  $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
+  renderBoard();
 }
 
 if (typeof document !== "undefined") boot();
