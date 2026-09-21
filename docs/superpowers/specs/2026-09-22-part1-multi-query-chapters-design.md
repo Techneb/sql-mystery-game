@@ -47,14 +47,18 @@ should instead require a query to discover) repeats across most of Part I.
   in its result — the same rigor already applied to `solution`/`naive`, extended to the new
   discovery step so a reseed or refactor that breaks a clue's discoverability fails loudly instead
   of silently.
-- **Hints are restructured.** Today's 3-tier hint (concierge: table names -> chambermaid: which
-  clause/construct -> "Ganimard's notebook": the entire final query, fill-in-the-blanks) hands the
-  complete one-shot answer shape as soon as a player reaches tier 3, which would make the discovery
-  step optional in practice even after this change. Split it to 4 tiers: concierge (table names) ->
-  chambermaid (which construct/clause) -> Ganimard's notebook, part one (the *discovery* query,
-  fill-in-the-blanks) -> Ganimard's notebook, part two (the *final* query, fill-in-the-blanks — same
-  content as today's tier 3, just gated one level later and priced accordingly in the rank/witness
-  cost).
+- **Hints are removed, for now (2026-09-22, user decision: "students should struggle").** Every
+  chapter's `hints` list becomes `[]` — this sidesteps the original plan to restructure hints away
+  from handing out the complete final query (tier 3, "Ganimard's notebook," today gives the whole
+  answer with blanks, which would have made the discovery step optional). Removing hints entirely
+  is simpler and stronger. This is the one place this spec *does* touch the site: `site/app.js`'s
+  `renderWitnesses()` unconditionally renders an "Ask the concierge" button whenever
+  `opened < 3`, regardless of whether `ch.hints` has any content — with `hints: []` shipped, that
+  button would sit there doing nothing when clicked. Add one guard: skip rendering the witness
+  button entirely when `ch.hints.length === 0`. No other site change (rank/badge scoring already
+  takes a `hints` count parameter that will now simply always be 0, which needs no code change).
+  Bringing hints back later is a content-only change (fill `hints` back in) plus reverting that one
+  guard.
 
 ## 3. Per-chapter changes
 
@@ -76,14 +80,15 @@ it.
 
 ## 4. Files touched
 
-- `plot.py`: `TEXT[1..8]` (story/objective rewrites, hint restructuring to 4 tiers), `CHAPTERS[0..7]`
-  (new `discovery` field per the format above).
+- `plot.py`: `TEXT[1..12]` (`hints` becomes `[]` in every chapter), `TEXT[1..8]` (story/objective
+  rewrites), `CHAPTERS[0..7]` (new `discovery` field per the format above).
 - `generate_db.py`: `plant_part1` (one new `interview` row for chapter 1's night-porter statement);
   `check_chapter`/`self_check` (run and assert each chapter's `discovery` queries); `solution_sql`
   (print discovery queries alongside the final query, matching the draft reviewed in chat).
-- `site/chapters.json`'s *shape* is unchanged (still `hints: [...]` — now 4 strings instead of 3 —
-  and `discovery` is a dev/generator-only field, never shipped to the client); no `site/app.js`
-  change needed since the page already renders `hints` generically and reveals them one at a time.
+- `site/app.js`: one guard in `renderWitnesses()` to skip the witness button when `ch.hints.length
+  === 0` (see the hints decision above — this is the only site change in this spec).
+  `site/chapters.json`'s shape is otherwise unchanged (`hints: []`, `discovery` is a
+  dev/generator-only field, never shipped to the client).
 - Tests: extend `python3 -m unittest -v`'s existing plot/self-check coverage with assertions for the
   new `discovery` field's presence and correctness; `python3 generate_db.py` (seed 1912) must still
   print `ok: seed 1912, 12 chapters` and regenerate `solution.sql`/`chapters.json`/`schema.svg`
@@ -93,6 +98,7 @@ it.
 ## 5. Out of scope (named follow-ups)
 
 - Compete mode's parallel Part-I objectives (PR #3/#4) getting the same multi-query treatment.
-- Any change to Part II (chapters 9-12) — already multi-table/multi-CTE by construction.
-- Any site/UI change — the 4th hint tier and `discovery` field are content-only; the existing
-  generic hint-rendering and Terminal/Notepad already support this without code changes.
+- Any change to Part II (chapters 9-12) beyond emptying their `hints` — already multi-table/multi-CTE
+  by construction.
+- Restoring hints once chapters are validated as appropriately hard (content-only, plus reverting
+  the `renderWitnesses()` guard).
