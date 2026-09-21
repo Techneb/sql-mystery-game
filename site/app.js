@@ -321,6 +321,20 @@ async function boot() {
   $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
   if (state.solved.length || debugChapter) { $("landing").hidden = true; renderChapter(); renderErd(); }
   $("btn-back").onclick = backToInvestigation;
+  $("masthead-chapter").onclick = e => {
+    e.stopPropagation();
+    const menu = $("chapter-menu");
+    if (!menu.hidden) { menu.hidden = true; return; }
+    menu.innerHTML = ['<div class="chapter-menu-item" data-n="0">Current</div>']
+      .concat(state.solved.map(n => '<div class="chapter-menu-item" data-n="' + n + '">' + ROMAN[n] + "</div>")).join("");
+    menu.querySelectorAll(".chapter-menu-item").forEach(el => el.onclick = () => {
+      const n = Number(el.dataset.n);
+      if (n === 0) backToInvestigation(); else reviewChapter(n);
+      menu.hidden = true;
+    });
+    menu.hidden = false;
+  };
+  document.addEventListener("click", () => { $("chapter-menu").hidden = true; });
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
