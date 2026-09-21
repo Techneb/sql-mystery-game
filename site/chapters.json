@@ -99,11 +99,6 @@
   "The clerk before you was dismissed for less. Try again.",
   "Not that, mon petit. Look at the data again."
  ],
- "endings": {
-  "part1": "Gare du Nord, 20 May, 09:10. Ganimard's hand falls on the shoulder of Rupert Blakeney, Esq. The gentleman turns, smiles, and hands the inspector a small velvet case. It is empty. 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",
-  "part2": "The Comtesse receives Ganimard in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, which is a first. You are promoted to a desk with a window. Lupin, in London, sends a telegram."
- },
- "part2_code_sha256": "05107323d5a58037c5524a24f859825733ad286c18c93889dab838e1c0722feb",
  "chapters": [
   {
    "title": "The Night of the 17th",
@@ -111,15 +106,15 @@
    "objective": "Find the police report for the theft at the Hotel Ritz. Duroc's statement in interview gives the exact night; police_report dates are written as YYYYMMDD.",
    "answer_form": "the report id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L",
+   "hints": [],
+   "answer_sha256": "f0f92eb79cec3fad7e7ad71ccfff43a904058162827b274830c05ffc6ec501fb",
    "n": 1,
    "part": 1,
    "construct": "SELECT / WHERE",
    "tables": [
     "police_report",
     "interview"
-   ],
-   "hints": [],
-   "answer_sha256": "f0f92eb79cec3fad7e7ad71ccfff43a904058162827b274830c05ffc6ec501fb"
+   ]
   },
   {
    "title": "The Neighbouring Suite",
@@ -127,14 +122,14 @@
    "objective": "Re-read the report from chapter 1 in full -- it already told you which suite to look for. Then in hotel_register, find that guest for the night of 17 May 1912 (checkin <= 19120517 and checkout > 19120517).",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L",
+   "hints": [],
+   "answer_sha256": "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432",
    "n": 2,
    "part": 1,
    "construct": "ORDER BY / LIMIT",
    "tables": [
     "hotel_register"
-   ],
-   "hints": [],
-   "answer_sha256": "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432"
+   ]
   },
   {
    "title": "A Plate in the Dark",
@@ -142,14 +137,14 @@
    "objective": "Read the neighbour's statement in interview to learn what he told Ganimard about the plate, then find in cab_ride the ride picked up at Place Vendome on 19120518 after 02:00 (time >= 200) matching what he said.",
    "answer_form": "the plate (75-2 and three digits)",
    "telegram": "MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L",
+   "hints": [],
+   "answer_sha256": "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5",
    "n": 3,
    "part": 1,
    "construct": "LIKE",
    "tables": [
     "cab_ride"
-   ],
-   "hints": [],
-   "answer_sha256": "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5"
+   ]
   },
   {
    "title": "The Cab's Week",
@@ -157,12 +152,12 @@
    "objective": "In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, look at everywhere it went -- count the visits per address -- and find the one it kept returning to.",
    "answer_form": "the address (number and street)",
    "telegram": "MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L",
+   "hints": [],
+   "answer_sha256": "6d71eb5495c5a18d933c60ee4d5e9999e9bef84fbf614721e3d3ac425287c4cb",
    "n": 4,
    "part": 1,
    "construct": "GROUP BY / HAVING",
-   "tables": [],
-   "hints": [],
-   "answer_sha256": "6d71eb5495c5a18d933c60ee4d5e9999e9bef84fbf614721e3d3ac425287c4cb"
+   "tables": []
   },
   {
    "title": "The Boarding House",
@@ -170,15 +165,15 @@
    "objective": "First find the id of the address from chapter 4 in the address table, then list who lives there (person.address_id equal to that id) and pick out the one whose occupation is jeweller. Only once you have done that by hand should you write it as one JOIN.",
    "answer_form": "the person's name",
    "telegram": "MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L",
+   "hints": [],
+   "answer_sha256": "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c",
    "n": 5,
    "part": 1,
    "construct": "JOIN",
    "tables": [
     "person",
     "address"
-   ],
-   "hints": [],
-   "answer_sha256": "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c"
+   ]
   },
   {
    "title": "Follow the Francs",
@@ -186,15 +181,15 @@
    "objective": "First find the fence's own id in bank_account (person_id is the jeweller from chapter 5), then look at everything bank_transaction paid out of it in May 1912 (date between 19120501 and 19120531) and total it by counterparty. Only then write the whole thing as one join.",
    "answer_form": "the account number (five digits)",
    "telegram": "MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L",
+   "hints": [],
+   "answer_sha256": "9d312e53839cd7a0c527c53d195beae1b007bd43b60a69c604feed4a7ddb13da",
    "n": 6,
    "part": 1,
    "construct": "JOIN x3 + SUM",
    "tables": [
     "bank_account",
     "bank_transaction"
-   ],
-   "hints": [],
-   "answer_sha256": "9d312e53839cd7a0c527c53d195beae1b007bd43b60a69c604feed4a7ddb13da"
+   ]
   },
   {
    "title": "A Wire Before Dawn",
@@ -202,14 +197,14 @@
    "objective": "In telegram, for office Ritz on 19120518, first look at the raw times, then classify each wire as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
    "answer_form": "the telegram id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
+   "hints": [],
+   "answer_sha256": "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729",
    "n": 7,
    "part": 1,
    "construct": "CASE WHEN",
    "tables": [
     "telegram"
-   ],
-   "hints": [],
-   "answer_sha256": "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729"
+   ]
   },
   {
    "title": "The First Order Before Dawn",
@@ -217,14 +212,14 @@
    "objective": "Read the whole telegram from chapter 7 -- it names what he always orders first. Then using room_service for 19120518, rank each suite's orders by time and find the suite whose rank-1 order is that, before 06:00, then the guest registered in that suite on floor 2 that night.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L",
+   "hints": [],
+   "answer_sha256": "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40",
    "n": 8,
    "part": 1,
    "construct": "RANK() OVER + subquery",
    "tables": [
     "room_service"
-   ],
-   "hints": [],
-   "answer_sha256": "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40"
+   ]
   },
   {
    "title": "The Trunk",
@@ -232,15 +227,15 @@
    "objective": "Using a CTE, list the trunks in luggage whose owner_name is Lord Ashcombe together with the person_id of their train_ticket, then keep the one whose ticket holder (in person) is not Lord Ashcombe.",
    "answer_form": "the trunk number (a letter, a dash, a digit)",
    "telegram": "MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L",
+   "hints": [],
+   "answer_sha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451",
    "n": 9,
    "part": 2,
    "construct": "CTE + JOIN",
    "tables": [
     "train_ticket",
     "luggage"
-   ],
-   "hints": [],
-   "answer_sha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451"
+   ]
   },
   {
    "title": "Never Seen Together",
@@ -248,12 +243,12 @@
    "objective": "In hotel_register, among guests with at least 6 stays, find the one (other than Rupert Blakeney) whose stays never overlap a stay of Rupert Blakeney. Two stays overlap when x.checkin < y.checkout AND y.checkin < x.checkout.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L",
+   "hints": [],
+   "answer_sha256": "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46",
    "n": 10,
    "part": 2,
    "construct": "NOT EXISTS / self-join",
-   "tables": [],
-   "hints": [],
-   "answer_sha256": "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46"
+   "tables": []
   },
   {
    "title": "The Silence",
@@ -261,14 +256,14 @@
    "objective": "Combine lift_log, room_service and telegram (rows with a suite) for 19120518 before 06:00 into one list of (suite, time). With LAG(time) OVER (PARTITION BY suite ORDER BY time), find the suite that has an event at or before 02:05 (205) and its next event at or after 03:10 (310).",
    "answer_form": "the suite number",
    "telegram": "MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L",
+   "hints": [],
+   "answer_sha256": "802b906a18591ead8a6dd809b262ace4c65c16e89764c40ae326cfcff811e10c",
    "n": 11,
    "part": 2,
    "construct": "LAG() OVER",
    "tables": [
     "lift_log"
-   ],
-   "hints": [],
-   "answer_sha256": "802b906a18591ead8a6dd809b262ace4c65c16e89764c40ae326cfcff811e10c"
+   ]
   },
   {
    "title": "Follow the Money",
@@ -276,12 +271,17 @@
    "objective": "With a recursive CTE, start from the account of chapter 6 with 40000 F at hop 0 and follow, hop by hop, the transfer (or the sum of the transfers between the same two accounts) whose amount is within 1 F of 98% of the previous hop, using bank_transaction from 19120518 on. Find the person who owns the account at hop 7.",
    "answer_form": "the person's name",
    "telegram": "MY DEAR GANIMARD STOP INSURANCE PAYS THREE HUNDRED THOUSAND FOR A STONE WORTH FORTY THOUSAND STOP ARITHMETIC IS THE GREATEST OF CRIMES STOP A L",
+   "hints": [],
+   "answer_sha256": "5f4b9a3cb0977d77cc43bb37fbe173d26ede96c880d6074ae72555b7c0adcd8c",
    "n": 12,
    "part": 2,
    "construct": "WITH RECURSIVE",
-   "tables": [],
-   "hints": [],
-   "answer_sha256": "5f4b9a3cb0977d77cc43bb37fbe173d26ede96c880d6074ae72555b7c0adcd8c"
+   "tables": []
   }
- ]
+ ],
+ "endings": {
+  "part1": "Gare du Nord, 20 May, 09:10. Ganimard's hand falls on the shoulder of Rupert Blakeney, Esq. The gentleman turns, smiles, and hands the inspector a small velvet case. It is empty. 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",
+  "part2": "The Comtesse receives Ganimard in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, which is a first. You are promoted to a desk with a window. Lupin, in London, sends a telegram."
+ },
+ "part2_code_sha256": "05107323d5a58037c5524a24f859825733ad286c18c93889dab838e1c0722feb"
 }
