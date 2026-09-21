@@ -62,6 +62,46 @@ function renderChapter() {
   // witnesses, board, telegram and ERD are rendered by their own tasks
 }
 
+export const ROW_CAP = 200;
+const esc = s => String(s === null || s === undefined ? "NULL" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+export function renderResults(res) {
+  if (!res) return '<p class="muted">No rows.</p>';
+  const head = "<tr>" + res.columns.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr>";
+  const body = res.values.slice(0, ROW_CAP).map(r => "<tr>" + r.map(v => "<td>" + esc(v) + "</td>").join("") + "</tr>").join("");
+  const more = res.values.length > ROW_CAP ? '<p class="muted">' + (res.values.length - ROW_CAP) + " more rows not shown.</p>" : "";
+  return "<table>" + head + body + "</table>" + more;
+}
+
+export function pushHistory(state, sql) {
+  if (state.history[0] !== sql) state.history.unshift(sql);
+  state.history = state.history.slice(0, 20);
+}
+
+function runQuery() {
+  const sql = $("sql").value.trim();
+  if (!sql) return;
+  const ch = currentChapter(state, data.chapters);
+  state.queries[ch.n] = (state.queries[ch.n] || 0) + 1;
+  state.totalQueries++;
+  pushHistory(state, sql);
+  let res = null, error = null, t0 = performance.now();
+  try { const all = db.exec(sql); res = all[all.length - 1] || null; state.errorStreak = 0; }
+  catch (e) { error = e.message; state.errorStreak++; }
+  const ms = Math.round(performance.now() - t0);
+  $("results").innerHTML = error ? '<div class="error">' + esc(error) + "</div>" : renderResults(res);
+  $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";
+  state.lastQueryLines = sql.split("\n").length;
+  renderHistory();
+  save(state);
+  return { sql, res, error };   // Task 7 feeds this to the badge detector
+}
+
+function renderHistory() {
+  $("history").innerHTML = state.history.map(q => "<li>" + esc(q) + "</li>").join("");
+  [...$("history").children].forEach((li, i) => li.onclick = () => { $("sql").value = state.history[i]; });
+}
+
 async function boot() {
   data = await (await fetch("chapters.json")).json();
   state = load();
@@ -70,6 +110,9 @@ async function boot() {
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); };
   if (state.solved.length) { $("landing").hidden = true; renderChapter(); }
+  $("btn-run").onclick = runQuery;
+  $("sql").addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); } });
+  renderHistory();
 }
 
 if (typeof document !== "undefined") boot();
