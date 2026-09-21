@@ -60,6 +60,13 @@ function renderChapter() {
   }
   if (state.solved.includes(12)) { $("story").textContent = data.endings.part2; $("objective").textContent = "Case closed. Twice."; }
   renderWitnesses();
+  let box = document.getElementById("rank-box");
+  if (part1Done(state)) {
+    if (!box) { box = document.createElement("div"); box.id = "rank-box"; box.className = "box"; $("objective").parentElement.after(box); }
+    const p1 = partStats(state, 1, 8);
+    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries, p1.hints)) + " - " + p1.queries + " queries, " + p1.hints + " witnesses<br>" +
+      esc(state.badges.join(", "));
+  } else if (box) box.remove();
 }
 
 const WITNESS = ["Ask the concierge", "Ask the chambermaid", "Open Ganimard's notebook"];
@@ -176,6 +183,28 @@ function award(list) {
   if (list.length) save(state);
 }
 
+export const RANKS = [[25, 0, "Ganimard himself"], [40, 3, "Chief Inspector"], [60, 6, "Inspector"], [Infinity, Infinity, "Constable"]];  // tune after the first class
+export function rank(queries, hints) { return RANKS.find(([q, h]) => queries <= q && hints <= h)[2]; }
+export function partStats(state, from, to) {
+  let queries = 0, hints = 0;
+  for (let n = from; n <= to; n++) { queries += state.queries[n] || 0; hints += state.hints[n] || 0; }
+  return { queries, hints };
+}
+
+function renderCertificate() {
+  const p1 = partStats(state, 1, 8), p2 = partStats(state, 9, 12);
+  const r1 = part1Done(state) ? rank(p1.queries, p1.hints) : "";
+  $("certificate").innerHTML =
+    '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">PARIS &mdash; ' + new Date().toLocaleDateString("en-GB") + "</div>" +
+    "<h1>CASE CLOSED" + (state.solved.includes(12) ? ", TWICE" : "") + "</h1>" +
+    "<p>The Prefecture of Police certifies that <b>" + esc(state.names || "the clerk") + "</b> unmasked Arsene Lupin in " + state.solved.filter(n => n <= 8).length + " chapters, " +
+    p1.queries + " queries and " + p1.hints + " witnesses, and is hereby ranked <b>" + esc(r1) + "</b>." +
+    (state.part2 ? " Part II: " + state.solved.filter(n => n > 8).length + " of 4 chapters, " + p2.queries + " queries.</p>" : "</p>") +
+    '<p class="label">BADGES</p><ul class="badges">' + state.badges.map(b => "<li>" + esc(b) + "</li>").join("") + "</ul>" +
+    (state.notes ? '<p class="label">NOTES</p><pre>' + esc(state.notes) + "</pre>" : "") +
+    "<p class=\"muted\">Ganimard's signature is illegible, as always.</p>";
+}
+
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
            bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), revealed: visibleTables(data.chapters, state),
@@ -244,12 +273,15 @@ function afterSolve(ch, event) {
   renderErd(newTables);
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
-    if (ch.n === 8) award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
+    if (ch.n === 8) {
+      award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
+      const p1 = partStats(state, 1, 8);
+      $("reply").textContent += " Rank: " + rank(p1.queries, p1.hints);
+    }
     if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
   } else if (event === "code") {
     award(detectBadges(ctx({ event: "code" }), state.badges));
   }
-  // Task 8 adds endings/rank.
 }
 function afterWrong(norm) {
   award(detectBadges(ctx({ event: "answer", norm }), state.badges));
@@ -273,6 +305,11 @@ async function boot() {
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
   $("btn-reset").onclick = () => { if (confirm("Start a new investigation? Progress, notes and badges are erased.")) { state = freshState(); save(state); location.reload(); } };
+  $("btn-print").onclick = () => {
+    if (!state.names) { state.names = prompt("Names for the certificate (both of you):") || ""; save(state); }
+    renderCertificate();
+    window.print();
+  };
 }
 
 if (typeof document !== "undefined") boot();
