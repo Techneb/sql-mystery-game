@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -52,4 +52,15 @@ test("wrong answers get suspect-specific or rotating default replies", () => {
   assert.notEqual(a, b);
   assert.equal(TAUNTS.length, 3);
   for (const t of TAUNTS) assert.match(t, /STOP/);
+});
+
+test("tables are revealed chapter by chapter", () => {
+  const s = freshState();
+  assert.deepEqual([...visibleTables(data.chapters, s)], ["police_report"]);
+  s.solved = [1, 2];
+  assert.deepEqual([...visibleTables(data.chapters, s)].sort(), ["cab_ride", "hotel_register", "interview", "police_report"]);
+  s.solved = [1, 2, 3, 4, 5, 6, 7, 8];
+  assert.ok(!visibleTables(data.chapters, s).has("train_ticket"));
+  s.part2 = true;
+  assert.ok(visibleTables(data.chapters, s).has("train_ticket"));
 });

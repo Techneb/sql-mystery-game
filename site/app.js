@@ -125,9 +125,11 @@ function renderBoard() {
   $("board").innerHTML = state.solved.map(n => '<div class="card"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
 }
 
+let visBefore = new Set();
 async function submitAnswer() {
   const raw = $("answer").value; const norm = normalise(raw);
   if (!norm) return;
+  visBefore = new Set(visibleTables(data.chapters, state));
   const hash = await sha256(norm);
   const ch = currentChapter(state, data.chapters);
   if (awaitingCode(state)) {
@@ -149,9 +151,37 @@ async function submitAnswer() {
   $("answer").value = ""; save(state);
 }
 
+export function visibleTables(chapters, state) {
+  const cur = currentChapter(state, chapters).n;
+  const seen = new Set();
+  for (const ch of chapters) if (ch.n <= cur) ch.tables.forEach(t => seen.add(t));
+  return seen;
+}
+
+let erdLoaded = false;
+async function renderErd(newTables = []) {
+  if (!erdLoaded) { $("erd").innerHTML = await (await fetch("schema.svg")).text(); erdLoaded = true; }
+  const vis = visibleTables(data.chapters, state);
+  for (const g of $("erd").querySelectorAll("g.table")) {
+    const t = g.dataset.table;
+    g.classList.toggle("hidden", !vis.has(t));
+    g.classList.toggle("reveal", newTables.includes(t));
+  }
+  for (const p of $("erd").querySelectorAll("path.fk")) {
+    const from = p.dataset.from.split(".")[0], to = p.dataset.to;
+    p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
+  }
+  if (newTables.length) {
+    const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
+    $("erd").appendChild(s); setTimeout(() => s.remove(), 2500);
+  }
+}
+
 function afterSolve(ch, event) {
   renderBoard(); renderChapter();
-  // Task 5 adds revealTables(); Task 6 renderWitnesses(); Task 7 badge events; Task 8 endings/rank.
+  const newTables = [...visibleTables(data.chapters, state)].filter(t => !visBefore.has(t));
+  renderErd(newTables);
+  // Task 6 renderWitnesses(); Task 7 badge events; Task 8 endings/rank.
 }
 function afterWrong(norm) {}
 
@@ -161,14 +191,15 @@ async function boot() {
   await loadDb();
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
-  $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); };
-  if (state.solved.length) { $("landing").hidden = true; renderChapter(); }
+  $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
+  if (state.solved.length) { $("landing").hidden = true; renderChapter(); renderErd(); }
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); } });
   renderHistory();
   $("btn-answer").onclick = submitAnswer;
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
   renderBoard();
+  $("btn-erd").onclick = () => $("erd").classList.toggle("large");
 }
 
 if (typeof document !== "undefined") boot();
