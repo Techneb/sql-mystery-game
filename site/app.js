@@ -296,7 +296,15 @@ async function boot() {
   $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
   if (state.solved.length) { $("landing").hidden = true; renderChapter(); renderErd(); }
   $("btn-run").onclick = runQuery;
-  $("sql").addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); } });
+  $("sql").addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
+    else if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.target, s = el.selectionStart, en = el.selectionEnd;
+      el.value = el.value.slice(0, s) + "\t" + el.value.slice(en);
+      el.selectionStart = el.selectionEnd = s + 1;
+    }
+  });
   renderHistory();
   $("btn-answer").onclick = submitAnswer;
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
