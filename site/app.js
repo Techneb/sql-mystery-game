@@ -303,6 +303,13 @@ async function boot() {
       const el = e.target, s = el.selectionStart, en = el.selectionEnd;
       el.value = el.value.slice(0, s) + "\t" + el.value.slice(en);
       el.selectionStart = el.selectionEnd = s + 1;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const el = e.target, s = el.selectionStart, en = el.selectionEnd;
+      const lineStart = el.value.lastIndexOf("\n", s - 1) + 1;
+      const indent = el.value.slice(lineStart, s).match(/^[ \t]*/)[0];
+      el.value = el.value.slice(0, s) + "\n" + indent + el.value.slice(en);
+      el.selectionStart = el.selectionEnd = s + 1 + indent.length;
     }
   });
   renderHistory();
