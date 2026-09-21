@@ -250,3 +250,8 @@ framework, no bundler.
 - **Translate the site into multiple languages.** Note the tension with section 1's fixed decision
   ("Language: English only... Dropped: French version") - revisit that decision explicitly before
   scoping this, rather than treating it as already superseded.
+- **Visual identity per chapter.** Illustrations; an investigation board/map with photos and a red
+  thread linking them (case board is currently text-only cards); one prop illustration per chapter
+  tied to its story beat (mask, dart, poison, a drink, whatever fits) - whatever is relevant per
+  chapter, not a fixed prop list. Needs its own design pass (art direction, asset budget, whether
+  assets are generated or commissioned) before scoping into a plan.
