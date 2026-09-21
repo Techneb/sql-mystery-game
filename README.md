@@ -16,6 +16,30 @@ python3 generate_db.py --season 3   # compete mode: site/season-3.sqlite + site/
 Stdlib only, no build step, no dependencies. `generate_db.py` is itself the test of the plot: it fails
 if any solution does not return exactly its answer, if any trap does not bite, or if any text is not ASCII.
 
+## Playing locally
+
+```bash
+python3 -m http.server 8000 -d site
+```
+
+Then open `http://localhost:8000/`. `file://` does not work: the page fetches `mystery.sqlite`,
+`chapters.json` and `schema.svg`, which browsers block over the `file://` scheme.
+
+Self-test (checks the normalisation fixture and that the database loaded): `http://localhost:8000/?selftest`.
+
+Tests for the site's pure functions (no browser needed): `node --test test_site.mjs`.
+
+## Deploying
+
+GitHub Pages, source `main` branch, folder `/site` (see Plan 4). The page is fully static: no
+server, no build step, no environment variables.
+
+## Tuning
+
+- `RANKS` in `site/app.js` sets the query/hint thresholds for each rank; tune after the first class.
+- `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
+- `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.
+
 ## Files
 
 | File | Role |

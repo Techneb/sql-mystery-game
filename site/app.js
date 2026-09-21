@@ -310,6 +310,19 @@ async function boot() {
     renderCertificate();
     window.print();
   };
+  if (location.search.includes("selftest")) {
+    let failures = 0;
+    for (const [raw, want] of data.normalise_fixture) {
+      const got = normalise(raw);
+      if (got !== want) { failures++; console.error("normalise mismatch", raw, "got", got, "want", want); }
+    }
+    const personCount = db.exec("SELECT COUNT(*) FROM person")[0].values[0][0];
+    if (!(personCount > 5000)) { failures++; console.error("person table has only " + personCount + " rows"); }
+    const version = db.exec("SELECT sqlite_version()")[0].values[0][0];
+    $("status").textContent = failures
+      ? "SELFTEST FAILED: " + failures + " (see console)"
+      : "SELFTEST OK: " + data.normalise_fixture.length + " normalisation cases, SQLite " + version;
+  }
 }
 
 if (typeof document !== "undefined") boot();
