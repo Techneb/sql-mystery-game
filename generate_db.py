@@ -67,7 +67,7 @@ def empty_db():
 
 
 STREETS = ["rue des Martyrs", "rue de Rivoli", "boulevard Haussmann", "rue Saint-Honore",
-           "rue de la Paix", "avenue de l'Opera", "rue Cambon", "boulevard des Capucines",
+           "rue de la Paix", "avenue Montaigne", "rue Cambon", "boulevard des Capucines",
            "rue Royale", "rue du Faubourg Saint-Honore", "rue Lafayette", "rue de Clichy",
            "rue Blanche", "rue Pigalle", "boulevard de Clichy", "rue de Douai"]
 
@@ -96,11 +96,17 @@ def plant_values(seed):
         champagne="Clicquot 1904",
         chain_amount=40000,
         part2_code="STOP READING THE NOISE",  # typed by the student to unlock Part II
+        compete_report_id=3200 if learn else r.randint(3200, 3499),
+        compete_plate="75-9777" if learn else "75-9%03d" % r.randint(100, 999),
+        compete_fence_number=45 if learn else r.randint(3, 60),
+        compete_fence_street="rue de Clichy" if learn else r.choice(STREETS),
     )
     while V["ortega_suite"] in (0, V["lupin_suite"], V["neighbour_suite"]):
         V["ortega_suite"] = r.choice([202, 204, 206, 208, 210, 212, 216, 218, 220, 222, 224])
     V["fence_address"] = "%d %s" % (V["fence_number"], V["fence_street"])
     V["plate_prefix"] = V["plate"][:4]          # "75-2"
+    V["compete_plate_prefix"] = V["compete_plate"][:4]
+    V["compete_fence_address"] = "%d %s" % (V["compete_fence_number"], V["compete_fence_street"])
     V["chain"] = []                              # filled by plant_part2: [(account_id, amount), ...]
     return V
 
@@ -243,6 +249,11 @@ def plant_part1(conn, V, r):
     # two decoy Ritz reports on other dates
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
+    # --- compete ch1: a second, fixed decoy report at a different hotel/date/type, random id per season
+    c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=19120611 AND type='burglary'")
+    c.execute("INSERT INTO police_report VALUES (?,19120611,'Paris','Hotel Meurice','burglary',?)",
+        (V["compete_report_id"],
+         "Reported by the night manager. A window forced on the second floor; nothing else taken."))
     # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
     c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
     others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
@@ -260,6 +271,8 @@ def plant_part1(conn, V, r):
     # decoys: same prefix that night elsewhere, and from Vendome earlier in the evening
     c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5)", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
     c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,7)", (V["plate_prefix"] + "290", E, "9 rue Royale"))
+    # --- compete ch3: same construct (LIKE), a different cab, identified by where it dropped, not where it was hailed
+    c.execute("INSERT INTO cab_ride VALUES (4,?,?,320,'Opera','Gare Saint-Lazare',6)", (V["compete_plate"], T))
     # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
     rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
@@ -274,6 +287,13 @@ def plant_part1(conn, V, r):
             rides.append((drop, r.choice(week), _time(r), None))
     for i, (drop, d, t, pick) in enumerate(rides):
         c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (10 + i, V["plate"], d, t, pick or r.choice(PLACES), drop, r.randint(2, 12)))
+    # --- compete ch4: a second cab's week, three drops at a second fence's address, two at Gare de Lyon
+    #     (a PLACES name, never produced by fill_noise's dropoff generator, so it cannot collide)
+    rides_c = [(V["compete_fence_address"], T, 300), (V["compete_fence_address"], 19120514, 1100),
+               (V["compete_fence_address"], 19120516, 900),
+               ("Gare de Lyon", 19120515, 1000), ("Gare de Lyon", 19120517, 1600)]
+    for i, (drop, d, t) in enumerate(rides_c):
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (5 + i, V["compete_plate"], d, t, r.choice(PLACES), drop, r.randint(2, 12)))
     # --- ch6: the fence's account and payments in May; largest single payment goes to a decoy
     c.execute("INSERT INTO bank_account VALUES (?,7,'Credit Lyonnais')", (V["fence_account"],))
     c.execute("INSERT INTO bank_account VALUES (?,NULL,'Credit Lyonnais')", (V["shell_account"],))
