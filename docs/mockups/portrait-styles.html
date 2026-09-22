@@ -192,9 +192,10 @@
         <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="soft"/>
         <feColorMatrix in="soft" type="matrix" values="0.85 0.10 0.05 0 0.06  0.08 0.78 0.10 0 0.05  0.05 0.12 0.72 0 0.09  0 0 0 1 0" result="dyes"/>
         <feColorMatrix in="dyes" type="saturate" values=".75" result="muted"/>
-        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="21" result="starch"/>
-        <feColorMatrix in="starch" type="matrix" values="1.1 0 0 0 -.05  0 1.1 0 0 -.05  0 0 1.1 0 -.05  0 0 0 .2 .8" result="starchColor"/>
-        <feBlend in="muted" in2="starchColor" mode="soft-light" result="plate"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="3" seed="21" result="starch"/>
+        <feColorMatrix in="starch" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0 1" result="starchOpaque"/>
+        <!-- gentle dyed mottle: pixel = muted * (0.78 + 0.4 * noise), noise differing per channel -->
+        <feComposite in="muted" in2="starchOpaque" operator="arithmetic" k1=".4" k2=".78" k3="0" k4="0" result="plate"/>
         <feComponentTransfer in="plate"><feFuncR type="linear" slope=".9" intercept=".05"/><feFuncG type="linear" slope=".9" intercept=".04"/><feFuncB type="linear" slope=".88" intercept=".06"/></feComponentTransfer>
       </filter>
 
