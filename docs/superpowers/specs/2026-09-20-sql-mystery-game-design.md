@@ -238,12 +238,20 @@ framework, no bundler.
 
 1. **Plot + generator**: schema, noise, 12 chapters (learn variant), self-checks, `chapters.json`,
    `schema.svg`. Done when `python3 generate_db.py` passes and `solution.sql` reads as a coherent story.
+   **Done** (PR #1). Amended 2026-09-22 (`2026-09-22-part1-multi-query-chapters-design.md`): every
+   Part I chapter now needs a discovery query first, hints removed for now.
 2. **Site MVP**: layout, terminal, answer flow, ERD reveal, case board, telegrams, notepad, hints,
    badges, rank, certificate. Done when Part I is playable end to end in Chrome, Safari, Firefox, and at
-   phone width.
+   phone width. **Done** (PR #2), played end to end via a real Chrome instance 2026-09-22.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
+   **Content and backend done** (PR #5, 2026-09-22; compete objectives given the same multi-query
+   treatment as learn mode). The in-game button is not built -- see backlog.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
-   hints from where students got stuck.
+   hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
+   <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
+   classic deploy-from-branch cannot serve `/site` as a subfolder). Still open: course-folder ties
+   (`../SQL` is not reachable from any session that has worked on this repo so far), a class trial,
+   and tuning `RANKS`/badges from where students got stuck.
 
 ## 8. Backlog (not scheduled)
 
