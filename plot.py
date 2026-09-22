@@ -30,6 +30,10 @@ CHAPTERS = [
   solution="SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = {fence_number} AND a.street = '{fence_street}' AND p.occupation = 'jeweller'",
   naive="SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = {fence_number} AND a.street = '{fence_street}'", naive_rows=5),
  dict(n=6, part=1, construct="JOIN x3 + SUM", tables=["bank_account", "bank_transaction"], answer_key="shell_account",
+  discovery=[
+    dict(query="SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = '{fence}')", row_count=1),
+    dict(query="SELECT counterparty_id, SUM(amount) AS total FROM bank_transaction WHERE account_id = (SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = '{fence}')) AND date BETWEEN 19120501 AND 19120531 GROUP BY counterparty_id", must_contain="{shell_account}"),
+  ],
   solution="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY SUM(t.amount) DESC LIMIT 1",
   naive="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 ORDER BY t.amount DESC LIMIT 1", naive_rows=1),
  dict(n=7, part=1, construct="CASE WHEN", tables=["telegram"], answer_key="night_telegram_id",
@@ -120,8 +124,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L"),
  6: dict(
   title="Follow the Francs",
-  story="The jeweller keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. Twenty-four payments in May, to a dozen people. 'A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
-  objective="Join person, bank_account (bank_account.person_id = person.id) and bank_transaction (bank_transaction.account_id = bank_account.id). For the jeweller of chapter 5, in May 1912 (date between 19120501 and 19120531), find the counterparty_id that received the largest total amount.",
+  story="The jeweller keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. 'Find his account first, clerk, then see what it paid out in May. Twenty-four payments, to a dozen people. A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
+  objective="First find the fence's own id in bank_account (person_id is the jeweller from chapter 5), then look at everything bank_transaction paid out of it in May 1912 (date between 19120501 and 19120531) and total it by counterparty. Only then write the whole thing as one join.",
   answer_form="the account number (five digits)",
   hints=[],
   telegram="MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L"),
