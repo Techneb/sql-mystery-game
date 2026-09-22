@@ -37,6 +37,7 @@ CHAPTERS = [
   solution="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY SUM(t.amount) DESC LIMIT 1",
   naive="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 ORDER BY t.amount DESC LIMIT 1", naive_rows=1),
  dict(n=7, part=1, construct="CASE WHEN", tables=["telegram"], answer_key="night_telegram_id",
+  discovery=[dict(query="SELECT time FROM telegram WHERE office = 'Ritz' AND date = {theft_date} ORDER BY time", must_contain="330")],
   solution="SELECT id FROM (SELECT id, CASE WHEN time < 600 THEN 'night' WHEN time < 1200 THEN 'morning' WHEN time < 1800 THEN 'afternoon' ELSE 'evening' END AS period FROM telegram WHERE office = 'Ritz' AND date = {theft_date}) AS t WHERE period = 'night'",
   naive="SELECT id FROM telegram WHERE office = 'Ritz' AND date = {theft_date}", naive_rows=None),
  dict(n=8, part=1, construct="RANK() OVER + subquery", tables=["room_service"], answer_key="lupin_alias",
@@ -131,8 +132,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="A Wire Before Dawn",
-  story="The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Sort them into my four boxes and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, which is one more than he needs.'",
-  objective="In telegram, for office Ritz on 19120518, classify each wire by time as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
+  story="The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Look at the times first, clerk, before you sort them into my four boxes, and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, which is one more than he needs.'",
+  objective="In telegram, for office Ritz on 19120518, first look at the raw times, then classify each wire as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
   answer_form="the telegram id (a number)",
   hints=[],
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
