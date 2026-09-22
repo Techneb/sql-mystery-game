@@ -78,6 +78,34 @@ class Noise(unittest.TestCase):
         conn.close()
 
 
+class Discovery(unittest.TestCase):
+    def test_must_contain_passes_and_fails(self):
+        conn = g.empty_db()
+        conn.execute("INSERT INTO interview VALUES (1,'Marcel Duroc',19120518,'the code is 42')")
+        ok = dict(n=1, discovery=[dict(query="SELECT transcript FROM interview WHERE person_name='Marcel Duroc'", must_contain="42")])
+        g.check_discovery(conn, {}, ok)   # must not raise
+        bad = dict(n=1, discovery=[dict(query="SELECT transcript FROM interview WHERE person_name='Marcel Duroc'", must_contain="99")])
+        with self.assertRaises(AssertionError):
+            g.check_discovery(conn, {}, bad)
+        conn.close()
+
+    def test_row_count_passes_and_fails(self):
+        conn = g.empty_db()
+        conn.execute("INSERT INTO interview VALUES (1,'A',19120518,'x')")
+        conn.execute("INSERT INTO interview VALUES (2,'B',19120518,'y')")
+        ok = dict(n=1, discovery=[dict(query="SELECT * FROM interview", row_count=2)])
+        g.check_discovery(conn, {}, ok)
+        bad = dict(n=1, discovery=[dict(query="SELECT * FROM interview", row_count=1)])
+        with self.assertRaises(AssertionError):
+            g.check_discovery(conn, {}, bad)
+        conn.close()
+
+    def test_missing_discovery_key_is_a_noop(self):
+        conn = g.empty_db()
+        g.check_discovery(conn, {}, dict(n=1))   # no "discovery" key at all -- must not raise
+        conn.close()
+
+
 class PartI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -128,8 +156,7 @@ class Text(unittest.TestCase):
         for ch in plot.CHAPTERS:
             for k in ["title", "story", "objective", "answer_form", "hints", "telegram"]:
                 self.assertIn(k, ch, ch["n"])
-            self.assertEqual(len(ch["hints"]), 3, ch["n"])
-            self.assertIn("____", ch["hints"][2], ch["n"])
+            self.assertEqual(len(ch["hints"]), 0, ch["n"])
             for s in [ch["title"], ch["story"], ch["objective"], ch["answer_form"], ch["telegram"], *ch["hints"]]:
                 s.format(**V).encode("ascii")
         self.assertEqual(len(plot.CAST), 6)

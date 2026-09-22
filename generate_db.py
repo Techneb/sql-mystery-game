@@ -380,8 +380,22 @@ def build_db(seed):
     return conn, V
 
 
+def check_discovery(conn, V, ch):
+    """Each chapter's discovery queries must actually surface the fact the story withholds."""
+    for d in ch.get("discovery", []):
+        rows = conn.execute(d["query"].format(**V)).fetchall()
+        if "row_count" in d:
+            assert len(rows) == d["row_count"], \
+                "chapter %s discovery: got %d rows, expected %d (%s)" % (ch["n"], len(rows), d["row_count"], d["query"])
+        if "must_contain" in d:
+            needle = d["must_contain"].format(**V)
+            assert needle in str(rows), \
+                "chapter %s discovery: %r not found in %r (%s)" % (ch["n"], needle, rows, d["query"])
+
+
 def check_chapter(conn, V, ch):
     """The solution returns exactly the answer; the naive query does not (wrong count, or a wrong value)."""
+    check_discovery(conn, V, ch)
     want = normalise(str(V[ch["answer_key"]]))
     rows = conn.execute(ch["solution"].format(**V)).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
