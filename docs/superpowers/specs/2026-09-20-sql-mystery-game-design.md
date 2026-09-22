@@ -260,15 +260,25 @@ framework, no bundler.
 - **Translate the site into multiple languages.** Note the tension with section 1's fixed decision
   ("Language: English only... Dropped: French version") - revisit that decision explicitly before
   scoping this, rather than treating it as already superseded.
-- **Visual identity per chapter.** Illustrations; an investigation board/map with photos and a red
-  thread linking them (case board is currently text-only cards); one prop illustration per chapter
-  tied to its story beat (mask, dart, poison, a drink, whatever fits) - whatever is relevant per
-  chapter, not a fixed prop list. Needs its own design pass (art direction, asset budget, whether
-  assets are generated or commissioned) before scoping into a plan.
-  2026-09-22: a mockup pass exists (`docs/mockups/illustrations.html`) with twelve chapter props,
-  a pinboard case board and a proposed Part II night palette. Not implemented in the site; blocked
-  on the course owner picking a drawing style, asset source, portrait treatment, night-switch
-  scope, board mechanism and masthead date (see the mockup's own section 6).
+- ~~Visual identity per chapter.~~ Implemented 2026-09-22, course owner's call ("do what you think
+  is best"): a mockup pass first (`docs/mockups/illustrations.html`), then built into the live site
+  from it. Decisions made:
+  - **Style C** (engraved line + one accent-colour wash) from the mockup's three options, hand-drawn
+    inline SVG, no asset files -- twelve chapter props (`PROPS` in `site/app.js`), one per chapter,
+    shown next to the chapter title (`#chapter-icon` in `index.html`, `.chapter-icon` in `style.css`).
+  - **Night mode: whole page**, not story-column-only. `site/style.css`'s `:root[data-mood="night"]`
+    overrides the existing colour tokens (`--paper`, `--ink`, `--card`, `--rule`, `--shade`, `--term`,
+    `--term-text`, `--accent`), so everything already styled off those tokens shifts for free; `body`
+    gets an 0.8s transition so the switch reads as a crossfade. Set once, in `applyMood()`, the moment
+    the Part II code is accepted, and re-applied on every boot/resume so a reload keeps the mood.
+  - **Masthead date** advances to 19 May for Part II (also in `applyMood()`).
+  - **Case board: kept the existing cards**, did not build the pinboard. The board's entries are not
+    uniformly people (an account number, an address, a telegram id have no portrait), so a
+    photo-per-suspect pinboard would need an answer-type-to-icon system the data doesn't support
+    without new complexity; reskinned the existing dynamic cards instead (cork-textured board
+    background, a pin dot per card) for most of the visual gain at a fraction of the code.
+  - **Portraits and the red thread: not built**, as a consequence of keeping the plain cards -- no
+    photos, so no thread between them. Revisit only if the pinboard itself gets built later.
 
 - ~~Compete mode's in-game button.~~ Done 2026-09-22: `#btn-compete` prompts for season + team,
   loads `season-N.*`, POSTs `start`/`progress`/`finish` to `APPS_SCRIPT_URL` (empty by default, set
