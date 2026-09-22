@@ -23,6 +23,10 @@ CHAPTERS = [
   solution="SELECT dropoff FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff HAVING COUNT(*) >= 3",
   naive="SELECT DISTINCT dropoff FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519", naive_rows=None),
  dict(n=5, part=1, construct="JOIN", tables=["person", "address"], answer_key="fence",
+  discovery=[
+    dict(query="SELECT id FROM address WHERE number = {fence_number} AND street = '{fence_street}'", row_count=1),
+    dict(query="SELECT name, occupation FROM person WHERE address_id = (SELECT id FROM address WHERE number = {fence_number} AND street = '{fence_street}')", row_count=5),
+  ],
   solution="SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = {fence_number} AND a.street = '{fence_street}' AND p.occupation = 'jeweller'",
   naive="SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = {fence_number} AND a.street = '{fence_street}'", naive_rows=5),
  dict(n=6, part=1, construct="JOIN x3 + SUM", tables=["bank_account", "bank_transaction"], answer_key="shell_account",
@@ -109,8 +113,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(
   title="The Boarding House",
-  story="The address is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. The Prefecture has never put the two together. You will.'",
-  objective="Join person to address (person.address_id = address.id). Find the tenant at the address of chapter 4 (number and street are two columns of address) whose occupation is jeweller.",
+  story="The address is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. Find the address's own id first, clerk, then see who lives there. The Prefecture has never put the two together. You will.'",
+  objective="First find the id of the address from chapter 4 in the address table, then list who lives there (person.address_id equal to that id) and pick out the one whose occupation is jeweller. Only once you have done that by hand should you write it as one JOIN.",
   answer_form="the person's name",
   hints=[],
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L"),
