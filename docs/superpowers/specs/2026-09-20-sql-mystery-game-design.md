@@ -271,7 +271,8 @@ framework, no bundler.
   scope, board mechanism and masthead date (see the mockup's own section 6).
   2026-09-22, course owner: the silhouette portraits are out; suspects get **painted portraits with a
   high level of detail**. Candidate painting styles are in the mockup's section 7 and rendered, one sitter
-  six ways in day and night editions, in `docs/mockups/portrait-styles.html`; the style, the asset
-  source and the day/night treatment are still to pick.
+  six ways in day and night editions, in `docs/mockups/portrait-styles.html`; the vector stand-in there is rejected
+  as a look: the target is photorealistic painted portraits (photograph-level detail, painted surface).
+  The style, the asset source and the day/night treatment are still to pick.
 
 - ~~**Compete mode's in-game button.**~~ Done 2026-09-22, see phase 3.
