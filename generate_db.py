@@ -240,6 +240,9 @@ def plant_part1(conn, V, r):
          "Sapphire known as the Blue Star taken from the second-floor suite of the Comtesse de Cagliostro. "
          "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
          "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
+    c.execute("INSERT INTO interview VALUES (2,?,?,?)", ("Marcel Duroc", T,
+        "I was in the lobby the whole night, monsieur, and heard the lift at ten past two. "
+        "Write down the date as I told the inspector: {theft_date}.".format(**V)))
     # two decoy Ritz reports on other dates
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))

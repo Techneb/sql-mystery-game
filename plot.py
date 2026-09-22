@@ -6,7 +6,8 @@ STOP_WORDS = {"the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "s
 # Each chapter: n, part, construct, tables revealed when it opens, answer_key (a key of V), solution SQL,
 # the naive SQL a student writes without the construct, and naive_rows (its row count, None = any).
 CHAPTERS = [
- dict(n=1, part=1, construct="SELECT / WHERE", tables=["police_report"], answer_key="report_id",
+ dict(n=1, part=1, construct="SELECT / WHERE", tables=["police_report", "interview"], answer_key="report_id",
+  discovery=[dict(query="SELECT transcript FROM interview WHERE person_name = 'Marcel Duroc'", must_contain="{theft_date}")],
   solution="SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND date = {theft_date} AND type = 'theft'",
   naive="SELECT id FROM police_report WHERE place = 'Hotel Ritz'", naive_rows=None),
  dict(n=2, part=1, construct="ORDER BY / LIMIT", tables=["hotel_register"], answer_key="neighbour",
@@ -77,8 +78,8 @@ ENDINGS = dict(
 TEXT = {
  1: dict(
   title="The Night of the 17th",
-  story="Paris, May 1912. The Comtesse de Cagliostro wakes at the Ritz to find her sapphire, the Blue Star, gone and a calling card on the pillow: A. L. Inspector Ganimard has been called at three in the morning and is in no mood. You are his clerk. He drops a stack of police reports on your desk. 'Find ours.'",
-  objective="Find the police report for the theft at the Hotel Ritz on 18 May 1912 (dates are written 19120518).",
+  story="Paris, May 1912. The Comtesse de Cagliostro wakes at the Ritz to find her sapphire, the Blue Star, gone and a calling card on the pillow: A. L. Inspector Ganimard has been called at three in the morning and is in no mood. You are his clerk. He drops a stack of police reports on your desk. 'Find ours. Ask Duroc which night, if you must -- he never sleeps and never forgets.'",
+  objective="Find the police report for the theft at the Hotel Ritz. Duroc's statement in interview gives the exact night; police_report dates are written as YYYYMMDD.",
   answer_form="the report id (a number)",
   hints=[],
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L"),
