@@ -107,27 +107,24 @@
  "chapters": [
   {
    "title": "The Night of the 17th",
-   "story": "Paris, May 1912. The Comtesse de Cagliostro wakes at the Ritz to find her sapphire, the Blue Star, gone and a calling card on the pillow: A. L. Inspector Ganimard has been called at three in the morning and is in no mood. You are his clerk. He drops a stack of police reports on your desk. 'Find ours.'",
-   "objective": "Find the police report for the theft at the Hotel Ritz on 18 May 1912 (dates are written 19120518).",
+   "story": "Paris, May 1912. The Comtesse de Cagliostro wakes at the Ritz to find her sapphire, the Blue Star, gone and a calling card on the pillow: A. L. Inspector Ganimard has been called at three in the morning and is in no mood. You are his clerk. He drops a stack of police reports on your desk. 'Find ours. Ask Duroc which night, if you must -- he never sleeps and never forgets.'",
+   "objective": "Find the police report for the theft at the Hotel Ritz. Duroc's statement in interview gives the exact night; police_report dates are written as YYYYMMDD.",
    "answer_form": "the report id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L",
    "n": 1,
    "part": 1,
    "construct": "SELECT / WHERE",
    "tables": [
-    "police_report"
+    "police_report",
+    "interview"
    ],
-   "hints": [
-    "The concierge, without looking up: 'Reports? The Prefecture keeps them all in one ledger, monsieur. police_report, they call it.'",
-    "The chambermaid: 'Three thousand reports, and you read them all? Ask only for the Ritz, only that date, only a theft. WHERE, monsieur, as they say.'",
-    "Ganimard's notebook: SELECT id FROM police_report WHERE place = '____' AND date = ____ AND type = 'theft'"
-   ],
+   "hints": [],
    "answer_sha256": "f0f92eb79cec3fad7e7ad71ccfff43a904058162827b274830c05ffc6ec501fb"
   },
   {
    "title": "The Neighbouring Suite",
-   "story": "'The thief came over the balcony of the neighbouring suite, the most expensive one on the floor,' Ganimard reads aloud, as if the report had insulted him. The Ritz keeps a register: every guest, every suite, every price, since January. Six months of it, and the prices on the second floor are all within a few francs of each other. 'The name of whoever slept in the priciest suite on the second floor on the night of the 17th. Not the second priciest. The priciest.'",
-   "objective": "In hotel_register, find the guest on floor 2 whose stay covers the night of 17 May 1912 (checkin <= 19120517 and checkout > 19120517) and who pays the highest price.",
+   "story": "Ganimard flips back through the very report you just found, squinting. 'It is all in here, if you read it properly, clerk. I am not paid to read twice.' The Ritz keeps a register: every guest, every suite, every price, since January. Six months of it.",
+   "objective": "Re-read the report from chapter 1 in full -- it already told you which suite to look for. Then in hotel_register, find that guest for the night of 17 May 1912 (checkin <= 19120517 and checkout > 19120517).",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L",
    "n": 2,
@@ -136,54 +133,41 @@
    "tables": [
     "hotel_register"
    ],
-   "hints": [
-    "The concierge: 'The register, monsieur? hotel_register. Guest, suite, floor, price, checkin, checkout. We write the guest's name in full, as one does.'",
-    "The chambermaid: 'Ten thousand lines and you want one? Keep the second floor and that night, then sort by price, the dearest first: ORDER BY price DESC. Then LIMIT 1, monsieur, as the head waiter says when the Baron asks for more.'",
-    "Ganimard's notebook: SELECT guest_name FROM hotel_register WHERE floor = ____ AND checkin <= 19120517 AND checkout > 19120517 ORDER BY ____ DESC LIMIT ____"
-   ],
+   "hints": [],
    "answer_sha256": "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432"
   },
   {
-   "title": "A Plate Beginning With 75-2",
-   "story": "His Lordship, when woken, is displeased but useful. His valet saw a man in an English coat leave by the service door and take a motor-cab on the Place Vendome. The plate began with 75-2; the rest, he says, was in the dark, and the fellow tipped in English coins. 'Forty cabs in Paris begin with 75-2,' says Ganimard. 'The company keeps a book. Find me the one that left the Place Vendome after two in the morning.'",
-   "objective": "Read the neighbour's statement in interview, then find in cab_ride the ride picked up at Place Vendome on 19120518 after 02:00 (time >= 200) whose plate begins with 75-2.",
+   "title": "A Plate in the Dark",
+   "story": "His Lordship, when woken, is displeased but useful. 'My valet saw the man,' he says, 'and gave his account to your inspector already -- read it yourself if you doubt a peer's memory.' Ganimard taps the stack: 'His statement is in interview, clerk. The company keeps a book of every cab, too. Find me the one that left the Place Vendome after two in the morning.'",
+   "objective": "Read the neighbour's statement in interview to learn what he told Ganimard about the plate, then find in cab_ride the ride picked up at Place Vendome on 19120518 after 02:00 (time >= 200) matching what he said.",
    "answer_form": "the plate (75-2 and three digits)",
    "telegram": "MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L",
    "n": 3,
    "part": 1,
    "construct": "LIKE",
    "tables": [
-    "interview",
     "cab_ride"
    ],
-   "hints": [
-    "The concierge: 'Statements go in interview, monsieur, and cabs in cab_ride: plate, date, time, pickup, dropoff. The company is very proud of its book.'",
-    "The chambermaid: 'You do not know the whole plate? Then do not ask for the whole plate. LIKE, monsieur, with the percent sign for the part you do not know: plate LIKE '75-2%'. And say where and when, or you will get forty.'",
-    "Ganimard's notebook: SELECT plate FROM cab_ride WHERE plate LIKE '____%' AND pickup = '____' AND date = 19120518 AND time >= ____"
-   ],
+   "hints": [],
    "answer_sha256": "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5"
   },
   {
    "title": "The Cab's Week",
-   "story": "The driver of the cab has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. Twice. Three times. Find me the address this cab dropped at three times or more that week. I do not want the list. I want the address.'",
-   "objective": "In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, find the dropoff address visited at least three times.",
+   "story": "The driver of the cab has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. More than once, more than twice, perhaps. Find me the address this cab kept returning to. I do not want the list. I want the address.'",
+   "objective": "In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, look at everywhere it went -- count the visits per address -- and find the one it kept returning to.",
    "answer_form": "the address (number and street)",
    "telegram": "MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L",
    "n": 4,
    "part": 1,
    "construct": "GROUP BY / HAVING",
    "tables": [],
-   "hints": [
-    "The concierge: 'Same book, monsieur. cab_ride. Sixty lines for that plate that week. The dropoff column is the one to count.'",
-    "The chambermaid: 'Counting by hand is for constables. GROUP BY dropoff, and COUNT(*). Then keep only the groups with three or more: HAVING COUNT(*) >= 3. WHERE cannot do it, monsieur, WHERE does not know how to count.'",
-    "Ganimard's notebook: SELECT dropoff FROM cab_ride WHERE plate = '____' AND date BETWEEN 19120513 AND 19120519 GROUP BY ____ HAVING COUNT(*) >= ____"
-   ],
+   "hints": [],
    "answer_sha256": "6d71eb5495c5a18d933c60ee4d5e9999e9bef84fbf614721e3d3ac425287c4cb"
   },
   {
    "title": "The Boarding House",
-   "story": "The address is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. The Prefecture has never put the two together. You will.'",
-   "objective": "Join person to address (person.address_id = address.id). Find the tenant at the address of chapter 4 (number and street are two columns of address) whose occupation is jeweller.",
+   "story": "The address is a boarding house: five tenants and a landlady who has seen nothing since 1889. Ganimard wants the tenant whose trade is jeweller; every fence in Paris calls himself a jeweller. 'Persons are in one ledger, addresses in another. Find the address's own id first, clerk, then see who lives there. The Prefecture has never put the two together. You will.'",
+   "objective": "First find the id of the address from chapter 4 in the address table, then list who lives there (person.address_id equal to that id) and pick out the one whose occupation is jeweller. Only once you have done that by hand should you write it as one JOIN.",
    "answer_form": "the person's name",
    "telegram": "MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L",
    "n": 5,
@@ -193,17 +177,13 @@
     "person",
     "address"
    ],
-   "hints": [
-    "The concierge: 'The Prefecture keeps person, with the occupation, and address, with the number and the street. Each person carries an address_id. That is the thread, monsieur.'",
-    "The chambermaid: 'Two ledgers, one question: JOIN address AS a ON p.address_id = a.id. Then WHERE the number, the street and the occupation. Without the occupation you arrest five people, and one of them is a seamstress.'",
-    "Ganimard's notebook: SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = ____ AND a.street = '____' AND p.occupation = '____'"
-   ],
+   "hints": [],
    "answer_sha256": "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c"
   },
   {
    "title": "Follow the Francs",
-   "story": "The jeweller keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. Twenty-four payments in May, to a dozen people. 'A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
-   "objective": "Join person, bank_account (bank_account.person_id = person.id) and bank_transaction (bank_transaction.account_id = bank_account.id). For the jeweller of chapter 5, in May 1912 (date between 19120501 and 19120531), find the counterparty_id that received the largest total amount.",
+   "story": "The jeweller keeps an account at the Credit Lyonnais and, since Ganimard has a warrant, the bank keeps nothing from him. 'Find his account first, clerk, then see what it paid out in May. Twenty-four payments, to a dozen people. A fence pays a thief in pieces, so the bank does not blink. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
+   "objective": "First find the fence's own id in bank_account (person_id is the jeweller from chapter 5), then look at everything bank_transaction paid out of it in May 1912 (date between 19120501 and 19120531) and total it by counterparty. Only then write the whole thing as one join.",
    "answer_form": "the account number (five digits)",
    "telegram": "MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L",
    "n": 6,
@@ -213,17 +193,13 @@
     "bank_account",
     "bank_transaction"
    ],
-   "hints": [
-    "The concierge: 'Three ledgers this time, monsieur: person, then bank_account, then bank_transaction. counterparty_id is who received the money. The bank is very proud of its columns.'",
-    "The chambermaid: 'Two JOINs in a row, one ON each. Then GROUP BY counterparty_id, SUM(amount), and ORDER BY that sum, DESC. The largest single payment is a decoy, monsieur. Fences are not stupid, only greedy.'",
-    "Ganimard's notebook: SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '____' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY ____(t.amount) DESC LIMIT ____"
-   ],
+   "hints": [],
    "answer_sha256": "9d312e53839cd7a0c527c53d195beae1b007bd43b60a69c604feed4a7ddb13da"
   },
   {
    "title": "A Wire Before Dawn",
-   "story": "The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Sort them into my four boxes and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, which is one more than he needs.'",
-   "objective": "In telegram, for office Ritz on 19120518, classify each wire by time as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
+   "story": "The Ritz telegraph desk sent eighty wires on the 18th and its clerk is too proud to have read any of them. Ganimard has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Look at the times first, clerk, before you sort them into my four boxes, and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, which is one more than he needs.'",
+   "objective": "In telegram, for office Ritz on 19120518, first look at the raw times, then classify each wire as night (before 0600), morning (before 1200), afternoon (before 1800) or evening, and find the single one sent at night.",
    "answer_form": "the telegram id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
    "n": 7,
@@ -232,17 +208,13 @@
    "tables": [
     "telegram"
    ],
-   "hints": [
-    "The concierge: 'The desk keeps telegram: office, date, time, sender, recipient, text. Times are four digits stored as a number, monsieur: 245 is a quarter to three in the morning.'",
-    "The chambermaid: 'Four boxes from one number? CASE WHEN time < 600 THEN 'night' WHEN time < 1200 THEN 'morning' and so on, END AS period. Put it in a subquery, monsieur, then WHERE period = 'night'. The inspector likes his boxes.'",
-    "Ganimard's notebook: SELECT id FROM (SELECT id, CASE WHEN time < ____ THEN 'night' WHEN time < 1200 THEN 'morning' WHEN time < 1800 THEN 'afternoon' ELSE 'evening' END AS period FROM telegram WHERE office = '____' AND date = 19120518) AS t WHERE period = '____'"
-   ],
+   "hints": [],
    "answer_sha256": "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729"
   },
   {
    "title": "The First Order Before Dawn",
-   "story": "'As always my first order before dawn.' Ganimard underlines it. 'A man of habit. The Ritz keeps a room-service ledger. Find me the suite whose FIRST order of the 18th was Clicquot 1904, before six. Not any order. The first.' Senor Ortega, you recall, also likes champagne.",
-   "objective": "Using room_service for 19120518, rank each suite's orders by time. Find the suite whose rank-1 order is Clicquot 1904 before 06:00, then the guest registered in that suite on floor 2 that night.",
+   "story": "'As always my first order before dawn.' Ganimard underlines it, then taps the telegram itself. 'Read the whole thing this time, clerk -- he names his poison. The Ritz keeps a room-service ledger. Find me the suite whose FIRST order of the 18th matches it, before six. Not any order. The first.' Senor Ortega, you recall, also likes champagne.",
+   "objective": "Read the whole telegram from chapter 7 -- it names what he always orders first. Then using room_service for 19120518, rank each suite's orders by time and find the suite whose rank-1 order is that, before 06:00, then the guest registered in that suite on floor 2 that night.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L",
    "n": 8,
@@ -251,11 +223,7 @@
    "tables": [
     "room_service"
    ],
-   "hints": [
-    "The concierge: 'Room service writes everything in room_service: suite, time, item. The register tells you who sleeps where.'",
-    "The chambermaid: 'First order per suite, monsieur? That is a RANK() OVER (PARTITION BY suite ORDER BY time). Then keep rank 1. Then the register.'",
-    "Ganimard's notebook: SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= 19120518 AND checkout > 19120518 AND suite = (SELECT suite FROM (SELECT suite, item, time, RANK() OVER (PARTITION BY ____ ORDER BY ____) AS rk FROM room_service WHERE date = 19120518) AS ranked WHERE rk = 1 AND item = '____' AND time < 600)"
-   ],
+   "hints": [],
    "answer_sha256": "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40"
   },
   {
@@ -271,11 +239,7 @@
     "train_ticket",
     "luggage"
    ],
-   "hints": [
-    "The night porter, who has replaced the concierge: 'Baggage is luggage, monsieur: trunk_no, owner_name, ticket_id. The ticket is train_ticket, and it carries a person_id.'",
-    "The chambermaid: 'Name your first step: WITH ashcombe_trunks AS (luggage JOIN train_ticket ON the ticket_id, WHERE the owner is his Lordship). Then JOIN that to person and keep WHERE p.name is NOT his Lordship. A CTE is a drawer, monsieur. You fill it, then you open it.'",
-    "Ganimard's notebook: WITH ashcombe_trunks AS (SELECT l.trunk_no, t.person_id FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id WHERE l.owner_name = '____') SELECT trunk_no FROM ashcombe_trunks AS a JOIN person AS p ON a.person_id = p.id WHERE p.name <> '____'"
-   ],
+   "hints": [],
    "answer_sha256": "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451"
   },
   {
@@ -288,11 +252,7 @@
    "part": 2,
    "construct": "NOT EXISTS / self-join",
    "tables": [],
-   "hints": [
-    "The night porter: 'Only hotel_register, monsieur. Six months of it. A regular is a name that comes back six times. We do not ask why.'",
-    "The chambermaid: 'First the regulars: GROUP BY guest_name HAVING COUNT(*) >= 6, in a subquery. Then for each, NOT EXISTS a pair of stays, his and Blakeney's, that overlap: x.checkin < y.checkout AND y.checkin < x.checkout. Not one night, monsieur.'",
-    "Ganimard's notebook: SELECT g.guest_name FROM (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= ____) AS g WHERE g.guest_name <> '____' AND NOT EXISTS (SELECT 1 FROM hotel_register AS x JOIN hotel_register AS y ON x.guest_name = '____' AND y.guest_name = g.guest_name WHERE x.checkin < y.checkout AND y.checkin < x.checkout)"
-   ],
+   "hints": [],
    "answer_sha256": "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46"
   },
   {
@@ -307,11 +267,7 @@
    "tables": [
     "lift_log"
    ],
-   "hints": [
-    "The night porter: 'The lift boy keeps lift_log: date, time, floor, suite. Room service you know. Telegrams charged to a suite carry the suite number, monsieur; the others carry nothing.'",
-    "The chambermaid: 'UNION ALL the three into one CTE of suite and time. Then LAG(time) OVER (PARTITION BY suite ORDER BY time) gives each event its previous one. A silence is a row whose prev is at or before 205 and whose time is at or after 310. Do not look for the longest silence, monsieur. Look for the right one.'",
-    "Ganimard's notebook: WITH ev AS (SELECT suite, time FROM lift_log WHERE date = 19120518 AND time < 600 UNION ALL SELECT suite, time FROM room_service WHERE date = 19120518 AND time < 600 UNION ALL SELECT suite, time FROM telegram WHERE date = 19120518 AND time < 600 AND suite IS NOT NULL), gaps AS (SELECT suite, time, ____(time) OVER (PARTITION BY ____ ORDER BY time) AS prev FROM ev) SELECT suite FROM gaps WHERE prev <= ____ AND time >= 310"
-   ],
+   "hints": [],
    "answer_sha256": "802b906a18591ead8a6dd809b262ace4c65c16e89764c40ae326cfcff811e10c"
   },
   {
@@ -324,11 +280,7 @@
    "part": 2,
    "construct": "WITH RECURSIVE",
    "tables": [],
-   "hints": [
-    "The night porter: 'The money is in bank_transaction, monsieur: account_id pays counterparty_id. bank_account tells you whose account it is, when it is anybody's. Most of them are nobody's.'",
-    "The chambermaid: 'First a CTE that SUMs the transfers per account_id and counterparty_id, because one hop was split. Then WITH RECURSIVE chain(account_id, amount, hop): the anchor is the shell account and its forty thousand at hop 0; each step joins the sums and keeps ABS(amount - previous * 0.98) <= 1. Hop 7, then bank_account, then person.'",
-    "Ganimard's notebook: WITH RECURSIVE flows AS (SELECT account_id, counterparty_id, SUM(amount) AS amount FROM bank_transaction WHERE date >= 19120518 AND type = 'transfer' GROUP BY account_id, counterparty_id), chain(account_id, amount, hop) AS (SELECT ____, 40000, 0 UNION ALL SELECT f.counterparty_id, f.amount, c.hop + 1 FROM chain AS c JOIN flows AS f ON f.account_id = c.account_id WHERE ABS(f.amount - c.amount * ____) <= 1) SELECT p.name FROM chain AS c JOIN bank_account AS b ON b.id = c.account_id JOIN person AS p ON p.id = b.person_id WHERE c.hop = ____"
-   ],
+   "hints": [],
    "answer_sha256": "5f4b9a3cb0977d77cc43bb37fbe173d26ede96c880d6074ae72555b7c0adcd8c"
   }
  ]

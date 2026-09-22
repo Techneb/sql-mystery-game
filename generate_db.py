@@ -437,10 +437,14 @@ def chapters_json(V, mode="learn"):
 
 
 def solution_sql(V):
-    out = ["-- The Ritz Affair: reference path (seed %d). One query per chapter; each answer is the next chapter's key." % V["seed"]]
+    out = ["-- The Ritz Affair: reference path (seed %d). Each chapter's discovery queries find the filter; the final query finds the answer." % V["seed"]]
     for ch in plot.CHAPTERS:
-        out.append("-- %02d. %s (%s) -> %s: %s\n%s;" % (ch["n"], ch["title"].format(**V), ch["construct"],
-                   ch["answer_form"].format(**V), V[ch["answer_key"]], ch["solution"].format(**V)))
+        lines = ["-- %02d. %s (%s) -> %s: %s" % (ch["n"], ch["title"].format(**V), ch["construct"],
+                 ch["answer_form"].format(**V), V[ch["answer_key"]])]
+        for d in ch.get("discovery", []):
+            lines.append(d["query"].format(**V) + ";")
+        lines.append(ch["solution"].format(**V) + ";")
+        out.append("\n".join(lines))
     return "\n\n".join(out) + "\n"
 
 

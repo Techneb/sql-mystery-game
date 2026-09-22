@@ -56,7 +56,7 @@ test("wrong answers get suspect-specific or rotating default replies", () => {
 
 test("tables are revealed chapter by chapter", () => {
   const s = freshState();
-  assert.deepEqual([...visibleTables(data.chapters, s)], ["police_report"]);
+  assert.deepEqual([...visibleTables(data.chapters, s)].sort(), ["interview", "police_report"]);
   s.solved = [1, 2];
   assert.deepEqual([...visibleTables(data.chapters, s)].sort(), ["cab_ride", "hotel_register", "interview", "police_report"]);
   s.solved = [1, 2, 3, 4, 5, 6, 7, 8];

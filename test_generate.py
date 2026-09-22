@@ -188,8 +188,11 @@ class Outputs(unittest.TestCase):
         blocks = [b for b in g.solution_sql(V).split("\n\n") if any(not l.startswith("--") for l in b.strip().splitlines())]
         self.assertEqual(len(blocks), 12)
         for b in blocks:
-            sql = "\n".join(l for l in b.splitlines() if not l.startswith("--")).rstrip(";\n")
-            self.assertEqual(len(conn.execute(sql).fetchall()), 1)
+            stmts = [l.rstrip(";") for l in b.splitlines() if not l.startswith("--") and l.strip()]
+            self.assertGreaterEqual(len(stmts), 1)
+            for s in stmts[:-1]:
+                conn.execute(s)   # discovery queries must not error
+            self.assertEqual(len(conn.execute(stmts[-1]).fetchall()), 1)
         conn.close()
 
 
