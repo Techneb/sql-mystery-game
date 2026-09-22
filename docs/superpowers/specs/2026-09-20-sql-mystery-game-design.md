@@ -244,8 +244,10 @@ framework, no bundler.
    badges, rank, certificate. Done when Part I is playable end to end in Chrome, Safari, Firefox, and at
    phone width. **Done** (PR #2), played end to end via a real Chrome instance 2026-09-22.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
-   **Content and backend done** (PR #5, 2026-09-22; compete objectives given the same multi-query
-   treatment as learn mode). The in-game button is not built -- see backlog.
+   **Done.** Content and backend PR #5 (2026-09-22; compete objectives given the same multi-query
+   treatment as learn mode); the in-game button, clock and event posting 2026-09-22
+   (`2026-09-22-plan-4-compete-button.md`). A season is opened by listing it in `seasons.txt` and
+   shared as `?season=N&board=<url>`.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
    <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
@@ -267,11 +269,8 @@ framework, no bundler.
   a pinboard case board and a proposed Part II night palette. Not implemented in the site; blocked
   on the course owner picking a drawing style, asset source, portrait treatment, night-switch
   scope, board mechanism and masthead date (see the mockup's own section 6).
+  2026-09-22, course owner: the silhouette portraits are out; suspects get **painted portraits with a
+  high level of detail**. Candidate painting styles are in the mockup's section 7; the style, the
+  asset source and the day/night treatment are still to pick.
 
-- **Compete mode's in-game button.** `site/app.js`'s landing page has had `#btn-compete` hardcoded
-  disabled since Plan 2; nothing POSTs to `apps_script.gs` or reads back a season yet. The content
-  and backend side of phase 3 (season generator with multi-query compete objectives, `apps_script.gs`,
-  `site/leaderboard.html`) is done as of 2026-09-22 and unblocked now that Plan 2's site is merged.
-  What is missing: team-name entry, a client-side timer, `start`/`progress`/`finish` events POSTed
-  to the Apps Script, and a way to pick which season a class plays (today a season's files must be
-  dropped into `site/` by hand). A short, mechanical plan, not a redesign.
+- ~~**Compete mode's in-game button.**~~ Done 2026-09-22, see phase 3.

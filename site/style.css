@@ -28,6 +28,12 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-card { max-width: 640px; text-align: center; border: 2px solid var(--ink); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0; }
 .landing-buttons { display: flex; gap: 12px; justify-content: center; margin: 16px 0 8px; }
+.compete-form { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 8px; }
+.compete-form[hidden] { display: none; }
+.compete-form .row { justify-content: center; }
+.compete-form input { flex: 1; min-width: 160px; max-width: 320px; font-family: "Special Elite", monospace; }
+.compete-info { font-family: "Special Elite", monospace; color: var(--red); letter-spacing: 1px; margin-top: 6px; }
+.compete-info[hidden] { display: none; }
 
 /* columns */
 .columns { display: grid; grid-template-columns: 340px 1fr 380px; gap: 16px; padding: 16px; align-items: start; }
