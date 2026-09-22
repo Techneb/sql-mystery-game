@@ -23,9 +23,13 @@ function doGet(e) {
 
 function getLogSheet_() {
   // Standalone deployment (not container-bound): the Sheet's own Extensions > Apps Script menu
-  // hit a broken multi-account redirect in testing, so this was deployed as a separate script
-  // pointed at the sheet by id instead. Keep this in sync with whatever is actually live.
-  var ss = SpreadsheetApp.openById("10DBMFeRhJZr97GwwHzIyqbtQxBhZJdvvFkrHvk-R8EY");
+  // hit a broken multi-account redirect in testing, so this is deployed as a separate script
+  // pointed at the sheet by id. The id itself is never committed to source: after pasting this
+  // file into the Apps Script editor, open Project Settings > Script Properties and add one
+  // property SHEET_ID = <your sheet's id, the long string in its URL between /d/ and /edit>.
+  var sheetId = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
+  if (!sheetId) throw new Error("Set the SHEET_ID script property (Project Settings > Script Properties) before deploying.");
+  var ss = SpreadsheetApp.openById(sheetId);
   var sheet = ss.getSheetByName("log");
   if (!sheet) {
     sheet = ss.insertSheet("log");

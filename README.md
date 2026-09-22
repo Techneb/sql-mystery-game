@@ -65,10 +65,13 @@ numbers, non-suspect names) is re-drawn from seed N, and each of the 8 Part I ch
 be reused by a new class without last term's answers helping. Generated `season-*` files are not
 committed; build the one season you need before class and drop it in `site/`.
 
-Backend: paste `apps_script.gs` into a Google Sheet's Apps Script editor and deploy it as a web app
-(see the comment at the top of the file, or Task 3 Step 2 of
-`docs/superpowers/plans/2026-09-22-plan-3-compete.md` for the exact click-path). Put the deployment URL
-into `site/leaderboard.html`'s `APPS_SCRIPT_URL` constant to see teams as they play.
+Backend: paste `apps_script.gs` into a Google Sheet's Apps Script editor, set the `SHEET_ID` script
+property to that sheet's id (Project Settings > Script Properties -- never edit the id into the file
+itself), and deploy as a web app (see the comment at the top of the file, or Task 3 Step 2 of
+`docs/superpowers/plans/2026-09-22-plan-3-compete.md` for the exact click-path). To see teams as they
+play, open `site/leaderboard.html?data=<your deployment's /exec URL>` -- the URL is never committed,
+since this repo is public and the URL is a live, unauthenticated write endpoint. Bookmark that link, or
+set `APPS_SCRIPT_URL` in your own local, uncommitted copy of `leaderboard.html` if you want a fixed link.
 
 The in-game "Compete" button (team name entry, timer, POSTing `start`/`progress`/`finish` events to the
 Apps Script) is not wired yet; it is a short follow-up in `site/app.js`. Until then, `leaderboard.html` can be exercised
