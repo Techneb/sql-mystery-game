@@ -354,7 +354,27 @@ function applyMood() {
   $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
 }
 
-function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); }
+function jumpToChapter(n) {
+  noPersist = true;
+  state = freshState();
+  for (let i = 1; i < n; i++) { state.solved.push(i); state.answers[i] = "(debug)"; }
+  if (n > 8) state.part2 = true;
+  enterGame();
+}
+
+function renderAdminPanel() {
+  if (!location.search.includes("admin")) return;
+  document.getElementById("admin-panel")?.remove();
+  const el = document.createElement("div"); el.id = "admin-panel"; el.className = "admin-panel";
+  el.innerHTML = '<span class="label">ADMIN</span>' +
+    data.chapters.map(c => '<button data-n="' + c.n + '">' + c.n + '</button>').join("") +
+    '<a class="quiet" target="_blank" href="leaderboard.html' +
+    (APPS_SCRIPT_URL ? "?data=" + encodeURIComponent(APPS_SCRIPT_URL) : "") + '">Leaderboard</a>';
+  el.querySelectorAll("button").forEach(b => b.onclick = () => jumpToChapter(Number(b.dataset.n)));
+  document.body.appendChild(el);
+}
+
+function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel(); }
 
 // season/team are null when resuming a season already in progress (localStorage has them).
 async function startCompete(season, team) {
@@ -374,21 +394,16 @@ async function startCompete(season, team) {
 async function boot() {
   data = await (await fetch("chapters.json")).json();
   const debugChapter = Number(new URLSearchParams(location.search).get("chapter"));
-  if (debugChapter >= 1 && debugChapter <= 12) {
-    noPersist = true;
-    state = freshState();
-    for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
-    if (debugChapter > 8) state.part2 = true;
-  } else {
-    state = load();
-  }
+  state = load();
   await loadDb("mystery");
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
   $("btn-compete").disabled = false;
   $("btn-investigate").onclick = enterGame;
   $("btn-compete").onclick = () => startCompete();
-  if (state.solved.length || debugChapter) {
+  if (debugChapter >= 1 && debugChapter <= 12) {
+    jumpToChapter(debugChapter);
+  } else if (state.solved.length) {
     enterGame();
   } else {
     const cState = JSON.parse(localStorage.getItem("ritz.compete") || "{}");
