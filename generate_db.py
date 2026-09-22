@@ -67,7 +67,7 @@ def empty_db():
 
 
 STREETS = ["rue des Martyrs", "rue de Rivoli", "boulevard Haussmann", "rue Saint-Honore",
-           "rue de la Paix", "avenue de l'Opera", "rue Cambon", "boulevard des Capucines",
+           "rue de la Paix", "avenue Montaigne", "rue Cambon", "boulevard des Capucines",
            "rue Royale", "rue du Faubourg Saint-Honore", "rue Lafayette", "rue de Clichy",
            "rue Blanche", "rue Pigalle", "boulevard de Clichy", "rue de Douai"]
 
@@ -96,11 +96,26 @@ def plant_values(seed):
         champagne="Clicquot 1904",
         chain_amount=40000,
         part2_code="STOP READING THE NOISE",  # typed by the student to unlock Part II
+        compete_report_id=3200 if learn else r.randint(3200, 3499),
+        compete_plate="75-9777" if learn else "75-9%03d" % r.randint(100, 999),
+        compete_fence_number=45 if learn else r.randint(3, 60),
+        compete_fence_street="rue de Clichy" if learn else r.choice(STREETS),
+        compete_fence_name="Isidore Vasseur" if learn else r.choice(plot.COMPETE_FENCE_NAMES),
+        compete_fence_account=54000 if learn else r.randint(50000, 59999),
+        compete_shell_account=74000 if learn else r.randint(70000, 79999),
+        compete_telegram_id=1800 if learn else r.randint(1500, 2900),
     )
     while V["ortega_suite"] in (0, V["lupin_suite"], V["neighbour_suite"]):
         V["ortega_suite"] = r.choice([202, 204, 206, 208, 210, 212, 216, 218, 220, 222, 224])
+    while V["compete_telegram_id"] == V["night_telegram_id"]:
+        V["compete_telegram_id"] = r.randint(1500, 2900)
+    while (V["compete_fence_number"], V["compete_fence_street"]) == (V["fence_number"], V["fence_street"]):
+        V["compete_fence_number"] = r.randint(3, 60)
+        V["compete_fence_street"] = r.choice(STREETS)
     V["fence_address"] = "%d %s" % (V["fence_number"], V["fence_street"])
     V["plate_prefix"] = V["plate"][:4]          # "75-2"
+    V["compete_plate_prefix"] = V["compete_plate"][:4]
+    V["compete_fence_address"] = "%d %s" % (V["compete_fence_number"], V["compete_fence_street"])
     V["chain"] = []                              # filled by plant_part2: [(account_id, amount), ...]
     return V
 
@@ -188,7 +203,7 @@ def fill_noise(conn, V, r):
     c.executemany("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         [(i, r.choice(["Ritz", "Bourse", "Gare du Nord", "Opera", "Central"]), _date(r, 5, 5), _time(r),
           _name(r), _name(r), None, " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(4, 9))))
-         for i in range(100, 3100) if i != V["night_telegram_id"]])
+         for i in range(100, 3100) if i not in (V["night_telegram_id"], V["compete_telegram_id"])])
     c.executemany("INSERT INTO room_service VALUES (?,?,?,?,?,?)",
         [(100 + i, r.choice(range(101, 525)), _date(r, 5, 5), _time(r), *r.choice(ITEMS)) for i in range(5000)])
     c.executemany("INSERT INTO train_ticket VALUES (?,?,?,?,?)",
@@ -233,6 +248,15 @@ def plant_part1(conn, V, r):
     for i in range(4):
         c.execute("INSERT INTO person VALUES (?,?,?,?,?,1)",
                   (13 + i, _name(r), "French", r.randint(1850, 1890), r.choice(["clerk", "seamstress", "waiter", "student"])))
+    # --- compete ch5: a second address, a second jeweller (name is noise-safe, see COMPETE_FENCE_NAMES)
+    c.execute("UPDATE address SET number = number + 200 WHERE number=? AND street=?",
+              (V["compete_fence_number"], V["compete_fence_street"]))
+    c.execute("INSERT INTO address VALUES (2,?,?,9)", (V["compete_fence_number"], V["compete_fence_street"]))
+    c.execute("INSERT INTO person VALUES (18,?,?,?, 'jeweller', 2)",
+              (V["compete_fence_name"], r.choice(NATION), r.randint(1850, 1890)))
+    for i in range(4):
+        c.execute("INSERT INTO person VALUES (?,?,?,?,?,2)",
+                  (19 + i, _name(r), "French", r.randint(1850, 1890), r.choice(["clerk", "seamstress", "waiter", "student"])))
     # --- ch1: the report (no noise theft at the Ritz that day)
     c.execute("DELETE FROM police_report WHERE place='Hotel Ritz' AND date=? AND type='theft'", (T,))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)",
@@ -240,9 +264,20 @@ def plant_part1(conn, V, r):
          "Sapphire known as the Blue Star taken from the second-floor suite of the Comtesse de Cagliostro. "
          "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
          "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
+    c.execute("INSERT INTO interview VALUES (2,?,?,?)", ("Marcel Duroc", T,
+        "I was in the lobby the whole night, monsieur, and heard the lift at ten past two. "
+        "Write down the date as I told the inspector: {theft_date}.".format(**V)))
     # two decoy Ritz reports on other dates
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
+    # --- compete ch1: a second, fixed decoy report at a different hotel/date/type, random id per season
+    c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=19120611 AND type='burglary'")
+    c.execute("INSERT INTO police_report VALUES (?,19120611,'Paris','Hotel Meurice','burglary',?)",
+        (V["compete_report_id"],
+         "Reported by the night manager. A window forced on the cheapest room on the second floor; nothing else taken."))
+    c.execute("INSERT INTO interview VALUES (3,?,?,?)", ("the Meurice night manager", 19120611,
+        "I was on duty the whole night, monsieur, and found the window forced myself. "
+        "Write down the date as I told the inspector: 19120611."))
     # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
     c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
     others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
@@ -260,6 +295,11 @@ def plant_part1(conn, V, r):
     # decoys: same prefix that night elsewhere, and from Vendome earlier in the evening
     c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5)", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
     c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,7)", (V["plate_prefix"] + "290", E, "9 rue Royale"))
+    # --- compete ch3: same construct (LIKE), a different cab, identified by where it dropped, not where it was hailed
+    c.execute("INSERT INTO interview VALUES (4,?,?,?)", ("the rival despatcher", T,
+        "One of our drivers dropped a fare at Gare Saint-Lazare that night. He swears the plate "
+        "began with {compete_plate_prefix}, the rest he never wrote down.".format(**V)))
+    c.execute("INSERT INTO cab_ride VALUES (4,?,?,320,'Opera','Gare Saint-Lazare',6)", (V["compete_plate"], T))
     # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
     rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
@@ -274,6 +314,13 @@ def plant_part1(conn, V, r):
             rides.append((drop, r.choice(week), _time(r), None))
     for i, (drop, d, t, pick) in enumerate(rides):
         c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (10 + i, V["plate"], d, t, pick or r.choice(PLACES), drop, r.randint(2, 12)))
+    # --- compete ch4: a second cab's week, three drops at a second fence's address, two at Gare de Lyon
+    #     (a PLACES name, never produced by fill_noise's dropoff generator, so it cannot collide)
+    rides_c = [(V["compete_fence_address"], T, 300), (V["compete_fence_address"], 19120514, 1100),
+               (V["compete_fence_address"], 19120516, 900),
+               ("Gare de Lyon", 19120515, 1000), ("Gare de Lyon", 19120517, 1600)]
+    for i, (drop, d, t) in enumerate(rides_c):
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (5 + i, V["compete_plate"], d, t, r.choice(PLACES), drop, r.randint(2, 12)))
     # --- ch6: the fence's account and payments in May; largest single payment goes to a decoy
     c.execute("INSERT INTO bank_account VALUES (?,7,'Credit Lyonnais')", (V["fence_account"],))
     c.execute("INSERT INTO bank_account VALUES (?,NULL,'Credit Lyonnais')", (V["shell_account"],))
@@ -284,6 +331,14 @@ def plant_part1(conn, V, r):
         tx.append((r.randint(100, 4000), _date(r, 5, 5), r.randint(50, 900)))
     for i, (cp, d, amt) in enumerate(tx):
         c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (1 + i, V["fence_account"], cp, d, amt))
+    # --- compete ch6: a second fence, a second shell account, a decoy larger single payment
+    c.execute("INSERT INTO bank_account VALUES (?,18,'Societe Generale')", (V["compete_fence_account"],))
+    c.execute("INSERT INTO bank_account VALUES (?,NULL,'Societe Generale')", (V["compete_shell_account"],))
+    decoy2 = c.execute("SELECT id FROM bank_account WHERE id>=100 LIMIT 1 OFFSET 1").fetchone()[0]
+    tx2 = [(V["compete_shell_account"], 19120519, 12000), (V["compete_shell_account"], 19120520, 12000),
+           (V["compete_shell_account"], 19120521, 9000), (decoy2, 19120510, 20000)]
+    for i, (cp, d, amt) in enumerate(tx2):
+        c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (25 + i, V["compete_fence_account"], cp, d, amt))
     # --- ch7: telegrams from the Ritz desk on the 18th; exactly one at night (03:30, after the suite falls silent, ch11)
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
@@ -293,6 +348,11 @@ def plant_part1(conn, V, r):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
             (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), _name(r), _name(r),
              r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
+    # --- compete ch7: a second office, a different time bucket (evening, not night)
+    c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=? AND time>=1800", (T,))
+    c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+        (V["compete_telegram_id"], "Bourse", T, 1930, "A Broker", "A Client", None,
+         "SHARES SOLD STOP PROCEEDS TO FOLLOW STOP COFFEE BEFORE THE OPENING BELL AS ALWAYS STOP"))
     # --- ch8: room service on the 18th; Ortega's suite orders coffee first
     c.execute("DELETE FROM room_service WHERE date=? AND time<600", (T,))
     rs = [(V["lupin_suite"], 320, V["champagne"], 40), (V["lupin_suite"], 900, "coffee", 2),
@@ -300,6 +360,11 @@ def plant_part1(conn, V, r):
           (V["neighbour_suite"], 730, V["champagne"], 40), (305, 1300, V["champagne"], 40)]
     for i, (s, t, item, amt) in enumerate(rs):
         c.execute("INSERT INTO room_service VALUES (?,?,?,?,?,?)", (1 + i, s, T, t, item, amt))
+    # --- compete ch8: same RANK() construct, rank 2 instead of rank 1, a suite with no other room_service that day
+    c.execute("DELETE FROM room_service WHERE suite=? AND date=?", (others[0], T))
+    c.execute("INSERT INTO room_service VALUES (7,?,?,150,'tea',2)", (others[0], T))
+    c.execute("INSERT INTO room_service VALUES (8,?,?,220,'coffee',2)", (others[0], T))
+    V["compete_suite8"] = others[0]
     conn.commit()
 
 
@@ -380,16 +445,32 @@ def build_db(seed):
     return conn, V
 
 
-def check_chapter(conn, V, ch):
+def check_discovery(conn, V, ch, compete=False):
+    """Each chapter's discovery queries must actually surface the fact the story withholds."""
+    for d in ch.get("discovery_compete" if compete else "discovery", []):
+        rows = conn.execute(d["query"].format(**V)).fetchall()
+        if "row_count" in d:
+            assert len(rows) == d["row_count"], \
+                "chapter %s discovery: got %d rows, expected %d (%s)" % (ch["n"], len(rows), d["row_count"], d["query"])
+        if "must_contain" in d:
+            needle = d["must_contain"].format(**V)   # case-insensitive: telegrams are upper-cased
+            assert needle.lower() in str(rows).lower(), \
+                "chapter %s discovery: %r not found in %r (%s)" % (ch["n"], needle, rows, d["query"])
+
+
+def check_chapter(conn, V, ch, compete=False):
     """The solution returns exactly the answer; the naive query does not (wrong count, or a wrong value)."""
-    want = normalise(str(V[ch["answer_key"]]))
-    rows = conn.execute(ch["solution"].format(**V)).fetchall()
+    check_discovery(conn, V, ch, compete)
+    suf = "_compete" if compete else ""
+    want = normalise(str(V[ch["answer_key" + suf]]))
+    rows = conn.execute(ch["solution" + suf].format(**V)).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
-        "chapter %d: solution returned %r" % (ch["n"], rows[:3])
-    rows = conn.execute(ch["naive"].format(**V)).fetchall()
-    assert ch["naive_rows"] is None or len(rows) == ch["naive_rows"], \
-        "chapter %d: naive returned %d rows, expected %d" % (ch["n"], len(rows), ch["naive_rows"])
-    assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d: trap does not bite" % ch["n"]
+        "chapter %d%s: solution returned %r" % (ch["n"], suf, rows[:3])
+    rows = conn.execute(ch["naive" + suf].format(**V)).fetchall()
+    naive_rows = ch["naive_rows" + suf]
+    assert naive_rows is None or len(rows) == naive_rows, \
+        "chapter %d%s: naive returned %d rows, expected %d" % (ch["n"], suf, len(rows), naive_rows)
+    assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap does not bite" % (ch["n"], suf)
     return len(rows)
 
 
@@ -408,22 +489,36 @@ TEXT_KEYS = ["title", "story", "objective", "answer_form", "telegram"]
 
 def chapters_json(V, mode="learn"):
     chapters = []
-    for ch in plot.CHAPTERS:
-        d = {k: ch[k].format(**V) for k in TEXT_KEYS}
-        d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"],
-                 hints=[h.format(**V) for h in ch["hints"]], answer_sha256=sha(V[ch["answer_key"]]))
+    src = plot.CHAPTERS if mode == "learn" else [c for c in plot.CHAPTERS if c["n"] <= 8]
+    for ch in src:
+        if mode == "learn":
+            d = {k: ch[k].format(**V) for k in TEXT_KEYS}
+            d.update(hints=[h.format(**V) for h in ch["hints"]], answer_sha256=sha(V[ch["answer_key"]]))
+        else:
+            d = dict(title=ch["title"].format(**V), story=ch["story"].format(**V),
+                      objective=ch["objective_compete"].format(**V), answer_form=ch["answer_form_compete"],
+                      telegram=ch["telegram"].format(**V))
+            d.update(hints=[], answer_sha256=sha(V[ch["answer_key_compete"]]))   # hints are off, in both modes
+        d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"])
         chapters.append(d)
-    return dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,
-                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
-                endings={k: v.format(**V) for k, v in plot.ENDINGS.items()},
-                part2_code_sha256=sha(V["part2_code"]), chapters=chapters)
+    out = dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,
+               cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
+               chapters=chapters)
+    if mode == "learn":
+        out["endings"] = {k: v.format(**V) for k, v in plot.ENDINGS.items()}
+        out["part2_code_sha256"] = sha(V["part2_code"])
+    return out
 
 
 def solution_sql(V):
-    out = ["-- The Ritz Affair: reference path (seed %d). One query per chapter; each answer is the next chapter's key." % V["seed"]]
+    out = ["-- The Ritz Affair: reference path (seed %d). Each chapter's discovery queries find the filter; the final query finds the answer." % V["seed"]]
     for ch in plot.CHAPTERS:
-        out.append("-- %02d. %s (%s) -> %s: %s\n%s;" % (ch["n"], ch["title"].format(**V), ch["construct"],
-                   ch["answer_form"].format(**V), V[ch["answer_key"]], ch["solution"].format(**V)))
+        lines = ["-- %02d. %s (%s) -> %s: %s" % (ch["n"], ch["title"].format(**V), ch["construct"],
+                 ch["answer_form"].format(**V), V[ch["answer_key"]])]
+        for d in ch.get("discovery", []):
+            lines.append(d["query"].format(**V) + ";")
+        lines.append(ch["solution"].format(**V) + ";")
+        out.append("\n".join(lines))
     return "\n\n".join(out) + "\n"
 
 
@@ -448,16 +543,19 @@ def write_outputs(conn, V, site_dir="site", mode="learn"):
                 f.write(solution_sql(V))
 
 
-def self_check(conn, V):
+def self_check(conn, V, mode="learn"):
     """The plot's test: every solution yields its answer, every trap bites, everything is ASCII."""
     for ch in plot.CHAPTERS:
         check_chapter(conn, V, ch)
+    if mode == "compete":
+        for ch in plot.CHAPTERS[:8]:
+            check_chapter(conn, V, ch, compete=True)
     for t in [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]:
         for row in conn.execute("SELECT * FROM %s" % t):
             for v in row:
                 if isinstance(v, str):
                     v.encode("ascii")
-    json.dumps(chapters_json(V)).encode("ascii")
+    json.dumps(chapters_json(V, mode)).encode("ascii")
 
 
 def main(argv=None):
@@ -467,9 +565,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     seed, mode = (a.season, "compete") if a.season else (a.seed, "learn")
     conn, V = build_db(seed)
-    self_check(conn, V)
+    self_check(conn, V, mode)
     write_outputs(conn, V, mode=mode)
-    print("ok: seed %d, %d chapters" % (seed, len(plot.CHAPTERS)))
+    print("ok: seed %d, %d chapters" % (seed, len(plot.CHAPTERS) if mode == "learn" else 8))
 
 
 if __name__ == "__main__":

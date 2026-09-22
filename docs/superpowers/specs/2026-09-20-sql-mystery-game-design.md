@@ -255,3 +255,15 @@ framework, no bundler.
   tied to its story beat (mask, dart, poison, a drink, whatever fits) - whatever is relevant per
   chapter, not a fixed prop list. Needs its own design pass (art direction, asset budget, whether
   assets are generated or commissioned) before scoping into a plan.
+  2026-09-22: a mockup pass exists (`docs/mockups/illustrations.html`) with twelve chapter props,
+  a pinboard case board and a proposed Part II night palette. Not implemented in the site; blocked
+  on the course owner picking a drawing style, asset source, portrait treatment, night-switch
+  scope, board mechanism and masthead date (see the mockup's own section 6).
+
+- **Compete mode's in-game button.** `site/app.js`'s landing page has had `#btn-compete` hardcoded
+  disabled since Plan 2; nothing POSTs to `apps_script.gs` or reads back a season yet. The content
+  and backend side of phase 3 (season generator with multi-query compete objectives, `apps_script.gs`,
+  `site/leaderboard.html`) is done as of 2026-09-22 and unblocked now that Plan 2's site is merged.
+  What is missing: team-name entry, a client-side timer, `start`/`progress`/`finish` events POSTed
+  to the Apps Script, and a way to pick which season a class plays (today a season's files must be
+  dropped into `site/` by hand). A short, mechanical plan, not a redesign.

@@ -80,7 +80,7 @@ function renderChapter() {
   if (part1Done(state)) {
     if (!box) { box = document.createElement("div"); box.id = "rank-box"; box.className = "box"; $("objective").parentElement.after(box); }
     const p1 = partStats(state, 1, 8);
-    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries, p1.hints)) + " - " + p1.queries + " queries, " + p1.hints + " witnesses<br>" +
+    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries)) + " - " + p1.queries + " queries<br>" +
       esc(state.badges.join(", "));
   } else if (box) box.remove();
 }
@@ -92,7 +92,7 @@ function renderWitnesses() {
   const el = $("witnesses"); el.innerHTML = "";
   if (awaitingCode(state) || state.solved.includes(12)) return;
   ch.hints.slice(0, opened).forEach(h => { const d = document.createElement("div"); d.className = "hint"; d.textContent = h; el.appendChild(d); });
-  if (opened < 3) {
+  if (opened < ch.hints.length) {
     const b = document.createElement("button"); b.textContent = WITNESS[opened] + (opened === 2 ? " (the query, with blanks)" : "");
     b.onclick = () => { state.hints[ch.n] = opened + 1; save(state); renderWitnesses(); };
     el.appendChild(b);
@@ -173,8 +173,8 @@ export const BADGES = [
   ["Typo", "Five errors in a row. The typewriter is not to blame.", c => c.event === "query" && c.error && c.state.errorStreak >= 5],
   ["Persistent", "Twenty queries in one chapter.", c => c.event === "query" && (c.state.queries[c.chapter] || 0) >= 20],
   ["Sniper", "A chapter solved on the first query.", c => c.event === "solve" && c.state.queries[c.chapter] === 1],
-  ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && new Date().getHours() < 5],
-  ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => !c.revealed.has(t) && t !== "sqlite_master")],
+  ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && c.hour < 5],
+  ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => c.allTables.includes(t) && !c.revealed.has(t))],
   ["Archivist", "Read sqlite_master. The card catalogue, in other words.", c => c.event === "query" && /sqlite_master/i.test(c.sql)],
   ["Anagram", "Accused Paul Sernine. Lupin is vain, not stupid.", c => c.event === "answer" && c.norm === "paul sernine"],
   ["Wrong Frenchman", "Accused Horace Velmont. The Prefect's wife is unamused.", c => c.event === "answer" && c.norm === "horace velmont"],
@@ -182,7 +182,6 @@ export const BADGES = [
   ["Window Shopper", "OVER ( before chapter 8.", c => c.event === "query" && /\bover\s*\(/i.test(c.sql) && c.chapter < 8],
   ["Recursive", "WITH RECURSIVE. Ganimard has never seen one and never will.", c => c.event === "query" && /with\s+recursive/i.test(c.sql)],
   ["Egg Hunter", "Found the telegram to the curious clerk.", c => c.event === "code"],
-  ["Clean Sweep", "Part I without a single witness.", c => c.event === "part1" && [1, 2, 3, 4, 5, 6, 7, 8].every(n => !(c.state.hints[n] > 0))],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
 ];
 
@@ -199,8 +198,9 @@ function award(list) {
   if (list.length) save(state);
 }
 
-export const RANKS = [[25, 0, "Ganimard himself"], [40, 3, "Chief Inspector"], [60, 6, "Inspector"], [Infinity, Infinity, "Constable"]];  // tune after the first class
-export function rank(queries, hints) { return RANKS.find(([q, h]) => queries <= q && hints <= h)[2]; }
+// Queries only: hints are off for now (spec 2026-09-22). If they come back, add a hint threshold per rank here.
+export const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
+export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 export function partStats(state, from, to) {
   let queries = 0, hints = 0;
   for (let n = from; n <= to; n++) { queries += state.queries[n] || 0; hints += state.hints[n] || 0; }
@@ -209,12 +209,12 @@ export function partStats(state, from, to) {
 
 function renderCertificate() {
   const p1 = partStats(state, 1, 8), p2 = partStats(state, 9, 12);
-  const r1 = part1Done(state) ? rank(p1.queries, p1.hints) : "";
+  const r1 = part1Done(state) ? rank(p1.queries) : "";
   $("certificate").innerHTML =
     '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">PARIS &mdash; ' + new Date().toLocaleDateString("en-GB") + "</div>" +
     "<h1>CASE CLOSED" + (state.solved.includes(12) ? ", TWICE" : "") + "</h1>" +
     "<p>The Prefecture of Police certifies that <b>" + esc(state.names || "the clerk") + "</b> unmasked Arsene Lupin in " + state.solved.filter(n => n <= 8).length + " chapters, " +
-    p1.queries + " queries and " + p1.hints + " witnesses, and is hereby ranked <b>" + esc(r1) + "</b>." +
+    p1.queries + " queries, and is hereby ranked <b>" + esc(r1) + "</b>." +
     (state.part2 ? " Part II: " + state.solved.filter(n => n > 8).length + " of 4 chapters, " + p2.queries + " queries.</p>" : "</p>") +
     '<p class="label">BADGES</p><ul class="badges">' + state.badges.map(b => "<li>" + esc(b) + "</li>").join("") + "</ul>" +
     (state.notes ? '<p class="label">NOTES</p><pre>' + esc(state.notes) + "</pre>" : "") +
@@ -223,8 +223,8 @@ function renderCertificate() {
 
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
-           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), revealed: visibleTables(data.chapters, state),
-           norm: "", lines: state.lastQueryLines, ...extra };
+           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
+           norm: "", lines: state.lastQueryLines, hour: new Date().getHours(), ...extra };
 }
 
 function renderBoard() {
@@ -279,6 +279,7 @@ async function renderErd(newTables = []) {
     p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
   }
   if (newTables.length) {
+    $("erd").querySelectorAll(".stamp").forEach(s => s.remove());   // two reveals within 2.5 s must not overlap
     const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
     $("erd").appendChild(s); setTimeout(() => s.remove(), 2500);
   }
@@ -293,7 +294,7 @@ function afterSolve(ch, event) {
     if (ch.n === 8) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
-      $("reply").textContent += " Rank: " + rank(p1.queries, p1.hints);
+      $("reply").textContent += " Rank: " + rank(p1.queries);
     }
     if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
   } else if (event === "code") {

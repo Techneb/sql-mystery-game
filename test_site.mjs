@@ -56,7 +56,7 @@ test("wrong answers get suspect-specific or rotating default replies", () => {
 
 test("tables are revealed chapter by chapter", () => {
   const s = freshState();
-  assert.deepEqual([...visibleTables(data.chapters, s)], ["police_report"]);
+  assert.deepEqual([...visibleTables(data.chapters, s)].sort(), ["interview", "police_report"]);
   s.solved = [1, 2];
   assert.deepEqual([...visibleTables(data.chapters, s)].sort(), ["cab_ride", "hotel_register", "interview", "police_report"]);
   s.solved = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -66,7 +66,7 @@ test("tables are revealed chapter by chapter", () => {
 });
 
 const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
-                      bigTables: ["person", "cab_ride"], revealed: new Set(["police_report"]), norm: "", lines: 1 });
+                      bigTables: ["person", "cab_ride"], allTables: ["person", "cab_ride", "police_report", "lift_log"], revealed: new Set(["police_report"]), norm: "", lines: 1, hour: 12 });
 
 test("badges fire on the right query shapes and only once", () => {
   const q = s => ({ ...base(), sql: s, rows: 3 });
@@ -78,20 +78,24 @@ test("badges fire on the right query shapes and only once", () => {
   assert.ok(names(q("SELECT x FROM t GROUP BY x HAVING COUNT(*) > 1")).includes("Early HAVING"));
   assert.ok(names(q("SELECT RANK() OVER (ORDER BY x) FROM t")).includes("Window Shopper"));
   assert.ok(names(q("SELECT * FROM sqlite_master")).includes("Archivist"));
+  assert.ok(!names(q("SELECT * FROM sqlite_master")).includes("Trespasser"));
+  assert.ok(!names(q("WITH ev AS (SELECT 1 AS x) SELECT x FROM ev")).includes("Trespasser"), "a CTE name is not a table");
+  assert.ok(names(q("SELECT * FROM lift_log")).includes("Trespasser"));
   assert.ok(names({ ...base(), sql: "x", rows: 1 }).includes("Needle"));
   assert.ok(names({ ...base(), sql: "x", rows: 500 }).includes("Haystack"));
   assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
   assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
-  assert.equal(BADGES.length, 23);
+  assert.equal(BADGES.length, 22);
+  assert.ok(!BADGES.some(([name]) => name === "Clean Sweep"), "Clean Sweep is gone while hints are off");
 });
 
 test("rank thresholds", () => {
-  assert.equal(rank(25, 0), "Ganimard himself");
-  assert.equal(rank(26, 0), "Chief Inspector");
-  assert.equal(rank(40, 3), "Chief Inspector");
-  assert.equal(rank(41, 3), "Inspector");
-  assert.equal(rank(60, 7), "Constable");
+  assert.equal(rank(25), "Ganimard himself");
+  assert.equal(rank(26), "Chief Inspector");
+  assert.equal(rank(40), "Chief Inspector");
+  assert.equal(rank(41), "Inspector");
+  assert.equal(rank(61), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 }; s.hints = { 2: 1 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12, hints: 1 });
 });
