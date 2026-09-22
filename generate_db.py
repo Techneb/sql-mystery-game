@@ -274,7 +274,10 @@ def plant_part1(conn, V, r):
     c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=19120611 AND type='burglary'")
     c.execute("INSERT INTO police_report VALUES (?,19120611,'Paris','Hotel Meurice','burglary',?)",
         (V["compete_report_id"],
-         "Reported by the night manager. A window forced on the second floor; nothing else taken."))
+         "Reported by the night manager. A window forced on the cheapest room on the second floor; nothing else taken."))
+    c.execute("INSERT INTO interview VALUES (3,?,?,?)", ("the Meurice night manager", 19120611,
+        "I was on duty the whole night, monsieur, and found the window forced myself. "
+        "Write down the date as I told the inspector: 19120611."))
     # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
     c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
     others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
@@ -293,6 +296,9 @@ def plant_part1(conn, V, r):
     c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5)", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
     c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,7)", (V["plate_prefix"] + "290", E, "9 rue Royale"))
     # --- compete ch3: same construct (LIKE), a different cab, identified by where it dropped, not where it was hailed
+    c.execute("INSERT INTO interview VALUES (4,?,?,?)", ("the rival despatcher", T,
+        "One of our drivers dropped a fare at Gare Saint-Lazare that night. He swears the plate "
+        "began with {compete_plate_prefix}, the rest he never wrote down.".format(**V)))
     c.execute("INSERT INTO cab_ride VALUES (4,?,?,320,'Opera','Gare Saint-Lazare',6)", (V["compete_plate"], T))
     # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
@@ -346,7 +352,7 @@ def plant_part1(conn, V, r):
     c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=? AND time>=1800", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["compete_telegram_id"], "Bourse", T, 1930, "A Broker", "A Client", None,
-         "SHARES SOLD STOP PROCEEDS TO FOLLOW STOP"))
+         "SHARES SOLD STOP PROCEEDS TO FOLLOW STOP COFFEE BEFORE THE OPENING BELL AS ALWAYS STOP"))
     # --- ch8: room service on the 18th; Ortega's suite orders coffee first
     c.execute("DELETE FROM room_service WHERE date=? AND time<600", (T,))
     rs = [(V["lupin_suite"], 320, V["champagne"], 40), (V["lupin_suite"], 900, "coffee", 2),
