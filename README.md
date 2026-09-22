@@ -84,8 +84,9 @@ Playing a season: share one link with the class,
 https://techneb.github.io/sql-mystery-game/?season=N&board=<your deployment's /exec URL>
 ```
 
-With `season=N` in the URL the landing page's **Compete** button is enabled (if `season-N.json` is on
-the server; otherwise its tooltip says so). Compete asks for a team name, POSTs `start` to the Apps
+With `season=N` in the URL the landing page's **Compete** button offers that season (if `season-N.json`
+is on the server; otherwise its tooltip says so); without a link, Compete asks for the season number
+instead. Compete then asks for a team name, POSTs `start` to the Apps
 Script (which stamps the server time), loads the season database, and runs Part I only with a clock in
 the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the team's hints,
 wrong answers and queries, and the finish screen links to the leaderboard. Events that cannot be

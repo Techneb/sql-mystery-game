@@ -63,6 +63,24 @@ export function eventPayload(state, event, chapter) {
 }
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+
+// One engraved-line prop per chapter, tied to its story beat (see docs/mockups/illustrations.html
+// section 2). Inner markup only -- #chapter-icon in index.html carries the shared outer <svg> attrs.
+// class="accent" picks up --red by day and --accent by night (see style.css's night palette).
+const PROPS = {
+  1: '<path d="M22 18h44l12 12v56H22z"/><path d="M66 18v12h12"/><path d="M30 40h34M30 47h34M30 54h26M30 61h34M30 68h20"/><g class="accent" stroke-width="2"><rect x="40" y="58" width="34" height="18" transform="rotate(-12 57 67)"/><path d="M46 68l22-4"/></g><path d="M28 24h10" stroke-width="1"/>',
+  2: '<circle cx="72" cy="26" r="9" stroke-width="1.2"/><path d="M12 62h76M12 82h76"/><path d="M18 62v20M30 62v20M42 62v20M54 62v20M66 62v20M78 62v20"/><path d="M18 66c6-6 6 6 12 0M30 66c6-6 6 6 12 0M42 66c6-6 6 6 12 0M54 66c6-6 6 6 12 0M66 66c6-6 6 6 12 0" stroke-width="1.1"/><path d="M12 62l8-22h56l8 22" stroke-dasharray="2 3" stroke-width="1"/><path class="accent" d="M46 40v-8l10-6" stroke-width="2"/>',
+  3: '<rect x="10" y="34" width="80" height="30" rx="2"/><rect x="14" y="38" width="72" height="22" rx="1" stroke-width="1"/><path d="M22 44h2v10M28 44h4v5h-4v5h4M38 44v10M46 44h4v5h-4" stroke-width="2.2"/><path d="M56 40v18M60 40v18M64 40v18M68 40v18M72 40v18M76 40v18M80 40v18" stroke-width="3" opacity=".85"/><circle cx="20" cy="76" r="7"/><circle cx="80" cy="76" r="7"/><path d="M27 76h46"/><path class="accent" d="M8 22c20 8 40 8 60-2" stroke-dasharray="1 4" stroke-width="2"/>',
+  4: '<rect x="26" y="30" width="48" height="52" rx="3"/><rect x="32" y="36" width="36" height="18" rx="1" stroke-width="1"/><path d="M36 44h8M50 44h6M60 44h4" stroke-width="2.4"/><path d="M34 64h32M34 70h32M34 76h20" stroke-width="1"/><path d="M50 30v-14"/><path class="accent" d="M50 16h14v9H50z" stroke-width="2"/><path d="M30 82v6h40v-6" stroke-width="1"/>',
+  5: '<circle cx="42" cy="44" r="22"/><circle cx="42" cy="44" r="16" stroke-width="1"/><path d="M58 60l22 22" stroke-width="5"/><path d="M58 60l22 22" stroke="var(--card)" stroke-width="2"/><path d="M32 36c4-6 12-8 18-4" stroke-width="1" opacity=".7"/><path class="accent" d="M36 48l5 5 9-12" stroke-width="2"/>',
+  6: '<ellipse cx="34" cy="70" rx="16" ry="5"/><path d="M18 70v-6M50 70v-6"/><ellipse cx="34" cy="64" rx="16" ry="5" stroke-width="1"/><path d="M18 64v-6M50 64v-6"/><ellipse cx="34" cy="58" rx="16" ry="5" stroke-width="1"/><path d="M18 58v-6M50 58v-6"/><ellipse cx="34" cy="52" rx="16" ry="5" stroke-width="1"/><rect x="46" y="22" width="44" height="26" rx="1" transform="rotate(-8 68 35)"/><rect x="50" y="26" width="36" height="18" transform="rotate(-8 68 35)" stroke-width="1" stroke-dasharray="1 2"/><path class="accent" d="M60 78h28M60 84h20" stroke-width="2"/><path d="M58 72l-3 14" stroke-width="1"/>',
+  7: '<rect x="14" y="60" width="72" height="14" rx="2"/><path d="M14 74l4 8h64l4-8" stroke-width="1"/><path d="M30 60V46c0-4 4-6 8-6h22"/><circle cx="66" cy="40" r="6"/><path d="M40 60v-8" stroke-width="1"/><path d="M22 66h8M70 66h8" stroke-width="1"/><path class="accent" d="M70 22l6-6M78 30l8-2M64 18l1-8" stroke-width="2"/>',
+  8: '<path d="M40 14h8v10c6 4 8 10 8 18v42a6 6 0 0 1-6 6H38a6 6 0 0 1-6-6V42c0-8 2-14 8-18z"/><rect x="34" y="52" width="20" height="16" stroke-width="1"/><path d="M38 58h12M38 62h8" stroke-width="1"/><path d="M66 46c0 10 4 16 10 16s10-6 10-16z"/><path d="M76 62v22M68 84h16"/><path class="accent" d="M70 40c2-4 8-6 12-4M84 36l-2-4" stroke-width="1.5" stroke-dasharray="1 3"/><path d="M40 20h8" stroke-width="1"/>',
+  9: '<rect x="14" y="34" width="72" height="46" rx="4"/><path d="M14 50h72M14 62h72" stroke-width="1"/><path d="M30 34v46M70 34v46" stroke-width="1"/><path d="M14 40c10-10 62-10 72 0" stroke-width="1"/><rect x="44" y="52" width="12" height="10" stroke-width="1"/><circle cx="50" cy="57" r="1.5"/><path class="accent" d="M18 66l14-8 2 12z" stroke-width="1.8"/><path class="accent" d="M76 40h10v10" stroke-width="1.8"/><path d="M20 80v6M80 80v6" stroke-width="1"/>',
+  10: '<path d="M14 70h36M20 70V44h24v26"/><path d="M20 48h24" stroke-width="1"/><ellipse cx="32" cy="70" rx="18" ry="3" stroke-width="1"/><path d="M50 70h36M56 70V44h24v26"/><path d="M56 48h24" stroke-width="1"/><ellipse cx="68" cy="70" rx="18" ry="3" stroke-width="1"/><path class="accent" d="M50 30v52" stroke-dasharray="3 3" stroke-width="1.6"/><path d="M24 84h52" stroke-width="1" opacity=".6"/>',
+  11: '<path d="M14 62a36 36 0 0 1 72 0z"/><path d="M14 62h72"/><path d="M20 58l4-2M30 42l3 3M50 30v5M70 42l-3 3M80 58l-4-2" stroke-width="1.4"/><text x="16" y="72" font-family="Special Elite, monospace" font-size="7" fill="currentColor" stroke="none">1</text><text x="80" y="72" font-family="Special Elite, monospace" font-size="7" fill="currentColor" stroke="none">5</text><path class="accent" d="M50 62L32 44" stroke-width="2.2"/><circle cx="50" cy="62" r="3" fill="currentColor" stroke="none"/><path d="M40 80h20" stroke-width="1"/>',
+  12: '<path class="accent" d="M50 18l26 16v32L50 82 24 66V34z" stroke-width="2"/><path class="accent" d="M50 18v64M24 34l52 32M76 34L24 66M50 18l-26 16M50 18l26 16" stroke-width="1" opacity=".8"/><path d="M36 44l14-8 14 8-14 8z" stroke-width="1"/><path d="M12 90h76" stroke-width="1" stroke-dasharray="2 3"/><path d="M18 88c8-6 14-6 22 0" stroke-width="1"/><path d="M60 88c8-6 14-6 22 0" stroke-width="1"/>',
+};
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
@@ -72,10 +90,10 @@ async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
   const buf = await (await fetch(stem + ".sqlite")).arrayBuffer();
   if (db) db.close();
-  tableSizes = {};
   db = new SQL.Database(new Uint8Array(buf));
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
+  tableSizes = {};
   for (const [t] of db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values)
     tableSizes[t] = db.exec("SELECT COUNT(*) FROM " + t)[0].values[0][0];
 }
@@ -86,11 +104,12 @@ function backToInvestigation() { reviewing = null; renderChapter(); }
 
 function renderChapter() {
   const total = state.part2 ? 12 : 8;
-  document.querySelector(".answer-row").hidden = reviewing != null;
+  document.querySelector(".answer-row").hidden = reviewing != null || competeDone(state);
   $("btn-back").hidden = reviewing == null;
   if (reviewing != null) {
     const ch = data.chapters.find(c => c.n === reviewing);
     $("masthead-chapter").textContent = "REVIEWING CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
+    $("chapter-icon").innerHTML = PROPS[ch.n] || "";
     $("chapter-title").textContent = ch.title;
     $("story").textContent = ch.story;
     $("objective").textContent = ch.objective + " Your answer: " + state.answers[ch.n] + ".";
@@ -99,6 +118,7 @@ function renderChapter() {
   }
   const ch = currentChapter(state, data.chapters);
   $("masthead-chapter").textContent = "CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
+  $("chapter-icon").innerHTML = PROPS[ch.n] || "";
   $("chapter-title").textContent = ch.title;
   $("story").textContent = ch.story;
   $("objective").textContent = ch.objective + " Answer: " + ch.answer_form + ".";
@@ -232,11 +252,11 @@ export function detectBadges(ctx, have) {
 }
 
 function award(list) {
-  for (const b of list) {
+  list.forEach((b, i) => {
     state.badges.push(b.name);
     const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
-    $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000);
-  }
+    $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000 + i * 400);   // stagger so a badge burst doesn't vanish as one block
+  });
   if (list.length) save(state);
 }
 
@@ -282,7 +302,7 @@ async function submitAnswer() {
   const hash = await sha256(norm);
   const ch = currentChapter(state, data.chapters);
   if (awaitingCode(state)) {
-    if (hash === data.part2_code_sha256) { state.part2 = true; $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
+    if (hash === data.part2_code_sha256) { state.part2 = true; applyMood(); $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
     else { $("reply").textContent = "That is not the code. It is four words, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
   }
@@ -404,32 +424,57 @@ async function startCompete() {
   state = { ...freshState(), mode: "compete", season, team, startedAt: Date.now() };
   queueEvent("start", 0);
   await loadSeason();
-  $("landing").hidden = true;
-  renderBoard(); renderHistory(); renderChapter(); renderErd();
+  renderBoard(); renderHistory(); enterGame();
   $("notes").value = state.notes;
 }
 
+async function fetchSeason(n) {
+  return fetch("season-" + n + ".json").then(r => r.ok ? r.json() : null).catch(() => null);
+}
+
+// The teacher's link (?season=N) names the season; without one, Compete asks for the number instead.
 function offerCompete() {
   const b = $("btn-compete");
-  if (!seasonData) { b.title = "Season " + season + " is not on this server. Ask your teacher to build it."; return; }
+  if (season && !seasonData) { b.title = "Season " + season + " is not on this server. Ask your teacher to build it."; return; }
   b.disabled = false; b.title = "Part I only, against the clock.";
-  $("compete-note").textContent = boardUrl
-    ? "Part I, chapters I to VIII, against the clock. Two minutes per hint, ten seconds per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named."
-    : "No leaderboard is connected to this link, so the clock runs locally and nothing is recorded.";
-  b.onclick = () => { $("compete-form").hidden = false; $("team").focus(); };
+  b.onclick = async () => {
+    if (!seasonData) {
+      const n = Number(prompt("Season number (ask your teacher):"));
+      if (!n) return;
+      seasonData = await fetchSeason(n);
+      if (!seasonData) { $("status").textContent = "Season " + n + " is not on this server."; return; }
+      season = n;
+    }
+    $("compete-note").textContent = boardUrl
+      ? "Part I, chapters I to VIII, against the clock. Two minutes per hint, ten seconds per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named."
+      : "No leaderboard is connected, so the clock runs locally and nothing is recorded.";
+    $("compete-form").hidden = false; $("team").focus();
+  };
   $("btn-start").onclick = startCompete;
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
 }
+
+// Part II mood: dark palette + a later masthead date, set once (see style.css's [data-mood="night"]).
+function applyMood() {
+  document.documentElement.dataset.mood = state.part2 ? "night" : "day";
+  $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
+}
+
+function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); }
 
 async function boot() {
   const params = new URLSearchParams(location.search);
   season = Number(params.get("season")) || 0;
   boardUrl = params.get("board") || APPS_SCRIPT_URL;
   const debugChapter = Number(params.get("chapter"));
-  if (season) seasonData = await fetch("season-" + season + ".json").then(r => r.ok ? r.json() : null).catch(() => null);
-  // A team that reloads the page mid-season lands back in its game, clock still running.
-  const saved = season && seasonData ? loadFrom(storageKey("compete")) : null;
-  const resuming = !!(saved && saved.mode === "compete" && saved.season === season && saved.team && !debugChapter);
+  const linked = season > 0;
+  // A team that reloads the page mid-season lands back in its game, clock still running: with the
+  // season link, always (a finished season shows its finish screen); without it, only while unfinished.
+  const saved = loadFrom(storageKey("compete"));
+  const savedLive = saved.mode === "compete" && saved.team && saved.season > 0;
+  if (!season && savedLive && !part1Done(saved) && !debugChapter) season = saved.season;
+  if (season) seasonData = await fetchSeason(season);
+  const resuming = !!(seasonData && savedLive && saved.season === season && !debugChapter);
   if (resuming) {
     key = storageKey("compete");
     state = saved;
@@ -448,10 +493,10 @@ async function boot() {
   }
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
-  $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
+  $("btn-investigate").onclick = enterGame;
   // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
-  if (resuming || (!season && state.solved.length) || debugChapter) { $("landing").hidden = true; renderChapter(); renderErd(); }
-  if (season && !resuming) offerCompete();
+  if (resuming || (!linked && state.solved.length) || debugChapter) enterGame();
+  if (!resuming) offerCompete();
   $("btn-back").onclick = backToInvestigation;
   $("masthead-chapter").onclick = e => {
     e.stopPropagation();

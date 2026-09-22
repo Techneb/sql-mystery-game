@@ -246,33 +246,50 @@ framework, no bundler.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
    **Done.** Content and backend PR #5 (2026-09-22; compete objectives given the same multi-query
    treatment as learn mode); the in-game button, clock and event posting 2026-09-22
-   (`2026-09-22-plan-4-compete-button.md`). A season is opened by listing it in `seasons.txt` and
-   shared as `?season=N&board=<url>`.
+   (`2026-09-22-plan-4-compete-button.md`, played end to end in Chromium against a stand-in Apps
+   Script). A season is opened by listing it in `seasons.txt` and shared as `?season=N&board=<url>`;
+   without a link, Compete asks for the season number.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
    <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
-   classic deploy-from-branch cannot serve `/site` as a subfolder). Still open: course-folder ties
-   (`../SQL` is not reachable from any session that has worked on this repo so far), a class trial,
-   and tuning `RANKS`/badges from where students got stuck.
+   classic deploy-from-branch cannot serve `/site` as a subfolder). **Course-folder ties done**: 
+   `../SQL/0-SQL.md` links the game, `../SQL/BACKLOG - SQL Mystery Game.md` is marked superseded, and
+   `../SQL/3-Corrections/8. Correction SQL Mystery Game.sql` regenerates automatically whenever
+   `generate_db.py` runs on a machine with that folder present (it is not a git repo, so this is
+   local-only, not tracked here). Still open: a class trial and tuning `RANKS`/badges from it.
 
 ## 8. Backlog (not scheduled)
 
 - **Translate the site into multiple languages.** Note the tension with section 1's fixed decision
   ("Language: English only... Dropped: French version") - revisit that decision explicitly before
   scoping this, rather than treating it as already superseded.
-- **Visual identity per chapter.** Illustrations; an investigation board/map with photos and a red
-  thread linking them (case board is currently text-only cards); one prop illustration per chapter
-  tied to its story beat (mask, dart, poison, a drink, whatever fits) - whatever is relevant per
-  chapter, not a fixed prop list. Needs its own design pass (art direction, asset budget, whether
-  assets are generated or commissioned) before scoping into a plan.
-  2026-09-22: a mockup pass exists (`docs/mockups/illustrations.html`) with twelve chapter props,
-  a pinboard case board and a proposed Part II night palette. Not implemented in the site; blocked
-  on the course owner picking a drawing style, asset source, portrait treatment, night-switch
-  scope, board mechanism and masthead date (see the mockup's own section 6).
-  2026-09-22, course owner: the silhouette portraits are out; suspects get **painted portraits with a
-  high level of detail**. Candidate painting styles are in the mockup's section 7 and rendered, one sitter
-  six ways in day and night editions, in `docs/mockups/portrait-styles.html`; the vector stand-in there is rejected
-  as a look: the target is photorealistic painted portraits (photograph-level detail, painted surface).
-  The style, the asset source and the day/night treatment are still to pick.
+- ~~Visual identity per chapter.~~ Implemented 2026-09-22, course owner's call ("do what you think
+  is best"): a mockup pass first (`docs/mockups/illustrations.html`), then built into the live site
+  from it. Decisions made:
+  - **Style C** (engraved line + one accent-colour wash) from the mockup's three options, hand-drawn
+    inline SVG, no asset files -- twelve chapter props (`PROPS` in `site/app.js`), one per chapter,
+    shown next to the chapter title (`#chapter-icon` in `index.html`, `.chapter-icon` in `style.css`).
+  - **Night mode: whole page**, not story-column-only. `site/style.css`'s `:root[data-mood="night"]`
+    overrides the existing colour tokens (`--paper`, `--ink`, `--card`, `--rule`, `--shade`, `--term`,
+    `--term-text`, `--accent`), so everything already styled off those tokens shifts for free; `body`
+    gets an 0.8s transition so the switch reads as a crossfade. Set once, in `applyMood()`, the moment
+    the Part II code is accepted, and re-applied on every boot/resume so a reload keeps the mood.
+  - **Masthead date** advances to 19 May for Part II (also in `applyMood()`).
+  - **Case board: kept the existing cards**, did not build the pinboard. The board's entries are not
+    uniformly people (an account number, an address, a telegram id have no portrait), so a
+    photo-per-suspect pinboard would need an answer-type-to-icon system the data doesn't support
+    without new complexity; reskinned the existing dynamic cards instead (cork-textured board
+    background, a pin dot per card) for most of the visual gain at a fraction of the code.
+  - **Portraits and the red thread: not built**, as a consequence of keeping the plain cards -- no
+    photos, so no thread between them. Revisit only if the pinboard itself gets built later.
+  - 2026-09-22, course owner, later the same day: suspects get **painted portraits with a high level
+    of detail**, photorealistic (photograph-level detail, painted surface), not silhouettes and not a
+    stylised vector face. Candidate painting styles are in the mockup's section 7 and rendered, one
+    sitter six ways in day and night editions, in `docs/mockups/portrait-styles.html` (the vector
+    stand-in there is rejected as a look). The style, the asset source and the day/night treatment are
+    still to pick; the first real generated or commissioned Ashcombe is the next step.
 
-- ~~**Compete mode's in-game button.**~~ Done 2026-09-22, see phase 3.
+- ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
+  `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
+  link (`?season=N&board=<url>`), or is typed when there is no link; there is no picker listing which
+  seasons exist, since one class plays one season and the teacher already knows which.
