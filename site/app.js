@@ -174,7 +174,7 @@ export const BADGES = [
   ["Persistent", "Twenty queries in one chapter.", c => c.event === "query" && (c.state.queries[c.chapter] || 0) >= 20],
   ["Sniper", "A chapter solved on the first query.", c => c.event === "solve" && c.state.queries[c.chapter] === 1],
   ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && c.hour < 5],
-  ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => !c.revealed.has(t) && t !== "sqlite_master")],
+  ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => c.allTables.includes(t) && !c.revealed.has(t))],
   ["Archivist", "Read sqlite_master. The card catalogue, in other words.", c => c.event === "query" && /sqlite_master/i.test(c.sql)],
   ["Anagram", "Accused Paul Sernine. Lupin is vain, not stupid.", c => c.event === "answer" && c.norm === "paul sernine"],
   ["Wrong Frenchman", "Accused Horace Velmont. The Prefect's wife is unamused.", c => c.event === "answer" && c.norm === "horace velmont"],
@@ -223,7 +223,7 @@ function renderCertificate() {
 
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
-           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), revealed: visibleTables(data.chapters, state),
+           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
            norm: "", lines: state.lastQueryLines, hour: new Date().getHours(), ...extra };
 }
 
@@ -279,6 +279,7 @@ async function renderErd(newTables = []) {
     p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
   }
   if (newTables.length) {
+    $("erd").querySelectorAll(".stamp").forEach(s => s.remove());   // two reveals within 2.5 s must not overlap
     const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
     $("erd").appendChild(s); setTimeout(() => s.remove(), 2500);
   }
