@@ -492,7 +492,7 @@ def chapters_json(V, mode="learn"):
             d = dict(title=ch["title"].format(**V), story=ch["story"].format(**V),
                       objective=ch["objective_compete"].format(**V), answer_form=ch["answer_form_compete"],
                       telegram=ch["telegram"].format(**V))
-            d.update(hints=[h.format(**V) for h in ch["hints_compete"]], answer_sha256=sha(V[ch["answer_key_compete"]]))
+            d.update(hints=[], answer_sha256=sha(V[ch["answer_key_compete"]]))   # hints are off, in both modes
         d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"])
         chapters.append(d)
     out = dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,

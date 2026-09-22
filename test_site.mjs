@@ -86,15 +86,16 @@ test("badges fire on the right query shapes and only once", () => {
   assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
   assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
-  assert.equal(BADGES.length, 23);
+  assert.equal(BADGES.length, 22);
+  assert.ok(!BADGES.some(([name]) => name === "Clean Sweep"), "Clean Sweep is gone while hints are off");
 });
 
 test("rank thresholds", () => {
-  assert.equal(rank(25, 0), "Ganimard himself");
-  assert.equal(rank(26, 0), "Chief Inspector");
-  assert.equal(rank(40, 3), "Chief Inspector");
-  assert.equal(rank(41, 3), "Inspector");
-  assert.equal(rank(60, 7), "Constable");
+  assert.equal(rank(25), "Ganimard himself");
+  assert.equal(rank(26), "Chief Inspector");
+  assert.equal(rank(40), "Chief Inspector");
+  assert.equal(rank(41), "Inspector");
+  assert.equal(rank(61), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 }; s.hints = { 2: 1 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12, hints: 1 });
 });

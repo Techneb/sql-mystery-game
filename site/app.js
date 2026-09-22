@@ -80,7 +80,7 @@ function renderChapter() {
   if (part1Done(state)) {
     if (!box) { box = document.createElement("div"); box.id = "rank-box"; box.className = "box"; $("objective").parentElement.after(box); }
     const p1 = partStats(state, 1, 8);
-    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries, p1.hints)) + " - " + p1.queries + " queries, " + p1.hints + " witnesses<br>" +
+    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries)) + " - " + p1.queries + " queries<br>" +
       esc(state.badges.join(", "));
   } else if (box) box.remove();
 }
@@ -182,7 +182,6 @@ export const BADGES = [
   ["Window Shopper", "OVER ( before chapter 8.", c => c.event === "query" && /\bover\s*\(/i.test(c.sql) && c.chapter < 8],
   ["Recursive", "WITH RECURSIVE. Ganimard has never seen one and never will.", c => c.event === "query" && /with\s+recursive/i.test(c.sql)],
   ["Egg Hunter", "Found the telegram to the curious clerk.", c => c.event === "code"],
-  ["Clean Sweep", "Part I without a single witness.", c => c.event === "part1" && [1, 2, 3, 4, 5, 6, 7, 8].every(n => !(c.state.hints[n] > 0))],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
 ];
 
@@ -199,8 +198,9 @@ function award(list) {
   if (list.length) save(state);
 }
 
-export const RANKS = [[25, 0, "Ganimard himself"], [40, 3, "Chief Inspector"], [60, 6, "Inspector"], [Infinity, Infinity, "Constable"]];  // tune after the first class
-export function rank(queries, hints) { return RANKS.find(([q, h]) => queries <= q && hints <= h)[2]; }
+// Queries only: hints are off for now (spec 2026-09-22). If they come back, add a hint threshold per rank here.
+export const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
+export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 export function partStats(state, from, to) {
   let queries = 0, hints = 0;
   for (let n = from; n <= to; n++) { queries += state.queries[n] || 0; hints += state.hints[n] || 0; }
@@ -209,12 +209,12 @@ export function partStats(state, from, to) {
 
 function renderCertificate() {
   const p1 = partStats(state, 1, 8), p2 = partStats(state, 9, 12);
-  const r1 = part1Done(state) ? rank(p1.queries, p1.hints) : "";
+  const r1 = part1Done(state) ? rank(p1.queries) : "";
   $("certificate").innerHTML =
     '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">PARIS &mdash; ' + new Date().toLocaleDateString("en-GB") + "</div>" +
     "<h1>CASE CLOSED" + (state.solved.includes(12) ? ", TWICE" : "") + "</h1>" +
     "<p>The Prefecture of Police certifies that <b>" + esc(state.names || "the clerk") + "</b> unmasked Arsene Lupin in " + state.solved.filter(n => n <= 8).length + " chapters, " +
-    p1.queries + " queries and " + p1.hints + " witnesses, and is hereby ranked <b>" + esc(r1) + "</b>." +
+    p1.queries + " queries, and is hereby ranked <b>" + esc(r1) + "</b>." +
     (state.part2 ? " Part II: " + state.solved.filter(n => n > 8).length + " of 4 chapters, " + p2.queries + " queries.</p>" : "</p>") +
     '<p class="label">BADGES</p><ul class="badges">' + state.badges.map(b => "<li>" + esc(b) + "</li>").join("") + "</ul>" +
     (state.notes ? '<p class="label">NOTES</p><pre>' + esc(state.notes) + "</pre>" : "") +
@@ -294,7 +294,7 @@ function afterSolve(ch, event) {
     if (ch.n === 8) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
-      $("reply").textContent += " Rank: " + rank(p1.queries, p1.hints);
+      $("reply").textContent += " Rank: " + rank(p1.queries);
     }
     if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
   } else if (event === "code") {

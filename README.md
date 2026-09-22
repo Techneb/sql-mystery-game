@@ -36,7 +36,8 @@ server, no build step, no environment variables.
 
 ## Tuning
 
-- `RANKS` in `site/app.js` sets the query/hint thresholds for each rank; tune after the first class.
+- `RANKS` in `site/app.js` sets the query thresholds for each rank; tune after the first class. Hints are
+  off for now (every chapter ships `hints: []`), so the rank counts queries only.
 - `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
 - `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.
 
@@ -70,7 +71,6 @@ Backend: paste `apps_script.gs` into a Google Sheet's Apps Script editor and dep
 into `site/leaderboard.html`'s `APPS_SCRIPT_URL` constant to see teams as they play.
 
 The in-game "Compete" button (team name entry, timer, POSTing `start`/`progress`/`finish` events to the
-Apps Script) is not wired yet — it lands in a short follow-up plan once PR #2 (the Investigate-mode
-site) is merged, since it needs `site/app.js` to exist. Until then, `leaderboard.html` can be exercised
+Apps Script) is not wired yet; it is a short follow-up in `site/app.js`. Until then, `leaderboard.html` can be exercised
 with a hand-crafted fixture (see Task 4 Step 2 of the same plan) or with `curl` directly against the
 Apps Script (Task 3 Step 2).
