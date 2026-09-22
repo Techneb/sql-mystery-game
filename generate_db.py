@@ -489,16 +489,15 @@ TEXT_KEYS = ["title", "story", "objective", "answer_form", "telegram"]
 
 def chapters_json(V, mode="learn"):
     chapters = []
-    src = plot.CHAPTERS if mode == "learn" else [c for c in plot.CHAPTERS if c["n"] <= 8]
+    src = plot.CHAPTERS if mode == "learn" else plot.CHAPTERS[:8]
+    suf = "" if mode == "learn" else "_compete"
     for ch in src:
-        if mode == "learn":
-            d = {k: ch[k].format(**V) for k in TEXT_KEYS}
-            d.update(hints=[h.format(**V) for h in ch["hints"]], answer_sha256=sha(V[ch["answer_key"]]))
-        else:
-            d = dict(title=ch["title"].format(**V), story=ch["story"].format(**V),
-                      objective=ch["objective_compete"].format(**V), answer_form=ch["answer_form_compete"],
-                      telegram=ch["telegram"].format(**V))
-            d.update(hints=[], answer_sha256=sha(V[ch["answer_key_compete"]]))   # hints are off, in both modes
+        d = {k: ch[k].format(**V) for k in ["title", "story"]}
+        d["objective"] = ch["objective" + suf].format(**V)
+        d["answer_form"] = ch["answer_form" + suf].format(**V)
+        d["telegram"] = ch["telegram"].format(**V)
+        d.update(hints=[h.format(**V) for h in ch["hints"]] if mode == "learn" else [],
+                  answer_sha256=sha(V[ch["answer_key" + suf]]))
         d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"])
         chapters.append(d)
     out = dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,

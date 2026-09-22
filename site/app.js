@@ -334,7 +334,8 @@ function enterGame() { $("landing").hidden = true; renderChapter(); renderErd();
 async function startCompete(season, team) {
   if (!season) { season = Number(prompt("Season number:")); if (!season) return; }
   if (team === undefined) team = (prompt("Team name:") || "").trim();
-  const resuming = !!localStorage.getItem("ritz.compete") && season === JSON.parse(localStorage.getItem("ritz.compete")).season;
+  const saved = JSON.parse(localStorage.getItem("ritz.compete") || "null");
+  const resuming = saved && season === saved.season;
   KEY = "ritz.compete";
   state = resuming ? load() : freshState();
   state.season = season; state.team = team; save(state);
