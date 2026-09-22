@@ -391,8 +391,8 @@ def check_discovery(conn, V, ch):
             assert len(rows) == d["row_count"], \
                 "chapter %s discovery: got %d rows, expected %d (%s)" % (ch["n"], len(rows), d["row_count"], d["query"])
         if "must_contain" in d:
-            needle = d["must_contain"].format(**V)
-            assert needle in str(rows), \
+            needle = d["must_contain"].format(**V)   # case-insensitive: telegrams are upper-cased
+            assert needle.lower() in str(rows).lower(), \
                 "chapter %s discovery: %r not found in %r (%s)" % (ch["n"], needle, rows, d["query"])
 
 

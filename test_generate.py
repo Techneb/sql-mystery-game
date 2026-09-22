@@ -84,6 +84,8 @@ class Discovery(unittest.TestCase):
         conn.execute("INSERT INTO interview VALUES (1,'Marcel Duroc',19120518,'the code is 42')")
         ok = dict(n=1, discovery=[dict(query="SELECT transcript FROM interview WHERE person_name='Marcel Duroc'", must_contain="42")])
         g.check_discovery(conn, {}, ok)   # must not raise
+        ok_case = dict(n=1, discovery=[dict(query="SELECT transcript FROM interview WHERE person_name='Marcel Duroc'", must_contain="THE CODE")])
+        g.check_discovery(conn, {}, ok_case)   # telegram text is upper-cased; the student reads it either way
         bad = dict(n=1, discovery=[dict(query="SELECT transcript FROM interview WHERE person_name='Marcel Duroc'", must_contain="99")])
         with self.assertRaises(AssertionError):
             g.check_discovery(conn, {}, bad)

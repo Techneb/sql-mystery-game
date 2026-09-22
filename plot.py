@@ -41,6 +41,7 @@ CHAPTERS = [
   solution="SELECT id FROM (SELECT id, CASE WHEN time < 600 THEN 'night' WHEN time < 1200 THEN 'morning' WHEN time < 1800 THEN 'afternoon' ELSE 'evening' END AS period FROM telegram WHERE office = 'Ritz' AND date = {theft_date}) AS t WHERE period = 'night'",
   naive="SELECT id FROM telegram WHERE office = 'Ritz' AND date = {theft_date}", naive_rows=None),
  dict(n=8, part=1, construct="RANK() OVER + subquery", tables=["room_service"], answer_key="lupin_alias",
+  discovery=[dict(query="SELECT text FROM telegram WHERE id = {night_telegram_id}", must_contain="{champagne}")],
   solution="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {theft_date} AND checkout > {theft_date} AND suite = (SELECT suite FROM (SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time) AS rk FROM room_service WHERE date = {theft_date}) AS ranked WHERE rk = 1 AND item = '{champagne}' AND time < 600)",
   naive="SELECT DISTINCT suite FROM room_service WHERE date = {theft_date} AND item = '{champagne}' AND time < 600", naive_rows=2),
  dict(n=9, part=2, construct="CTE + JOIN", tables=["train_ticket", "luggage"], answer_key="trunk_no",
@@ -139,8 +140,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
  8: dict(
   title="The First Order Before Dawn",
-  story="'As always my first order before dawn.' Ganimard underlines it. 'A man of habit. The Ritz keeps a room-service ledger. Find me the suite whose FIRST order of the 18th was {champagne}, before six. Not any order. The first.' Senor Ortega, you recall, also likes champagne.",
-  objective="Using room_service for 19120518, rank each suite's orders by time. Find the suite whose rank-1 order is {champagne} before 06:00, then the guest registered in that suite on floor 2 that night.",
+  story="'As always my first order before dawn.' Ganimard underlines it, then taps the telegram itself. 'Read the whole thing this time, clerk -- he names his poison. The Ritz keeps a room-service ledger. Find me the suite whose FIRST order of the 18th matches it, before six. Not any order. The first.' Senor Ortega, you recall, also likes champagne.",
+  objective="Read the whole telegram from chapter 7 -- it names what he always orders first. Then using room_service for 19120518, rank each suite's orders by time and find the suite whose rank-1 order is that, before 06:00, then the guest registered in that suite on floor 2 that night.",
   answer_form="the guest's name",
   hints=[],
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
