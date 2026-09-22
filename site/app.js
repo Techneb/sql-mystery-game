@@ -460,7 +460,43 @@ function applyMood() {
   $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
 }
 
-function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); }
+// Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
+// Passphrase is asked for once per page load (adminUnlocked persists after); ask the course owner
+// for it, it is not committed in plaintext anywhere.
+const ADMIN_PASS_SHA256 = "8ac2a0c1bf87c00e57b1893a1e374c2335ce1b4d16fb029a8fbe84077c1a9f3f";
+let adminUnlocked = false;
+async function unlockAdmin() {
+  if (adminUnlocked) return true;
+  const pass = prompt("Admin passphrase:");
+  if (!pass) return false;
+  adminUnlocked = (await sha256(normalise(pass))) === ADMIN_PASS_SHA256;
+  if (!adminUnlocked) alert("Wrong passphrase.");
+  return adminUnlocked;
+}
+
+async function jumpToChapter(n) {
+  if (!(await unlockAdmin())) return false;
+  noPersist = true;
+  state = freshState();
+  for (let i = 1; i < n; i++) { state.solved.push(i); state.answers[i] = "(debug)"; }
+  if (n > 8) state.part2 = true;
+  enterGame();
+  return true;
+}
+
+async function renderAdminPanel() {
+  if (!location.search.includes("admin") || !(await unlockAdmin())) return;
+  document.getElementById("admin-panel")?.remove();
+  const el = document.createElement("div"); el.id = "admin-panel"; el.className = "admin-panel";
+  el.innerHTML = '<span class="label">ADMIN</span>' +
+    data.chapters.map(c => '<button data-n="' + c.n + '">' + c.n + '</button>').join("") +
+    '<a class="quiet" target="_blank" href="leaderboard.html' +
+    (APPS_SCRIPT_URL ? "?data=" + encodeURIComponent(APPS_SCRIPT_URL) : "") + '">Leaderboard</a>';
+  el.querySelectorAll("button").forEach(b => b.onclick = () => jumpToChapter(Number(b.dataset.n)));
+  document.body.appendChild(el);
+}
+
+function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel(); }
 
 async function boot() {
   const params = new URLSearchParams(location.search);
@@ -475,13 +511,17 @@ async function boot() {
   if (!season && savedLive && !part1Done(saved) && !debugChapter) season = saved.season;
   if (season) seasonData = await fetchSeason(season);
   const resuming = !!(seasonData && savedLive && saved.season === season && !debugChapter);
+  // debugChapter is gated by unlockAdmin() (same passphrase as the ?admin panel): only asked when
+  // ?chapter=N is actually present, so a plain ?season= link never prompts for anything.
+  let debugOk = false;
   if (resuming) {
     key = storageKey("compete");
     state = saved;
     await loadSeason();
   } else {
     data = await (await fetch("chapters.json")).json();
-    if (debugChapter >= 1 && debugChapter <= 12) {
+    debugOk = debugChapter >= 1 && debugChapter <= 12 && await unlockAdmin();
+    if (debugOk) {
       noPersist = true;
       state = freshState();
       for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
@@ -495,7 +535,7 @@ async function boot() {
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = enterGame;
   // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
-  if (resuming || (!linked && state.solved.length) || debugChapter) enterGame();
+  if (resuming || (!linked && state.solved.length) || debugOk) enterGame();
   if (!resuming) offerCompete();
   $("btn-back").onclick = backToInvestigation;
   $("masthead-chapter").onclick = e => {

@@ -27,6 +27,12 @@ Then open `http://localhost:8000/`. `file://` does not work: the page fetches `m
 
 Self-test (checks the normalisation fixture and that the database loaded): `http://localhost:8000/?selftest`.
 
+Jump straight to a chapter without solving the earlier ones: `?chapter=N` (1-12). Add `?admin` for a
+small panel to switch chapters live, in either mode, plus a link to the leaderboard. Both are gated
+behind a passphrase (`ADMIN_PASS_SHA256` in `site/app.js`, hash only -- ask the course owner for the
+passphrase itself), asked once per page load. Neither touches `localStorage`, so it never disturbs
+real progress.
+
 Tests for the site's pure functions (no browser needed): `node --test test_site.mjs`.
 
 ## Deploying
