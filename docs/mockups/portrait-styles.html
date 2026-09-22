@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ritz Affair &mdash; portrait styles</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #f3ead7; --card: #fffdf5; --ink: #1c1a17; --red: #8a2b2b; --gold: #c9a35a; --rule: #c9b98f;
+          --night: #131820; --slate: #1d2531; --pale: #e6dfcb; --sapphire: #3f6fb5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.45 "Cormorant Garamond", Georgia, serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font: 900 clamp(30px, 5vw, 46px)/1.05 "Playfair Display", serif; margin: 0; }
+  h2 { font: 700 24px/1.15 "Playfair Display", serif; margin: 0; }
+  h3 { font: 700 20px/1.15 "Playfair Display", serif; margin: 0 0 4px; }
+  .sub { font-size: 12px; letter-spacing: 2px; margin: 6px 0 18px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; border-top: 1px solid var(--ink); padding-top: 10px; margin: 36px 0 16px; }
+  .num { font: 900 22px "Playfair Display", serif; color: var(--red); }
+  .note { font-style: italic; opacity: .8; }
+  .label { font-weight: 700; letter-spacing: 1px; font-size: 11px; }
+  code { font: 13px "Special Elite", monospace; }
+
+  .style { display: grid; grid-template-columns: 240px 240px 1fr; gap: 18px; align-items: start; margin: 0 0 34px; }
+  .plate { padding: 10px; }
+  .plate.day { background: var(--card); border: 1px solid var(--rule); }
+  .plate.night { background: var(--slate); border: 1px solid #2a3442; color: var(--pale); }
+  .plate .cap { font-size: 11px; letter-spacing: 2px; text-align: center; margin-top: 8px; }
+  .frame { display: block; width: 100%; height: auto; }
+  .plate.day .frame { box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.18); }
+  .plate.night .frame { box-shadow: 0 6px 16px rgba(0,0,0,.6); }
+  /* Night edition: the same asset, one CSS filter. The grisaille shows why a monochrome source is the easy case. */
+  .plate.night .frame { filter: brightness(.72) sepia(.45) hue-rotate(188deg) saturate(1.15) contrast(1.05); }
+  .painters { font-size: 14px; font-style: italic; opacity: .85; margin: 2px 0 8px; }
+  .why { margin: 0 0 8px; }
+  .prompt { background: var(--card); border-left: 3px solid var(--gold); padding: 8px 10px; font: 13px/1.5 "Special Elite", monospace; white-space: pre-wrap; }
+  .verdict { font-size: 14px; margin-top: 8px; }
+  .verdict b { color: var(--red); }
+
+  .sw { display: inline-block; width: 92px; height: 34px; margin: 0 6px 6px 0; font-size: 10px; letter-spacing: 1px; text-align: center; line-height: 34px; color: #fff; text-shadow: 0 0 3px #000; }
+  .questions ol li { margin: 8px 0; }
+
+  @media (max-width: 820px) {
+    .style { grid-template-columns: 1fr 1fr; }
+    .style .text { grid-column: 1 / -1; }
+  }
+  @media (max-width: 520px) { .style { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Six ways to paint Lord Ashcombe</h1>
+  <div class="sub">PARIS &mdash; 22 SEPTEMBER 2026 &mdash; PORTRAIT STYLE BOARD &mdash; FOR THE COURSE OWNER TO CHOOSE</div>
+  <p>Follow-up to <i>illustrations.html</i> section 7. The silhouette portraits are out; the suspects get painted portraits with a high level of detail. This board renders <b>one sitter, drawn once</b>, through six treatments, each in the day edition (cream paper) and the night edition (the same file under one CSS filter, as the site would do it). What differs between the six is exactly what a style choice fixes: palette, light, finish and surface.</p>
+  <p class="note">These are procedural stand-ins, not paintings: a shaded vector bust pushed through SVG filters for canvas weave, brush displacement, a single gaslight, autochrome grain and pastel bloom. They show the <i>register</i> of each style faithfully; the real assets, commissioned or generated from the prompt under each one, would carry the fine detail (skin, whiskers, cloth) that no filter adds. Choose the register here, judge the detail on the first real portrait.</p>
+
+  <!-- The sitter, drawn once. Every plate below is <use href="#ashcombe"> with a different filter. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <radialGradient id="g-skin" cx="42%" cy="38%" r="70%">
+        <stop offset="0" stop-color="#f1d3b2"/><stop offset=".55" stop-color="#d8a982"/><stop offset="1" stop-color="#8d5a3c"/>
+      </radialGradient>
+      <linearGradient id="g-neck" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8d5a3c"/><stop offset="1" stop-color="#c7996f"/>
+      </linearGradient>
+      <radialGradient id="g-bg" cx="35%" cy="30%" r="90%">
+        <stop offset="0" stop-color="#5a4a3a"/><stop offset=".6" stop-color="#2c2620"/><stop offset="1" stop-color="#16120e"/>
+      </radialGradient>
+      <linearGradient id="g-coat" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#2a2622"/><stop offset=".5" stop-color="#0f0d0b"/><stop offset="1" stop-color="#1c1917"/>
+      </linearGradient>
+      <linearGradient id="g-lapel" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#3a3430"/><stop offset="1" stop-color="#151210"/>
+      </linearGradient>
+      <linearGradient id="g-hair" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6b5a4a"/><stop offset=".5" stop-color="#3a2e24"/><stop offset="1" stop-color="#1e1712"/>
+      </linearGradient>
+      <radialGradient id="id-vign" cx="50%" cy="45%" r="75%">
+        <stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/>
+      </radialGradient>
+
+      <symbol id="ashcombe" viewBox="0 0 300 380">
+        <rect width="300" height="380" fill="url(#g-bg)"/>
+        <!-- shoulders and coat -->
+        <path d="M-10 400 C20 300 70 285 118 272 L150 300 L182 272 C230 285 280 300 310 400 Z" fill="url(#g-coat)"/>
+        <path d="M118 272 L150 300 L128 360 L92 300 Z" fill="url(#g-lapel)"/>
+        <path d="M182 272 L150 300 L172 360 L208 300 Z" fill="url(#g-lapel)" transform="translate(0 0)"/>
+        <!-- shirt and cravat -->
+        <path d="M128 262 L150 292 L172 262 L164 276 L150 300 L136 276 Z" fill="#efe6d6"/>
+        <path d="M143 278 L157 278 L162 296 L150 318 L138 296 Z" fill="#5a1d1d"/>
+        <!-- neck -->
+        <path d="M126 222 L128 262 C138 276 162 276 172 262 L174 222 Z" fill="url(#g-neck)"/>
+        <!-- ears -->
+        <ellipse cx="90" cy="176" rx="11" ry="17" fill="#c7906a"/><ellipse cx="210" cy="176" rx="11" ry="17" fill="#a9724f"/>
+        <!-- head -->
+        <path d="M150 88 C195 88 214 128 212 176 C210 224 186 254 150 256 C114 254 90 224 88 176 C86 128 105 88 150 88 Z" fill="url(#g-skin)"/>
+        <!-- shading: right side of the face away from the light, under the chin, cheekbones -->
+        <path d="M150 88 C195 88 214 128 212 176 C210 224 186 254 150 256 L150 246 C178 244 196 218 198 176 C200 132 182 100 150 96 Z" fill="#6f4327" opacity=".28"/>
+        <ellipse cx="150" cy="250" rx="26" ry="9" fill="#6f4327" opacity=".35"/>
+        <ellipse cx="116" cy="188" rx="16" ry="10" fill="#b8734d" opacity=".25"/>
+        <ellipse cx="184" cy="188" rx="16" ry="10" fill="#8a4f30" opacity=".35"/>
+        <!-- hair: receding, parted, sideburns -->
+        <path d="M88 150 C86 110 110 84 150 82 C190 82 214 108 212 150 C206 128 196 118 178 112 C160 106 150 104 130 108 C110 112 96 126 88 150 Z" fill="url(#g-hair)"/>
+        <path d="M88 150 C92 150 98 142 104 138 L100 190 L92 192 Z" fill="url(#g-hair)"/>
+        <path d="M212 150 C208 150 202 142 196 138 L200 190 L208 192 Z" fill="url(#g-hair)"/>
+        <path d="M112 112 C130 100 165 100 186 112 C170 104 132 104 112 112 Z" fill="#8f7b66" opacity=".5"/>
+        <!-- brows -->
+        <path d="M108 150 C118 142 132 142 142 148 C130 146 118 148 108 152 Z" fill="#2e2119"/>
+        <path d="M158 148 C168 142 182 142 192 150 C182 148 170 146 158 150 Z" fill="#2e2119"/>
+        <!-- eyes -->
+        <path d="M110 164 C118 156 134 156 142 164 C134 170 118 170 110 164 Z" fill="#f4efe6"/>
+        <path d="M158 164 C166 156 182 156 190 164 C182 170 166 170 158 164 Z" fill="#efe8dc"/>
+        <circle cx="127" cy="164" r="5.2" fill="#4d3a2a"/><circle cx="175" cy="164" r="5.2" fill="#4d3a2a"/>
+        <circle cx="127" cy="164" r="2.4" fill="#100b08"/><circle cx="175" cy="164" r="2.4" fill="#100b08"/>
+        <circle cx="125" cy="162" r="1.1" fill="#fff"/><circle cx="173" cy="162" r="1.1" fill="#fff"/>
+        <path d="M110 164 C118 156 134 156 142 164" fill="none" stroke="#3a2a1e" stroke-width="1.4"/>
+        <path d="M158 164 C166 156 182 156 190 164" fill="none" stroke="#3a2a1e" stroke-width="1.4"/>
+        <path d="M112 172 C120 176 134 176 142 172" fill="none" stroke="#6f4327" stroke-width=".8" opacity=".6"/>
+        <path d="M158 172 C166 176 180 176 188 172" fill="none" stroke="#6f4327" stroke-width=".8" opacity=".6"/>
+        <!-- nose -->
+        <path d="M150 168 C154 184 160 196 162 206 C158 212 146 212 140 206 C144 198 148 186 150 168 Z" fill="#c99168" opacity=".55"/>
+        <path d="M152 170 C156 186 162 198 163 206 C160 210 154 212 150 210" fill="none" stroke="#7a4a2c" stroke-width="1.6" opacity=".7"/>
+        <path d="M140 206 C144 210 156 210 160 206" fill="none" stroke="#5a3520" stroke-width="1.4"/>
+        <ellipse cx="141" cy="205" rx="3.2" ry="2" fill="#5a3520" opacity=".7"/><ellipse cx="159" cy="205" rx="3.2" ry="2" fill="#5a3520" opacity=".7"/>
+        <!-- moustache, 1912 -->
+        <path d="M150 216 C138 208 122 212 112 224 C124 226 136 228 150 224 C164 228 176 226 188 224 C178 212 162 208 150 216 Z" fill="#2a1d15"/>
+        <path d="M150 218 C140 212 128 214 118 222 C128 222 138 223 150 220 C162 223 172 222 182 222 C172 214 160 212 150 218 Z" fill="#4a382b" opacity=".6"/>
+        <!-- mouth and chin -->
+        <path d="M132 232 C142 238 158 238 168 232" fill="none" stroke="#7a3a2a" stroke-width="2"/>
+        <path d="M136 236 C144 242 156 242 164 236" fill="none" stroke="#c98a72" stroke-width="1" opacity=".7"/>
+        <ellipse cx="150" cy="246" rx="12" ry="3" fill="#f0d0b0" opacity=".35"/>
+        <!-- the light: a soft warm bloom on the lit side -->
+        <ellipse cx="118" cy="150" rx="34" ry="46" fill="#fff0da" opacity=".16"/>
+        <!-- pin: a small red enamel in the lapel, the one accent -->
+        <circle cx="118" cy="312" r="3" fill="#8a2b2b"/>
+        <rect width="300" height="380" fill="url(#id-vign)"/>
+      </symbol>
+
+      <!-- A. Grisaille oil: one hue, full modelling, canvas weave, glazed highlight bloom -->
+      <filter id="f-grisaille" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="matrix" values="0.33 0.55 0.12 0 0.02  0.28 0.46 0.10 0 0.0  0.20 0.34 0.08 0 -0.02  0 0 0 1 0" result="umber"/>
+        <feComponentTransfer in="umber" result="glazed"><feFuncR type="gamma" amplitude="1" exponent="1.15"/><feFuncG type="gamma" amplitude="1" exponent="1.2"/><feFuncB type="gamma" amplitude="1" exponent="1.3"/></feComponentTransfer>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.35" numOctaves="2" seed="4" result="weave"/>
+        <feColorMatrix in="weave" type="matrix" values="0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .35 .65" result="weaveGrey"/>
+        <feBlend in="glazed" in2="weaveGrey" mode="multiply" result="canvas"/>
+        <feGaussianBlur in="canvas" stdDeviation=".35"/>
+      </filter>
+
+      <!-- B. Belle Epoque academic: deep ground, smooth glazes, high contrast on the lit planes -->
+      <filter id="f-academic" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation=".7" result="glaze"/>
+        <feComponentTransfer in="glaze" result="deep"><feFuncR type="gamma" amplitude="1.05" exponent="1.35"/><feFuncG type="gamma" amplitude="1" exponent="1.45"/><feFuncB type="gamma" amplitude=".95" exponent="1.6"/></feComponentTransfer>
+        <feColorMatrix in="deep" type="saturate" values="1.15" result="rich"/>
+        <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="9" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .18 .82" result="grainGrey"/>
+        <feBlend in="rich" in2="grainGrey" mode="multiply"/>
+      </filter>
+
+      <!-- C. Society bravura: loose, directional strokes everywhere; the face is re-laid tight on top (see the plate) -->
+      <filter id="f-bravura-loose" x="-.05" y="-.05" width="1.1" height="1.1" color-interpolation-filters="sRGB">
+        <feTurbulence type="turbulence" baseFrequency="0.012 0.07" numOctaves="3" seed="7" result="strokes"/>
+        <feDisplacementMap in="SourceGraphic" in2="strokes" scale="22" xChannelSelector="R" yChannelSelector="G" result="laid"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.05 0.9" numOctaves="2" seed="3" result="bristle"/>
+        <feColorMatrix in="bristle" type="matrix" values="0 0 0 0 .55 0 0 0 0 .55 0 0 0 0 .55 0 0 0 .5 .5" result="bristleGrey"/>
+        <feBlend in="laid" in2="bristleGrey" mode="overlay" result="paint"/>
+        <feColorMatrix in="paint" type="saturate" values="1.25"/>
+      </filter>
+      <filter id="f-bravura-tight" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feTurbulence type="turbulence" baseFrequency="0.03 0.12" numOctaves="2" seed="7" result="strokes"/>
+        <feDisplacementMap in="SourceGraphic" in2="strokes" scale="5" xChannelSelector="R" yChannelSelector="G" result="laid"/>
+        <feColorMatrix in="laid" type="saturate" values="1.2" result="s"/>
+        <feComponentTransfer in="s"><feFuncR type="linear" slope="1.08" intercept="0.02"/><feFuncG type="linear" slope="1.05"/><feFuncB type="linear" slope="1"/></feComponentTransfer>
+      </filter>
+      <radialGradient id="g-facemask" cx="50%" cy="44%" r="32%"><stop offset=".7" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient>
+      <mask id="m-face" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#g-facemask)"/></mask>
+
+      <!-- D. Tenebrist: one gaslight, upper left; everything else falls to near-black -->
+      <filter id="f-tenebrist" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="soft"/>
+        <feDiffuseLighting in="soft" surfaceScale="3" diffuseConstant="1.3" lighting-color="#ffd9a0" result="light">
+          <fePointLight x="70" y="40" z="180"/>
+        </feDiffuseLighting>
+        <feComposite in="light" in2="SourceGraphic" operator="arithmetic" k1="1.15" k2="0" k3="0" k4="0" result="lit"/>
+        <feComponentTransfer in="lit" result="dark"><feFuncR type="gamma" amplitude="1" exponent="1.5"/><feFuncG type="gamma" amplitude=".92" exponent="1.7"/><feFuncB type="gamma" amplitude=".8" exponent="2.1"/></feComponentTransfer>
+        <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="11" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .22 .78" result="grainGrey"/>
+        <feBlend in="dark" in2="grainGrey" mode="multiply"/>
+      </filter>
+
+      <!-- E. Autochrome: starch-grain pointillism in three dyes, muted, a touch soft -->
+      <filter id="f-autochrome" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="soft"/>
+        <feColorMatrix in="soft" type="matrix" values="0.85 0.10 0.05 0 0.06  0.08 0.78 0.10 0 0.05  0.05 0.12 0.72 0 0.09  0 0 0 1 0" result="dyes"/>
+        <feColorMatrix in="dyes" type="saturate" values=".75" result="muted"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="21" result="starch"/>
+        <feColorMatrix in="starch" type="matrix" values="1.1 0 0 0 -.05  0 1.1 0 0 -.05  0 0 1.1 0 -.05  0 0 0 .2 .8" result="starchColor"/>
+        <feBlend in="muted" in2="starchColor" mode="soft-light" result="plate"/>
+        <feComponentTransfer in="plate"><feFuncR type="linear" slope=".9" intercept=".05"/><feFuncG type="linear" slope=".9" intercept=".04"/><feFuncB type="linear" slope=".88" intercept=".06"/></feComponentTransfer>
+      </filter>
+
+      <!-- F. Pastel: powdery bloom, chalk grain, the paper showing through -->
+      <filter id="f-pastel" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="bloom"/>
+        <feComponentTransfer in="bloom" result="lift"><feFuncR type="linear" slope=".78" intercept=".22"/><feFuncG type="linear" slope=".76" intercept=".2"/><feFuncB type="linear" slope=".72" intercept=".18"/></feComponentTransfer>
+        <feColorMatrix in="lift" type="saturate" values=".85" result="chalky"/>
+        <feTurbulence type="fractalNoise" baseFrequency="1.9 1.2" numOctaves="2" seed="5" result="tooth"/>
+        <feColorMatrix in="tooth" type="matrix" values="0 0 0 0 .7 0 0 0 0 .68 0 0 0 0 .62 0 0 0 .4 .6" result="toothPaper"/>
+        <feBlend in="chalky" in2="toothPaper" mode="multiply" result="drawn"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.04 0.5" numOctaves="1" seed="8" result="strokeNoise"/>
+        <feDisplacementMap in="drawn" in2="strokeNoise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="sec-head"><span class="num">1</span><h2>The six treatments</h2><span class="note">same sitter, same pose, same key light, in every plate</span></div>
+
+  <!-- A -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-grisaille)"/></svg>
+      <div class="cap">A &middot; GRISAILLE OIL &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-grisaille)"/></svg>
+      <div class="cap">A &middot; GRISAILLE OIL &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>A. Grisaille oil</h3>
+      <div class="painters">Monochrome oil in raw umber or Payne's grey; look at Ingres's underpaintings, Van Dyck's grisaille sketches, and the grey-brown reproductions in <i>L'Illustration</i>.</div>
+      <p class="why">Full old-master modelling in a single hue. Because the source carries no colour of its own, the night edition is one filter with nothing to fight: this is the only style where day and night come out as one coherent picture rather than a tinted photograph. Sits on cream paper and prints on the certificate without a second version.</p>
+      <div class="prompt">Bust portrait of an English peer, about 55, 1912, three-quarter view, receding grey-brown hair, full moustache, wing collar, dark frock coat. Grisaille oil painting in raw umber monochrome, smooth glazes, fine canvas weave visible, single soft key light from upper left, neutral expression, dark plain ground. Museum reproduction, no frame, no text.</div>
+      <div class="verdict"><b>Recommended.</b> Cheapest to maintain (one file per sitter, one filter), most at home with the ink drawings around it.</div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-academic)"/></svg>
+      <div class="cap">B &middot; ACADEMIC &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-academic)"/></svg>
+      <div class="cap">B &middot; ACADEMIC &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>B. Belle Epoque academic portrait</h3>
+      <div class="painters">Leon Bonnat, Carolus-Duran, Jean-Jacques Henner, Jules Lefebvre: the Salon portraitists of the Third Republic.</div>
+      <p class="why">Deep ground, chiaroscuro, tight rendering of skin, whiskers and starched linen, formal dress and a formal face. Reads as the official portrait a prefecture would keep in a file, which is exactly what the case board pretends to be. Full colour, so the night filter turns it cold and photographic; acceptable, less elegant than A.</p>
+      <div class="prompt">Formal oil portrait in the manner of Leon Bonnat, 1912. Bust of an English peer, about 55, three-quarter view, receding hair, full moustache, wing collar, dark frock coat, small red enamel pin. Dark brown ground, strong chiaroscuro from upper left, highly finished skin and linen, restrained warm palette, neutral expression. Museum reproduction, no frame, no text.</div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><rect width="300" height="380" fill="#1a1512"/><use href="#ashcombe" filter="url(#f-bravura-loose)"/><use href="#ashcombe" filter="url(#f-bravura-tight)" mask="url(#m-face)"/></svg>
+      <div class="cap">C &middot; SOCIETY BRAVURA &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><rect width="300" height="380" fill="#1a1512"/><use href="#ashcombe" filter="url(#f-bravura-loose)"/><use href="#ashcombe" filter="url(#f-bravura-tight)" mask="url(#m-face)"/></svg>
+      <div class="cap">C &middot; SOCIETY BRAVURA &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>C. Society bravura</h3>
+      <div class="painters">John Singer Sargent, Giovanni Boldini, Antonio de La Gandara, Philip de Laszlo: the painters the Ritz's guests actually sat for.</div>
+      <p class="why">The face and hands finished tight, everything else laid in with fast, visible, directional strokes. Glamour and speed: this is Lupin's world, and it is the one style that gives each suspect a temperament through brushwork alone. Most demanding of the artist or the model; the loose passages must still read at 60 px on the case board.</p>
+      <div class="prompt">Society portrait in the manner of John Singer Sargent and Boldini, 1912. Bust of an English peer, about 55, three-quarter view, receding hair, full moustache, wing collar, dark frock coat. Face finely finished; coat, collar and background in loose, confident, visible brushstrokes; dark warm ground with a single soft key light from upper left; neutral expression. Museum reproduction, no frame, no text.</div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-tenebrist)"/></svg>
+      <div class="cap">D &middot; TENEBRIST &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-tenebrist)"/></svg>
+      <div class="cap">D &middot; TENEBRIST &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>D. Tenebrist</h3>
+      <div class="painters">Rembrandt, Georges de La Tour, Ribera; in 1912 terms, the "Rembrandt lighting" of the Nadar and Reutlinger photographic studios.</div>
+      <p class="why">One warm source, upper left, and the face emerging from near-black. It is the desk lamp and the gaslight already in the spec's palette, so it ties the portraits to the room the student is sitting in, and the night edition barely has to change. The cost: on cream paper by day a very dark rectangle is heavy, and six of them on a board is a wall.</p>
+      <div class="prompt">Tenebrist oil portrait in the manner of Rembrandt, 1912 sitter. Bust of an English peer, about 55, three-quarter view, receding hair, full moustache, wing collar, dark frock coat. Single warm candle-like light from upper left, face and collar lit, everything else falling into deep brown-black shadow, fine grain, neutral expression. Museum reproduction, no frame, no text.</div>
+    </div>
+  </div>
+
+  <!-- E -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-autochrome)"/></svg>
+      <div class="cap">E &middot; AUTOCHROME &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-autochrome)"/></svg>
+      <div class="cap">E &middot; AUTOCHROME &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>E. Autochrome tint</h3>
+      <div class="painters">The Lumiere brothers' autochrome plates (1907 onward); Albert Kahn's <i>Archives de la Planete</i>; the Gervais-Courtellemont Paris portraits.</div>
+      <p class="why">Not a painting: a colour photograph the way 1912 could make one, with the dyed starch grain that gives autochromes their pointillist shimmer and muted, slightly wrong colour. The most period-exact detailed likeness a newspaper could have run, and the only style that says "evidence" rather than "portrait". Day and night both work; the grain hides generation artefacts well.</p>
+      <div class="prompt">Autochrome Lumiere colour photograph, 1912, studio portrait. Bust of an English peer, about 55, three-quarter view, receding hair, full moustache, wing collar, dark frock coat. Soft daylight from upper left, muted desaturated colour, visible fine coloured starch grain, slight softness, plain dark backdrop, neutral expression. Glass plate scan, no frame, no text.</div>
+    </div>
+  </div>
+
+  <!-- F -->
+  <div class="style">
+    <div class="plate day">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-pastel)"/></svg>
+      <div class="cap">F &middot; PASTEL &middot; DAY</div>
+    </div>
+    <div class="plate night">
+      <svg class="frame" viewBox="0 0 300 380"><use href="#ashcombe" filter="url(#f-pastel)"/></svg>
+      <div class="cap">F &middot; PASTEL &middot; NIGHT</div>
+    </div>
+    <div class="text">
+      <h3>F. Pastel</h3>
+      <div class="painters">Maurice Quentin de La Tour, Rosalba Carriera; nearer 1912, Degas's and Helleu's pastel heads.</div>
+      <p class="why">Powdery, luminous, highly worked faces with the paper's tooth showing through. The softest and lightest of the six; it flatters the Comtesse and sits beautifully on cream. It is also the least like a police file, and the night filter dulls the chalk to plaster. A candidate for the victim's portrait alone, if styles were mixed.</p>
+      <div class="prompt">Pastel portrait on toned paper in the manner of Quentin de La Tour, 1912 sitter. Bust of an English peer, about 55, three-quarter view, receding hair, full moustache, wing collar, dark frock coat. Soft powdery modelling, visible paper tooth, luminous highlights, light warm palette, neutral expression, plain ground. Museum reproduction, no frame, no text.</div>
+    </div>
+  </div>
+
+  <div class="sec-head"><span class="num">2</span><h2>How the chosen style ships</h2></div>
+  <p><b>Assets.</b> One WebP per sitter (six suspects, Ganimard, the Comtesse; Lupin himself never), about 600 x 800 px and 40 to 80 KB each. Commissioned from one brief, or generated from the prompt above with only the sitter's line changed, so pose, light and finish stay constant across the cast and no face reads guiltier than another. <b>Night.</b> The same file under the CSS filter these plates use (<code>brightness(.72) sepia(.45) hue-rotate(188deg) saturate(1.15)</code>); no second set. <b>On the paper.</b> An oval or rounded-corner vignette, a halftone overlay in <code>mix-blend-mode: multiply</code>, and a hairline rule, so the portrait reads as a reproduction in the newspaper rather than a photo pasted on it. <b>On the case board.</b> The same file at about 60 px with the halftone stronger; styles C and F should be checked at that size before the whole cast is produced.</p>
+
+  <div class="sec-head questions"><span class="num">3</span><h2>Decisions</h2></div>
+  <ol class="questions">
+    <li><b>Style.</b> A to F. Two can be combined (one for the file portraits, another for the Comtesse alone), at the cost of a second brief.</li>
+    <li><b>Source.</b> Commissioned or generated. Either way the first delivery should be Ashcombe alone, judged at chapter-header size and at case-board size, before the rest of the cast.</li>
+    <li><b>Blakeney.</b> A face from chapter I like everyone else, or only after chapter VIII names him.</li>
+    <li><b>Where.</b> Chapter header only, case board only, or both.</li>
+  </ol>
+</div>
+</body>
+</html>
