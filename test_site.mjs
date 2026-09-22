@@ -66,7 +66,7 @@ test("tables are revealed chapter by chapter", () => {
 });
 
 const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
-                      bigTables: ["person", "cab_ride"], revealed: new Set(["police_report"]), norm: "", lines: 1 });
+                      bigTables: ["person", "cab_ride"], revealed: new Set(["police_report"]), norm: "", lines: 1, hour: 12 });
 
 test("badges fire on the right query shapes and only once", () => {
   const q = s => ({ ...base(), sql: s, rows: 3 });

@@ -92,7 +92,7 @@ function renderWitnesses() {
   const el = $("witnesses"); el.innerHTML = "";
   if (awaitingCode(state) || state.solved.includes(12)) return;
   ch.hints.slice(0, opened).forEach(h => { const d = document.createElement("div"); d.className = "hint"; d.textContent = h; el.appendChild(d); });
-  if (opened < 3) {
+  if (opened < ch.hints.length) {
     const b = document.createElement("button"); b.textContent = WITNESS[opened] + (opened === 2 ? " (the query, with blanks)" : "");
     b.onclick = () => { state.hints[ch.n] = opened + 1; save(state); renderWitnesses(); };
     el.appendChild(b);
@@ -173,7 +173,7 @@ export const BADGES = [
   ["Typo", "Five errors in a row. The typewriter is not to blame.", c => c.event === "query" && c.error && c.state.errorStreak >= 5],
   ["Persistent", "Twenty queries in one chapter.", c => c.event === "query" && (c.state.queries[c.chapter] || 0) >= 20],
   ["Sniper", "A chapter solved on the first query.", c => c.event === "solve" && c.state.queries[c.chapter] === 1],
-  ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && new Date().getHours() < 5],
+  ["Insomniac", "A query run between midnight and five.", c => c.event === "query" && c.hour < 5],
   ["Trespasser", "Queried a table the evidence has not reached yet.", c => c.event === "query" && tablesIn(c.sql).some(t => !c.revealed.has(t) && t !== "sqlite_master")],
   ["Archivist", "Read sqlite_master. The card catalogue, in other words.", c => c.event === "query" && /sqlite_master/i.test(c.sql)],
   ["Anagram", "Accused Paul Sernine. Lupin is vain, not stupid.", c => c.event === "answer" && c.norm === "paul sernine"],
@@ -224,7 +224,7 @@ function renderCertificate() {
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
            bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), revealed: visibleTables(data.chapters, state),
-           norm: "", lines: state.lastQueryLines, ...extra };
+           norm: "", lines: state.lastQueryLines, hour: new Date().getHours(), ...extra };
 }
 
 function renderBoard() {
