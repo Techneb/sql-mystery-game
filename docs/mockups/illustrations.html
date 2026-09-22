@@ -429,6 +429,21 @@ section { margin: 44px 0; }
     <li><b>Masthead date.</b> Advance to 19 May for Part II, or keep 18 May throughout.</li>
   </ol>
 </section>
+
+<!-- ===================== 7. PORTRAIT STYLES ===================== -->
+<section>
+  <div class="sec-head"><span class="num">7</span><h2>Portraits as paintings</h2><span class="note">added 2026-09-22: the silhouettes above are out; rendered examples in <a href="portrait-styles.html">portrait-styles.html</a></span></div>
+  <p style="font-size:15px">The course owner wants the suspects painted, with a high level of detail, not contoured. Candidate styles, all period-plausible for a Paris hotel in 1912 and all reproducible as a newspaper would have reproduced a painting (rotogravure: soft, warm, slightly grainy). Whatever is picked applies to all six suspects plus Ganimard and the Comtesse, in the same pose family (three-quarter bust, neutral expression, same key light), so no face reads guiltier than another.</p>
+  <ol style="font-size:15px">
+    <li><b>Grisaille oil</b> (monochrome oil, umber or Payne's grey, full modelling, glazed highlights). Detailed like an old master, single hue: it recolours for the night edition with one CSS filter, exactly as the ink drawings do, and prints well. <i>Recommended.</i></li>
+    <li><b>Belle Epoque academic portrait</b> (Bonnat, Carolus-Duran): dark ground, chiaroscuro, tight rendering of skin and starched linen, formal dress. Reads as the official portrait a prefecture would hold on file.</li>
+    <li><b>Society bravura</b> (Sargent, Boldini): high finish on face and hands, loose virtuoso strokes on fabric and background. The glamour of the Ritz; flatters Lupin's world.</li>
+    <li><b>Tenebrist</b> (Rembrandt, La Tour): one warm light source, face emerging from near-black. Ties directly to the gaslight motif and to the night palette; the day edition would run it on cream with a paper texture over the dark.</li>
+    <li><b>Autochrome tint</b> (Lumiere plates, 1907 onward): a hand-tinted photographic look, pointillist grain, muted colour. Not a painting but the most period-exact detailed portrait a 1912 paper could print.</li>
+    <li><b>Pastel</b> (Quentin de La Tour, Degas): powdery, luminous, highly worked faces. Softest of the set; suits the Comtesse, may look too gentle for a police file.</li>
+  </ol>
+  <p style="font-size:15px"><b>Production notes.</b> Painted portraits are raster assets (one WebP per person, about 600 x 800 px, 40 to 80 KB each, ten files); the day/night switch is a CSS <code>filter</code> (sepia, hue-rotate towards sapphire, lowered brightness) on the same file, so no second set. An oval vignette and a halftone overlay in <code>mix-blend-mode: multiply</code> seat them on the paper. Source: commissioned, or generated from one shared prompt template that fixes pose, light and finish and varies only the sitter. Open questions carried over from section 6: whether Blakeney gets a face before chapter VIII, and whether the case board keeps small silhouettes while the chapter header carries the painting.</p>
+</section>
 </div>
 </body>
 </html>

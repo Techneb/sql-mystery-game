@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -98,4 +98,33 @@ test("rank thresholds", () => {
   assert.equal(rank(61), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 }; s.hints = { 2: 1 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12, hints: 1 });
+});
+
+test("compete mode runs Part I only and never asks for the Part II code", () => {
+  const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha" };
+  assert.equal(currentChapter(s, data.chapters).n, 1);
+  assert.ok(!competeDone(s));
+  s.solved = [1, 2, 3, 4, 5, 6, 7, 8];
+  assert.equal(currentChapter(s, data.chapters).n, 8);
+  assert.ok(part1Done(s) && competeDone(s) && !awaitingCode(s));
+  const learn = { ...freshState(), solved: [1, 2, 3, 4, 5, 6, 7, 8] };
+  assert.ok(awaitingCode(learn) && !competeDone(learn));
+  assert.equal(storageKey("compete"), "ritz.compete");
+  assert.equal(storageKey("learn"), "ritz.learn");
+  assert.notEqual(storageKey("compete"), storageKey("learn"));
+});
+
+test("compete events carry the Part I totals the leaderboard scores", () => {
+  const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha", solved: [1, 2, 3],
+              queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, hints: { 2: 1, 10: 3 }, wrong: { 1: 2, 3: 1, 11: 9 } };
+  assert.deepEqual(competeStats(s), { queries: 15, hints: 1, wrong: 3 });
+  assert.deepEqual(eventPayload(s, "progress", 3),
+    { event: "progress", team: "Alpha", season: 7, chapter: 3, hints: 1, wrong: 3, queries: 15 });
+  assert.equal(eventPayload(s, "start", 0).chapter, 3, "chapter defaults to the number solved");
+  assert.equal(eventPayload({ ...freshState(), team: "B", season: 1 }, "start", 0).chapter, 0);
+  assert.equal(fmtTime(0), "00:00");
+  assert.equal(fmtTime(4000), "00:04");
+  assert.equal(fmtTime(124000), "02:04");
+  assert.equal(fmtTime(3600000), "60:00");
+  assert.equal(fmtTime(-500), "00:00");
 });

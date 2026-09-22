@@ -19,7 +19,11 @@
     <p>You are the clerk. Your only weapon is SQL.</p>
     <div class="landing-buttons">
       <button id="btn-investigate" disabled>Investigate</button>
-      <button id="btn-compete" disabled>Compete</button>
+      <button id="btn-compete" disabled title="The season has not opened yet. Ask your teacher for the season link.">Compete</button>
+    </div>
+    <div id="compete-form" class="compete-form" hidden>
+      <div class="row"><span class="label">TEAM</span><input id="team" autocomplete="off" maxlength="40" placeholder="Both your names, or a nom de guerre"><button id="btn-start">Start the clock</button></div>
+      <p id="compete-note" class="muted"></p>
     </div>
     <p id="status" class="muted">Loading the archives...</p>
   </div>
@@ -28,6 +32,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">PARIS &mdash; <span id="masthead-date">18 MAY 1912</span> &mdash; THE RITZ AFFAIR &mdash; <span id="masthead-chapter" class="chapter-menu-toggle">CHAPTER I OF VIII</span></div>
+  <div id="compete-info" class="mast-sub compete-info" hidden></div>
   <div id="chapter-menu" class="chapter-menu" hidden></div>
 </header>
 

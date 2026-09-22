@@ -15,33 +15,51 @@ export async function sha256(s) {
 }
 
 export function freshState() {
-  return { solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
-           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           team: "", season: 0 };
+  return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
+           solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
+           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {} };
 }
 // queries/hints/wrong are keyed by chapter number: { "1": 3, "2": 7 }
+// mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
+// outbox holds compete events not yet accepted by the Apps Script, so a lost connection never loses a row.
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
   const cap = state.part2 ? 12 : 8;
   return chapters.find(c => c.n === Math.min(next, cap));
 }
 export function part1Done(state) { return state.solved.includes(8); }
-export function awaitingCode(state) { return part1Done(state) && !state.part2; }
+export function awaitingCode(state) { return state.mode !== "compete" && part1Done(state) && !state.part2; }
+export function competeDone(state) { return state.mode === "compete" && part1Done(state); }
 
-let KEY = "ritz.learn";   // switched to "ritz.compete" while a compete season is active; separate progress per mode
-export function load() { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return freshState(); } }
+// Learning-mode and compete progress are separate localStorage keys (spec section 4).
+export function storageKey(mode) { return mode === "compete" ? "ritz.compete" : "ritz.learn"; }
+let key = storageKey("learn");
+export function loadFrom(k) { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(k) || "{}") }; } catch { return freshState(); } }
+export function load() { return loadFrom(key); }
 let noPersist = false;
-export function save(state) { if (noPersist) return; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+export function save(state) { if (noPersist) return; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
 
-// Set to your Apps Script deployment's /exec URL in your own uncommitted copy -- never commit a
-// live URL here, this repo is public (see README's "Compete mode" section). Empty = Compete stays
-// disabled.
+// --- compete mode: season, team, clock, events -------------------------------------------------
+// Left empty on purpose, like leaderboard.html's: a deployment URL is a live, unauthenticated write
+// endpoint specific to one teacher's Google account, and this repo is public. Share the game as
+// index.html?season=N&board=<your /exec URL> instead (README, "Compete mode"), or set it in your own
+// local, uncommitted copy.
 const APPS_SCRIPT_URL = "";
-function postEvent(body) {
-  if (!APPS_SCRIPT_URL) return;
-  // text/plain avoids a CORS preflight that Apps Script web apps don't answer; doPost reads the
-  // raw body regardless of the declared content type.
-  fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }).catch(() => {});
+export function fmtTime(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+export function competeStats(state) {
+  const s = partStats(state, 1, 8);
+  let wrong = 0;
+  for (let n = 1; n <= 8; n++) wrong += state.wrong[n] || 0;
+  return { ...s, wrong };
+}
+// One row of the Apps Script's log sheet. The server stamps the time itself; nothing here is a clock.
+export function eventPayload(state, event, chapter) {
+  const s = competeStats(state);
+  return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
+           hints: s.hints, wrong: s.wrong, queries: s.queries };
 }
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -66,10 +84,12 @@ const PROPS = {
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
+let season = 0, seasonData = null, boardUrl = "";
 
 async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
   const buf = await (await fetch(stem + ".sqlite")).arrayBuffer();
+  if (db) db.close();
   db = new SQL.Database(new Uint8Array(buf));
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
@@ -84,7 +104,7 @@ function backToInvestigation() { reviewing = null; renderChapter(); }
 
 function renderChapter() {
   const total = state.part2 ? 12 : 8;
-  document.querySelector(".answer-row").hidden = reviewing != null || (data.mode === "compete" && awaitingCode(state));
+  document.querySelector(".answer-row").hidden = reviewing != null || competeDone(state);
   $("btn-back").hidden = reviewing == null;
   if (reviewing != null) {
     const ch = data.chapters.find(c => c.n === reviewing);
@@ -103,16 +123,20 @@ function renderChapter() {
   $("story").textContent = ch.story;
   $("objective").textContent = ch.objective + " Answer: " + ch.answer_form + ".";
   if (awaitingCode(state)) {
-    if (data.mode === "compete") {
-      $("story").textContent = "The desk stamps your time. Case closed for your team.";
-      $("objective").textContent = "Compete mode ends at chapter 8. Check the leaderboard for your rank.";
-    } else {
-      $("story").textContent = data.endings.part1;
-      $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
-      $("btn-print").hidden = false;
-    }
+    $("story").textContent = data.endings.part1;
+    $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
+    $("btn-print").hidden = false;
   }
   if (state.solved.includes(12)) { $("story").textContent = data.endings.part2; $("objective").textContent = "Case closed. Twice."; }
+  if (competeDone(state)) {
+    $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
+      "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +
+      "plus two minutes per hint and ten seconds per wrong answer.";
+    $("objective").innerHTML = boardUrl
+      ? 'Your result is on the class leaderboard: <a href="leaderboard.html?data=' + encodeURIComponent(boardUrl) + '" target="_blank">open it</a>.'
+      : "No leaderboard is connected to this season, so the result stays on this screen.";
+    $("btn-print").hidden = false;
+  }
   renderWitnesses();
   let box = document.getElementById("rank-box");
   if (part1Done(state)) {
@@ -128,7 +152,7 @@ function renderWitnesses() {
   const ch = currentChapter(state, data.chapters);
   const opened = state.hints[ch.n] || 0;
   const el = $("witnesses"); el.innerHTML = "";
-  if (awaitingCode(state) || state.solved.includes(12)) return;
+  if (awaitingCode(state) || competeDone(state) || state.solved.includes(12)) return;
   ch.hints.slice(0, opened).forEach(h => { const d = document.createElement("div"); d.className = "hint"; d.textContent = h; el.appendChild(d); });
   if (opened < ch.hints.length) {
     const b = document.createElement("button"); b.textContent = WITNESS[opened] + (opened === 2 ? " (the query, with blanks)" : "");
@@ -329,15 +353,14 @@ function afterSolve(ch, event) {
   renderErd(newTables);
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
-    if (data.mode === "compete") {
-      const p1 = partStats(state, 1, 8);
-      postEvent({ event: ch.n === 8 ? "finish" : "progress", team: state.team, season: state.season,
-                  chapter: ch.n, hints: p1.hints, wrong: Object.values(state.wrong).reduce((a, b) => a + b, 0), queries: p1.queries });
-    }
     if (ch.n === 8) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
       $("reply").textContent += " Rank: " + rank(p1.queries);
+    }
+    if (state.mode === "compete") {
+      if (ch.n === 8) { state.finishedAt = Date.now(); queueEvent("finish", 8); renderChapter(); tickClock(); }
+      else queueEvent("progress", ch.n);
     }
     if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
   } else if (event === "code") {
@@ -346,6 +369,89 @@ function afterSolve(ch, event) {
 }
 function afterWrong(norm) {
   award(detectBadges(ctx({ event: "answer", norm }), state.badges));
+}
+
+// --- compete mode: the clock and the outbox ----------------------------------------------------
+let ticker = null;
+function tickClock() {
+  const el = $("compete-info");
+  el.hidden = false;
+  el.textContent = "SEASON " + state.season + " \u2014 " + state.team.toUpperCase() + " \u2014 " +
+    fmtTime((state.finishedAt || Date.now()) - state.startedAt) + (boardUrl ? "" : " \u2014 NOT RECORDED");
+}
+function startClock() { clearInterval(ticker); tickClock(); ticker = setInterval(tickClock, 1000); }
+
+function queueEvent(event, chapter) {
+  state.outbox.push(eventPayload(state, event, chapter));
+  save(state);
+  flushOutbox();
+}
+let flushing = false;
+async function flushOutbox() {
+  // Oldest first, one at a time, in order; a failure leaves the row in the outbox and retries in 30 s.
+  // The body is text/plain so the browser sends no CORS preflight (Apps Script cannot answer one).
+  if (!boardUrl || flushing || !state.outbox.length) return;
+  flushing = true;
+  try {
+    while (state.outbox.length) {
+      const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                        body: JSON.stringify(state.outbox[0]) });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      state.outbox.shift();
+      save(state);
+    }
+  } catch (e) {
+    console.warn("leaderboard unreachable, retrying in 30 s:", e.message);
+    setTimeout(flushOutbox, 30000);
+  } finally {
+    flushing = false;
+  }
+}
+
+async function loadSeason() {
+  data = seasonData || await (await fetch("season-" + season + ".json")).json();
+  await loadDb("season-" + season);
+  startClock();
+  flushOutbox();
+}
+
+async function startCompete() {
+  const team = $("team").value.trim();
+  if (!team) { $("team").focus(); return; }
+  $("btn-start").disabled = true;
+  $("status").textContent = "Opening season " + season + "...";
+  key = storageKey("compete");
+  state = { ...freshState(), mode: "compete", season, team, startedAt: Date.now() };
+  queueEvent("start", 0);
+  await loadSeason();
+  renderBoard(); renderHistory(); enterGame();
+  $("notes").value = state.notes;
+}
+
+async function fetchSeason(n) {
+  return fetch("season-" + n + ".json").then(r => r.ok ? r.json() : null).catch(() => null);
+}
+
+// The teacher's link (?season=N) names the season; without one, Compete asks for the number instead.
+function offerCompete() {
+  const b = $("btn-compete");
+  if (season && !seasonData) { b.title = "Season " + season + " is not on this server. Ask your teacher to build it."; return; }
+  b.disabled = false; b.title = "Part I only, against the clock.";
+  b.onclick = async () => {
+    if (!seasonData) {
+      const n = Number(prompt("Season number (ask your teacher):"));
+      if (!n) return;
+      seasonData = await fetchSeason(n);
+      if (!seasonData) { $("status").textContent = "Season " + n + " is not on this server."; return; }
+      season = n;
+    }
+    $("compete-note").textContent = boardUrl
+      ? "Part I, chapters I to VIII, against the clock. Two minutes per hint, ten seconds per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named."
+      : "No leaderboard is connected, so the clock runs locally and nothing is recorded.";
+    $("compete-form").hidden = false; $("team").focus();
+  };
+  $("btn-start").onclick = startCompete;
+  $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
 }
 
 // Part II mood: dark palette + a later masthead date, set once (see style.css's [data-mood="night"]).
@@ -392,39 +498,45 @@ async function renderAdminPanel() {
 
 function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel(); }
 
-// season/team are null when resuming a season already in progress (localStorage has them).
-async function startCompete(season, team) {
-  if (!season) { season = Number(prompt("Season number:")); if (!season) return; }
-  if (team === undefined) team = (prompt("Team name:") || "").trim();
-  const saved = JSON.parse(localStorage.getItem("ritz.compete") || "null");
-  const resuming = saved && season === saved.season;
-  KEY = "ritz.compete";
-  state = resuming ? load() : freshState();
-  state.season = season; state.team = team; save(state);
-  data = await (await fetch(`season-${season}.json`)).json();
-  await loadDb(`season-${season}`);
-  if (!resuming) postEvent({ event: "start", team, season });
-  enterGame();
-}
-
 async function boot() {
-  data = await (await fetch("chapters.json")).json();
-  const debugChapter = Number(new URLSearchParams(location.search).get("chapter"));
-  state = load();
-  await loadDb("mystery");
+  const params = new URLSearchParams(location.search);
+  season = Number(params.get("season")) || 0;
+  boardUrl = params.get("board") || APPS_SCRIPT_URL;
+  const debugChapter = Number(params.get("chapter"));
+  const linked = season > 0;
+  // A team that reloads the page mid-season lands back in its game, clock still running: with the
+  // season link, always (a finished season shows its finish screen); without it, only while unfinished.
+  const saved = loadFrom(storageKey("compete"));
+  const savedLive = saved.mode === "compete" && saved.team && saved.season > 0;
+  if (!season && savedLive && !part1Done(saved) && !debugChapter) season = saved.season;
+  if (season) seasonData = await fetchSeason(season);
+  const resuming = !!(seasonData && savedLive && saved.season === season && !debugChapter);
+  // debugChapter is gated by unlockAdmin() (same passphrase as the ?admin panel): only asked when
+  // ?chapter=N is actually present, so a plain ?season= link never prompts for anything.
+  let debugOk = false;
+  if (resuming) {
+    key = storageKey("compete");
+    state = saved;
+    await loadSeason();
+  } else {
+    data = await (await fetch("chapters.json")).json();
+    debugOk = debugChapter >= 1 && debugChapter <= 12 && await unlockAdmin();
+    if (debugOk) {
+      noPersist = true;
+      state = freshState();
+      for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
+      if (debugChapter > 8) state.part2 = true;
+    } else {
+      state = load();
+    }
+    await loadDb("mystery");
+  }
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
-  $("btn-compete").disabled = false;
   $("btn-investigate").onclick = enterGame;
-  $("btn-compete").onclick = () => startCompete();
-  if (debugChapter >= 1 && debugChapter <= 12 && await jumpToChapter(debugChapter)) {
-    // entered via jumpToChapter above
-  } else if (state.solved.length) {
-    enterGame();
-  } else {
-    const cState = JSON.parse(localStorage.getItem("ritz.compete") || "{}");
-    if (cState.solved && cState.solved.length && cState.season) await startCompete(cState.season, cState.team);
-  }
+  // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
+  if (resuming || (!linked && state.solved.length) || debugOk) enterGame();
+  if (!resuming) offerCompete();
   $("btn-back").onclick = backToInvestigation;
   $("masthead-chapter").onclick = e => {
     e.stopPropagation();
@@ -467,7 +579,11 @@ async function boot() {
   };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
-  $("btn-reset").onclick = () => { if (confirm("Start a new investigation? Progress, notes and badges are erased.")) { state = freshState(); save(state); location.reload(); } };
+  $("btn-reset").onclick = () => {
+    const msg = state.mode === "compete" ? "Abandon the season? The clock, notes and badges are erased; rows already on the leaderboard stay."
+                                         : "Start a new investigation? Progress, notes and badges are erased.";
+    if (confirm(msg)) { state = freshState(); save(state); location.reload(); }
+  };
   $("btn-print").onclick = () => {
     if (!state.names) { state.names = prompt("Names for the certificate (both of you):") || ""; save(state); }
     renderCertificate();

@@ -244,8 +244,11 @@ framework, no bundler.
    badges, rank, certificate. Done when Part I is playable end to end in Chrome, Safari, Firefox, and at
    phone width. **Done** (PR #2), played end to end via a real Chrome instance 2026-09-22.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
-   **Done** (PR #5, 2026-09-22; content/backend). The in-game button was wired 2026-09-22, played end
-   to end via a real Chrome instance against a mock Apps Script endpoint.
+   **Done.** Content and backend PR #5 (2026-09-22; compete objectives given the same multi-query
+   treatment as learn mode); the in-game button, clock and event posting 2026-09-22
+   (`2026-09-22-plan-4-compete-button.md`, played end to end in Chromium against a stand-in Apps
+   Script). A season is opened by listing it in `seasons.txt` and shared as `?season=N&board=<url>`;
+   without a link, Compete asks for the season number.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
    <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
@@ -279,9 +282,14 @@ framework, no bundler.
     background, a pin dot per card) for most of the visual gain at a fraction of the code.
   - **Portraits and the red thread: not built**, as a consequence of keeping the plain cards -- no
     photos, so no thread between them. Revisit only if the pinboard itself gets built later.
+  - 2026-09-22, course owner, later the same day: suspects get **painted portraits with a high level
+    of detail**, photorealistic (photograph-level detail, painted surface), not silhouettes and not a
+    stylised vector face. Candidate painting styles are in the mockup's section 7 and rendered, one
+    sitter six ways in day and night editions, in `docs/mockups/portrait-styles.html` (the vector
+    stand-in there is rejected as a look). The style, the asset source and the day/night treatment are
+    still to pick; the first real generated or commissioned Ashcombe is the next step.
 
-- ~~Compete mode's in-game button.~~ Done 2026-09-22: `#btn-compete` prompts for season + team,
-  loads `season-N.*`, POSTs `start`/`progress`/`finish` to `APPS_SCRIPT_URL` (empty by default, set
-  locally, never committed -- same as `leaderboard.html`), and resumes on reload from its own
-  `localStorage` key. Picking a season is still just typing its number; there is no picker listing
-  which seasons exist on disk, since one class plays one season and the teacher already knows which.
+- ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
+  `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
+  link (`?season=N&board=<url>`), or is typed when there is no link; there is no picker listing which
+  seasons exist, since one class plays one season and the teacher already knows which.

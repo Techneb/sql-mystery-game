@@ -1,0 +1,4 @@
+# Seasons the GitHub Pages deploy builds into site/ (python3 generate_db.py --season N), one number per line.
+# Season files are gitignored: add the number your class plays here, push, and share
+#   https://techneb.github.io/sql-mystery-game/?season=N&board=<your Apps Script /exec URL>
+# Remove the line after the class so last term's evidence stops being served. Lines starting with # are ignored.

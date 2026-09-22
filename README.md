@@ -37,8 +37,9 @@ Tests for the site's pure functions (no browser needed): `node --test test_site.
 
 ## Deploying
 
-GitHub Pages, source `main` branch, folder `/site` (see Plan 4). The page is fully static: no
-server, no build step, no environment variables.
+GitHub Pages via `.github/workflows/pages.yml` on every push to `main`: the workflow builds the compete
+seasons listed in `seasons.txt`, then publishes `site/`. Live at <https://techneb.github.io/sql-mystery-game/>.
+The page is fully static: no server, no environment variables.
 
 ## Tuning
 
@@ -57,30 +58,51 @@ server, no build step, no environment variables.
 | `test_generate.py` | `unittest` suite |
 | `solution.sql` | generated: the reference path, one query per chapter |
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
+| `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
+| `apps_script.gs`, `seasons.txt` | compete backend (Google Apps Script) and the seasons Pages builds |
+| `test_site.mjs` | `node --test` suite for the site's pure functions |
 | `docs/superpowers/specs/` | the design spec; `docs/superpowers/plans/` the implementation plans |
 
 The plot is public in `plot.py` and `solution.sql`; the site only ships SHA-256 hashes of the
 normalised answers in `chapters.json`.
 
-## Compete mode (season content)
+## Compete mode
 
 `python3 generate_db.py --season N` builds `site/season-N.sqlite` and `site/season-N.json`: the same
 plot and cast, but every piece of evidence (plates, addresses, account numbers, telegram ids, suite
 numbers, non-suspect names) is re-drawn from seed N, and each of the 8 Part I chapters asks a
 **different question on the same tables with the same construct** than learning mode, so a season can
 be reused by a new class without last term's answers helping. Generated `season-*` files are not
-committed; build the one season you need before class and drop it in `site/`.
+committed. GitHub Pages builds the seasons listed in `seasons.txt` (one number per line) at deploy time,
+so opening a season for a class is: add its number to `seasons.txt`, push, share the link below. Remove
+the line after the class. Locally, run the command above and the files land in `site/` directly.
 
 Backend: paste `apps_script.gs` into a Google Sheet's Apps Script editor, set the `SHEET_ID` script
 property to that sheet's id (Project Settings > Script Properties -- never edit the id into the file
 itself), and deploy as a web app (see the comment at the top of the file, or Task 3 Step 2 of
-`docs/superpowers/plans/2026-09-22-plan-3-compete.md` for the exact click-path). To see teams as they
-play, open `site/leaderboard.html?data=<your deployment's /exec URL>` -- the URL is never committed,
-since this repo is public and the URL is a live, unauthenticated write endpoint. Bookmark that link, or
-set `APPS_SCRIPT_URL` in your own local, uncommitted copy of `leaderboard.html` if you want a fixed link.
+`docs/superpowers/plans/2026-09-22-plan-3-compete.md` for the exact click-path). The deployment's
+`/exec` URL is never committed: this repo is public and the URL is a live, unauthenticated write
+endpoint. It travels in links instead.
 
-The in-game "Compete" button is wired: it prompts for a season number and team name, loads
-`season-N.sqlite`/`season-N.json`, and POSTs `start` once, `progress` after each chapter, and `finish`
-at chapter 8, to whatever `APPS_SCRIPT_URL` is set to (empty by default, same reasoning as
-`leaderboard.html` above -- set it in your own local, uncommitted copy of `site/app.js`). Compete
-progress lives under its own `localStorage` key and resumes automatically on reload.
+Playing a season: share one link with the class,
+
+```
+https://techneb.github.io/sql-mystery-game/?season=N&board=<your deployment's /exec URL>
+```
+
+With `season=N` in the URL the landing page's **Compete** button offers that season (if `season-N.json`
+is on the server; otherwise its tooltip says so); without a link, Compete asks for the season number
+instead. Compete then asks for a team name, POSTs `start` to the Apps
+Script (which stamps the server time), loads the season database, and runs Part I only with a clock in
+the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the team's hints,
+wrong answers and queries, and the finish screen links to the leaderboard. Events that cannot be
+delivered (a dropped connection) wait in the saved state and are retried every 30 s; the leaderboard
+scores the first `start` and the first `finish` it sees, so a retry can never shorten a time. Without
+`board=` the clock still runs but nothing is recorded, and the masthead says NOT RECORDED. Reloading
+the page lands a team back in its running game. Compete progress lives under the `ritz.compete`
+localStorage key, learning-mode progress under `ritz.learn`; "New investigation" in a season game
+abandons the season (rows already on the sheet stay).
+
+To watch teams as they play, open `site/leaderboard.html?data=<the same /exec URL>`. Bookmark that
+link, or set `APPS_SCRIPT_URL` in your own local, uncommitted copy of `leaderboard.html` (and of
+`app.js`, whose constant of the same name replaces the `board=` parameter) if you want fixed links.

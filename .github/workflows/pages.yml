@@ -26,6 +26,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Build the compete seasons listed in seasons.txt
+        # season-N.sqlite/json are gitignored; the deploy builds whichever seasons the teacher lists.
+        run: |
+          for n in $(sed 's/#.*//' seasons.txt); do python3 generate_db.py --season "$n"; done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

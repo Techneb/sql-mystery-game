@@ -44,14 +44,16 @@ function fmt(ms) {
 
 // One row per team+season: pairs its "start" row with its "finish" row (adjusted time, spec formula:
 // finish - start + 2 min/hint + 10 s/wrong) or, absent a finish, its latest "progress" chapter.
+// Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win,
+// so a team that retries a POST after a dropped connection, or reloads the page, can never shorten its time.
 function summarize(rows) {
   const teams = new Map(); // key "team|season" -> {team, season, start, finish, chapter}
   for (const r of rows) {
     const key = r.team + "|" + r.season;
     const t = teams.get(key) || { team: r.team, season: r.season, start: null, finish: null, chapter: 0 };
-    if (r.event === "start") t.start = r.timestamp;
+    if (r.event === "start" && t.start == null) t.start = r.timestamp;
     if (r.event === "progress") t.chapter = Math.max(t.chapter, Number(r.chapter) || 0);
-    if (r.event === "finish") t.finish = r;
+    if (r.event === "finish" && !t.finish) t.finish = r;
     teams.set(key, t);
   }
   return [...teams.values()].map(t => {
