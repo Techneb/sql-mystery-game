@@ -11,6 +11,7 @@ CHAPTERS = [
   solution="SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND date = {theft_date} AND type = 'theft'",
   naive="SELECT id FROM police_report WHERE place = 'Hotel Ritz'", naive_rows=None),
  dict(n=2, part=1, construct="ORDER BY / LIMIT", tables=["hotel_register"], answer_key="neighbour",
+  discovery=[dict(query="SELECT description FROM police_report WHERE id = {report_id}", must_contain="neighbouring suite")],
   solution="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date} ORDER BY price DESC LIMIT 1",
   naive="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date}", naive_rows=6),
  dict(n=3, part=1, construct="LIKE", tables=["interview", "cab_ride"], answer_key="plate",
@@ -85,8 +86,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L"),
  2: dict(
   title="The Neighbouring Suite",
-  story="'The thief came over the balcony of the neighbouring suite, the most expensive one on the floor,' Ganimard reads aloud, as if the report had insulted him. The Ritz keeps a register: every guest, every suite, every price, since January. Six months of it, and the prices on the second floor are all within a few francs of each other. 'The name of whoever slept in the priciest suite on the second floor on the night of the 17th. Not the second priciest. The priciest.'",
-  objective="In hotel_register, find the guest on floor 2 whose stay covers the night of 17 May 1912 (checkin <= 19120517 and checkout > 19120517) and who pays the highest price.",
+  story="Ganimard flips back through the very report you just found, squinting. 'It is all in here, if you read it properly, clerk. I am not paid to read twice.' The Ritz keeps a register: every guest, every suite, every price, since January. Six months of it.",
+  objective="Re-read the report from chapter 1 in full -- it already told you which suite to look for. Then in hotel_register, find that guest for the night of 17 May 1912 (checkin <= 19120517 and checkout > 19120517).",
   answer_form="the guest's name",
   hints=[],
   telegram="MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L"),
