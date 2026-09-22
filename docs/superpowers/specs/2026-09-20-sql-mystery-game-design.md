@@ -288,6 +288,21 @@ framework, no bundler.
     sitter six ways in day and night editions, in `docs/mockups/portrait-styles.html` (the vector
     stand-in there is rejected as a look). The style, the asset source and the day/night treatment are
     still to pick; the first real generated or commissioned Ashcombe is the next step.
+  - 2026-09-22, later still: a first real Ashcombe generated (Style A, grisaille oil, no assets or
+    accounts touched -- a public no-login image endpoint, prompt unchanged from the mockup) and shown
+    to the course owner, day and night, for the judgement call the mockup itself asks for before
+    producing the rest of the cast. Sent as files, not committed to the repo (a decision sample, not
+    a production asset -- it carries a small generator watermark a real delivery would not have).
+    My recommendation on the mockup's four open questions, pending the course owner's confirmation:
+    **style A** (its own "Recommended" verdict holds up against a real sample: coherent day/night
+    from one file, cheapest to maintain); **source generated**, same free endpoint, once a placement
+    is picked (commissioning is outside what a coding session can execute); **Blakeney gets a
+    portrait from chapter I** like every other suspect -- withholding only his until chapter VIII
+    would itself be the tell; **placement is still open and needs its own small design pass**: `data
+    .cast` (the six suspects' name/nationality/bio) already ships to the client but nothing renders
+    it, so the natural home is a new "Suspects" panel, not the chapter header (which already carries
+    the chapter's own prop icon) or the case board (whose entries are not uniformly people, the same
+    reason the pinboard was cut). Not built pending that confirmation and the other seven portraits.
 
 - ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
   `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
