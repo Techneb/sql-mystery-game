@@ -87,6 +87,22 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
   background: radial-gradient(circle at 35% 35%, #fff 0, var(--accent) 35%, #3a0d0d 100%); transform: translateX(-50%); box-shadow: 1px 2px 2px rgba(0,0,0,.4); }
 .card:hover { box-shadow: 2px 2px 8px rgba(0,0,0,.4); }
 .card:nth-child(even) { transform: rotate(1.5deg); }
+
+/* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
+.suspects { position: fixed; inset: 0; z-index: 19; background: var(--paper); overflow: auto; padding: 20px 16px 40px;
+  display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-content: flex-start; }
+.suspects[hidden] { display: none; }
+.suspects-close { position: fixed; top: 16px; right: 16px; }
+.suspect { width: 180px; text-align: center; position: relative; }
+.suspect img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%;
+  box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); position: relative; }
+/* halftone: the same dot-screen technique as the cork board, laid over the portrait */
+.suspect::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; aspect-ratio: 3/4;
+  border-radius: 50% / 40%; background-image: radial-gradient(#000 1px, transparent 1px); background-size: 3px 3px;
+  opacity: .10; mix-blend-mode: multiply; pointer-events: none; }
+.suspect b { display: block; font: 700 15px "Playfair Display", serif; margin-top: 8px; }
+.suspect p { font-size: 13px; margin: 2px 0 0; }
+:root[data-mood="night"] .suspect img { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 20px rgba(63,111,181,.35)); }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
 .telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; border: 1px solid var(--rule); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }

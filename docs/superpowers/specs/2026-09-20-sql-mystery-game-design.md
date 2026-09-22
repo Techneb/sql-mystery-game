@@ -288,21 +288,30 @@ framework, no bundler.
     sitter six ways in day and night editions, in `docs/mockups/portrait-styles.html` (the vector
     stand-in there is rejected as a look). The style, the asset source and the day/night treatment are
     still to pick; the first real generated or commissioned Ashcombe is the next step.
-  - 2026-09-22, later still: a first real Ashcombe generated (Style A, grisaille oil, no assets or
-    accounts touched -- a public no-login image endpoint, prompt unchanged from the mockup) and shown
-    to the course owner, day and night, for the judgement call the mockup itself asks for before
-    producing the rest of the cast. Sent as files, not committed to the repo (a decision sample, not
-    a production asset -- it carries a small generator watermark a real delivery would not have).
-    My recommendation on the mockup's four open questions, pending the course owner's confirmation:
-    **style A** (its own "Recommended" verdict holds up against a real sample: coherent day/night
-    from one file, cheapest to maintain); **source generated**, same free endpoint, once a placement
-    is picked (commissioning is outside what a coding session can execute); **Blakeney gets a
-    portrait from chapter I** like every other suspect -- withholding only his until chapter VIII
-    would itself be the tell; **placement is still open and needs its own small design pass**: `data
-    .cast` (the six suspects' name/nationality/bio) already ships to the client but nothing renders
-    it, so the natural home is a new "Suspects" panel, not the chapter header (which already carries
-    the chapter's own prop icon) or the case board (whose entries are not uniformly people, the same
-    reason the pinboard was cut). Not built pending that confirmation and the other seven portraits.
+  - 2026-09-22, later still: a first real Ashcombe generated (Style A, grisaille oil) and shown to
+    the course owner, day and night, per the mockup's own request for a judgement call before
+    producing the rest of the cast. The course owner asked for a colour sample instead, named Sir
+    John Lavery (already adjacent to the mockup's Style C, "society bravura", reference list); a
+    second sample confirmed the mockup's own prediction about colour -- the shared night-mode filter
+    (`hue-rotate` + `sepia`) cools it into a flash-photo look the monochrome style never had this
+    problem with. **Decided: Lavery colour for the day edition; a separate, gentler filter for
+    night** (`brightness(.85) saturate(.9) contrast(1.15) drop-shadow(...sapphire...)`, no hue
+    rotation, so the warm paint tones survive and the glow ties into the existing sapphire night
+    accent) rather than either reusing the page-wide night filter or generating a second image per
+    sitter (doubling the asset count and risking the two not reading as the same sitter).
+  - ~~Portrait implementation.~~ Done 2026-09-22/23: all six suspects generated in the confirmed
+    style (`site/portraits/*.jpg`, ~35-55 KB each, a public no-login image endpoint, no accounts or
+    paid services touched), plus Ganimard and the Comtesse (generated but not yet used anywhere).
+    Two of the eight (Blakeney, Ganimard) came back as a painting-in-a-frame despite the prompt
+    saying otherwise -- a model quirk, not fixed by more negative prompting, so both were cropped to
+    match the other six instead of regenerated again. Shipped as a new **Suspects panel**
+    (`#btn-suspects` next to the case board, reusing the ERD's existing enlarge/overlay pattern):
+    `data.cast` (name, nationality, bio -- already sent to the client, never rendered until now) now
+    renders as an oval-vignetted, lightly halftoned portrait grid, closable, with the night filter
+    above applied under `[data-mood="night"]`. Blakeney ships from chapter I like every other
+    suspect, per the "no face reads guiltier" principle the mockup's own asset section states.
+    Ganimard and the Comtesse are generated and committed but have no UI yet (Ganimard is not a
+    suspect; the Comtesse's a possible fit for the Part II ending screen, not built).
 
 - ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
   `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's

@@ -81,6 +81,13 @@ const PROPS = {
   11: '<path d="M14 62a36 36 0 0 1 72 0z"/><path d="M14 62h72"/><path d="M20 58l4-2M30 42l3 3M50 30v5M70 42l-3 3M80 58l-4-2" stroke-width="1.4"/><text x="16" y="72" font-family="Special Elite, monospace" font-size="7" fill="currentColor" stroke="none">1</text><text x="80" y="72" font-family="Special Elite, monospace" font-size="7" fill="currentColor" stroke="none">5</text><path class="accent" d="M50 62L32 44" stroke-width="2.2"/><circle cx="50" cy="62" r="3" fill="currentColor" stroke="none"/><path d="M40 80h20" stroke-width="1"/>',
   12: '<path class="accent" d="M50 18l26 16v32L50 82 24 66V34z" stroke-width="2"/><path class="accent" d="M50 18v64M24 34l52 32M76 34L24 66M50 18l-26 16M50 18l26 16" stroke-width="1" opacity=".8"/><path d="M36 44l14-8 14 8-14 8z" stroke-width="1"/><path d="M12 90h76" stroke-width="1" stroke-dasharray="2 3"/><path d="M18 88c8-6 14-6 22 0" stroke-width="1"/><path d="M60 88c8-6 14-6 22 0" stroke-width="1"/>',
 };
+
+// Portrait file per suspect in data.cast (site/portraits/*.jpg -- Style A/Lavery colour, generated;
+// see docs/superpowers/specs section 8's visual-identity entry). Same six every mode; Lupin himself
+// never gets one singled out, so no face reads guiltier than another before chapter VIII.
+const PORTRAIT_FILE = { "Lord Ashcombe": "ashcombe", "Paul Sernine": "sernine", "Horace Velmont": "velmont",
+  "Raul Ortega": "ortega", "Ines de Almagro": "almagro", "Rupert Blakeney": "blakeney" };
+
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
@@ -292,6 +299,19 @@ function ctx(extra) {
 function renderBoard() {
   $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
+}
+
+let suspectsBuilt = false;
+function renderSuspects() {
+  if (suspectsBuilt) return;
+  const el = $("suspects");
+  el.innerHTML = '<button class="quiet suspects-close">Close</button>' + data.cast.map(s => {
+    const file = PORTRAIT_FILE[s.name];
+    const img = file ? '<img src="portraits/' + file + '.jpg" alt="">' : "";
+    return '<div class="suspect">' + img + '<b>' + esc(s.name) + '</b><span class="muted">' + esc(s.nationality) + '</span><p>' + esc(s.bio) + '</p></div>';
+  }).join("");
+  el.querySelector(".suspects-close").onclick = () => el.hidden = true;
+  suspectsBuilt = true;
 }
 
 let visBefore = new Set();
@@ -577,6 +597,7 @@ async function boot() {
     const large = $("erd").classList.toggle("large");
     $("btn-erd").textContent = large ? "Close" : "Enlarge";
   };
+  $("btn-suspects").onclick = () => { renderSuspects(); $("suspects").hidden = false; };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
   $("btn-reset").onclick = () => {

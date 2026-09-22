@@ -59,6 +59,7 @@ The page is fully static: no server, no environment variables.
 | `solution.sql` | generated: the reference path, one query per chapter |
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
 | `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
+| `site/portraits/*.jpg` | suspect portraits (Style A/Lavery colour, generated), shown in the Suspects panel |
 | `apps_script.gs`, `seasons.txt` | compete backend (Google Apps Script) and the seasons Pages builds |
 | `test_site.mjs` | `node --test` suite for the site's pure functions |
 | `docs/superpowers/specs/` | the design spec; `docs/superpowers/plans/` the implementation plans |
