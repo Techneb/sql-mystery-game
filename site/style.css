@@ -50,7 +50,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* ERD */
 .erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 80vh; position: relative; }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
-.erd svg { display: block; width: 100%; height: auto; font: 11px "Special Elite", monospace; }
+/* Native size, not squished to the column width: past a few tables the diagram is wider than the
+   column, and .erd's own overflow:auto (above) scrolls it instead of shrinking labels to nothing.
+   width:auto on an inline SVG resolves to the container's width, not the viewBox, hence max-content. */
+.erd svg { display: block; width: max-content; height: max-content; font: 11px "Special Elite", monospace; }
 .erd .table rect { fill: var(--paper); stroke: var(--ink); }
 .erd .table rect.head { fill: var(--ink); }
 .erd .table .tname { fill: var(--paper); }

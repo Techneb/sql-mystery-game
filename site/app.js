@@ -208,11 +208,11 @@ export function detectBadges(ctx, have) {
 }
 
 function award(list) {
-  for (const b of list) {
+  list.forEach((b, i) => {
     state.badges.push(b.name);
     const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
-    $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000);
-  }
+    $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000 + i * 400);   // stagger so a badge burst doesn't vanish as one block
+  });
   if (list.length) save(state);
 }
 
