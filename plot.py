@@ -19,6 +19,7 @@ CHAPTERS = [
   solution="SELECT plate FROM cab_ride WHERE plate LIKE '{plate_prefix}%' AND pickup = 'Place Vendome' AND date = {theft_date} AND time >= 200",
   naive="SELECT plate FROM cab_ride WHERE plate LIKE '{plate_prefix}%' AND date = {theft_date}", naive_rows=None),
  dict(n=4, part=1, construct="GROUP BY / HAVING", tables=[], answer_key="fence_address",
+  discovery=[dict(query="SELECT dropoff, COUNT(*) AS n FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff ORDER BY n DESC", must_contain="{fence_address}")],
   solution="SELECT dropoff FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff HAVING COUNT(*) >= 3",
   naive="SELECT DISTINCT dropoff FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519", naive_rows=None),
  dict(n=5, part=1, construct="JOIN", tables=["person", "address"], answer_key="fence",
@@ -101,8 +102,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
-  story="The driver of the cab has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. Twice. Three times. Find me the address this cab dropped at three times or more that week. I do not want the list. I want the address.'",
-  objective="In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, find the dropoff address visited at least three times.",
+  story="The driver of the cab has a bad memory and a good book. Ganimard reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. More than once, more than twice, perhaps. Find me the address this cab kept returning to. I do not want the list. I want the address.'",
+  objective="In cab_ride, for the plate you found in chapter 3, between 19120513 and 19120519, look at everywhere it went -- count the visits per address -- and find the one it kept returning to.",
   answer_form="the address (number and street)",
   hints=[],
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
