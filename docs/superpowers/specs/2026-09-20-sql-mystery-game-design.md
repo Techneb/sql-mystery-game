@@ -244,14 +244,16 @@ framework, no bundler.
    badges, rank, certificate. Done when Part I is playable end to end in Chrome, Safari, Firefox, and at
    phone width. **Done** (PR #2), played end to end via a real Chrome instance 2026-09-22.
 3. **Compete**: compete objectives + solutions, season build, Apps Script, leaderboard page.
-   **Content and backend done** (PR #5, 2026-09-22; compete objectives given the same multi-query
-   treatment as learn mode). The in-game button is not built -- see backlog.
+   **Done** (PR #5, 2026-09-22; content/backend). The in-game button was wired 2026-09-22, played end
+   to end via a real Chrome instance against a mock Apps Script endpoint.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
    <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
-   classic deploy-from-branch cannot serve `/site` as a subfolder). Still open: course-folder ties
-   (`../SQL` is not reachable from any session that has worked on this repo so far), a class trial,
-   and tuning `RANKS`/badges from where students got stuck.
+   classic deploy-from-branch cannot serve `/site` as a subfolder). **Course-folder ties done**: 
+   `../SQL/0-SQL.md` links the game, `../SQL/BACKLOG - SQL Mystery Game.md` is marked superseded, and
+   `../SQL/3-Corrections/8. Correction SQL Mystery Game.sql` regenerates automatically whenever
+   `generate_db.py` runs on a machine with that folder present (it is not a git repo, so this is
+   local-only, not tracked here). Still open: a class trial and tuning `RANKS`/badges from it.
 
 ## 8. Backlog (not scheduled)
 
@@ -268,10 +270,8 @@ framework, no bundler.
   on the course owner picking a drawing style, asset source, portrait treatment, night-switch
   scope, board mechanism and masthead date (see the mockup's own section 6).
 
-- **Compete mode's in-game button.** `site/app.js`'s landing page has had `#btn-compete` hardcoded
-  disabled since Plan 2; nothing POSTs to `apps_script.gs` or reads back a season yet. The content
-  and backend side of phase 3 (season generator with multi-query compete objectives, `apps_script.gs`,
-  `site/leaderboard.html`) is done as of 2026-09-22 and unblocked now that Plan 2's site is merged.
-  What is missing: team-name entry, a client-side timer, `start`/`progress`/`finish` events POSTed
-  to the Apps Script, and a way to pick which season a class plays (today a season's files must be
-  dropped into `site/` by hand). A short, mechanical plan, not a redesign.
+- ~~Compete mode's in-game button.~~ Done 2026-09-22: `#btn-compete` prompts for season + team,
+  loads `season-N.*`, POSTs `start`/`progress`/`finish` to `APPS_SCRIPT_URL` (empty by default, set
+  locally, never committed -- same as `leaderboard.html`), and resumes on reload from its own
+  `localStorage` key. Picking a season is still just typing its number; there is no picker listing
+  which seasons exist on disk, since one class plays one season and the teacher already knows which.

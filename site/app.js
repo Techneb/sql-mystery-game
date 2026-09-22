@@ -16,7 +16,8 @@ export async function sha256(s) {
 
 export function freshState() {
   return { solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
-           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {} };
+           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
+           team: "", season: 0 };
 }
 // queries/hints/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 export function currentChapter(state, chapters) {
@@ -27,22 +28,34 @@ export function currentChapter(state, chapters) {
 export function part1Done(state) { return state.solved.includes(8); }
 export function awaitingCode(state) { return part1Done(state) && !state.part2; }
 
-const KEY = "ritz.learn";
+let KEY = "ritz.learn";   // switched to "ritz.compete" while a compete season is active; separate progress per mode
 export function load() { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return freshState(); } }
 let noPersist = false;
 export function save(state) { if (noPersist) return; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+
+// Set to your Apps Script deployment's /exec URL in your own uncommitted copy -- never commit a
+// live URL here, this repo is public (see README's "Compete mode" section). Empty = Compete stays
+// disabled.
+const APPS_SCRIPT_URL = "";
+function postEvent(body) {
+  if (!APPS_SCRIPT_URL) return;
+  // text/plain avoids a CORS preflight that Apps Script web apps don't answer; doPost reads the
+  // raw body regardless of the declared content type.
+  fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) }).catch(() => {});
+}
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
 
-async function loadDb() {
+async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
-  const buf = await (await fetch("mystery.sqlite")).arrayBuffer();
+  const buf = await (await fetch(stem + ".sqlite")).arrayBuffer();
   db = new SQL.Database(new Uint8Array(buf));
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
+  tableSizes = {};
   for (const [t] of db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values)
     tableSizes[t] = db.exec("SELECT COUNT(*) FROM " + t)[0].values[0][0];
 }
@@ -53,7 +66,7 @@ function backToInvestigation() { reviewing = null; renderChapter(); }
 
 function renderChapter() {
   const total = state.part2 ? 12 : 8;
-  document.querySelector(".answer-row").hidden = reviewing != null;
+  document.querySelector(".answer-row").hidden = reviewing != null || (data.mode === "compete" && awaitingCode(state));
   $("btn-back").hidden = reviewing == null;
   if (reviewing != null) {
     const ch = data.chapters.find(c => c.n === reviewing);
@@ -70,9 +83,14 @@ function renderChapter() {
   $("story").textContent = ch.story;
   $("objective").textContent = ch.objective + " Answer: " + ch.answer_form + ".";
   if (awaitingCode(state)) {
-    $("story").textContent = data.endings.part1;
-    $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
-    $("btn-print").hidden = false;
+    if (data.mode === "compete") {
+      $("story").textContent = "The desk stamps your time. Case closed for your team.";
+      $("objective").textContent = "Compete mode ends at chapter 8. Check the leaderboard for your rank.";
+    } else {
+      $("story").textContent = data.endings.part1;
+      $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
+      $("btn-print").hidden = false;
+    }
   }
   if (state.solved.includes(12)) { $("story").textContent = data.endings.part2; $("objective").textContent = "Case closed. Twice."; }
   renderWitnesses();
@@ -291,6 +309,11 @@ function afterSolve(ch, event) {
   renderErd(newTables);
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
+    if (data.mode === "compete") {
+      const p1 = partStats(state, 1, 8);
+      postEvent({ event: ch.n === 8 ? "finish" : "progress", team: state.team, season: state.season,
+                  chapter: ch.n, hints: p1.hints, wrong: Object.values(state.wrong).reduce((a, b) => a + b, 0), queries: p1.queries });
+    }
     if (ch.n === 8) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
@@ -305,6 +328,22 @@ function afterWrong(norm) {
   award(detectBadges(ctx({ event: "answer", norm }), state.badges));
 }
 
+function enterGame() { $("landing").hidden = true; renderChapter(); renderErd(); }
+
+// season/team are null when resuming a season already in progress (localStorage has them).
+async function startCompete(season, team) {
+  if (!season) { season = Number(prompt("Season number:")); if (!season) return; }
+  if (team === undefined) team = (prompt("Team name:") || "").trim();
+  const resuming = !!localStorage.getItem("ritz.compete") && season === JSON.parse(localStorage.getItem("ritz.compete")).season;
+  KEY = "ritz.compete";
+  state = resuming ? load() : freshState();
+  state.season = season; state.team = team; save(state);
+  data = await (await fetch(`season-${season}.json`)).json();
+  await loadDb(`season-${season}`);
+  if (!resuming) postEvent({ event: "start", team, season });
+  enterGame();
+}
+
 async function boot() {
   data = await (await fetch("chapters.json")).json();
   const debugChapter = Number(new URLSearchParams(location.search).get("chapter"));
@@ -316,11 +355,18 @@ async function boot() {
   } else {
     state = load();
   }
-  await loadDb();
+  await loadDb("mystery");
   $("status").textContent = "The archives are open.";
   $("btn-investigate").disabled = false;
-  $("btn-investigate").onclick = () => { $("landing").hidden = true; renderChapter(); renderErd(); };
-  if (state.solved.length || debugChapter) { $("landing").hidden = true; renderChapter(); renderErd(); }
+  $("btn-compete").disabled = false;
+  $("btn-investigate").onclick = enterGame;
+  $("btn-compete").onclick = () => startCompete();
+  if (state.solved.length || debugChapter) {
+    enterGame();
+  } else {
+    const cState = JSON.parse(localStorage.getItem("ritz.compete") || "{}");
+    if (cState.solved && cState.solved.length && cState.season) await startCompete(cState.season, cState.team);
+  }
   $("btn-back").onclick = backToInvestigation;
   $("masthead-chapter").onclick = e => {
     e.stopPropagation();

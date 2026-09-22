@@ -73,7 +73,8 @@ play, open `site/leaderboard.html?data=<your deployment's /exec URL>` -- the URL
 since this repo is public and the URL is a live, unauthenticated write endpoint. Bookmark that link, or
 set `APPS_SCRIPT_URL` in your own local, uncommitted copy of `leaderboard.html` if you want a fixed link.
 
-The in-game "Compete" button (team name entry, timer, POSTing `start`/`progress`/`finish` events to the
-Apps Script) is not wired yet; it is a short follow-up in `site/app.js`. Until then, `leaderboard.html` can be exercised
-with a hand-crafted fixture (see Task 4 Step 2 of the same plan) or with `curl` directly against the
-Apps Script (Task 3 Step 2).
+The in-game "Compete" button is wired: it prompts for a season number and team name, loads
+`season-N.sqlite`/`season-N.json`, and POSTs `start` once, `progress` after each chapter, and `finish`
+at chapter 8, to whatever `APPS_SCRIPT_URL` is set to (empty by default, same reasoning as
+`leaderboard.html` above -- set it in your own local, uncommitted copy of `site/app.js`). Compete
+progress lives under its own `localStorage` key and resumes automatically on reload.
