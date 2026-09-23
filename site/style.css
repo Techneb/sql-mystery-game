@@ -102,7 +102,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
   opacity: .10; mix-blend-mode: multiply; pointer-events: none; }
 .suspect b { display: block; font: 700 15px "Playfair Display", serif; margin-top: 8px; }
 .suspect p { font-size: 13px; margin: 2px 0 0; }
-:root[data-mood="night"] .suspect img { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 20px rgba(63,111,181,.35)); }
+/* a single portrait set into running text: the landing (Ganimard), the two endings (Blakeney, the Comtesse) */
+.portrait { float: left; width: 96px; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%; margin: 4px 14px 6px 0;
+  box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); }
+:root[data-mood="night"] .suspect img, :root[data-mood="night"] .portrait { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 20px rgba(63,111,181,.35)); }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
 .telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; border: 1px solid var(--rule); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }

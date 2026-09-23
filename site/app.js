@@ -130,11 +130,11 @@ function renderChapter() {
   $("story").textContent = ch.story;
   $("objective").textContent = ch.objective + " Answer: " + ch.answer_form + ".";
   if (awaitingCode(state)) {
-    $("story").textContent = data.endings.part1;
+    $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + esc(data.endings.part1);   // the unmasking: his face, only now
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
     $("btn-print").hidden = false;
   }
-  if (state.solved.includes(12)) { $("story").textContent = data.endings.part2; $("objective").textContent = "Case closed. Twice."; }
+  if (state.solved.includes(12)) { $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + esc(data.endings.part2); $("objective").textContent = "Case closed. Twice."; }
   if (competeDone(state)) {
     $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
       "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +

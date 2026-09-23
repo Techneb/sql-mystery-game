@@ -310,8 +310,12 @@ framework, no bundler.
     renders as an oval-vignetted, lightly halftoned portrait grid, closable, with the night filter
     above applied under `[data-mood="night"]`. Blakeney ships from chapter I like every other
     suspect, per the "no face reads guiltier" principle the mockup's own asset section states.
-    Ganimard and the Comtesse are generated and committed but have no UI yet (Ganimard is not a
-    suspect; the Comtesse's a possible fit for the Part II ending screen, not built).
+    The other two found their slots the same day: Ganimard on the landing card (the text there
+    already introduces him as the inspector who hired the clerk), Blakeney at the Part I ending (the
+    Gare du Nord unmasking -- his face shown only once chapter VIII has named him) and the Comtesse at
+    the Part II ending ("case closed, twice"), all via one `.portrait` rule floated into the running
+    text. The generator's corner watermark was cropped off all eight files (a uniform 5% tighter
+    frame, 3:4 kept), so the committed assets are clean, not just hidden by the oval mask.
 
 - ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
   `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
