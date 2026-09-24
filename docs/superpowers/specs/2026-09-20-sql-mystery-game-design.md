@@ -6,6 +6,19 @@ course construct per chapter.
 
 Decided 2026-09-20 with the course owner. Supersedes `SQL/BACKLOG - SQL Mystery Game.md`.
 
+**Amended since, body left as decided; the current state is in section 7 (phases) and section 8
+(backlog), with the reasoning:**
+
+- Part I chapters require a discovery query before the taught construct, and **hints are removed**
+  (`2026-09-22-part1-multi-query-chapters-design.md`). Section 3's "Witnesses (hints)" describes the
+  original design, not the shipped one; the `Clean Sweep` badge went with them and **rank counts
+  queries only**.
+- Section 5's "Google Fonts only, no artwork" no longer holds: twelve chapter props (inline SVG), a
+  Part II night edition, a cork case board and painted portraits of the cast shipped 2026-09-22/23.
+- Section 4's compete flow is link-driven: the teacher shares `?season=N&board=<url>`; the season
+  number is typed only when there is no link. Events queue offline and retry.
+- The `?chapter=N` debug jump and an `?admin` panel exist, both behind a passphrase.
+
 ## 1. Fixed decisions
 
 | Topic | Decision |

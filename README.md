@@ -48,6 +48,20 @@ The page is fully static: no server, no environment variables.
 - `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
 - `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.
 
+## Look
+
+- Twelve chapter props (engraved-line inline SVG, one accent colour) sit next to the chapter title:
+  `PROPS` in `site/app.js`. Pure ASCII, no asset files.
+- Part II is a night edition: the whole page switches once the Part II code is accepted
+  (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
+  to 19 May, and a reload keeps the mood.
+- Portraits: `site/portraits/*.jpg`, six suspects plus Ganimard and the Comtesse, painted in colour
+  after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; Ganimard sits
+  on the landing card, Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
+  ending. All generated from one prompt template (only the sitter changes, so no face reads guiltier
+  than another), from a public, no-login image endpoint; the generator's corner mark was cropped off.
+- The case board is a cork board with a pin per solved chapter. Badge toasts clear a beat apart.
+
 ## Files
 
 | File | Role |
@@ -56,13 +70,14 @@ The page is fully static: no server, no environment variables.
 | `generate_db.py` | planted values per seed, schema, noise, planting, self-checks, outputs |
 | `erd.py` | ERD auto-layout (FK depth layers, barycentre ordering) to inline SVG |
 | `test_generate.py` | `unittest` suite |
-| `solution.sql` | generated: the reference path, one query per chapter |
+| `solution.sql` | generated: the reference path, each chapter's discovery queries then its final query |
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
 | `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
 | `site/portraits/*.jpg` | suspect portraits (Style A/Lavery colour, generated), shown in the Suspects panel |
 | `apps_script.gs`, `seasons.txt` | compete backend (Google Apps Script) and the seasons Pages builds |
 | `test_site.mjs` | `node --test` suite for the site's pure functions |
 | `docs/superpowers/specs/` | the design spec; `docs/superpowers/plans/` the implementation plans |
+| `docs/mockups/` | design boards: chapter props, case board and night palette (`illustrations.html`), portrait styles (`portrait-styles.html`) |
 
 The plot is public in `plot.py` and `solution.sql`; the site only ships SHA-256 hashes of the
 normalised answers in `chapters.json`.
