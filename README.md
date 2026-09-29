@@ -38,7 +38,7 @@ Tests for the site's pure functions (no browser needed): `node --test test_site.
 ## Deploying
 
 GitHub Pages via `.github/workflows/pages.yml` on every push to `main`: the workflow builds the compete
-seasons listed in `seasons.txt`, then publishes `site/`. Live at <https://techneb.github.io/sql-mystery-game/>.
+seasons 1-20, then publishes `site/`. Live at <https://mystery.alephb.uk/> (the old techneb.github.io address redirects there).
 The page is fully static: no server, no environment variables.
 
 ## Tuning
@@ -74,7 +74,7 @@ The page is fully static: no server, no environment variables.
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
 | `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
 | `site/portraits/*.jpg` | suspect portraits (Style A/Lavery colour, generated), shown in the Suspects panel |
-| `apps_script.gs`, `seasons.txt` | compete backend (Google Apps Script) and the seasons Pages builds |
+| `apps_script.gs` | compete backend (Google Apps Script) |
 | `test_site.mjs` | `node --test` suite for the site's pure functions |
 | `docs/superpowers/specs/` | the design spec; `docs/superpowers/plans/` the implementation plans |
 | `docs/mockups/` | design boards: chapter props, case board and night palette (`illustrations.html`), portrait styles (`portrait-styles.html`) |
@@ -89,9 +89,10 @@ plot and cast, but every piece of evidence (plates, addresses, account numbers, 
 numbers, non-suspect names) is re-drawn from seed N, and each of the 8 Part I chapters asks a
 **different question on the same tables with the same construct** than learning mode, so a season can
 be reused by a new class without last term's answers helping. Generated `season-*` files are not
-committed. GitHub Pages builds the seasons listed in `seasons.txt` (one number per line) at deploy time,
-so opening a season for a class is: add its number to `seasons.txt`, push, share the link below. Remove
-the line after the class. Locally, run the command above and the files land in `site/` directly.
+committed. GitHub Pages builds seasons 1-20 at every deploy, so opening a season
+for a class is only picking an unused number: open `?admin&board=<your /exec URL>` (passphrase), click
+**Seasons**, and it lists the seasons teams have already played, proposes the next free one, and copies
+the student and leaderboard links. Locally, run the command above and the files land in `site/` directly.
 
 Backend: paste `apps_script.gs` into a Google Sheet's Apps Script editor, set the `SHEET_ID` script
 property to that sheet's id (Project Settings > Script Properties -- never edit the id into the file
@@ -103,7 +104,7 @@ endpoint. It travels in links instead.
 Playing a season: share one link with the class,
 
 ```
-https://techneb.github.io/sql-mystery-game/?season=N&board=<your deployment's /exec URL>
+https://mystery.alephb.uk/?season=N&board=<your deployment's /exec URL>
 ```
 
 With `season=N` in the URL the landing page's **Compete** button offers that season (if `season-N.json`
