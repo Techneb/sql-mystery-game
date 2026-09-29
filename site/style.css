@@ -114,8 +114,17 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* toasts */
 /* ?admin in the URL only; not linked from anywhere a student would find */
 .admin-panel { position: fixed; left: 16px; bottom: 16px; background: var(--card); border: 2px dashed var(--accent);
-  padding: 6px 8px; z-index: 20; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 280px; }
+  padding: 6px 8px; z-index: 20; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: min(420px, calc(100vw - 32px)); }
 .admin-panel button { padding: 2px 8px; font-size: 12px; }
+.admin-seasons { flex-basis: 100%; font-size: 12px; }
+.admin-seasons input { font-size: 12px; }
+.admin-board { flex-basis: 100%; box-sizing: border-box; font-size: 12px; }
+.admin-seasons input[type=number] { width: 4em; }
+.admin-seasons textarea { width: 100%; box-sizing: border-box; font-size: 12px; }
+.admin-seasons #admin-season { width: 4em; }
+.admin-seasons table { border-collapse: collapse; margin: 6px 0; }
+.admin-seasons th, .admin-seasons td { padding: 1px 8px 1px 0; text-align: left; }
+.admin-msg { word-break: break-all; margin-top: 4px; }
 
 #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
 .toast { background: var(--ink); color: var(--paper); padding: 8px 12px; border-left: 4px solid var(--gold); animation: slidein .4s ease-out both; max-width: 320px; }

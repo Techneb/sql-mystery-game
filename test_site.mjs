@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -127,4 +127,46 @@ test("compete events carry the Part I totals the leaderboard scores", () => {
   assert.equal(fmtTime(124000), "02:04");
   assert.equal(fmtTime(3600000), "60:00");
   assert.equal(fmtTime(-500), "00:00");
+});
+
+test("admin seasons: usage per season, next free number, share links", () => {
+  const rows = [
+    { timestamp: 100, event: "start", team: "A", season: 1 }, { timestamp: 300, event: "finish", team: "A", season: 1 },
+    { timestamp: 200, event: "start", team: "B", season: 1 }, { timestamp: 50, event: "start", team: "C", season: 3 },
+    { timestamp: 9, event: "start", team: "test", season: "" },
+  ];
+  const usage = seasonUsage(rows);
+  assert.deepEqual(usage, [{ season: 1, teams: 2, last: 300 }, { season: 3, teams: 1, last: 50 }]);
+  assert.equal(nextFreeSeason(usage), 2);
+  assert.equal(nextFreeSeason([]), 1);
+  const l = seasonLinks("https://x.uk/g/", 2, "https://s.g/exec?a=1");
+  assert.equal(l.student, "https://x.uk/g/?season=2&board=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
+  assert.equal(l.leaderboard, "https://x.uk/g/leaderboard.html?data=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
+  assert.equal(seasonLinks("b/", 4, "").student, "b/?season=4");
+});
+
+test("compete refuses a name already used in the same season, whatever the case", () => {
+  const rows = [{ team: "Alice", season: 2 }, { team: "Bob ", season: "3" }];
+  assert.ok(nameTaken(rows, 2, " alice"));
+  assert.ok(nameTaken(rows, 3, "BOB"));
+  assert.ok(!nameTaken(rows, 3, "Alice"), "same name in another season is fine");
+  assert.ok(!nameTaken([], 2, "Alice"));
+});
+
+test("admin settings: valid fields apply, invalid ones are refused and keep the default", () => {
+  const before = currentConfig();
+  try {
+    assert.deepEqual(applyConfig([{ team: "x" }]), [], "an old backend answers rows: ignored");
+    assert.deepEqual(applyConfig({ ranks: [10, 20, 30], penalty: { wrong: 5 }, taunts: [" A L ", "B"] }), []);
+    assert.equal(rank(10), "Ganimard himself");
+    assert.equal(rank(31), "Constable");
+    assert.deepEqual(TAUNTS, ["A L", "B"]);
+    assert.deepEqual(PENALTY, { hint: 120, wrong: 5 });
+    assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { hint: -1 } }), ["ranks", "taunts", "penalty.hint"]);
+    assert.deepEqual(currentConfig().ranks, [10, 20, 30], "refused ranks change nothing");
+    assert.equal(configUrl("https://s.g/exec"), "https://s.g/exec?config=1");
+  } finally {
+    applyConfig(before);
+  }
+  assert.deepEqual(currentConfig(), before);
 });

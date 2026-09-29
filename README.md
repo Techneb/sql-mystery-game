@@ -43,6 +43,12 @@ The page is fully static: no server, no environment variables.
 
 ## Tuning
 
+Live, without a deploy: open `?admin&board=<your /exec URL>`, click **Settings**, and change the rank
+thresholds, the telegrams and the leaderboard penalties. They are stored in the Apps Script (Script Property
+`CONFIG`) and reach any page whose link carries the backend URL (`?board=` for the game, `?data=` for the
+leaderboard; the admin panel's **Investigate link** adds it to learning mode). Saving needs the Script
+Property `ADMIN_KEY` set to the admin passphrase. The values below are the defaults.
+
 - `RANKS` in `site/app.js` sets the query thresholds for each rank; tune after the first class. Hints are
   off for now (every chapter ships `hints: []`), so the rank counts queries only.
 - `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
@@ -109,7 +115,7 @@ https://mystery.alephb.uk/?season=N&board=<your deployment's /exec URL>
 
 With `season=N` in the URL the landing page's **Compete** button offers that season (if `season-N.json`
 is on the server; otherwise its tooltip says so); without a link, Compete asks for the season number
-instead. Compete then asks for a team name, POSTs `start` to the Apps
+instead. Compete then asks for a pseudo (refused if already used in that season), POSTs `start` to the Apps
 Script (which stamps the server time), loads the season database, and runs Part I only with a clock in
 the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the team's hints,
 wrong answers and queries, and the finish screen links to the leaderboard. Events that cannot be

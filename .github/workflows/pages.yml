@@ -26,10 +26,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build the compete seasons listed in seasons.txt
-        # season-N.sqlite/json are gitignored; the deploy builds whichever seasons the teacher lists.
-        run: |
-          for n in $(sed 's/#.*//' seasons.txt); do python3 generate_db.py --season "$n"; done
+      - name: Build compete seasons 1-20
+        # season-N.sqlite/json are gitignored; every deploy builds all twenty (~4 MB, ~1.5 s each) so the
+        # teacher picks and shares one from the ?admin panel without touching the repo.
+        run: for n in $(seq 1 20); do python3 generate_db.py --season "$n"; done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,17 +1,22 @@
 // apps_script.gs -- paste into Extensions > Apps Script of a Google Sheet, then Deploy > New deployment >
-// Web app (Execute as: Me, Who has access: Anyone). Copy the deployment URL into leaderboard.html's
-// APPS_SCRIPT_URL and, once the follow-up UI plan wires the Compete button, into site/app.js's.
+// Web app (Execute as: Me, Who has access: Anyone). The deployment URL is never committed: it travels in
+// links (?board= for the game, ?data= for leaderboard.html), which the ?admin panel's Seasons section copies.
 // The sheet needs no manual setup: doPost creates a "log" tab and header row on first call.
 
 function doPost(e) {
-  var sheet = getLogSheet_();
   var data = JSON.parse(e.postData.contents);
+  if (data.config) return json_(saveConfig_(data));
+  var sheet = getLogSheet_();
   sheet.appendRow([new Date(), data.event || "", data.team || "", data.season || "",
                     data.chapter || "", data.hints || 0, data.wrong || 0, data.queries || 0]);
   return ContentService.createTextOutput(JSON.stringify({ok: true})).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet(e) {
+  if (e && e.parameter && e.parameter.config) {
+    var c = PropertiesService.getScriptProperties().getProperty("CONFIG");
+    return json_(c ? JSON.parse(c) : {});
+  }
   var sheet = getLogSheet_();
   var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 8).getValues() : [];
   var out = rows.map(function (r) {
@@ -36,4 +41,22 @@ function getLogSheet_() {
     sheet.appendRow(["timestamp", "event", "team", "season", "chapter", "hints", "wrong", "queries"]);
   }
   return sheet;
+}
+
+// Game settings from the ?admin panel (ranks, telegrams, penalties), stored as one JSON Script Property.
+// Anyone can POST to this web app, so a save must carry the admin passphrase: set Script Property
+// ADMIN_KEY to it by hand (Project Settings > Script Properties). Without ADMIN_KEY, nobody can save.
+// The game validates the values when it reads them, so this only guards who may write.
+function saveConfig_(data) {
+  var props = PropertiesService.getScriptProperties();
+  var key = props.getProperty("ADMIN_KEY");
+  if (!key || String(data.key || "").trim().toLowerCase() !== key.trim().toLowerCase()) return {ok: false, error: "wrong admin key"};
+  var s = JSON.stringify(data.config);
+  if (s.length > 8000) return {ok: false, error: "settings too large"};
+  props.setProperty("CONFIG", s);
+  return {ok: true};
+}
+
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }

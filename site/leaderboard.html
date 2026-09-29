@@ -24,10 +24,10 @@
 <div class="sub" id="status">Loading...</div>
 <select id="season"></select>
 <table id="board">
-  <thead><tr><th>#</th><th>Team</th><th>Time</th><th>Hints</th><th>Wrong</th></tr></thead>
+  <thead><tr><th>#</th><th>Pseudo</th><th>Time</th><th>Hints</th><th>Wrong</th></tr></thead>
   <tbody id="rows"></tbody>
 </table>
-<div class="empty" id="empty" hidden>No teams yet for this season.</div>
+<div class="empty" id="empty" hidden>No players yet for this season.</div>
 <script>
 // Left empty on purpose: this file is committed to a public repo, and a live deployment URL is
 // specific to one teacher's Google account. Two ways to point this page at a real deployment
@@ -42,10 +42,13 @@ function fmt(ms) {
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 }
 
+// Everything below comes from the Sheet, which anyone can POST to: escape it before it reaches innerHTML.
+const esc = s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 // One row per team+season: pairs its "start" row with its "finish" row (adjusted time, spec formula:
-// finish - start + 2 min/hint + 10 s/wrong) or, absent a finish, its latest "progress" chapter.
+// finish - start + penalty.hint s/hint + penalty.wrong s/wrong, 120 and 10 unless the ?admin Settings say otherwise) or, absent a finish, its latest "progress" chapter.
 // Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win,
 // so a team that retries a POST after a dropped connection, or reloads the page, can never shorten its time.
+let penalty = { hint: 120, wrong: 10 };  // defaults, same as PENALTY in app.js
 function summarize(rows) {
   const teams = new Map(); // key "team|season" -> {team, season, start, finish, chapter}
   for (const r of rows) {
@@ -58,7 +61,7 @@ function summarize(rows) {
   }
   return [...teams.values()].map(t => {
     if (t.finish && t.start != null) {
-      const adjusted = (t.finish.timestamp - t.start) + (t.finish.hints || 0) * 120000 + (t.finish.wrong || 0) * 10000;
+      const adjusted = (t.finish.timestamp - t.start) + (t.finish.hints || 0) * penalty.hint * 1000 + (t.finish.wrong || 0) * penalty.wrong * 1000;
       return { ...t, done: true, adjusted, hints: t.finish.hints, wrong: t.finish.wrong };
     }
     return { ...t, done: false, adjusted: Infinity };
@@ -68,20 +71,25 @@ function summarize(rows) {
 async function load() {
   if (!SOURCE) { document.getElementById("status").textContent = "No leaderboard configured yet."; return; }
   let rows;
+  try {
+    const u = new URL(SOURCE); u.searchParams.set("config", "1");
+    const p = await fetch(u).then(r => r.json()).then(c => c.penalty || {}).catch(() => ({}));
+    for (const k of ["hint", "wrong"]) if (Number.isFinite(p[k]) && p[k] >= 0) penalty[k] = p[k];
+  } catch {}
   try { rows = await (await fetch(SOURCE)).json(); }
   catch (e) { document.getElementById("status").textContent = "Could not reach the leaderboard."; return; }
   const teams = summarize(rows);
   const seasons = [...new Set(teams.map(t => t.season))].sort((a, b) => a - b);
   const sel = document.getElementById("season");
   const prev = sel.value;
-  sel.innerHTML = seasons.map(s => `<option value="${s}">Season ${s}</option>`).join("");
+  sel.innerHTML = seasons.map(s => `<option value="${esc(s)}">Season ${esc(s)}</option>`).join("");
   if (seasons.includes(Number(prev))) sel.value = prev;
   const season = Number(sel.value || seasons[0]);
   const here = teams.filter(t => t.season === season).sort((a, b) => a.adjusted - b.adjusted);
   document.getElementById("rows").innerHTML = here.map((t, i) => `
     <tr class="${t.done ? "done" : "progress"}">
       <td>${t.done ? i + 1 : "-"}</td>
-      <td>${t.team}</td>
+      <td>${esc(t.team)}</td>
       <td class="time">${t.done ? fmt(t.adjusted) : "chapter " + t.chapter + " of 8"}</td>
       <td>${t.done ? t.hints : "-"}</td>
       <td>${t.done ? t.wrong : "-"}</td>

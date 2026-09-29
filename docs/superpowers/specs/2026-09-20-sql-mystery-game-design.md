@@ -18,6 +18,9 @@ Decided 2026-09-20 with the course owner. Supersedes `SQL/BACKLOG - SQL Mystery 
 - Section 4's compete flow is link-driven: the teacher shares `?season=N&board=<url>`; the season
   number is typed only when there is no link. Events queue offline and retry.
 - The `?chapter=N` debug jump and an `?admin` panel exist, both behind a passphrase.
+- 2026-09-30, course owner: compete is played **individually**, not in pairs. The prompt asks for a
+  player name and refuses one already used in that season (the leaderboard keys on name + season).
+  Every deploy builds seasons 1-20; the `?admin` panel's Seasons section replaces `seasons.txt`.
 
 ## 1. Fixed decisions
 
@@ -260,11 +263,13 @@ framework, no bundler.
    **Done.** Content and backend PR #5 (2026-09-22; compete objectives given the same multi-query
    treatment as learn mode); the in-game button, clock and event posting 2026-09-22
    (`2026-09-22-plan-4-compete-button.md`, played end to end in Chromium against a stand-in Apps
-   Script). A season is opened by listing it in `seasons.txt` and shared as `?season=N&board=<url>`;
+   Script). Every deploy builds seasons 1-20 (2026-09-29, replacing `seasons.txt`); the `?admin` panel's Seasons
+   section shows which are used and copies the `?season=N&board=<url>` share link;
    without a link, Compete asks for the season number.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
-   <https://techneb.github.io/sql-mystery-game/> (Actions build, `.github/workflows/pages.yml`, since
+   <https://techneb.github.io/sql-mystery-game/>, at <https://mystery.alephb.uk/> since 2026-09-29 (custom domain;
+   the old address redirects) (Actions build, `.github/workflows/pages.yml`, since
    classic deploy-from-branch cannot serve `/site` as a subfolder). **Course-folder ties done**: 
    `../SQL/0-SQL.md` links the game, `../SQL/BACKLOG - SQL Mystery Game.md` is marked superseded, and
    `../SQL/3-Corrections/8. Correction SQL Mystery Game.sql` regenerates automatically whenever
@@ -273,9 +278,8 @@ framework, no bundler.
 
 ## 8. Backlog (not scheduled)
 
-- **Translate the site into multiple languages.** Note the tension with section 1's fixed decision
-  ("Language: English only... Dropped: French version") - revisit that decision explicitly before
-  scoping this, rather than treating it as already superseded.
+- ~~Translate the site into multiple languages.~~ Dropped 2026-09-29, course owner: English only,
+  section 1's fixed decision stands.
 - ~~Visual identity per chapter.~~ Implemented 2026-09-22, course owner's call ("do what you think
   is best"): a mockup pass first (`docs/mockups/illustrations.html`), then built into the live site
   from it. Decisions made:
