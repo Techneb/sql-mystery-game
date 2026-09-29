@@ -61,9 +61,9 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
 - Part II is a night edition: the whole page switches once the Part II code is accepted
   (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
   to 19 May, and a reload keeps the mood.
-- Portraits: `site/portraits/*.jpg`, six suspects plus Ganimard and the Comtesse, painted in colour
-  after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; Ganimard sits
-  on the landing card, Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
+- Portraits: `site/portraits/*.jpg`, six suspects plus the Comtesse, painted in colour
+  after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; the landing card
+  shows the Blue Star itself (the tab icon's sapphire), Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
   ending. All generated from one prompt template (only the sitter changes, so no face reads guiltier
   than another), from a public, no-login image endpoint; the generator's corner mark was cropped off.
 - The case board is a cork board with a pin per solved chapter. Badge toasts clear a beat apart.
