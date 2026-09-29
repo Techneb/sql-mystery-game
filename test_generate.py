@@ -127,6 +127,18 @@ class PartI(unittest.TestCase):
         for ch in plot.CHAPTERS[:8]:
             g.check_chapter(self.conn, self.V, ch)   # asserts naive_rows and that the naive query misses
 
+    def test_plot_is_not_on_the_first_screen(self):
+        # SELECT * without WHERE must show noise first (scatter_planted), May 1912 alone must not surface the report
+        first = lambda sql: [r[0] for r in self.conn.execute(sql + " LIMIT 50")]
+        self.assertNotIn("Marcel Duroc", first("SELECT person_name FROM interview"))
+        self.assertNotIn(self.V["report_id"], first("SELECT id FROM police_report"))
+        self.assertNotIn(self.V["report_id"], first("SELECT id FROM police_report WHERE date BETWEEN 19120501 AND 19120531"))
+        self.assertNotIn(self.V["neighbour"], first("SELECT guest_name FROM hotel_register"))
+
+    def test_transcripts_write_dates_in_english(self):
+        for (t,) in self.conn.execute("SELECT transcript FROM interview"):
+            self.assertNotRegex(t, r"1912\d{4}")
+
 
 class PartII(unittest.TestCase):
     @classmethod

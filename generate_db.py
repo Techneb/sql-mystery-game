@@ -139,6 +139,96 @@ ITEMS = [("coffee", 2), ("tea", 2), ("croissants", 3), ("omelette", 5), ("consom
 TYPES = ["theft", "burglary", "assault", "fraud", "lost property", "disturbance", "vandalism"]
 TEL_WORDS = ["ARRIVE", "TOMORROW", "STOP", "SEND", "MONEY", "LOVE", "MOTHER", "ILL", "TRAIN",
              "DELAYED", "CONTRACT", "SIGNED", "REGARDS", "WEATHER", "FINE", "BUY", "SELL", "SHARES"]
+# Noise reads like a real, tired Prefecture: famous lines, famous people, anachronisms on purpose.
+# Keep it noise: no cast name, no sapphire, no balcony, no plate prefix, no suite price rank.
+REPORT_TEXT = [
+    "Reported by {n}. A tall stranger in dark glasses took the hat stand and promised he would be back.",
+    "Reported by {n}. A man in a cape asked the doorman for Rosebud, then left without his sledge.",
+    "Monsieur Proust reports a madeleine missing from his tea. He is writing seven volumes about it.",
+    "Reported by {n}. A black cat crossed the street twice, exactly the same way. Nothing else seemed wrong.",
+    "A gentleman with a very small moustache stole a bread roll and did a little dance with it.",
+    "Reported by {n}. A child claims a man offered him an offer he could not refuse: a sou for a pear.",
+    "Monsieur Eiffel reports that someone has again tried to buy his tower. It is not for sale.",
+    "Reported by {n}. A young woman in glass slippers left one on the stairs at midnight. Kept at the desk.",
+    "An inventor reports his flying machine flew. The complaint is from the neighbour whose roof it met.",
+    "Reported by {n}. A man shouted that he was the king of the world from the bow of a barge on the Seine.",
+    "Reported by {n}. Three musketeers refused to pay for four meals. One for all, they said.",
+    "Madame Curie reports that her notebook glows in the dark. No crime, but the constable was nervous.",
+    "Reported by {n}. A gentleman in a bowler hat insists this is not a pipe. The pipe was stolen.",
+    "Reported by {n}. A sailor asked for a bigger boat after seeing a fish in the Tuileries pond.",
+    "A tourist from Kansas lost her dog and her way. She keeps repeating there is no place like home.",
+    "Reported by {n}. A man knocked on every door in the street asking whether anyone had seen Waldo.",
+    "Reported by {n}. A wig was taken off the head of a judge in broad daylight. The judge saw nothing.",
+    "A painter from Malaga complains the police have made his portrait look too much like a person.",
+    "Reported by {n}. An umbrella went missing. The owner is certain it will rain as soon as he says so.",
+    "Reported by {n}. A tenant has been playing the same four notes on the piano since Tuesday.",
+    "Reported by {n}. Winter is coming, says the coal merchant, who wants his unpaid bill settled first.",
+    "A clown was reported for frightening the pigeons. The pigeons have declined to press charges.",
+    "Reported by {n}. A man tried to pay for his soup with a banknote from the year 2000.",
+    "Reported by {n}. A gentleman with a lightsabre, he said, cut a baguette in half. It was a cane.",
+    "Mademoiselle Chanel reports a black dress stolen. She says a simple one will do, and has already cut another.",
+    "Reported by {n}. A bicycle vanished outside a cafe. The owner keeps asking: where is my mind.",
+    "Reported by {n}. Somebody painted a moustache on a portrait of a lady in the Louvre. Again.",
+    "A man insists he saw a train arrive at the station and that the audience ran away screaming.",
+    "Reported by {n}. A goose escaped from Les Halles and has taken over the Pont Neuf. It is winning.",
+    "Reported by {n}. Two gentlemen settled a duel with scissors and paper. Nobody chose rock.",
+    "Monsieur Verne reports he has been around the world in eighty days and would like his deposit back.",
+    "Reported by {n}. A man keeps asking the time and replying himself: it is later than you think.",
+    "Reported by {n}. A trunk of left boots was found. The right boots are being sought separately.",
+    "A lady reports her parrot now says only one thing, which the constable declined to write down.",
+    "Reported by {n}. A street singer was told this was fine by a dog sitting in a burning cafe.",
+    "Reported by {n}. A delivery of snails escaped. The owner reports they were last seen very near.",
+    "A mime was arrested for disturbance. He has refused to say a word in his defence.",
+    "Reported by {n}. Someone swapped all the numbers on the doors of a staircase. Postmen in despair.",
+    "Reported by {n}. A man in a tin suit asked for oil and a heart. Sent to the Prefecture of Kansas.",
+    "Reported by {n}. A houseboat was lost at sea. It was moored in the Canal Saint-Martin.",
+    "Reported by {n}. No witness. The reporting party asks us to keep calm and carry on.",
+    "Reported by {n}. A pickpocket returned a wallet, apologised, and took the umbrella instead.",
+]
+INTERVIEW_TEXT = [
+    "I saw nothing, monsieur. I was asleep, and dreaming of a much better hotel.",
+    "Frankly, my dear inspector, I do not give a damn. I was playing cards.",
+    "I see dead people, monsieur. Mostly the guests at breakfast.",
+    "Houston? Who is Houston? I have a problem, yes: my soup is cold.",
+    "Here is looking at you, monsieur. And no, I did not look at anything else.",
+    "I was at the Moulin Rouge until the can-can ended. Then I was at the Moulin Rouge until it started again.",
+    "Elementary, inspector. It was the butler. We do not have a butler.",
+    "Show me the money and I will show you my memory. No? Then I remember nothing.",
+    "I heard a dog barking. Then a second dog. Then they were both barking at me.",
+    "Monsieur Houdini stayed in my room last week. I have not found the door since.",
+    "To the Opera and beyond, monsieur. I sleep through the second act, always.",
+    "May the force of the law be with you. It was not with me: somebody drank my cognac.",
+    "I only saw a man eating a very large sandwich. It is not a crime, I hope?",
+    "One does not simply walk into the Ritz after midnight, monsieur. I tried.",
+    "I was reading Monsieur Leroux's new mystery. The yellow room was locked. So was mine.",
+    "Say hello to my little friend, monsieur. He is a poodle. He saw nothing either.",
+    "I was counting the stars from the roof with Monsieur Flammarion. We got to eleven.",
+    "The butler did it, the gardener did it, my mother-in-law did it. Pick one.",
+    "I was on the telephone all night. Nobody answered. It is a new invention.",
+    "You talking to me? You talking to me? Then I was in bed, monsieur.",
+    "Keep your friends close and your umbrellas closer. Mine was stolen in May.",
+    "It is not a bug, monsieur, it is a feature of the building. The pipes sing at night.",
+    "I asked the cat. The cat looked at me as if I were the suspect.",
+    "Life is like a box of bonbons, monsieur. Mine was empty before I arrived.",
+    "I was dancing the tango with a Brazilian aviator. He says he flew first. The Americans disagree.",
+    "I heard someone humming. Very badly. It may have been me.",
+    "There is no spoon, monsieur. The Ritz has three hundred of them and I counted.",
+    "Nobody expects a witness to see anything. I did not disappoint.",
+    "I woke up, I checked my watch, I went back to sleep. A perfect night.",
+    "I was writing postcards to my aunt in Lyon. Eleven. She never replies.",
+    "Monsieur Picasso was drawing on the tablecloth again. The waiter wants it framed.",
+    "I bought a ticket for the Titanic next month. My wife says we must not miss the boat.",
+    "The only thing I saw was a very tall hat. The man under it was very short.",
+    "I was at the cinematograph. A train came straight at us. I have not recovered.",
+    "Winter is not coming, monsieur, it is May. I was on the terrace.",
+    "I told the constable everything and the constable told me to go home. So I went home.",
+    "I was trying to teach my parrot to say Vive la Republique. It prefers something shorter.",
+    "Nothing to report. I have not been this bored since the Exposition of 1900.",
+    "I saw a man with a moustache. Then a woman with a moustache. It was a very strange party.",
+    "Ask my lawyer. My lawyer says ask my wife. My wife says ask my lawyer.",
+    "I had one job, monsieur: to wake the gentleman in the morning. I overslept.",
+    "Bond, Jean Bond. I was stirring, not shaking, a very quiet drink at the bar.",
+]
 
 
 def _date(r, m0=1, m1=6):
@@ -161,7 +251,7 @@ def _add_days(d, n):
 
 
 def fill_noise(conn, V, r):
-    """Noise ids start at 100 in every table and skip the reserved planted ids."""
+    """Noise ids start at 100 in every table and skip the reserved planted ids (scatter_planted mixes them later)."""
     c = conn.cursor()
     c.executemany("INSERT INTO address VALUES (?,?,?,?)",
         [(100 + i, r.randint(1, 120), r.choice(STREETS), r.randint(1, 20)) for i in range(1200)])
@@ -169,9 +259,11 @@ def fill_noise(conn, V, r):
         [(100 + i, _name(r), r.choice(NATION), r.randint(1840, 1894), r.choice(OCCUP),
           r.randint(100, 1299)) for i in range(5000)])
     reserved = {V["report_id"]}
+    hotels = ["Hotel Ritz", "Hotel Meurice", "Grand Hotel"]
     c.executemany("INSERT INTO police_report VALUES (?,?,?,?,?,?)",
-        [(i, _date(r), "Paris", r.choice(PLACES + ["Hotel Ritz", "Hotel Meurice", "Grand Hotel"]),
-          r.choice(TYPES), "Reported by %s. No witness." % _name(r))
+        [(i, _date(r, 5, 5) if r.random() < 0.35 else _date(r), "Paris",
+          r.choice(hotels) if r.random() < 0.2 else r.choice(PLACES + hotels),
+          r.choice(TYPES), r.choice(REPORT_TEXT).format(n=_name(r)))
          for i in range(100, 3100) if i not in reserved])
     # hotel: 200 suites (x01-x40 on 5 floors), back-to-back stays through Jan-Jun; floor = suite // 100
     rows, rid = [], 100
@@ -186,7 +278,7 @@ def fill_noise(conn, V, r):
             day = _add_days(out, r.randint(0, 1))
     c.executemany("INSERT INTO hotel_register VALUES (?,?,?,?,?,?,?)", rows)
     c.executemany("INSERT INTO interview VALUES (?,?,?,?)",
-        [(100 + i, _name(r), _date(r, 5, 5), "I saw nothing, monsieur. I was asleep.") for i in range(600)])
+        [(100 + i, _name(r), _date(r, 5, 5), r.choice(INTERVIEW_TEXT)) for i in range(600)])
     plates = ["75-%04d" % r.randint(1000, 9999) for _ in range(400)] + \
              ["%s%03d" % (V["plate_prefix"], r.randint(100, 999)) for _ in range(40)]
     plates = [p for p in plates if p != V["plate"]]
@@ -265,9 +357,15 @@ def plant_part1(conn, V, r):
          "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
          "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
     c.execute("INSERT INTO interview VALUES (2,?,?,?)", ("Marcel Duroc", T,
-        "I was in the lobby the whole night, monsieur, and heard the lift at ten past two. "
-        "Write down the date as I told the inspector: {theft_date}.".format(**V)))
-    # two decoy Ritz reports on other dates
+        "I was in the lobby the whole night of the 17th, monsieur, and I heard the lift at ten past two. "
+        "Past midnight, so write the 18th of May, as the inspector likes things exact."))
+    # decoy Ritz reports: the eve (a student who files the night under the 17th), the same day, the same week
+    c.execute("INSERT INTO police_report VALUES (4,?,?,?,?,?)", (E, "Paris", "Hotel Ritz", "theft",
+        "A bottle of Pommery 1906 taken from a room-service trolley on the first floor. Drunk on the spot, by the smell."))
+    c.execute("INSERT INTO police_report VALUES (5,?,?,?,?,?)", (T, "Paris", "Hotel Ritz", "disturbance",
+        "A guest sang in the bath until the small hours. The guest is a tenor. The complaint is from a baritone."))
+    c.execute("INSERT INTO police_report VALUES (6,19120516,'Paris','Hotel Ritz','fraud',?)",
+        ("A gentleman paid his bar bill with a cheque drawn on the Bank of Monte Carlo. There is no such bank.",))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
     # --- compete ch1: a second, fixed decoy report at a different hotel/date/type, random id per season
@@ -276,8 +374,8 @@ def plant_part1(conn, V, r):
         (V["compete_report_id"],
          "Reported by the night manager. A window forced on the cheapest room on the second floor; nothing else taken."))
     c.execute("INSERT INTO interview VALUES (3,?,?,?)", ("the Meurice night manager", 19120611,
-        "I was on duty the whole night, monsieur, and found the window forced myself. "
-        "Write down the date as I told the inspector: 19120611."))
+        "I was on duty the whole night, monsieur, and found the window forced myself, "
+        "at four in the morning on the 11th of June."))
     # --- ch2: the six suspects on floor 2, 15-22 May; the neighbour pays the most
     c.execute("DELETE FROM hotel_register WHERE floor=2 AND checkin<19120522 AND checkout>19120515")
     others = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])]
@@ -435,13 +533,42 @@ def plant_part2(conn, V, r):
     conn.commit()
 
 
+def scatter_planted(conn, noise, r):
+    """Planted rows go in with small ids (below 100), so SELECT * without WHERE would list the plot first.
+    Swap each one with a random noise row from the middle of its table; foreign keys follow the swap.
+    Ids pinned in V (above 100) are never touched, and nothing may name a planted row by a literal small id."""
+    tables = [t for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+    refs = {t: [] for t in tables}
+    for t in tables:
+        for fk in conn.execute("PRAGMA foreign_key_list(%s)" % t):
+            refs[fk[2]].append((t, fk[3]))
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys = OFF")   # the swap moves parent and children in three steps
+    for t in tables:
+        ids = {i for (i,) in conn.execute("SELECT id FROM %s" % t)}
+        pool = sorted(ids & noise[t])
+        pool = pool[len(pool) // 4: 3 * len(pool) // 4]
+        for a in sorted(i for i in ids - noise[t] if i < 100):
+            b = pool.pop(r.randrange(len(pool)))
+            for x, y in ((a, -1), (b, a), (-1, b)):
+                conn.execute("UPDATE %s SET id=? WHERE id=?" % t, (y, x))
+                for rt, col in refs[t]:
+                    conn.execute("UPDATE %s SET %s=? WHERE %s=?" % (rt, col, col), (y, x))
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys = ON")
+    assert not conn.execute("PRAGMA foreign_key_check").fetchall(), "scatter_planted broke a foreign key"
+
+
 def build_db(seed):
     V = plant_values(seed)
     r = random.Random(seed)
     conn = empty_db()
     fill_noise(conn, V, r)
+    noise = {t: {i for (i,) in conn.execute("SELECT id FROM %s" % t)}
+             for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
+    scatter_planted(conn, noise, r)
     return conn, V
 
 
