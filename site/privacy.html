@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Ritz Affair -- Privacy</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Keep this page in step with what app.js, leaderboard.html and apps_script.gs actually do. */
+  .notice { max-width: 640px; margin: 24px auto 48px; padding: 0 16px; }
+  .notice h1 { font: 700 26px/1.15 "Playfair Display", serif; text-align: center; margin: 20px 0 4px; }
+  .notice h2 { font: 700 18px/1.2 "Playfair Display", serif; margin: 28px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+  .notice p, .notice li { font-size: 17px; }
+  .notice .dateline { text-align: center; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">PARIS &mdash; THE RITZ AFFAIR &mdash; <a href="./">BACK TO THE CASE</a></div>
+</header>
+<main class="notice">
+  <h1>What the paper knows about you</h1>
+  <p class="dateline muted">Privacy notice &mdash; last updated 30 September 2026</p>
+
+  <p>The Ritz Affair is a browser game for learning SQL. It has no accounts, sets no cookies, and runs no
+  analytics, advertising or trackers. The whole game, database included, runs in your browser.</p>
+
+  <h2>Investigate (learning mode)</h2>
+  <p>Nothing leaves your browser. Your progress, notes, queries and badges are saved in your browser's
+  local storage so you can pick up where you left off. Only you can see them; clearing this site's data
+  in your browser erases them.</p>
+
+  <h2>Compete</h2>
+  <p>When your teacher gives you a season link and you press <i>Start the clock</i>, the game sends the
+  following to the class leaderboard, at the start, after each chapter and at the finish:</p>
+  <ul>
+    <li>the pseudo you type,</li>
+    <li>the season number and the chapter you reached,</li>
+    <li>how many queries you ran, wrong answers you gave and hints you opened.</li>
+  </ul>
+  <p>The leaderboard adds the time it received each message. It never receives your queries, your
+  answers or your notes. It is a Google Sheet belonging to the course teacher, reached through Google
+  Apps Script, so Google processes it under its own terms. Anyone with the leaderboard link sees the
+  pseudos and times of that season. The rows stay until the teacher deletes them.</p>
+  <p><b>Choose a pseudo that is not your full name.</b> A first name or a nom de guerre is enough.</p>
+
+  <h2>What the page loads from elsewhere</h2>
+  <ul>
+    <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
+    <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
+  </ul>
+
+  <h2>Questions, or removing your rows</h2>
+  <p>Write to <a href="mailto:contact@alephb.uk">contact@alephb.uk</a>: to ask what is stored about
+  your pseudo, or to have your leaderboard rows removed.</p>
+</main>
+</body>
+</html>

@@ -300,6 +300,7 @@ export function applyConfig(cfg) {
 export function currentConfig() {
   return { ranks: RANKS.slice(0, 3).map(([q]) => q), taunts: [...TAUNTS], penalty: { ...PENALTY } };
 }
+export function duration(s) { return s && s % 60 === 0 ? s / 60 + (s === 60 ? " minute" : " minutes") : s + " seconds"; }
 export function configUrl(board) { const u = new URL(board); u.searchParams.set("config", "1"); return u.href; }
 export function partStats(state, from, to) {
   let queries = 0, hints = 0;
@@ -512,8 +513,10 @@ function offerCompete() {
       if (!seasonData) { $("status").textContent = "Season " + n + " is not on this server."; return; }
       season = n;
     }
-    $("compete-note").textContent = boardUrl
-      ? "Part I, chapters I to VIII, against the clock. Two minutes per hint, ten seconds per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named."
+    $("compete-note").innerHTML = boardUrl
+      ? "Part I, chapters I to VIII, against the clock. " + duration(PENALTY.hint) + " per hint, " + duration(PENALTY.wrong) +
+        " per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named." +
+        ' Your pseudo and progress go to the class leaderboard (<a href="privacy.html" target="_blank">what is sent</a>).'
       : "No leaderboard is connected, so the clock runs locally and nothing is recorded.";
     $("compete-form").hidden = false; $("team").focus();
   };
