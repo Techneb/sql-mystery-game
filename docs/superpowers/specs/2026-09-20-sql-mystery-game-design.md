@@ -334,6 +334,14 @@ framework, no bundler.
     text. The generator's corner watermark was cropped off all eight files (a uniform 5% tighter
     frame, 3:4 kept), so the committed assets are clean, not just hidden by the oval mask.
 
+- **Redo three portraits: Ashcombe, Sernine, Ortega** (course owner, 2026-09-30: they read as the same
+  lean, dark, moustached man, and Ashcombe should look about 55-60). Blocked: the free no-login endpoint
+  (image.pollinations.ai, model flux) now answers 402 after one image. Generate elsewhere, square, same
+  Lavery template, distinct sitters (Ashcombe: elderly, white mutton-chops, monocle, ruddy; Sernine: ~30,
+  fair, clean-shaven, boyish, grey suit and carnation; Ortega: stout, tanned, grey-streaked black beard,
+  bald crown, cream linen). The endpoint renders square and stretches other sizes, which is why all
+  seven files were squeezed back to square and centre-cropped to 3:4 (450x600) on 2026-09-30; crop new
+  ones the same way, clear of the generator's corner mark.
 - ~~Compete mode's in-game button.~~ Done 2026-09-22, see phase 3 and
   `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
   link (`?season=N&board=<url>`), or is typed when there is no link; there is no picker listing which

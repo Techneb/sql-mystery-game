@@ -144,7 +144,13 @@ function renderChapter() {
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
     $("btn-print").hidden = false;
   }
-  if (state.solved.includes(12)) { $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + esc(data.endings.part2); $("objective").textContent = "Case closed. Twice."; }
+  // The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
+  if (state.solved.includes(12)) {
+    $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + esc(data.endings.part2) +
+      '<figure class="ending-photo"><img src="blue-star.jpg" alt="The Blue Star, re-set as a ring, on dark velvet by a window over London">' +
+      "<figcaption>Enclosed with the telegram, a photograph. No message. The jeweller has been busy.</figcaption></figure>";
+    $("objective").textContent = "Case closed. Twice.";
+  }
   if (competeDone(state)) {
     $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
       "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +
@@ -284,6 +290,7 @@ export const BADGES = [
   ["Window Shopper", "OVER ( before chapter 8.", c => c.event === "query" && /\bover\s*\(/i.test(c.sql) && c.chapter < 8],
   ["Recursive", "WITH RECURSIVE. Ganimard has never seen one and never will.", c => c.event === "query" && /with\s+recursive/i.test(c.sql)],
   ["Egg Hunter", "Found the telegram to the curious clerk.", c => c.event === "code"],
+  ["Lamplighter", "Switched between the day and night editions. Paris has lit its lamps by hand since 1667.", c => c.event === "theme"],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
 ];
 
@@ -591,10 +598,21 @@ function offerCompete() {
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
 }
 
-// Part II mood: dark palette + a later masthead date, set once (see style.css's [data-mood="night"]).
+// Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is
+// the reader's choice once they press the Day/Night edition button (per browser, THEME_KEY); until then
+// it follows the story. The masthead date always follows the story.
+const THEME_KEY = "ritz.theme";
+function chosenTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
 function applyMood() {
-  document.documentElement.dataset.mood = state.part2 ? "night" : "day";
-  $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
+  const mood = chosenTheme() || (state && state.part2 ? "night" : "day");
+  document.documentElement.dataset.mood = mood;
+  $("btn-theme").textContent = mood === "night" ? "Day edition" : "Night edition";
+  if (state) $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
+}
+function toggleTheme() {
+  try { localStorage.setItem(THEME_KEY, document.documentElement.dataset.mood === "night" ? "day" : "night"); } catch {}
+  applyMood();
+  if (state && data) award(detectBadges(ctx({ event: "theme" }), state.badges));   // before boot has loaded them: no badge
 }
 
 // Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
@@ -734,6 +752,8 @@ async function renderAdminPanel() {
 function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel(); }
 
 async function boot() {
+  $("btn-theme").onclick = toggleTheme;
+  applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
   season = Number(params.get("season")) || 0;
   boardUrl = params.get("board") || APPS_SCRIPT_URL;

@@ -217,7 +217,7 @@ INTERVIEW_TEXT = [
     "I woke up, I checked my watch, I went back to sleep. A perfect night.",
     "I was writing postcards to my aunt in Lyon. Eleven. She never replies.",
     "Monsieur Picasso was drawing on the tablecloth again. The waiter wants it framed.",
-    "I bought a ticket for the Titanic next month. My wife says we must not miss the boat.",
+    "I had a ticket for the Titanic last month and missed the boat. Best mistake of my life, monsieur.",
     "The only thing I saw was a very tall hat. The man under it was very short.",
     "I was at the cinematograph. A train came straight at us. I have not recovered.",
     "Winter is not coming, monsieur, it is May. I was on the terrace.",

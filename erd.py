@@ -1,5 +1,6 @@
 """ERD auto-layout: layered by foreign-key depth, barycentre ordering, inline SVG. Stdlib only."""
 W, GAP, LAYER_H, ROW = 170, 40, 60, 14
+PER_ROW = 2   # a layer wraps after this many tables, so the schema stays about one column wide (the site fits it to ~340 px)
 
 
 def read_schema(conn):
@@ -15,7 +16,8 @@ def read_schema(conn):
 
 def layout(tables, fks, override=None):
     """-> {name: (layer, x, y, w, h)}. Layer 0 = no FK; else 1 + deepest referenced table (self-refs ignored).
-    Within a layer, ordered by the mean x of the referenced tables, ties by name. override = {name: (x, y)}."""
+    Within a layer, ordered by the mean x of the referenced tables, ties by name, wrapped every PER_ROW tables.
+    override = {name: (x, y)}."""
     refs = {t: {ref for (tt, _, ref) in fks if tt == t and ref != t} for t in tables}
     layer = {}
 
@@ -34,9 +36,12 @@ def layout(tables, fks, override=None):
         def bary(t):
             xs = [pos[r][1] for r in refs[t] if r in pos]
             return (sum(xs) / len(xs) if xs else 0, t)
-        for i, t in enumerate(sorted(rows[L], key=bary)):
-            pos[t] = (L, i * (W + GAP), y, W, 16 + ROW * len(tables[t]))
-        y += max(pos[t][4] for t in rows[L]) + LAYER_H
+        ordered = sorted(rows[L], key=bary)
+        for k in range(0, len(ordered), PER_ROW):
+            chunk = ordered[k:k + PER_ROW]
+            for i, t in enumerate(chunk):
+                pos[t] = (L, i * (W + GAP), y, W, 16 + ROW * len(tables[t]))
+            y += max(pos[t][4] for t in chunk) + LAYER_H
     for t, (x, yy) in (override or {}).items():
         pos[t] = (pos[t][0], x, yy, W, pos[t][4])
     return pos
