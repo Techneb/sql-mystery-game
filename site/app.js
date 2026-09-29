@@ -530,7 +530,7 @@ function applyMood() {
 // Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
 // Passphrase is asked for once per page load (adminUnlocked persists after); ask the course owner
 // for it, it is not committed in plaintext anywhere.
-const ADMIN_PASS_SHA256 = "8ac2a0c1bf87c00e57b1893a1e374c2335ce1b4d16fb029a8fbe84077c1a9f3f";
+const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
 let adminUnlocked = false, adminPass = "";  // adminPass: memory only, sent as the key when saving settings
 async function unlockAdmin() {
   if (adminUnlocked) return true;
