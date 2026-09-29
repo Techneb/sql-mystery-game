@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -176,4 +176,17 @@ test("penalty durations read naturally in the compete note", () => {
   assert.equal(duration(60), "1 minute");
   assert.equal(duration(10), "10 seconds");
   assert.equal(duration(0), "0 seconds");
+});
+
+test("terminal colouring: keywords, functions, names, strings, numbers, comments", () => {
+  const h = highlightSql("SELECT count(*), name FROM person -- WHERE id = 1\nWHERE city = 'Paris' AND n > 42 /* x */");
+  assert.match(h, /<span class="sql-kw">SELECT<\/span>/);
+  assert.match(h, /<span class="sql-fn">count<\/span>/);
+  assert.match(h, /<span class="sql-id">name<\/span>/);
+  assert.match(h, /<span class="sql-com">-- WHERE id = 1<\/span>/, "a commented-out clause is one comment span");
+  assert.match(h, /<span class="sql-str">'Paris'<\/span>/);
+  assert.match(h, /<span class="sql-num">42<\/span>/);
+  assert.match(h, /<span class="sql-com">\/\* x \*\/<\/span>/);
+  assert.equal(highlightSql("a < b & c").replace(/<[^>]+>/g, ""), "a &lt; b &amp; c\n", "escaped, and nothing but the source text");
+  assert.match(highlightSql("/* open"), /sql-com">\/\* open</, "an unclosed comment still colours to the end");
 });

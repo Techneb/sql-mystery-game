@@ -1,7 +1,9 @@
-:root { --paper: #f3ead7; --ink: #1c1a17; --red: #8a2b2b; --term: #0f0d0a; --term-text: #d9c89a; --gold: #c9a35a; --card: #fffdf5; --rule: #c9b98f; --shade: #e9dfc6; --accent: var(--red); }
+:root { --paper: #f3ead7; --ink: #1c1a17; --red: #8a2b2b; --term: #0f0d0a; --term-text: #d9c89a; --gold: #c9a35a; --card: #fffdf5; --rule: #c9b98f; --shade: #e9dfc6; --accent: var(--red);
+  --sql-kw: #e8a652; --sql-fn: #8fc1dc; --sql-str: #a6cf8c; --sql-num: #df9bbd; --sql-com: #7f7667; }
 /* Part II mood, set once as data-mood="night" on <html> when the code is accepted (see app.js).
    Same tokens, dark values: everything already styled off these variables shifts for free. */
-:root[data-mood="night"] { --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5; }
+:root[data-mood="night"] { --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
+  --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #5e6c7e; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.4 "Cormorant Garamond", Georgia, serif; transition: background .8s, color .8s; }
 button { font: inherit; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); padding: 4px 12px; cursor: pointer; letter-spacing: 1px; }
@@ -14,6 +16,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .muted { opacity: .6; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); padding: 6px 8px; margin: 10px 0; }
+.answer-form { margin-top: 6px; padding-top: 5px; border-top: 1px dotted var(--rule); }
 
 /* masthead */
 .masthead { position: relative; text-align: center; border-bottom: 2px solid var(--ink); padding: 10px 16px 6px; }
@@ -23,6 +26,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .chapter-menu-item { cursor: pointer; padding: 4px 10px; border: 1px solid var(--rule); background: var(--paper); font-size: 13px; }
 .chapter-menu-item:hover { background: var(--shade); }
 .mast-title { font: 900 32px/1 "Playfair Display", serif; letter-spacing: 1px; }
+.reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
 .mast-sub { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
 
 /* landing */
@@ -45,7 +49,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .compete-info[hidden] { display: none; }
 
 /* columns */
-.columns { display: grid; grid-template-columns: 340px 1fr 380px; gap: 16px; padding: 16px; align-items: start; }
+.columns { display: grid; grid-template-columns: 340px minmax(0, 1fr) 380px; gap: 16px; padding: 16px; align-items: start; }
 .col-story h2 { font: 700 22px/1.15 "Playfair Display", serif; margin: 0 0 6px; }
 .chapter-head { display: flex; align-items: center; gap: 10px; }
 .chapter-icon { width: 44px; height: 44px; flex: none; }
@@ -53,32 +57,48 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .story { text-align: justify; }
 
 /* terminal */
-#sql { width: 100%; min-height: 160px; background: var(--term); color: var(--term-text); border: 1px solid #6b5a33; font: 14px/1.4 "Special Elite", monospace; padding: 8px 10px; resize: vertical; }
+.editor { position: relative; background: var(--term); border: 1px solid #6b5a33; }
+#sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
+  tab-size: 4; white-space: pre-wrap; overflow-wrap: anywhere; letter-spacing: normal; }
+#sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
+#sql::placeholder { color: var(--term-text); opacity: .45; }
+#sql::selection { background: rgba(201,163,90,.35); color: transparent; }
+.sql-hl { position: absolute; inset: 0; color: var(--term-text); pointer-events: none; overflow: hidden; }
+.sql-kw { color: var(--sql-kw); } .sql-fn { color: var(--sql-fn); } .sql-str { color: var(--sql-str); }
+.sql-num { color: var(--sql-num); } .sql-com { color: var(--sql-com); font-style: italic; }
 .results { background: var(--card); border: 1px solid var(--rule); font: 13px "Special Elite", monospace; overflow: auto; max-height: 50vh; margin-top: 6px; }
 .results table { border-collapse: collapse; width: 100%; }
 .results th { text-align: left; border-bottom: 1px solid var(--ink); padding: 2px 6px; font-weight: normal; letter-spacing: 1px; font-size: 11px; position: sticky; top: 0; background: var(--card); }
 .results td { padding: 2px 6px; border-bottom: 1px dotted var(--rule); white-space: nowrap; }
 .results .error { color: var(--red); padding: 8px; white-space: pre-wrap; }
 .answer-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.answer-row[hidden] { display: none; }
 .answer-row input { flex: 1; font-family: "Special Elite", monospace; }
 .reply { min-height: 1.4em; font-style: italic; }
+.next-chapter { display: block; width: 100%; margin: 4px 0 10px; padding: 12px 16px; font: 700 20px "Playfair Display", serif;
+  background: var(--accent); border-color: var(--accent); color: var(--card); animation: pulse 1.8s ease-in-out infinite; }
+.next-chapter[hidden] { display: none; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent } 50% { box-shadow: 0 0 0 6px var(--shade) } }
 #history { font: 12px "Special Elite", monospace; padding-left: 20px; }
 #history li { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ERD */
 .erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 80vh; position: relative; }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
-/* Native size, not squished to the column width: past a few tables the diagram is wider than the
-   column, and .erd's own overflow:auto (above) scrolls it instead of shrinking labels to nothing.
-   width:auto on an inline SVG resolves to the container's width, not the viewBox, hence max-content. */
-.erd svg { display: block; width: max-content; height: max-content; font: 11px "Special Elite", monospace; }
+/* fitErd() (app.js) crops the viewBox to the revealed tables and sets the width: the column's, capped at natural size. */
+.erd svg { display: block; height: auto; margin: 0 auto; font: 11px "Special Elite", monospace; }
 .erd .table rect { fill: var(--paper); stroke: var(--ink); }
 .erd .table rect.head { fill: var(--ink); }
 .erd .table .tname { fill: var(--paper); }
 .erd .table .col { fill: var(--ink); font-size: 10px; }
 .erd .fk { stroke: var(--red); fill: none; stroke-width: 1.2; }
 .erd .hidden { display: none; }
-.erd .reveal { animation: slidein .8s ease-out both; }
+/* A new table fades in with a glow on its frame. Opacity and stroke only: a CSS transform would replace the
+   table's transform="translate(...)" placement. */
+.erd .reveal { animation: fadein 1.2s ease-out both; }
+.erd .reveal rect:first-child { animation: glow 3s ease-out both; }
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+@keyframes glow { 0%, 40% { stroke: var(--accent); stroke-width: 4 } 100% { stroke: var(--ink); stroke-width: 1 } }
 .stamp { position: absolute; right: 12px; top: 12px; border: 3px solid var(--red); color: var(--red); font: 900 18px "Playfair Display", serif; padding: 3px 8px; letter-spacing: 2px; transform: rotate(-12deg); animation: stamp 1s ease-out both; pointer-events: none; }
 @keyframes slidein { from { transform: translateY(-30px); opacity: 0 } to { transform: none; opacity: 1 } }
 @keyframes stamp { 0% { transform: scale(3) rotate(-12deg); opacity: 0 } 60% { transform: scale(1) rotate(-12deg); opacity: 1 } 100% { transform: scale(1) rotate(-12deg); opacity: 1 } }
@@ -108,6 +128,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
   opacity: .10; mix-blend-mode: multiply; pointer-events: none; }
 .suspect b { display: block; font: 700 15px "Playfair Display", serif; margin-top: 8px; }
 .suspect p { font-size: 13px; margin: 2px 0 0; }
+.badges-title { flex-basis: 100%; text-align: center; font: 700 22px "Playfair Display", serif; margin: 8px 0 0; }
+.badge { width: 200px; background: var(--card); border: 1px solid var(--ink); padding: 8px 10px; box-shadow: 2px 2px 5px rgba(0,0,0,.2); }
+.badge b { font: 700 15px "Playfair Display", serif; }
+.badge p { font-size: 14px; margin: 4px 0 0; }
+.badge.locked { opacity: .45; border-style: dashed; box-shadow: none; }
 /* a single portrait set into running text: the two endings (Blakeney, the Comtesse) */
 .portrait { float: left; width: 96px; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%; margin: 4px 14px 6px 0;
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); }
@@ -147,11 +172,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 }
 
 @media (max-width: 900px) {
-  .columns { grid-template-columns: 1fr; padding: 16px; }
+  .columns { grid-template-columns: minmax(0, 1fr); padding: 16px; }
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
+  .reset-corner { position: static; display: block; margin: 0 0 6px; }
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
-  #sql { width: 100%; }
 }
 .landing-story b, .landing-kicker b { font-weight: 700; }

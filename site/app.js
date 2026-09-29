@@ -105,21 +105,31 @@ async function loadDb(stem) {
     tableSizes[t] = db.exec("SELECT COUNT(*) FROM " + t)[0].values[0][0];
 }
 
-let reviewing = null;
-function reviewChapter(n) { reviewing = n; renderChapter(); }
-function backToInvestigation() { reviewing = null; renderChapter(); }
+// After a correct answer the solved chapter stays on screen (telegram, answer) until the clerk presses
+// Next chapter; the new chapter's tables are revealed only then, so the reveal is actually seen.
+let reviewing = null, nextPending = 0, pendingReveal = [];
+function clearTerminal() { $("sql").value = ""; syncSql(); $("results").innerHTML = ""; $("run-info").textContent = ""; }
+function reviewChapter(n) { reviewing = n; clearTerminal(); renderChapter(); }
+function backToInvestigation() {
+  reviewing = null; nextPending = 0; clearTerminal(); renderChapter();
+  if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
+}
+const objectiveHtml = (text, label, value) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>";
 
 function renderChapter() {
   const total = state.part2 ? 12 : 8;
   document.querySelector(".answer-row").hidden = reviewing != null || competeDone(state);
-  $("btn-back").hidden = reviewing == null;
+  const pendingHere = nextPending && reviewing === nextPending;
+  $("btn-back").hidden = reviewing == null || pendingHere;
+  $("btn-next").hidden = !pendingHere;
+  if (pendingHere) $("btn-next").textContent = "Next chapter: " + ROMAN[currentChapter(state, data.chapters).n] + " \u2192";
   if (reviewing != null) {
     const ch = data.chapters.find(c => c.n === reviewing);
     $("masthead-chapter").textContent = "REVIEWING CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
     $("chapter-icon").innerHTML = PROPS[ch.n] || "";
     $("chapter-title").textContent = ch.title;
     $("story").textContent = ch.story;
-    $("objective").textContent = ch.objective + " Your answer: " + state.answers[ch.n] + ".";
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n]);
     $("witnesses").innerHTML = "";
     return;
   }
@@ -128,7 +138,7 @@ function renderChapter() {
   $("chapter-icon").innerHTML = PROPS[ch.n] || "";
   $("chapter-title").textContent = ch.title;
   $("story").textContent = ch.story;
-  $("objective").textContent = ch.objective + " Answer: " + ch.answer_form + ".";
+  $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form);
   if (awaitingCode(state)) {
     $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + esc(data.endings.part1);   // the unmasking: his face, only now
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
@@ -166,6 +176,29 @@ function renderWitnesses() {
     b.onclick = () => { state.hints[ch.n] = opened + 1; save(state); renderWitnesses(); };
     el.appendChild(b);
   }
+}
+
+// SQL colouring for the terminal: a <pre> under a transparent textarea (index.html .editor).
+export const SQL_KEYWORDS = new Set(("select from where and or not in is null like glob between join inner left right full outer " +
+  "cross natural on using as group by order having limit offset distinct all union intersect except with recursive case " +
+  "when then else end asc desc over partition rows range exists cast collate escape values insert into update set delete " +
+  "create table view drop filter window").split(" "));
+export function highlightSql(src) {
+  const e = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const re = /(--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:[^']|'')*'?|"(?:[^"]|"")*"?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])/g;
+  let out = "", m;
+  while ((m = re.exec(src))) {
+    const [t, com, str, num, word] = m;
+    const cls = com ? "com" : str ? "str" : num ? "num"
+      : word ? (SQL_KEYWORDS.has(word.toLowerCase()) ? "kw" : /^\s*\(/.test(src.slice(re.lastIndex)) ? "fn" : "id") : "";
+    out += cls ? '<span class="sql-' + cls + '">' + e(t) + "</span>" : e(t);
+  }
+  return out + "\n";   // a trailing newline in a <pre> is dropped; keep the last empty line as tall as the textarea's
+}
+function syncSql() {
+  const ta = $("sql");
+  $("sql-hl").innerHTML = highlightSql(ta.value);
+  ta.style.height = "auto"; ta.style.height = Math.max(160, ta.scrollHeight + 2) + "px";   // grows instead of scrolling: nothing to keep in sync
 }
 
 export const ROW_CAP = 200;
@@ -206,7 +239,7 @@ function runQuery() {
 
 function renderHistory() {
   $("history").innerHTML = state.history.map(q => "<li>" + esc(q) + "</li>").join("");
-  [...$("history").children].forEach((li, i) => li.onclick = () => { $("sql").value = state.history[i]; });
+  [...$("history").children].forEach((li, i) => li.onclick = () => { $("sql").value = state.history[i]; syncSql(); });
 }
 
 export const TAUNTS = [
@@ -346,6 +379,16 @@ function renderSuspects() {
   suspectsBuilt = true;
 }
 
+// Every badge is listed; a locked one shows no name and no text at all, so the DOM gives nothing away.
+function renderBadges() {
+  const el = $("badges");
+  el.innerHTML = '<button class="quiet suspects-close">Close</button><h2 class="badges-title">Badges: ' +
+    state.badges.length + " of " + BADGES.length + "</h2>" + BADGES.map(([name, text]) => state.badges.includes(name)
+      ? '<div class="badge"><b>' + esc(name) + "</b><p>" + esc(text) + "</p></div>"
+      : '<div class="badge locked"><b>???</b><p>Not yet earned.</p></div>').join("");
+  el.querySelector(".suspects-close").onclick = () => el.hidden = true;
+}
+
 let visBefore = new Set();
 async function submitAnswer() {
   const raw = $("answer").value; const norm = normalise(raw);
@@ -392,6 +435,7 @@ async function renderErd(newTables = []) {
     const from = p.dataset.from.split(".")[0], to = p.dataset.to;
     p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
   }
+  fitErd();
   if (newTables.length) {
     $("erd").querySelectorAll(".stamp").forEach(s => s.remove());   // two reveals within 2.5 s must not overlap
     const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
@@ -399,10 +443,33 @@ async function renderErd(newTables = []) {
   }
 }
 
+// Crop the viewBox to the tables revealed so far and fit that to the column (never upscaled past
+// natural size); Enlarge shows the same crop at natural size, scrolling if it has to.
+function fitErd() {
+  const svg = $("erd").querySelector("svg");
+  if (!svg) return;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const g of svg.querySelectorAll("g.table:not(.hidden)")) {
+    const [tx, ty] = (g.getAttribute("transform").match(/-?[\d.]+/g) || [0, 0]).map(Number);
+    const r = g.querySelector("rect");
+    x0 = Math.min(x0, tx); y0 = Math.min(y0, ty);
+    x1 = Math.max(x1, tx + Number(r.getAttribute("width"))); y1 = Math.max(y1, ty + Number(r.getAttribute("height")));
+  }
+  if (x0 === Infinity) return;
+  const m = 8, w = x1 - x0 + 2 * m, h = y1 - y0 + 2 * m;
+  svg.setAttribute("viewBox", [x0 - m, y0 - m, w, h].join(" "));
+  svg.removeAttribute("width"); svg.removeAttribute("height");
+  svg.style.maxWidth = w + "px";
+  svg.style.width = $("erd").classList.contains("large") ? w + "px" : "100%";
+}
+
 function afterSolve(ch, event) {
-  renderBoard(); renderChapter();
   const newTables = [...visibleTables(data.chapters, state)].filter(t => !visBefore.has(t));
-  renderErd(newTables);
+  const ending = awaitingCode(state) || competeDone(state) || state.solved.includes(12);
+  if (event === "solve" && !ending) { reviewing = nextPending = ch.n; pendingReveal = newTables; }
+  else renderErd(newTables);
+  renderBoard(); renderChapter();
+  if (nextPending) $("btn-next").scrollIntoView({ block: "nearest" });
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
     if (ch.n === 8) {
@@ -730,6 +797,7 @@ async function boot() {
       const el = e.target, s = el.selectionStart, en = el.selectionEnd;
       el.value = el.value.slice(0, s) + "\t" + el.value.slice(en);
       el.selectionStart = el.selectionEnd = s + 1;
+      syncSql();
     } else if (e.key === "Enter") {
       e.preventDefault();
       const el = e.target, s = el.selectionStart, en = el.selectionEnd;
@@ -737,8 +805,13 @@ async function boot() {
       const indent = el.value.slice(lineStart, s).match(/^[ \t]*/)[0];
       el.value = el.value.slice(0, s) + "\n" + indent + el.value.slice(en);
       el.selectionStart = el.selectionEnd = s + 1 + indent.length;
+      syncSql();
     }
   });
+  $("sql").addEventListener("input", syncSql);
+  syncSql();
+  $("btn-next").onclick = backToInvestigation;
+  $("btn-badges").onclick = () => { renderBadges(); $("badges").hidden = false; };
   renderHistory();
   $("btn-answer").onclick = submitAnswer;
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
@@ -746,6 +819,7 @@ async function boot() {
   $("btn-erd").onclick = () => {
     const large = $("erd").classList.toggle("large");
     $("btn-erd").textContent = large ? "Close" : "Enlarge";
+    fitErd();
   };
   $("btn-suspects").onclick = () => { renderSuspects(); $("suspects").hidden = false; };
   $("notes").value = state.notes;
