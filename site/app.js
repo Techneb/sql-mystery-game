@@ -486,7 +486,7 @@ async function renderErd(newTables = []) {
     g.classList.toggle("hidden", !vis.has(t));
     g.classList.toggle("reveal", newTables.includes(t));
   }
-  for (const p of $("erd").querySelectorAll("path.fk")) {
+  for (const p of $("erd").querySelectorAll("g.fk")) {
     const from = p.dataset.from.split(".")[0], to = p.dataset.to;
     p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
   }

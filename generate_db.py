@@ -136,7 +136,7 @@ LAST = ["Kane", "Corleone", "Dawson", "Brody", "Gale", "Diggs", "Anderson", "But
         "Dantes", "de Bergerac", "Mustard", "Peacock", "Plum"]
 NATION = ["French"] * 8 + ["English", "German", "Italian", "Spanish", "American", "Argentine"]
 OCCUP = ["clerk", "seamstress", "cab driver", "waiter", "banker", "jeweller", "actress", "student",
-         "engineer", "lawyer", "shopkeeper", "concierge", "journalist", "painter", "none"]
+         "engineer", "lawyer", "shopkeeper", "concierge", "journalist", "painter", None]
 PLACES = ["Place Vendome", "Gare du Nord", "Gare Saint-Lazare", "Opera", "Place de la Concorde",
           "Les Halles", "Montmartre", "Jardin des Tuileries", "Pont Neuf", "Place de la Bastille",
           "Bois de Boulogne", "Champs-Elysees", "Boulevard Saint-Germain", "Gare de Lyon"]
@@ -401,11 +401,11 @@ CAST_PERSONS = [  # id, name, nationality, born, occupation  (address_id set in 
     (2, "Paul Sernine", "French", 1874, "rentier"),
     (3, "Horace Velmont", "French", 1870, "painter"),
     (4, "Raul Ortega", "Argentine", 1868, "cattle baron"),
-    (5, "Ines de Almagro", "Spanish", 1879, "none"),
+    (5, "Ines de Almagro", "Spanish", 1879, None),
     (6, "Rupert Blakeney", "English", 1872, "gentleman"),
     (7, "Ernest Grimaud", "French", 1858, "jeweller"),
     (8, "Marcel Duroc", "French", 1880, "night porter"),
-    (9, "Comtesse de Cagliostro", "Italian", 1875, "none"),
+    (9, "Comtesse de Cagliostro", "Italian", 1875, None),
     (10, "Mr. Grey", "English", 1872, "gentleman"),
     (11, "Ganimard", "French", 1855, "inspector"),
     (12, "Minou Ganimard", "French", 1908, "cat"),
@@ -563,7 +563,7 @@ def plant_part2(conn, V, r):
     # --- ch9: Ashcombe's trunks. Three under his own ticket; one under a ticket bought for cash by an
     #     unnamed regular (so chapter 10 has to deduce Mr. Grey from the register, not read him here).
     c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
-    c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,'none',NULL)")
+    c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,NULL,NULL)")
     c.execute("INSERT INTO train_ticket VALUES (2,17,19120519,'Boat Train 9:15','London')")
     for i, trunk in enumerate(["A-1", "A-2", "A-3"]):
         c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, 30 + i))
@@ -773,7 +773,7 @@ def write_outputs(conn, V, site_dir="site", mode="learn"):
         with open("solution.sql", "w") as f:
             f.write(solution_sql(V))
         with open(os.path.join(site_dir, "schema.svg"), "w") as f:
-            f.write(erd.svg(conn))
+            f.write(erd.svg(conn, order=[t for ch in plot.CHAPTERS for t in ch["tables"]]))
         corr = os.path.join("..", "SQL", "3-Corrections", "8. Correction SQL Mystery Game.sql")
         if os.path.isdir(os.path.dirname(corr)):
             with open(corr, "w") as f:

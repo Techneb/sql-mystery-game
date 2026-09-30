@@ -96,7 +96,16 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .erd .table rect.head { fill: var(--ink); }
 .erd .table .tname { fill: var(--paper); }
 .erd .table .col { fill: var(--ink); font-size: 10px; }
-.erd .fk { stroke: var(--red); fill: none; stroke-width: 1.2; }
+.erd .fk path { stroke: var(--red); fill: none; stroke-width: 1.2; }
+.erd .fk text { fill: var(--red); font-size: 9px; }
+/* Keys (erd.py's #erd-key symbol, and the legend under the schema): gold = primary key, silver = foreign key. */
+.key { fill: none; stroke-width: 1.8; }
+.key.pk { stroke: #c9a227; }
+.key.fk { stroke: #9ea4aa; }
+.erd-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: 11px; margin: 4px 0 0; }
+.erd-legend svg { vertical-align: -1px; margin-right: 4px; }
+.erd-legend .rel { stroke: var(--red); fill: none; stroke-width: 1.2; }
+.erd-legend .rel-t { fill: var(--red); font: 9px "Special Elite", monospace; }
 .erd .hidden { display: none; }
 /* A new table fades in with a glow on its frame. Opacity and stroke only: a CSS transform would replace the
    table's transform="translate(...)" placement. */

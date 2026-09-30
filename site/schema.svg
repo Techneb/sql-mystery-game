@@ -1,134 +1,154 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1126" width="390" height="1126">
-<path class="fk" data-from="bank_account.person_id" data-to="person" d="M85 907 C85 867 85 850 85 810"/>
-<path class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account" d="M85 1067 C85 1027 85 968 85 928"/>
-<path class="fk" data-from="bank_transaction.account_id" data-to="bank_account" d="M85 1053 C85 1013 85 968 85 928"/>
-<path class="fk" data-from="luggage.ticket_id" data-to="train_ticket" d="M295 1053 C295 1013 295 996 295 956"/>
-<path class="fk" data-from="person.address_id" data-to="address" d="M85 803 C85 763 85 112 85 72"/>
-<path class="fk" data-from="train_ticket.person_id" data-to="person" d="M295 907 C295 867 85 850 85 810"/>
-<g class="table" data-table="address" transform="translate(0,0)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1100" width="390" height="1100">
+<defs><symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol></defs>
+<g class="fk" data-from="bank_account.person_id" data-to="person"><path d="M85 784 V784 C85 814 85 814 85 844"/><path d="M79 789 H91"/><text x="90" y="796">1</text><path d="M85 835 L79 844 M85 835 L91 844 M85 835 V844"/><text x="91" y="835">N</text></g>
+<g class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account"><path d="M60 902 V930 C60 960 60 960 60 990"/><path d="M54 907 H66"/><text x="65" y="914">1</text><path d="M60 981 L54 990 M60 981 L66 990 M60 981 V990"/><text x="66" y="981">N</text></g>
+<g class="fk" data-from="bank_transaction.account_id" data-to="bank_account"><path d="M110 902 V930 C110 960 110 960 110 990"/><path d="M104 907 H116"/><text x="115" y="914">1</text><path d="M110 981 L104 990 M110 981 L116 990 M110 981 V990"/><text x="116" y="981">N</text></g>
+<g class="fk" data-from="luggage.ticket_id" data-to="train_ticket"><path d="M295 930 V930 C295 960 295 960 295 990"/><path d="M289 935 H301"/><text x="300" y="942">1</text><path d="M295 981 L289 990 M295 981 L301 990 M295 981 V990"/><text x="301" y="981">N</text></g>
+<g class="fk" data-from="person.address_id" data-to="address"><path d="M85 624 V624 C85 654 85 654 85 684"/><path d="M79 629 H91"/><text x="90" y="636">1</text><path d="M85 675 L79 684 M85 675 L91 684 M85 675 V684"/><text x="91" y="675">N</text></g>
+<g class="fk" data-from="train_ticket.person_id" data-to="person"><path d="M125 784 V784 C125 814 295 814 295 844"/><path d="M119 789 H131"/><text x="130" y="796">1</text><path d="M295 835 L289 844 M295 835 L301 844 M295 835 V844"/><text x="301" y="835">N</text></g>
+<g class="table" data-table="address" transform="translate(0,552)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">address</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">number</text>
-<text class="col" x="6" y="55">street</text>
-<text class="col" x="6" y="69">arrondissement</text></g>
-<g class="table" data-table="bank_account" transform="translate(0,870)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">number</text>
+<text class="col" x="21" y="55">street</text>
+<text class="col" x="21" y="69">arrondissement</text></g>
+<g class="table" data-table="bank_account" transform="translate(0,844)">
 <rect width="170" height="58"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_account</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">person_id -> person</text>
-<text class="col" x="6" y="55">bank</text></g>
-<g class="table" data-table="bank_transaction" transform="translate(0,1016)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">person_id</text>
+<text class="col" x="21" y="55">bank</text></g>
+<g class="table" data-table="bank_transaction" transform="translate(0,990)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_transaction</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">account_id -> bank_account</text>
-<text class="col" x="6" y="55">counterparty_id -> bank_account</text>
-<text class="col" x="6" y="69">date</text>
-<text class="col" x="6" y="83">amount</text>
-<text class="col" x="6" y="97">type</text></g>
-<g class="table" data-table="cab_ride" transform="translate(210,0)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">account_id</text>
+<use href="#erd-key" class="key fk" x="4" y="47" width="14" height="9"/>
+<text class="col" x="21" y="55">counterparty_id</text>
+<text class="col" x="21" y="69">date</text>
+<text class="col" x="21" y="83">amount</text>
+<text class="col" x="21" y="97">type</text></g>
+<g class="table" data-table="cab_ride" transform="translate(210,124)">
 <rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">cab_ride</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">plate</text>
-<text class="col" x="6" y="55">date</text>
-<text class="col" x="6" y="69">time</text>
-<text class="col" x="6" y="83">pickup</text>
-<text class="col" x="6" y="97">dropoff</text>
-<text class="col" x="6" y="111">fare</text>
-<text class="col" x="6" y="125">currency</text></g>
-<g class="table" data-table="hotel_register" transform="translate(0,188)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">plate</text>
+<text class="col" x="21" y="55">date</text>
+<text class="col" x="21" y="69">time</text>
+<text class="col" x="21" y="83">pickup</text>
+<text class="col" x="21" y="97">dropoff</text>
+<text class="col" x="21" y="111">fare</text>
+<text class="col" x="21" y="125">currency</text></g>
+<g class="table" data-table="hotel_register" transform="translate(0,124)">
 <rect width="170" height="114"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">hotel_register</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">guest_name</text>
-<text class="col" x="6" y="55">suite</text>
-<text class="col" x="6" y="69">floor</text>
-<text class="col" x="6" y="83">price</text>
-<text class="col" x="6" y="97">checkin</text>
-<text class="col" x="6" y="111">checkout</text></g>
-<g class="table" data-table="interview" transform="translate(210,188)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">guest_name</text>
+<text class="col" x="21" y="55">suite</text>
+<text class="col" x="21" y="69">floor</text>
+<text class="col" x="21" y="83">price</text>
+<text class="col" x="21" y="97">checkin</text>
+<text class="col" x="21" y="111">checkout</text></g>
+<g class="table" data-table="interview" transform="translate(210,0)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">interview</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">person_name</text>
-<text class="col" x="6" y="55">date</text>
-<text class="col" x="6" y="69">transcript</text></g>
-<g class="table" data-table="lift_log" transform="translate(0,362)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">person_name</text>
+<text class="col" x="21" y="55">date</text>
+<text class="col" x="21" y="69">transcript</text></g>
+<g class="table" data-table="lift_log" transform="translate(0,428)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">lift_log</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">date</text>
-<text class="col" x="6" y="55">time</text>
-<text class="col" x="6" y="69">floor</text>
-<text class="col" x="6" y="83">suite</text>
-<text class="col" x="6" y="97">direction</text></g>
-<g class="table" data-table="luggage" transform="translate(210,1016)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">date</text>
+<text class="col" x="21" y="55">time</text>
+<text class="col" x="21" y="69">floor</text>
+<text class="col" x="21" y="83">suite</text>
+<text class="col" x="21" y="97">direction</text></g>
+<g class="table" data-table="luggage" transform="translate(210,990)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">luggage</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">ticket_id -> train_ticket</text>
-<text class="col" x="6" y="55">trunk_no</text>
-<text class="col" x="6" y="69">owner_name</text>
-<text class="col" x="6" y="83">weight_kg</text></g>
-<g class="table" data-table="person" transform="translate(0,710)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">ticket_id</text>
+<text class="col" x="21" y="55">trunk_no</text>
+<text class="col" x="21" y="69">owner_name</text>
+<text class="col" x="21" y="83">weight_kg</text></g>
+<g class="table" data-table="person" transform="translate(0,684)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">person</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">name</text>
-<text class="col" x="6" y="55">nationality</text>
-<text class="col" x="6" y="69">born_year</text>
-<text class="col" x="6" y="83">occupation</text>
-<text class="col" x="6" y="97">address_id -> address</text></g>
-<g class="table" data-table="police_report" transform="translate(210,362)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">name</text>
+<text class="col" x="21" y="55">nationality</text>
+<text class="col" x="21" y="69">born_year</text>
+<text class="col" x="21" y="83">occupation</text>
+<use href="#erd-key" class="key fk" x="4" y="89" width="14" height="9"/>
+<text class="col" x="21" y="97">address_id</text></g>
+<g class="table" data-table="police_report" transform="translate(0,0)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">police_report</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">date</text>
-<text class="col" x="6" y="55">city</text>
-<text class="col" x="6" y="69">place</text>
-<text class="col" x="6" y="83">type</text>
-<text class="col" x="6" y="97">description</text></g>
-<g class="table" data-table="room_service" transform="translate(0,522)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">date</text>
+<text class="col" x="21" y="55">city</text>
+<text class="col" x="21" y="69">place</text>
+<text class="col" x="21" y="83">type</text>
+<text class="col" x="21" y="97">description</text></g>
+<g class="table" data-table="room_service" transform="translate(210,276)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">room_service</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">suite</text>
-<text class="col" x="6" y="55">date</text>
-<text class="col" x="6" y="69">time</text>
-<text class="col" x="6" y="83">item</text>
-<text class="col" x="6" y="97">amount</text></g>
-<g class="table" data-table="telegram" transform="translate(210,522)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">suite</text>
+<text class="col" x="21" y="55">date</text>
+<text class="col" x="21" y="69">time</text>
+<text class="col" x="21" y="83">item</text>
+<text class="col" x="21" y="97">amount</text></g>
+<g class="table" data-table="telegram" transform="translate(0,276)">
 <rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">telegram</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">office</text>
-<text class="col" x="6" y="55">date</text>
-<text class="col" x="6" y="69">time</text>
-<text class="col" x="6" y="83">sender</text>
-<text class="col" x="6" y="97">recipient</text>
-<text class="col" x="6" y="111">suite</text>
-<text class="col" x="6" y="125">text</text></g>
-<g class="table" data-table="train_ticket" transform="translate(210,870)">
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">office</text>
+<text class="col" x="21" y="55">date</text>
+<text class="col" x="21" y="69">time</text>
+<text class="col" x="21" y="83">sender</text>
+<text class="col" x="21" y="97">recipient</text>
+<text class="col" x="21" y="111">suite</text>
+<text class="col" x="21" y="125">text</text></g>
+<g class="table" data-table="train_ticket" transform="translate(210,844)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">train_ticket</text>
-<text class="col" x="6" y="27">*id</text>
-<text class="col" x="6" y="41">person_id -> person</text>
-<text class="col" x="6" y="55">date</text>
-<text class="col" x="6" y="69">train</text>
-<text class="col" x="6" y="83">destination</text></g>
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">person_id</text>
+<text class="col" x="21" y="55">date</text>
+<text class="col" x="21" y="69">train</text>
+<text class="col" x="21" y="83">destination</text></g>
 </svg>

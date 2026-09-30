@@ -287,7 +287,30 @@ class Erd(unittest.TestCase):
         self.assertEqual(s.count('class="table"'), 13)
         self.assertEqual(s.count('class="fk"'), 6)
         self.assertIn('data-table="lift_log"', s)
+        self.assertNotIn("-&gt;", s)
+        self.assertNotIn("->", s)
+        self.assertEqual(s.count('class="key pk"'), 13)
+        self.assertEqual(s.count('class="key fk"'), 6)
         s.encode("ascii")
+        conn.close()
+
+    def test_lines_clear_every_table(self):
+        import erd
+        conn, V = g.build_db(1912)
+        tables, fks = erd.read_schema(conn)
+        pos = erd.layout(tables, fks, [t for ch in plot.CHAPTERS for t in ch["tables"]])
+        for t, col, ref, (sx, sy), (ex, ey), bottom in erd.fk_paths(tables, fks, pos):
+            mid = (bottom + sy) / 2
+            pts = [(ex, ey + (bottom - ey) * k / 20) for k in range(1, 21)]   # straight down out of the parent's row
+            for k in range(1, 20):   # then the curve (control points at mid height) down to the child
+                u = k / 20
+                bx = (1 - u) ** 3 * ex + 3 * (1 - u) ** 2 * u * ex + 3 * (1 - u) * u * u * sx + u ** 3 * sx
+                by = (1 - u) ** 3 * bottom + 3 * (1 - u) ** 2 * u * mid + 3 * (1 - u) * u * u * mid + u ** 3 * sy
+                pts.append((bx, by))
+            for name, (_, x, y, w, h) in pos.items():
+                for px, py in pts:
+                    self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (t, col, name))
+        self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
         conn.close()
 
 

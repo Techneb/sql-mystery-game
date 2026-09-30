@@ -52,6 +52,11 @@
   <aside class="col-erd">
     <div class="label-row"><span class="label">SCHEMA</span><button id="btn-erd" class="quiet">Enlarge</button></div>
     <div id="erd" class="erd"></div>
+    <p class="erd-legend muted">
+      <span><svg width="16" height="10" viewBox="0 0 16 10" class="key pk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>primary key</span>
+      <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
+      <span><svg width="44" height="12" viewBox="0 0 44 12"><path class="rel" d="M2 3V9M2 6H42M32 6L42 1M32 6L42 11"/><text class="rel-t" x="5" y="11">1</text><text class="rel-t" x="25" y="11">N</text></svg>one-to-many</span>
+    </p>
   </aside>
 
   <section class="col-terminal">
