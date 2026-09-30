@@ -108,7 +108,7 @@ HAVING COUNT(*) = 3
 ORDER BY SUM(t.amount) DESC
 LIMIT 1;
 
--- 07. A Wire Before Dawn (CASE WHEN + GROUP BY) -> the telegram id: 2718
+-- 07. The Quietest Hour (CASE WHEN + GROUP BY) -> the telegram id: 2718
 -- Ganimard's four boxes, counted: the night is the quietest.
 SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period, COUNT(*) AS wires
 FROM telegram
@@ -123,31 +123,44 @@ WHERE office = 'Ritz'
   AND date = 19120518
   AND sender LIKE '_.';
 -- The answer:
-SELECT id
-FROM (
+WITH boxed AS (
   SELECT id, sender, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
   FROM telegram
   WHERE office = 'Ritz'
     AND date = 19120518
-) AS t
-WHERE sender = 'R.'
-  AND period = (
-  SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
-  FROM telegram
-  WHERE office = 'Ritz'
-    AND date = 19120518
+), quietest AS (
+  SELECT period
+  FROM boxed
   GROUP BY period
   ORDER BY COUNT(*)
   LIMIT 1
+)
+SELECT id
+FROM boxed
+WHERE sender = 'R.'
+  AND period = (
+  SELECT period
+  FROM quietest
 );
 
--- 08. The First Order Before Dawn (RANK() OVER + subquery) -> the guest's name: Rupert Blakeney
+-- 08. The First Order Before Dawn (RANK() OVER + CTE) -> the guest's name: Rupert Blakeney
 -- The night wire names his first order before dawn: Clicquot 1904.
 SELECT text
 FROM telegram
 WHERE id = 2718;
 -- Rank each suite's orders of the 18th by time: his is the suite whose FIRST order is the champagne, before six (Ortega also drank it that night, but after a coffee). The register names that suite's guest.
 -- The answer:
+WITH ranked AS (
+  SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time) AS rk
+  FROM room_service
+  WHERE date = 19120518
+), his_suite AS (
+  SELECT suite
+  FROM ranked
+  WHERE rk = 1
+    AND item = 'Clicquot 1904'
+    AND time < '06:00'
+)
 SELECT guest_name
 FROM hotel_register
 WHERE floor = 2
@@ -155,14 +168,7 @@ WHERE floor = 2
   AND checkout > 19120518
   AND suite = (
   SELECT suite
-  FROM (
-    SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time) AS rk
-    FROM room_service
-    WHERE date = 19120518
-  ) AS ranked
-  WHERE rk = 1
-    AND item = 'Clicquot 1904'
-    AND time < '06:00'
+  FROM his_suite
 );
 
 -- 09. The Trunk (CTE + JOIN) -> the trunk number: A-7
@@ -182,21 +188,25 @@ WHERE p.name <> 'Lord Ashcombe';
 -- 10. Never Seen Together (NOT EXISTS / self-join) -> the guest's name: Mr. Grey
 -- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.
 -- The answer:
-SELECT g.guest_name
-FROM (
+WITH regulars AS (
   SELECT guest_name
   FROM hotel_register
   GROUP BY guest_name
   HAVING COUNT(*) >= 6
-) AS g
-WHERE g.guest_name <> 'Rupert Blakeney'
+), blakeney AS (
+  SELECT checkin, checkout
+  FROM hotel_register
+  WHERE guest_name = 'Rupert Blakeney'
+)
+SELECT r.guest_name
+FROM regulars AS r
+WHERE r.guest_name <> 'Rupert Blakeney'
   AND NOT EXISTS (
   SELECT 1
-  FROM hotel_register AS x
-  JOIN hotel_register AS y ON x.guest_name = 'Rupert Blakeney'
-    AND y.guest_name = g.guest_name
-  WHERE x.checkin < y.checkout
+  FROM hotel_register AS y
+  JOIN blakeney AS x ON x.checkin < y.checkout
     AND y.checkin < x.checkout
+  WHERE y.guest_name = r.guest_name
 );
 
 -- 11. The Silence (LAG() OVER) -> the suite number: 214

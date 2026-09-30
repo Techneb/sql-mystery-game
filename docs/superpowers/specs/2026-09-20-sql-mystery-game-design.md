@@ -375,8 +375,8 @@ framework, no bundler.
     the CNIL requires opt-in consent before it runs (EU-US Data Privacy Framework covers the transfer
     itself since 2023, not the consent). Use Google Consent Mode v2 with everything `denied` by
     default, and a one-line banner on the landing card ("Help improve the course: allow anonymous
-    usage statistics? Yes / No"), remembered in localStorage; only a Yes loads full measurement. Set
-    `anonymize_ip` is automatic in GA4; turn off Google signals and ad personalisation in the property,
+    usage statistics? Yes / No"), remembered in localStorage; only a Yes loads full measurement. GA4
+    already drops IP addresses; turn off Google signals and ad personalisation in the property,
     and set data retention to the minimum (2 months) in the GA admin.
   - **Privacy page.** `site/privacy.html` currently says "no analytics, sets no cookies"; rewrite it in
     the same change: Google Analytics, the events and their fields, the cookie, consent and how to

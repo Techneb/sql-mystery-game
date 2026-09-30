@@ -246,7 +246,7 @@
    ]
   },
   {
-   "title": "A Wire Before Dawn",
+   "title": "The Quietest Hour",
    "story": "The Ritz telegraph desk sent a hundred wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment, sent when the desk was at its quietest. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Quietest by my four boxes, clerk, not by your watch. He signs with one letter, *which is one more than he needs*.' **Senor Ortega**, down the corridor, signs everything with a flourish and an R.",
    "objective": "Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
    "answer_form": "the telegram id",
