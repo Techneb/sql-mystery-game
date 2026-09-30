@@ -177,7 +177,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(
   title="The Boarding House",
-  story="The address is a boarding house: five tenants and a landlady who has *seen nothing since 1889*. **Ganimard** wants the tenant whose trade is jeweller; *every fence in Paris calls himself a jeweller*. 'Persons are in one ledger, addresses in another. Find the address's own id first, clerk, then see who lives there. The Prefecture has never put the two together. You will.'",
+  story="The address is a boarding house: five tenants and a landlady who has *seen nothing since 1889*. **Ganimard** wants the tenant whose trade is jeweller; *every fence in Paris calls himself a jeweller*.",
   objective="Who is the jeweller at the address from chapter 4?",
   answer_form="the person's name",
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L"),
