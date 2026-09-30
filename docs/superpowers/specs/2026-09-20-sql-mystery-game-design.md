@@ -354,29 +354,35 @@ framework, no bundler.
   seasons exist, since one class plays one season and the teacher already knows which.
 
 - **Usage analytics** (course owner, 2026-09-30: how much the site is used, which chapters, how long a
-  chapter takes). Not built. Notes for when it is:
+  chapter takes). Not built. **Chosen route: Google Analytics 4** (course owner, same day). Notes for
+  when it is built:
   - **What to measure.** Per chapter: how many players open it and solve it (the funnel, where
     students drop out), time from opening to solving (`state.opened[n]` is already recorded), queries
-    and wrong answers before solving, and badges earned. Per day: distinct players, learn vs compete.
-    This is also what phase 4 needs to tune `RANKS` from real query counts, so it can replace the
-    class-trial spreadsheet work.
-  - **Recommended: reuse the Apps Script backend, learn events on a second sheet.** The compete path
-    already queues events in `state.outbox` and posts them to the `/exec` URL (`eventPayload`,
-    `flushOutbox`), so learn mode would add `open`, `solve` and `finish` events with: a random
-    per-browser id generated on first visit (no name, no pseudo, not linkable to a student), the
-    chapter, the seconds since the chapter opened, the query and wrong-answer counts, and the mode.
-    `apps_script.gs` appends them to a `learn` sheet; a `?stats=1` read (or a tab in the `?admin`
-    panel) shows the funnel, median time and median queries per chapter. No new service, no account,
-    no cookie, stays within the stdlib/no-build rules, and the data stays in the course owner's Drive.
-    Needs a board URL in learn mode too: today it only arrives via the compete link, so the learn
-    link would carry `&board=` as well (or the URL becomes a constant, which the "never commit a
-    deployment URL" rule forbids; keep it in the link).
-  - **Alternatives considered.** A hosted cookie-free counter (GoatCounter, Plausible, Cloudflare Web
-    Analytics) gives page views and visitors for one script tag, but not chapter funnels or solve
-    times without custom events, adds a third party to `privacy.html`, and Plausible is paid.
-    Google Analytics: cookies and a consent banner for EU students; rejected.
-  - **Privacy.** Students are in the EU: anonymous, aggregate, no cookies, no fingerprinting, no IP
-    stored (Apps Script does not expose it). `site/privacy.html` currently says the game "runs no
-    analytics" and that learn mode sends nothing; it must be rewritten in the same change to list the
-    learn events field by field, and the landing card could say so in one line. Offer an opt-out
-    (a `?nostats` flag remembered in localStorage) and ask the school whether its policy needs more.
+    and wrong answers before solving, badges earned. Per day: players, learn vs compete. Phase 4 needs
+    the same numbers to tune `RANKS`.
+  - **How, with GA4.** The `gtag.js` snippet in `index.html` (and `leaderboard.html` if wanted) with
+    the course owner's measurement ID (`G-...`, public by nature, so it may be committed, unlike the
+    Apps Script URL). Page views come for free; the chapter data needs custom events sent from
+    `site/app.js`: `chapter_open` {chapter, mode}, `chapter_solve` {chapter, mode, seconds, queries,
+    wrong}, `game_finish` {part, mode}, `badge` {name}. Register `chapter`, `seconds`, `queries` and
+    `wrong` as custom dimensions/metrics in the GA admin, then a GA "Funnel exploration" over
+    chapter_solve by chapter gives the drop-out curve, and "Free form" gives median seconds and
+    queries per chapter. Keep every `gtag` call behind one small `track(name, params)` helper that
+    does nothing when `gtag` is absent, so `node --test` and blocked-tracker browsers are unaffected.
+    Never send the pseudo, answers or query text. cdnjs is the only script host today: add
+    `www.googletagmanager.com` (and `google-analytics.com` for the beacons) to whatever the page allows.
+  - **Consent: required.** GA4 sets cookies (`_ga`) and sends data to Google in the US, so in France
+    the CNIL requires opt-in consent before it runs (EU-US Data Privacy Framework covers the transfer
+    itself since 2023, not the consent). Use Google Consent Mode v2 with everything `denied` by
+    default, and a one-line banner on the landing card ("Help improve the course: allow anonymous
+    usage statistics? Yes / No"), remembered in localStorage; only a Yes loads full measurement. Set
+    `anonymize_ip` is automatic in GA4; turn off Google signals and ad personalisation in the property,
+    and set data retention to the minimum (2 months) in the GA admin.
+  - **Privacy page.** `site/privacy.html` currently says "no analytics, sets no cookies"; rewrite it in
+    the same change: Google Analytics, the events and their fields, the cookie, consent and how to
+    withdraw it, retention, Google as processor. Ask the school whether its policy allows GA for
+    students at all before shipping.
+  - **Not chosen, for the record.** Anonymous events to a second sheet of the existing Apps Script
+    backend (no cookie, no consent banner, no third party, but the stats view has to be built);
+    cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
+    chapter funnels without custom events.
