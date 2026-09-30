@@ -60,13 +60,19 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
   `PROPS` in `site/app.js`. Pure ASCII, no asset files.
 - Part II is a night edition: the whole page switches once the Part II code is accepted
   (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
-  to 19 May, and a reload keeps the mood.
+  to 19 May, and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
+  the palette instead; the choice is kept per browser.
 - Portraits: `site/portraits/*.jpg`, six suspects plus the Comtesse, painted in colour
   after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; the landing card
   shows the Blue Star itself (the tab icon's sapphire), Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
   ending. All generated from one prompt template (only the sitter changes, so no face reads guiltier
   than another), from a public, no-login image endpoint; the generator's corner mark was cropped off.
-- The case board is a cork board with a pin per solved chapter. Badge toasts clear a beat apart.
+- The case board is a cork board with a pin per solved chapter. A **Badges** button opens all 37 badges
+  (locked ones show only "???"); toasts clear a beat apart. Part II ends on Lupin's photograph of the Blue
+  Star (`site/blue-star.jpg`).
+- Chapter stories use `**bold**` / `*italic*` markup in `plot.py`, rendered with a drop cap like the landing page.
+- The noise rows are deliberately funny (film, video-game and Kaamelott references); some badges reward
+  finding them.
 
 ## Files
 

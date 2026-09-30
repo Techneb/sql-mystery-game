@@ -276,7 +276,11 @@ framework, no bundler.
    `../SQL/0-SQL.md` links the game, `../SQL/BACKLOG - SQL Mystery Game.md` is marked superseded, and
    `../SQL/3-Corrections/8. Correction SQL Mystery Game.sql` regenerates automatically whenever
    `generate_db.py` runs on a machine with that folder present (it is not a git repo, so this is
-   local-only, not tracked here). Still open: a class trial and tuning `RANKS`/badges from it.
+   local-only, not tracked here). Still open: a class trial and tuning `RANKS`/badges from it (live, from the admin panel's Settings).
+   2026-09-30: the course owner played chapters 1-2 as a student; the review was applied (bare objectives,
+   English dates in statements, planted rows scattered, funnier noise, fitted schema, SQL colouring, Next
+   chapter button, Badges panel, Day/Night edition button, formatted stories), then a ponytail audit
+   removed the dormant hints code. Chapters 3-12 have not had that student-eye review yet.
 
 ## 8. Backlog (not scheduled)
 
