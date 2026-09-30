@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, FILM_LINES, seenFilms } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -66,7 +66,7 @@ test("tables are revealed chapter by chapter", () => {
 });
 
 const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
-                      bigTables: ["person", "cab_ride"], allTables: ["person", "cab_ride", "police_report", "lift_log"], revealed: new Set(["police_report"]), norm: "", lines: 1, hour: 12 });
+                      bigTables: ["person", "cab_ride"], allTables: ["person", "cab_ride", "police_report", "lift_log"], revealed: new Set(["police_report"]), norm: "", text: "", lines: 1, hour: 12, elapsed: 600000 });
 
 test("badges fire on the right query shapes and only once", () => {
   const q = s => ({ ...base(), sql: s, rows: 3 });
@@ -86,7 +86,7 @@ test("badges fire on the right query shapes and only once", () => {
   assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
   assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
-  assert.equal(BADGES.length, 23);
+  assert.equal(BADGES.length, 37);
   assert.deepEqual(names({ event: "theme" }), ["Lamplighter"]);
   assert.ok(!BADGES.some(([name]) => name === "Clean Sweep"), "Clean Sweep is gone while hints are off");
 });
@@ -190,4 +190,35 @@ test("terminal colouring: keywords, functions, names, strings, numbers, comments
   assert.match(h, /<span class="sql-com">\/\* x \*\/<\/span>/);
   assert.equal(highlightSql("a < b & c").replace(/<[^>]+>/g, ""), "a &lt; b &amp; c\n", "escaped, and nothing but the source text");
   assert.match(highlightSql("/* open"), /sql-com">\/\* open</, "an unclosed comment still colours to the end");
+});
+
+test("review badges: SQL skills, easter eggs, behaviour", () => {
+  const q = (s, extra = {}) => detectBadges({ ...base(), sql: s, rows: 3, ...extra }, []).map(b => b.name);
+  assert.ok(q("SELECT DISTINCT place FROM police_report").includes("Bouncer"));
+  assert.ok(q("SELECT * FROM t WHERE id IN (SELECT id FROM u)").includes("Subpoena"));
+  assert.ok(q("SELECT * FROM t WHERE x IS NULL").includes("Null and Void"));
+  assert.ok(!q("SELECT * FROM t WHERE x IS NOT NULL").includes("Null and Void"));
+  assert.ok(q("SELECT * FROM t WHERE name LIKE 'Dur%'").includes("Wildcard"));
+  assert.ok(!q("SELECT * FROM t WHERE name LIKE 'Duroc'").includes("Wildcard"));
+  assert.ok(q("SELECT 1 -- note").includes("Commentator"));
+  assert.ok(q("SELECT * FROM t ORDER BY fare DESC LIMIT 1").includes("Top of the Class"));
+  assert.ok(q("SELECT 1 WHERE 0", { rows: 0 }).includes("Ghost Hunter"));
+  assert.ok(!q("SELEC", { rows: -1, error: true }).includes("Ghost Hunter"), "an error is not an empty result");
+  assert.ok(q("SELECT *", { text: "monsieur proust reports a madeleine missing from his tea" }).includes("Madeleine"));
+  assert.ok(!q("SELECT *", { text: "madeleine dupont" }).includes("Madeleine"), "the first name is not the pastry");
+  assert.ok(q("SELECT *", { text: "asked the doorman for rosebud" }).includes("Rosebud"));
+  assert.ok(q("SELECT * FROM police_report WHERE date > 20000101").includes("Time Traveller"));
+  assert.ok(!q("SELECT * FROM police_report WHERE date = 19120518").includes("Time Traveller"));
+  const films = seenFilms("i see dead people. houston? there is no spoon", ["rosebud"]);
+  assert.equal(films.length, 4);
+  assert.deepEqual(seenFilms("houston", films), films, "a film counts once");
+  const s = freshState(); s.film = FILM_LINES.slice(0, 5);
+  assert.ok(detectBadges({ ...base(), state: s }, []).map(b => b.name).includes("Film Buff"));
+  const ev = (event, extra = {}) => detectBadges({ ...base(), event, ...extra }, []).map(b => b.name);
+  assert.deepEqual(ev("suspects"), ["Paparazzo"]);
+  assert.ok(ev("solve", { elapsed: 90000 }).includes("Speed Reader"));
+  assert.ok(!ev("solve", { elapsed: 200000 }).includes("Speed Reader"));
+  assert.ok(ev("answer", { norm: "4100", decoy: 4100 }).includes("Filed Under the 17th"));
+  assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
+  assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
 });

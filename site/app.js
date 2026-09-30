@@ -17,7 +17,8 @@ export async function sha256(s) {
 export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
            solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
-           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {} };
+           badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
+           film: [], opened: {} };
 }
 // queries/hints/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
@@ -118,6 +119,8 @@ const objectiveHtml = (text, label, value) => esc(text) + '<div class="answer-fo
 
 function renderChapter() {
   const total = state.part2 ? 12 : 8;
+  // Speed Reader: when the current chapter was first put in front of the player
+  if (reviewing == null) { const n = currentChapter(state, data.chapters).n; if (!state.opened[n]) { state.opened[n] = Date.now(); save(state); } }
   document.querySelector(".answer-row").hidden = reviewing != null || competeDone(state);
   const pendingHere = nextPending && reviewing === nextPending;
   $("btn-back").hidden = reviewing == null || pendingHere;
@@ -238,7 +241,9 @@ function runQuery() {
   $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";
   state.lastQueryLines = sql.split("\n").length;
   renderHistory();
-  award(detectBadges(ctx({ sql, rows: error ? -1 : (res ? res.values.length : 0), error: !!error }), state.badges));
+  const text = res ? res.values.map(r => r.join(" ")).join(" ").toLowerCase() : "";
+  state.film = seenFilms(text, state.film);
+  award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), error: !!error }), state.badges));
   save(state);
   return { sql, res, error };
 }
@@ -290,9 +295,30 @@ export const BADGES = [
   ["Window Shopper", "OVER ( before chapter 8.", c => c.event === "query" && /\bover\s*\(/i.test(c.sql) && c.chapter < 8],
   ["Recursive", "WITH RECURSIVE. Ganimard has never seen one and never will.", c => c.event === "query" && /with\s+recursive/i.test(c.sql)],
   ["Egg Hunter", "Found the telegram to the curious clerk.", c => c.event === "code"],
+  ["Bouncer", "DISTINCT. Nobody gets in twice.", c => c.event === "query" && /\bdistinct\b/i.test(c.sql)],
+  ["Subpoena", "A query inside a query. A question within a question.", c => c.event === "query" && /\(\s*select\b/i.test(c.sql)],
+  ["Null and Void", "IS NULL. The absence of evidence is evidence.", c => c.event === "query" && /\bis\s+null\b/i.test(c.sql)],
+  ["Wildcard", "LIKE with a %. Half a name is still a name.", c => c.event === "query" && /\blike\s+'[^']*%/i.test(c.sql)],
+  ["Commentator", "A comment in a query. Notes in the margin.", c => c.event === "query" && /--|\/\*/.test(c.sql)],
+  ["Top of the Class", "ORDER BY ... DESC LIMIT 1. Only the best, or the worst.", c => c.event === "query" && /\border\s+by\b[\s\S]*\bdesc\b[\s\S]*\blimit\s+1\b/i.test(c.sql)],
+  ["Ghost Hunter", "A query that found nothing. Lupin was here; the data says otherwise.", c => c.event === "query" && !c.error && c.rows === 0],
+  ["Madeleine", "Found Monsieur Proust's report. Seven volumes to follow.", c => c.event === "query" && c.text.includes("a madeleine missing")],
+  ["Rosebud", "Found the man in the cape. The sledge was never recovered either.", c => c.event === "query" && c.text.includes("rosebud")],
+  ["Film Buff", "Five films quoted in the archives. Cinema was invented in Paris, after all.", c => c.event === "query" && c.state.film.length >= 5],
+  ["Time Traveller", "Searched for a date after 1912. The banknote from 2000 was a hint.", c => c.event === "query" && /\b(19(1[3-9]|[2-9]\d)|20\d\d)\d{4}\b/.test(c.sql)],
+  ["Paparazzo", "Opened the Suspects gallery. Faces, at last.", c => c.event === "suspects"],
+  ["Speed Reader", "A chapter solved within two minutes of opening it.", c => c.event === "solve" && c.elapsed < 120000],
+  ["Filed Under the 17th", "Filed the case under the wrong night. Duroc never sleeps, but he does count.",
+    c => c.event === "answer" && c.chapter === 1 && c.decoy != null && c.norm === String(c.decoy)],
   ["Lamplighter", "Switched between the day and night editions. Paris has lit its lamps by hand since 1667.", c => c.event === "theme"],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
 ];
+
+// Film Buff: lowercase fragments of the movie lines in generate_db.py's noise pools (keep them verbatim there).
+export const FILM_LINES = ["would be back", "rosebud", "offer he could not refuse", "no place like home", "tin suit",
+  "do not give a damn", "i see dead people", "houston", "elementary, inspector", "may the force", "simply walk into",
+  "little friend", "you talking to me", "there is no spoon", "bond, jean bond"];
+export function seenFilms(text, have) { return have.concat(FILM_LINES.filter(m => text.includes(m) && !have.includes(m))); }
 
 export function detectBadges(ctx, have) {
   return BADGES.filter(([name, , pred]) => !have.includes(name) && pred(ctx)).map(([name, text]) => ({ name, text }));
@@ -365,7 +391,9 @@ function renderCertificate() {
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
            bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
-           norm: "", lines: state.lastQueryLines, hour: new Date().getHours(), ...extra };
+           norm: "", text: "", lines: state.lastQueryLines, hour: new Date().getHours(),
+           elapsed: Date.now() - (state.opened[currentChapter(state, data.chapters).n] || Date.now()),
+           decoy: data.decoys ? data.decoys[currentChapter(state, data.chapters).n] : undefined, ...extra };
 }
 
 function renderBoard() {
@@ -841,7 +869,7 @@ async function boot() {
     $("btn-erd").textContent = large ? "Close" : "Enlarge";
     fitErd();
   };
-  $("btn-suspects").onclick = () => { renderSuspects(); $("suspects").hidden = false; };
+  $("btn-suspects").onclick = () => { renderSuspects(); $("suspects").hidden = false; award(detectBadges(ctx({ event: "suspects" }), state.badges)); };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
   $("btn-reset").onclick = () => {
