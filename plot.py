@@ -243,8 +243,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
  8: dict(
   title="The First Order Before Dawn",
-  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. The same wire names the drink. 'A man of habit is a man with a room number, clerk.' Room service keeps a ledger of every order sent upstairs: the suite, the day, the time, the item. Before dawn, to Ganimard, means before six. Once you have the suite, the Ritz register will tell you who slept in it.",
-  objective="On the 18th, before six, one suite's first order of the day was the drink named in the wire from chapter 7. Who slept in that suite?",
+  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too. 'A man of habit is a man with a room number, clerk. And before dawn, at my age, means before six.'",
+  objective="The wire from chapter 7 describes a habit. Whose was it, on the 18th?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
  9: dict(
