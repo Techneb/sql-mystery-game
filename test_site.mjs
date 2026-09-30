@@ -66,13 +66,14 @@ test("tables are revealed chapter by chapter", () => {
 });
 
 const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
-                      bigTables: ["person", "cab_ride"], allTables: ["person", "cab_ride", "police_report", "lift_log"], revealed: new Set(["police_report"]), norm: "", text: "", lines: 1, hour: 12, elapsed: 600000 });
+                      cols: 0, allTables: ["person", "cab_ride", "police_report", "lift_log"], revealed: new Set(["police_report"]), norm: "", text: "", lines: 1, hour: 12, elapsed: 600000 });
 
 test("badges fire on the right query shapes and only once", () => {
-  const q = s => ({ ...base(), sql: s, rows: 3 });
+  const q = (s, cols = 7) => ({ ...base(), sql: s, rows: 3, cols });
   const names = ctx => detectBadges(ctx, []).map(b => b.name);
   assert.deepEqual(names(q("SELECT * FROM person")), ["Tourist", "Trespasser"]);
-  assert.ok(names(q("SELECT * FROM police_report")).length === 0);
+  assert.ok(names(q("SELECT * FROM police_report", 6)).length === 0, "six columns is not a tour");
+  assert.ok(!names(q("SELECT id, suite, floor, price, checkin, checkout, guest_name FROM person")).includes("Tourist"), "naming them is the cure");
   assert.ok(names(q("SELECT a.id FROM a JOIN b ON a.x = b.y")).includes("First JOIN"));
   assert.ok(names(q("SELECT 1 FROM a JOIN b ON 1 JOIN c ON 1")).includes("Three's a Crowd"));
   assert.ok(names(q("SELECT x FROM t GROUP BY x HAVING COUNT(*) > 1")).includes("Early HAVING"));

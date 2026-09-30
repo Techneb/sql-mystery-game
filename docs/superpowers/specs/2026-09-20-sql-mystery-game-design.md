@@ -128,7 +128,7 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 
 | Badge | Trigger |
 |---|---|
-| Tourist | `SELECT *` on a table over 1,000 rows |
+| Tourist | `SELECT *` returning 7 or more columns |
 | Needle | first query returning exactly 1 row |
 | Haystack | a result hits the 200-row cap |
 | First JOIN | first `JOIN` |

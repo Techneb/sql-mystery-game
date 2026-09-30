@@ -220,7 +220,7 @@ function runQuery() {
   renderHistory();
   const text = eggText(res);
   state.film = seenFilms(text, state.film);
-  award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), error: !!error }), state.badges));
+  award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), cols: res ? res.columns.length : 0, error: !!error }), state.badges));
   save(state);
   return { sql, res, error };
 }
@@ -251,7 +251,7 @@ function typeTelegram(text) {
 
 const tablesIn = sql => [...sql.matchAll(/\b(?:from|join)\s+([a-z_]+)/gi)].map(m => m[1].toLowerCase());
 export const BADGES = [
-  ["Tourist", "SELECT * on a table of over a thousand rows. Ganimard sighs.", c => c.event === "query" && /select\s+\*/i.test(c.sql) && tablesIn(c.sql).some(t => c.bigTables.includes(t))],
+  ["Tourist", "SELECT * over seven columns or more. Ganimard sighs.", c => c.event === "query" && /select\s+\*/i.test(c.sql) && c.cols >= 7],
   ["Needle", "A query that returned exactly one row.", c => c.event === "query" && c.rows === 1],
   ["Haystack", "A result too long to show. Two hundred rows is the clerk's limit.", c => c.event === "query" && c.rows > ROW_CAP],
   ["First JOIN", "Two ledgers, one question.", c => c.event === "query" && /\bjoin\b/i.test(c.sql)],
@@ -376,7 +376,7 @@ function renderCertificate() {
 
 function ctx(extra) {
   return { event: "query", sql: "", rows: 0, error: false, chapter: currentChapter(state, data.chapters).n, state,
-           bigTables: Object.keys(tableSizes).filter(t => tableSizes[t] > 1000), allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
+           cols: 0, allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
            norm: "", text: "", lines: state.lastQueryLines, hour: new Date().getHours(),
            elapsed: Date.now() - (state.opened[currentChapter(state, data.chapters).n] || Date.now()),
            decoy: data.decoys ? data.decoys[currentChapter(state, data.chapters).n] : undefined, ...extra };
