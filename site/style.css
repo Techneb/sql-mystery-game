@@ -121,6 +121,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
   display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-content: flex-start; }
 .suspects[hidden] { display: none; }
 .suspects-close { position: fixed; top: 16px; right: 16px; }
+/* the Day/Night button shares that corner: step aside while a panel with its own Close is open */
+body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .suspect { width: 180px; text-align: center; position: relative; }
 .suspect img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%;
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); position: relative; }

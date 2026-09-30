@@ -102,8 +102,8 @@
  "chapters": [
   {
    "title": "The Night of the 17th",
-   "story": "Paris, May 1912. The Comtesse de Cagliostro wakes at the Ritz to find her sapphire, the Blue Star, gone and a calling card on the pillow: A. L. Inspector Ganimard has been called at three in the morning and is in no mood. You are his clerk. He drops a stack of police reports on your desk. 'Find ours. Ask Duroc which night, if you must -- he never sleeps and never forgets.'",
-   "objective": "Find our police report. Marcel Duroc knows which night.",
+   "story": "Four in the morning, the Prefecture. Ganimard comes back from the Ritz with his collar undone and his temper worse, and drops a stack of police reports on your desk: every theft, fraud and lost umbrella in Paris this spring. 'One of these is ours. Duroc, the night porter, was in the lobby. He never sleeps and never forgets.'",
+   "objective": "Mr Duroc knows which night.",
    "answer_form": "the report id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L",
    "hints": [],
