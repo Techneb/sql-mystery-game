@@ -507,24 +507,28 @@ def plant_part1(conn, V, r):
                ("Gare de Lyon", 19120515, 1000), ("Gare de Lyon", 19120517, 1600)]
     for i, (drop, d, t) in enumerate(rides_c):
         c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)", (5 + i, V["compete_plate"], d, t, r.choice(PLACES), drop, r.randint(2, 12), "franc"))
-    # --- ch6: the fence's account and payments in May; largest single payment goes to a decoy
+    # --- ch6: the fence pays his thief in three pieces, and the most of anyone paid in three. Decoys: the biggest
+    #     single cheque (one payment), the biggest total (a weekly supplier, four payments), and another account paid
+    #     in three small pieces. Decoy accounts are above 4000: the fence's noise payments never reach them.
+    def fence_payments(account, shell, first_id, split, bank, decoys):
+        c.execute("INSERT INTO bank_account VALUES (?,NULL,?)", (shell, bank))
+        cheque, supplier, craftsman = decoys
+        tx = [(shell, 19120519, split[0]), (shell, 19120520, split[1]), (shell, 19120521, split[2]),
+              (cheque, 19120510, round(sum(split) * 0.625, -3))]
+        tx += [(supplier, d, round(sum(split) * 0.3, -3)) for d in (19120504, 19120511, 19120518, 19120525)]
+        tx += [(craftsman, d, a) for d, a in ((19120503, 2000), (19120514, 3000), (19120527, 2500))]
+        for i, (cp, d, amt) in enumerate(tx):
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (first_id + i, account, cp, d, amt))
+        return first_id + len(tx)
     c.execute("INSERT INTO bank_account VALUES (?,7,'Credit Lyonnais')", (V["fence_account"],))
-    c.execute("INSERT INTO bank_account VALUES (?,NULL,'Credit Lyonnais')", (V["shell_account"],))
-    decoy = c.execute("SELECT id FROM bank_account WHERE id>=100 LIMIT 1").fetchone()[0]
-    tx = [(V["shell_account"], 19120519, 15000), (V["shell_account"], 19120520, 15000), (V["shell_account"], 19120521, 10000),
-          (decoy, 19120510, 25000)]
+    decoys = [i for (i,) in c.execute("SELECT id FROM bank_account WHERE id > 4000 ORDER BY id LIMIT 6")]
+    nxt = fence_payments(V["fence_account"], V["shell_account"], 1, (15000, 15000, 10000), "Credit Lyonnais", decoys[:3])
     for i in range(20):
-        tx.append((r.randint(100, 4000), _date(r, 5, 5), r.randint(50, 900)))
-    for i, (cp, d, amt) in enumerate(tx):
-        c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (1 + i, V["fence_account"], cp, d, amt))
-    # --- compete ch6: a second fence, a second shell account, a decoy larger single payment
+        c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')",
+                  (nxt + i, V["fence_account"], r.randint(100, 4000), _date(r, 5, 5), r.randint(50, 900)))
+    # --- compete ch6: a second fence, a second shell account, the same three decoys
     c.execute("INSERT INTO bank_account VALUES (?,18,'Societe Generale')", (V["compete_fence_account"],))
-    c.execute("INSERT INTO bank_account VALUES (?,NULL,'Societe Generale')", (V["compete_shell_account"],))
-    decoy2 = c.execute("SELECT id FROM bank_account WHERE id>=100 LIMIT 1 OFFSET 1").fetchone()[0]
-    tx2 = [(V["compete_shell_account"], 19120519, 12000), (V["compete_shell_account"], 19120520, 12000),
-           (V["compete_shell_account"], 19120521, 9000), (decoy2, 19120510, 20000)]
-    for i, (cp, d, amt) in enumerate(tx2):
-        c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (25 + i, V["compete_fence_account"], cp, d, amt))
+    fence_payments(V["compete_fence_account"], V["compete_shell_account"], 60, (12000, 12000, 9000), "Societe Generale", decoys[3:])
     # --- ch7: telegrams from the Ritz desk on the 18th; exactly one at night (03:30, after the suite falls silent, ch11)
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",

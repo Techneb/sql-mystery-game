@@ -80,7 +80,7 @@ WHERE a.number = 27
   AND a.street = 'rue des Martyrs'
   AND p.occupation = 'jeweller';
 
--- 06. Follow the Francs (JOIN x3 + SUM) -> the account number: 88213
+-- 06. Follow the Francs (JOIN x3 + SUM + HAVING) -> the account number: 88213
 -- The jeweller's account: 44170.
 SELECT id
 FROM bank_account
@@ -89,7 +89,7 @@ WHERE person_id = (
   FROM person
   WHERE name = 'Ernest Grimaud'
 );
--- What it paid each account in May: the biggest single cheque (a decoy) is not the biggest total (three payments).
+-- What it paid each account in May. Decoys: the biggest single cheque (one payment), the biggest total (four payments, a supplier), and a second account paid in three small pieces.
 SELECT counterparty_id, COUNT(*) AS payments, SUM(amount) AS total, MAX(amount) AS biggest
 FROM bank_transaction
 WHERE account_id = 44170
@@ -104,6 +104,7 @@ JOIN bank_transaction AS t ON t.account_id = b.id
 WHERE p.name = 'Ernest Grimaud'
   AND t.date BETWEEN 19120501 AND 19120531
 GROUP BY t.counterparty_id
+HAVING COUNT(*) = 3
 ORDER BY SUM(t.amount) DESC
 LIMIT 1;
 
