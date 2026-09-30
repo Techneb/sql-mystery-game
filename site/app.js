@@ -218,7 +218,7 @@ function runQuery() {
   $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";
   state.lastQueryLines = sql.split("\n").length;
   renderHistory();
-  const text = res ? res.values.map(r => r.join(" ")).join(" ").toLowerCase() : "";
+  const text = eggText(res);
   state.film = seenFilms(text, state.film);
   award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), error: !!error }), state.badges));
   save(state);
@@ -295,6 +295,11 @@ export const BADGES = [
 export const FILM_LINES = ["would be back", "rosebud", "offer he could not refuse", "no place like home", "tin suit",
   "do not give a damn", "i see dead people", "houston", "elementary, inspector", "may the force", "simply walk into",
   "little friend", "you talking to me", "there is no spoon", "bond, jean bond"];
+// Easter eggs count only in a narrow result: a SELECT * over the archive must not hand them all out.
+export const EGG_ROWS = 10;
+export function eggText(res) {
+  return res && res.values.length <= EGG_ROWS ? res.values.map(r => r.join(" ")).join(" ").toLowerCase() : "";
+}
 export function seenFilms(text, have) { return have.concat(FILM_LINES.filter(m => text.includes(m) && !have.includes(m))); }
 
 // Stories and endings carry **bold** and *italic* (plot.py); escaped first, so nothing else becomes markup.

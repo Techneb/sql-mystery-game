@@ -145,7 +145,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
 .telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; border: 1px solid var(--rule); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }
-#notes { width: 100%; min-height: 120px; font: 13px/1.4 "Special Elite", monospace; }
+#notes { width: 100%; min-height: 120px; resize: vertical; font: 13px/1.4 "Special Elite", monospace; }
 
 /* toasts */
 /* ?admin in the URL only; not linked from anywhere a student would find */

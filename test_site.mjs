@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, FILM_LINES, seenFilms, richText } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -211,6 +211,10 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   const films = seenFilms("i see dead people. houston? there is no spoon", ["rosebud"]);
   assert.equal(films.length, 4);
   assert.deepEqual(seenFilms("houston", films), films, "a film counts once");
+  const row = ["A man in a cape asked the doorman for Rosebud"];
+  assert.match(eggText({ values: [row] }), /rosebud/);
+  assert.equal(eggText({ values: Array(EGG_ROWS + 1).fill(row) }), "", "a SELECT * over the archive finds no egg");
+  assert.equal(eggText(null), "");
   const s = freshState(); s.film = FILM_LINES.slice(0, 5);
   assert.ok(detectBadges({ ...base(), state: s }, []).map(b => b.name).includes("Film Buff"));
   const ev = (event, extra = {}) => detectBadges({ ...base(), event, ...extra }, []).map(b => b.name);
