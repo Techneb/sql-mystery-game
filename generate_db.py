@@ -184,6 +184,28 @@ REPORT_TEXT = [
     "Reported by {n}. A houseboat was lost at sea. It was moored in the Canal Saint-Martin.",
     "Reported by {n}. No witness. The reporting party asks us to keep calm and carry on.",
     "Reported by {n}. A pickpocket returned a wallet, apologised, and took the umbrella instead.",
+    # video games
+    "Reported by {n}. A plumber in red overalls jumped on every mushroom at Les Halles. He says the princess is in another castle.",
+    "Reported by {n}. An old man in a cave gave a boy a sword, saying it is dangerous to go alone. Sword confiscated.",
+    "A baker reports that the cake in his window is a lie. It is plaster. The customer wants his sou back.",
+    "Reported by {n}. A blue hedgehog ran through the Tuileries in a great hurry, collecting gold coins.",
+    "Reported by {n}. Crates fell from a cart in odd shapes and fitted perfectly into a gap. The whole row vanished.",
+    "Reported by {n}. A man in a white jacket shouted Hadouken at a street lamp. The lamp is unharmed.",
+    "Reported by {n}. An aviator was told to do a barrel roll over the Champ de Mars. He did two.",
+    "Reported by {n}. A round yellow gentleman ate every cherry at the market and fled from four ghosts.",
+    "A soldier shouted Leeroy Jenkins and charged a pastry shop alone. The pastry shop won.",
+    "Reported by {n}. A man with a cardboard box over his head crept past the guard. The guard saw a box.",
+    # Kaamelott
+    "Reported by {n}. A knight named Perceval counted the missing forks: one, two, three, fourteen. C'est pas faux, he says.",
+    "Reported by {n}. A gentleman named Karadoc refused to make a statement before he had eaten. Le gras, c'est la vie.",
+    "Reported by {n}. Six knights held a round table at a brasserie for six hours and ordered one soup between them.",
+    "A man in armour asked every passer-by for the Graal. He was sent to the Bon Marche, second counter on the left.",
+    "Reported by {n}. A Welshman painted Pays de Galles independant on the Pont Alexandre III. Twice.",
+    "Reported by {n}. A cook swears someone breathed on his compote. Faut pas respirer la compote, ca fait tousser.",
+    "Reported by {n}. Two knights argued for an hour about the word cuillere. Nobody was hurt, but a fork was bent.",
+    "A king complains that his knights say Sire, Sire, and then nothing at all. Filed out of pity.",
+    "Reported by {n}. A lady rose out of the Seine and asked the way to Brittany. The bargeman has taken the pledge.",
+    "Reported by {n}. A druid brewed something that turned the concierge's cat green. The cat is proud of it.",
 ]
 INTERVIEW_TEXT = [
     "I saw nothing, monsieur. I was asleep, and dreaming of a much better hotel.",
@@ -228,6 +250,28 @@ INTERVIEW_TEXT = [
     "Ask my lawyer. My lawyer says ask my wife. My wife says ask my lawyer.",
     "I had one job, monsieur: to wake the gentleman in the morning. I overslept.",
     "Bond, Jean Bond. I was stirring, not shaking, a very quiet drink at the bar.",
+    # video games
+    "I used to be a night porter like you, monsieur. Then I took an arrow to the knee.",
+    "Hey, listen! Hey! That is all my neighbour's canary says, monsieur, all night long.",
+    "Stay a while and listen, inspector. No? Nobody ever stays.",
+    "All your base are belong to us, the telegram said. My cousin cannot spell.",
+    "Up, up, down, down, left, right, left, right. That is how I climb the stairs after champagne.",
+    "War never changes, monsieur. Neither does the soup here.",
+    "Would you kindly stop asking me questions? Ah. That one I cannot refuse.",
+    "Finish him, the crowd shouted at the boxing. I finished my drink instead.",
+    "Snake? Snake?! No, monsieur, it was a garden hose. I screamed anyway.",
+    "Press F to pay respects, the waiter said. I do not know where F is. I paid in francs.",
+    # Kaamelott
+    "C'est pas faux, monsieur. I did not understand the question, but c'est pas faux.",
+    "On en a gros, inspector. That is the whole of my statement.",
+    "I do not talk before I eat, monsieur. Come back after the cheese.",
+    "C'est pas moi qui explique mal, monsieur. It is the others who listen badly.",
+    "Sire, Sire! Oh, pardon, you are an inspector. It is the hat.",
+    "I was looking for the Graal all night. I found a very nice cheese instead.",
+    "Le gras, c'est la vie. I was in the kitchen, monsieur, the whole night.",
+    "My friend Perceval says it happened at three o'clock or at fourteen. He counts in his own way.",
+    "At our round table nobody listens, monsieur, so I came here to be ignored professionally.",
+    "Pays de Galles independant! Pardon, monsieur, it slips out when I am tired.",
 ]
 
 
@@ -569,6 +613,11 @@ def build_db(seed):
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
     scatter_planted(conn, noise, r)
+    # The ch.1 decoy (the eve's Ritz theft): a wrong answer the site's "Filed Under the 17th" badge recognises,
+    # looked up after scatter_planted moved it. Shipped in chapters.json, so it must never be the answer.
+    (V["decoy_report_id"],) = conn.execute(
+        "SELECT id FROM police_report WHERE description LIKE 'A bottle of Pommery 1906%'").fetchone()
+    assert V["decoy_report_id"] not in (V["report_id"], V["compete_report_id"])
     return conn, V
 
 
@@ -629,7 +678,7 @@ def chapters_json(V, mode="learn"):
         chapters.append(d)
     out = dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,
                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
-               chapters=chapters)
+               chapters=chapters, decoys={"1": V["decoy_report_id"]} if mode == "learn" else {})
     if mode == "learn":
         out["endings"] = {k: v.format(**V) for k, v in plot.ENDINGS.items()}
         out["part2_code_sha256"] = sha(V["part2_code"])
