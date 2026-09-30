@@ -237,12 +237,15 @@ test("story markup: bold and italic only, everything else escaped", () => {
 
 test("formatSql changes only whitespace and keyword case, and is stable", () => {
   const squash = q => q.replace(/\s+/g, "").toLowerCase();
-  const queries = fs.readFileSync(new URL("./solution.sql", import.meta.url), "utf8").split("\n").filter(l => /^(select|with)/i.test(l));
-  assert.ok(queries.length > 10);
+  // solution.sql is formatted by generate_db.format_sql, the Python port: the JS formatter must leave it as it is.
+  const queries = fs.readFileSync(new URL("./solution.sql", import.meta.url), "utf8").split(/;\n/)
+    .map(q => q.split("\n").filter(l => !l.startsWith("--")).join("\n").trim()).filter(Boolean).map(q => q + ";");
+  assert.ok(queries.length > 20);
   for (const q of queries) {
-    const f = formatSql(q);
-    assert.equal(squash(f), squash(q), q);
-    assert.equal(formatSql(f), f, "formatting twice changes nothing: " + q);
+    const one = q.replace(/\s+/g, " ");
+    assert.equal(squash(formatSql(one)), squash(one), q);
+    assert.equal(formatSql(one), q, "the Python and JS formatters agree: " + q);
+    assert.equal(formatSql(q), q, "formatting twice changes nothing: " + q);
   }
   const f = formatSql("select name from person where name = 'Paul from Where' and born between 1850 and 1890 -- and so on\n or id = 1");
   assert.match(f, /'Paul from Where'/, "strings keep their case and words");

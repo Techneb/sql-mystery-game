@@ -215,7 +215,8 @@ class Outputs(unittest.TestCase):
         blocks = [b for b in g.solution_sql(V).split("\n\n") if any(not l.startswith("--") for l in b.strip().splitlines())]
         self.assertEqual(len(blocks), 12)
         for b in blocks:
-            stmts = [l.rstrip(";") for l in b.splitlines() if not l.startswith("--") and l.strip()]
+            code = "\n".join(l for l in b.splitlines() if not l.startswith("--"))
+            stmts = [q.strip() for q in code.split(";") if q.strip()]   # formatted: one statement spans several lines
             self.assertGreaterEqual(len(stmts), 1)
             for s in stmts[:-1]:
                 conn.execute(s)   # discovery queries must not error
@@ -315,6 +316,19 @@ class Erd(unittest.TestCase):
 
 
 class SolutionSql(unittest.TestCase):
+    def test_formatter_matches_the_site(self):
+        import re
+        with open("site/app.js") as f:
+            js = f.read()
+        words = lambda name: set(" ".join(re.findall(r'"([a-z_ ]+)"', re.search(r"const %s = new Set\(([\s\S]*?)\);" % name, js).group(1))).split())
+        self.assertEqual(words("SQL_KEYWORDS"), g.SQL_KEYWORDS)
+        self.assertEqual(words("SQL_FUNCS"), g.SQL_FUNCS)
+        for ch in plot.CHAPTERS:
+            q = ch["solution"].format(**g.plant_values(1912)) + ";"
+            f = g.format_sql(q)
+            self.assertEqual(re.sub(r"\s+", "", f).lower(), re.sub(r"\s+", "", q).lower())
+            self.assertEqual(g.format_sql(f), f)
+
     def test_no_chapter_repeats_a_query(self):
         for ch in plot.CHAPTERS:
             for key in ("discovery", "discovery_compete"):

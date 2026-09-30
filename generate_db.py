@@ -747,6 +747,66 @@ def chapters_json(V, mode="learn"):
     return out
 
 
+# A port of site/app.js formatSql (Ctrl+F in the terminal), so solution.sql reads like a formatted query.
+# The site test runs the JS formatter over solution.sql and requires it to change nothing: the two must agree.
+SQL_KEYWORDS = set(("select from where and or not in is null like glob between join inner left right full outer "
+    "cross natural on using as group by order having limit offset distinct all union intersect except with recursive case "
+    "when then else end asc desc over partition rows range exists cast collate escape values insert into update set delete "
+    "create table view drop filter window").split(" "))
+SQL_FUNCS = set("count sum avg min max abs round length lower upper substr trim replace coalesce ifnull nullif date time "
+    "strftime rank dense_rank row_number lag lead ntile first_value last_value printf cast".split(" "))
+JOIN_LEAD = {"left", "right", "inner", "full", "cross", "natural", "outer"}
+CLAUSES = {"from", "where", "group", "having", "order", "limit", "union", "intersect", "except", "window"}
+SQL_TOKEN = re.compile(r"""(\s+)|(--[^\n]*)|(/\*[\s\S]*?(?:\*/|$))|('(?:[^']|'')*'?|"(?:[^"]|"")*"?)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])""")
+
+
+def format_sql(src):
+    parens, out, space, prev, start, between = [], "", False, "", True, False
+
+    def br(extra):
+        nonlocal out, space
+        out = out.rstrip() + "\n" + "  " * (sum(parens) + extra)
+        space = False
+
+    for m in SQL_TOKEN.finditer(src):
+        t, ws, line, block, string, word = m.group(0), m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
+        if ws:
+            space = out != ""
+            continue
+        w = word.lower() if word else ""
+        rest = src[m.end():]
+        if word and (not parens or parens[-1]) and not start:
+            if w in CLAUSES or (w == "select" and prev != "(") or ((w in JOIN_LEAD or w == "join") and prev not in JOIN_LEAD):
+                br(0)
+            elif w in ("and", "or") and not between:
+                br(1)
+        if w == "and" and between:
+            between = False
+        if w == "between":
+            between = True
+        text = word.upper() if word and (w in SQL_KEYWORDS or (w in SQL_FUNCS and re.match(r"\s*\(", rest))) else t
+        if t == ")" and parens and parens.pop():
+            br(0)
+        if space and out and not out[-1].isspace():
+            out += " "
+        out += text
+        space = False
+        if t == "(":
+            parens.append(bool(re.match(r"\s*(select|with)\b", rest, re.I)))
+            if parens[-1]:
+                br(0)
+        if line:
+            br(0)
+        if t == ";":
+            out += "\n"
+            start, prev, parens = True, "", []
+            continue
+        if not string and not line and not block:
+            prev = w or t
+        start = False
+    return re.sub(r"[ \t]+$", "", out, flags=re.M).strip()
+
+
 def solution_sql(V):
     out = ["-- The Ritz Affair: reference path (seed %d). Each chapter first finds the facts the story withholds, then answers." % V["seed"]]
     for ch in plot.CHAPTERS:
@@ -755,9 +815,11 @@ def solution_sql(V):
         for d in ch.get("discovery", []):
             if "note" in d:
                 lines.append("-- " + d["note"].format(**V))
-            lines.append(d["query"].format(**V) + ";")
+            lines.append(format_sql(d["query"].format(**V) + ";"))
+        if "explain" in ch:
+            lines.append("-- " + ch["explain"].format(**V))
         lines.append("-- The answer:")
-        lines.append(ch["solution"].format(**V) + ";")
+        lines.append(format_sql(ch["solution"].format(**V) + ";"))
         out.append("\n".join(lines))
     return "\n\n".join(out) + "\n"
 
