@@ -672,11 +672,9 @@ def chapters_json(V, mode="learn"):
         d["objective"] = ch["objective" + suf].format(**V)
         d["answer_form"] = ch["answer_form" + suf].format(**V)
         d["telegram"] = ch["telegram"].format(**V)
-        d.update(hints=[h.format(**V) for h in ch["hints"]] if mode == "learn" else [],
-                  answer_sha256=sha(V[ch["answer_key" + suf]]))
-        d.update(n=ch["n"], part=ch["part"], construct=ch["construct"], tables=ch["tables"])
+        d.update(answer_sha256=sha(V[ch["answer_key" + suf]]), n=ch["n"], tables=ch["tables"])
         chapters.append(d)
-    out = dict(seed=V["seed"], mode=mode, theft_date=V["theft_date"], normalise_fixture=FIXTURE,
+    out = dict(mode=mode, normalise_fixture=FIXTURE,
                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
                chapters=chapters, decoys={"1": V["decoy_report_id"]} if mode == "learn" else {})
     if mode == "learn":

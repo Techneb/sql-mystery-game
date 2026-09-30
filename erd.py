@@ -14,10 +14,9 @@ def read_schema(conn):
     return tables, fks
 
 
-def layout(tables, fks, override=None):
+def layout(tables, fks):
     """-> {name: (layer, x, y, w, h)}. Layer 0 = no FK; else 1 + deepest referenced table (self-refs ignored).
-    Within a layer, ordered by the mean x of the referenced tables, ties by name, wrapped every PER_ROW tables.
-    override = {name: (x, y)}."""
+    Within a layer, ordered by the mean x of the referenced tables, ties by name, wrapped every PER_ROW tables."""
     refs = {t: {ref for (tt, _, ref) in fks if tt == t and ref != t} for t in tables}
     layer = {}
 
@@ -42,14 +41,12 @@ def layout(tables, fks, override=None):
             for i, t in enumerate(chunk):
                 pos[t] = (L, i * (W + GAP), y, W, 16 + ROW * len(tables[t]))
             y += max(pos[t][4] for t in chunk) + LAYER_H
-    for t, (x, yy) in (override or {}).items():
-        pos[t] = (pos[t][0], x, yy, W, pos[t][4])
     return pos
 
 
-def svg(conn, override=None):
+def svg(conn):
     tables, fks = read_schema(conn)
-    pos = layout(tables, fks, override)
+    pos = layout(tables, fks)
     width = max(x + w for (_, x, _, w, _) in pos.values()) + 10
     height = max(y + h for (_, _, y, _, h) in pos.values()) + 10
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">' % (width, height, width, height)]

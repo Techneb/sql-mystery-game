@@ -16,11 +16,11 @@ export async function sha256(s) {
 
 export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
-           solved: [], part2: false, queries: {}, hints: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
+           solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
            film: [], opened: {} };
 }
-// queries/hints/wrong are keyed by chapter number: { "1": 3, "2": 7 }
+// queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
 // outbox holds compete events not yet accepted by the Apps Script, so a lost connection never loses a row.
 export function currentChapter(state, chapters) {
@@ -36,16 +36,10 @@ export function competeDone(state) { return state.mode === "compete" && part1Don
 export function storageKey(mode) { return mode === "compete" ? "ritz.compete" : "ritz.learn"; }
 let key = storageKey("learn");
 export function loadFrom(k) { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(k) || "{}") }; } catch { return freshState(); } }
-export function load() { return loadFrom(key); }
 let noPersist = false;
 export function save(state) { if (noPersist) return; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
 
 // --- compete mode: season, team, clock, events -------------------------------------------------
-// Left empty on purpose, like leaderboard.html's: a deployment URL is a live, unauthenticated write
-// endpoint specific to one teacher's Google account, and this repo is public. Share the game as
-// index.html?season=N&board=<your /exec URL> instead (README, "Compete mode"), or set it in your own
-// local, uncommitted copy.
-const APPS_SCRIPT_URL = "";
 export function fmtTime(ms) {
   const s = Math.max(0, Math.round(ms / 1000));
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
@@ -60,7 +54,7 @@ export function competeStats(state) {
 export function eventPayload(state, event, chapter) {
   const s = competeStats(state);
   return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
-           hints: s.hints, wrong: s.wrong, queries: s.queries };
+           wrong: s.wrong, queries: s.queries };
 }
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -133,7 +127,6 @@ function renderChapter() {
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
     $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n]);
-    $("witnesses").innerHTML = "";
     return;
   }
   const ch = currentChapter(state, data.chapters);
@@ -157,34 +150,18 @@ function renderChapter() {
   if (competeDone(state)) {
     $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
       "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +
-      "plus two minutes per hint and ten seconds per wrong answer.";
+      "plus " + duration(PENALTY.wrong) + " per wrong answer.";
     $("objective").innerHTML = boardUrl
       ? 'Your result is on the class leaderboard: <a href="leaderboard.html?data=' + encodeURIComponent(boardUrl) + '" target="_blank">open it</a>.'
       : "No leaderboard is connected to this season, so the result stays on this screen.";
     $("btn-print").hidden = false;
   }
-  renderWitnesses();
   let box = document.getElementById("rank-box");
   if (part1Done(state)) {
     if (!box) { box = document.createElement("div"); box.id = "rank-box"; box.className = "box"; $("objective").parentElement.after(box); }
     const p1 = partStats(state, 1, 8);
-    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries)) + " - " + p1.queries + " queries<br>" +
-      esc(state.badges.join(", "));
+    box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries)) + " - " + p1.queries + " queries";
   } else if (box) box.remove();
-}
-
-const WITNESS = ["Ask the concierge", "Ask the chambermaid", "Open Ganimard's notebook"];
-function renderWitnesses() {
-  const ch = currentChapter(state, data.chapters);
-  const opened = state.hints[ch.n] || 0;
-  const el = $("witnesses"); el.innerHTML = "";
-  if (awaitingCode(state) || competeDone(state) || state.solved.includes(12)) return;
-  ch.hints.slice(0, opened).forEach(h => { const d = document.createElement("div"); d.className = "hint"; d.textContent = h; el.appendChild(d); });
-  if (opened < ch.hints.length) {
-    const b = document.createElement("button"); b.textContent = WITNESS[opened] + (opened === 2 ? " (the query, with blanks)" : "");
-    b.onclick = () => { state.hints[ch.n] = opened + 1; save(state); renderWitnesses(); };
-    el.appendChild(b);
-  }
 }
 
 // SQL colouring for the terminal: a <pre> under a transparent textarea (index.html .editor).
@@ -338,14 +315,13 @@ function award(list) {
   if (list.length) save(state);
 }
 
-// Queries only: hints are off for now (spec 2026-09-22). If they come back, add a hint threshold per rank here.
 export const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
 export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 
 // Settings the ?admin panel changes live: apps_script.gs stores them (Script Property CONFIG) and serves
 // them at <board>?config=1; boot applies them over the defaults above. leaderboard.html reads `penalty`.
 // Returns the fields it refused; a refused or missing field keeps its default.
-export const PENALTY = { hint: 120, wrong: 10 };  // seconds, mirrored as the default in leaderboard.html
+export const PENALTY = { wrong: 10 };  // seconds per wrong answer, mirrored as the default in leaderboard.html
 export function applyConfig(cfg) {
   if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) return [];
   const bad = [];
@@ -361,7 +337,7 @@ export function applyConfig(cfg) {
       TAUNTS.splice(0, TAUNTS.length, ...t.map(s => s.trim()));
     else bad.push("taunts");
   }
-  for (const k of ["hint", "wrong"]) {
+  for (const k of ["wrong"]) {
     const v = cfg.penalty?.[k];
     if (v === undefined) continue;
     if (Number.isFinite(v) && v >= 0) PENALTY[k] = v; else bad.push("penalty." + k);
@@ -374,9 +350,9 @@ export function currentConfig() {
 export function duration(s) { return s && s % 60 === 0 ? s / 60 + (s === 60 ? " minute" : " minutes") : s + " seconds"; }
 export function configUrl(board) { const u = new URL(board); u.searchParams.set("config", "1"); return u.href; }
 export function partStats(state, from, to) {
-  let queries = 0, hints = 0;
-  for (let n = from; n <= to; n++) { queries += state.queries[n] || 0; hints += state.hints[n] || 0; }
-  return { queries, hints };
+  let queries = 0;
+  for (let n = from; n <= to; n++) queries += state.queries[n] || 0;
+  return { queries };
 }
 
 function renderCertificate() {
@@ -621,7 +597,7 @@ function offerCompete() {
       season = n;
     }
     $("compete-note").innerHTML = boardUrl
-      ? "Part I, chapters I to VIII, against the clock. " + duration(PENALTY.hint) + " per hint, " + duration(PENALTY.wrong) +
+      ? "Part I, chapters I to VIII, against the clock. " + duration(PENALTY.wrong) +
         " per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named." +
         ' Your pseudo and progress go to the class leaderboard (<a href="privacy.html" target="_blank">what is sent</a>).'
       : "No leaderboard is connected, so the clock runs locally and nothing is recorded.";
@@ -706,7 +682,7 @@ async function renderAdminPanel() {
     '<div id="admin-settings" class="admin-seasons" hidden>' +
     'Rank = most queries for Part I:<br>' +
     RANKS.slice(0, 3).map(([, name], i) => name + ' <input id="cfg-r' + i + '" type="number" min="1"> ').join("") +
-    '<br>Leaderboard penalty, seconds: per hint <input id="cfg-ph" type="number" min="0"> per wrong answer ' +
+    '<br>Leaderboard penalty, seconds per wrong answer ' +
     '<input id="cfg-pw" type="number" min="0"><br>Telegrams after every third wrong answer, one per line:' +
     '<textarea id="cfg-taunts" rows="4"></textarea><button id="cfg-save">Save</button>' +
     '<div id="cfg-msg" class="admin-msg"></div></div>' +
@@ -745,7 +721,7 @@ async function renderAdminPanel() {
   const fillSettings = () => {
     const c = currentConfig();
     c.ranks.forEach((v, i) => { q("cfg-r" + i).value = v; });
-    q("cfg-ph").value = c.penalty.hint; q("cfg-pw").value = c.penalty.wrong;
+    q("cfg-pw").value = c.penalty.wrong;
     q("cfg-taunts").value = c.taunts.join("\n");
   };
   q("admin-settings-btn").onclick = async () => {
@@ -763,7 +739,7 @@ async function renderAdminPanel() {
     const board = q("admin-board").value.trim();
     if (!board) { q("cfg-msg").textContent = "Paste the /exec URL first."; return; }
     const cfg = { ranks: [0, 1, 2].map(i => Number(q("cfg-r" + i).value)),
-                  penalty: { hint: Number(q("cfg-ph").value), wrong: Number(q("cfg-pw").value) },
+                  penalty: { wrong: Number(q("cfg-pw").value) },
                   taunts: q("cfg-taunts").value.split("\n").map(s => s.trim()).filter(Boolean) };
     const bad = applyConfig(cfg);
     if (bad.length) { q("cfg-msg").textContent = "Not saved, check: " + bad.join(", ") + " (ranks must be whole numbers, increasing)."; return; }
@@ -789,7 +765,7 @@ async function boot() {
   applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
   season = Number(params.get("season")) || 0;
-  boardUrl = params.get("board") || APPS_SCRIPT_URL;
+  boardUrl = params.get("board") || "";   // the deployment URL travels in links, never in this public repo
   // Not awaited: settings only matter at the first wrong answer or the rank, well after load.
   if (boardUrl) fetch(configUrl(boardUrl)).then(r => r.json()).then(applyConfig).catch(() => {});
   const debugChapter = Number(params.get("chapter"));
@@ -817,7 +793,7 @@ async function boot() {
       for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
       if (debugChapter > 8) state.part2 = true;
     } else {
-      state = load();
+      state = loadFrom(key);
     }
     await loadDb("mystery");
   }

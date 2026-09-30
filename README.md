@@ -49,8 +49,8 @@ thresholds, the telegrams and the leaderboard penalties. They are stored in the 
 leaderboard; the admin panel's **Investigate link** adds it to learning mode). Saving needs the Script
 Property `ADMIN_KEY` set to the admin passphrase. The values below are the defaults.
 
-- `RANKS` in `site/app.js` sets the query thresholds for each rank; tune after the first class. Hints are
-  off for now (every chapter ships `hints: []`), so the rank counts queries only.
+- `RANKS` in `site/app.js` sets the query thresholds for each rank; tune after the first class. The rank
+  counts queries only.
 - `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
 - `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.
 
@@ -72,7 +72,7 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
 
 | File | Role |
 |---|---|
-| `plot.py` | the plot as data: cast, chapters (text, hints, taunts, solution and naive SQL) |
+| `plot.py` | the plot as data: cast, chapters (text, taunts, solution and naive SQL) |
 | `generate_db.py` | planted values per seed, schema, noise, planting, self-checks, outputs |
 | `erd.py` | ERD auto-layout (FK depth layers, barycentre ordering) to inline SVG |
 | `test_generate.py` | `unittest` suite |
@@ -117,7 +117,7 @@ With `season=N` in the URL the landing page's **Compete** button offers that sea
 is on the server; otherwise its tooltip says so); without a link, Compete asks for the season number
 instead. Compete then asks for a pseudo (refused if already used in that season), POSTs `start` to the Apps
 Script (which stamps the server time), loads the season database, and runs Part I only with a clock in
-the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the team's hints,
+the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the player's
 wrong answers and queries, and the finish screen links to the leaderboard. Events that cannot be
 delivered (a dropped connection) wait in the saved state and are retried every 30 s; the leaderboard
 scores the first `start` and the first `finish` it sees, so a retry can never shorten a time. Without

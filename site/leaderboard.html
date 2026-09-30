@@ -25,18 +25,13 @@
 <div class="sub" id="status">Loading...</div>
 <select id="season"></select>
 <table id="board">
-  <thead><tr><th>#</th><th>Pseudo</th><th>Time</th><th>Hints</th><th>Wrong</th></tr></thead>
+  <thead><tr><th>#</th><th>Pseudo</th><th>Time</th><th>Wrong</th></tr></thead>
   <tbody id="rows"></tbody>
 </table>
 <div class="empty" id="empty" hidden>No players yet for this season.</div>
 <script>
-// Left empty on purpose: this file is committed to a public repo, and a live deployment URL is
-// specific to one teacher's Google account. Two ways to point this page at a real deployment
-// without ever committing that URL: (a) share the page as leaderboard.html?data=<your /exec URL>
-// (bookmark it once, the URL never touches git), or (b) edit APPS_SCRIPT_URL in your own local,
-// uncommitted copy of this file. See README.md's "Compete mode" section.
-const APPS_SCRIPT_URL = "";
-const SOURCE = new URLSearchParams(location.search).get("data") || APPS_SCRIPT_URL;
+// The deployment URL travels in the link (leaderboard.html?data=<your /exec URL>), never in this public repo.
+const SOURCE = new URLSearchParams(location.search).get("data") || "";
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -46,10 +41,10 @@ function fmt(ms) {
 // Everything below comes from the Sheet, which anyone can POST to: escape it before it reaches innerHTML.
 const esc = s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 // One row per team+season: pairs its "start" row with its "finish" row (adjusted time, spec formula:
-// finish - start + penalty.hint s/hint + penalty.wrong s/wrong, 120 and 10 unless the ?admin Settings say otherwise) or, absent a finish, its latest "progress" chapter.
+// finish - start + penalty.wrong s per wrong answer, 10 unless the ?admin Settings say otherwise) or, absent a finish, its latest "progress" chapter.
 // Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win,
 // so a team that retries a POST after a dropped connection, or reloads the page, can never shorten its time.
-let penalty = { hint: 120, wrong: 10 };  // defaults, same as PENALTY in app.js
+let penalty = { wrong: 10 };  // default, same as PENALTY in app.js
 function summarize(rows) {
   const teams = new Map(); // key "team|season" -> {team, season, start, finish, chapter}
   for (const r of rows) {
@@ -62,8 +57,8 @@ function summarize(rows) {
   }
   return [...teams.values()].map(t => {
     if (t.finish && t.start != null) {
-      const adjusted = (t.finish.timestamp - t.start) + (t.finish.hints || 0) * penalty.hint * 1000 + (t.finish.wrong || 0) * penalty.wrong * 1000;
-      return { ...t, done: true, adjusted, hints: t.finish.hints, wrong: t.finish.wrong };
+      const adjusted = (t.finish.timestamp - t.start) + (t.finish.wrong || 0) * penalty.wrong * 1000;
+      return { ...t, done: true, adjusted, wrong: t.finish.wrong };
     }
     return { ...t, done: false, adjusted: Infinity };
   });
@@ -75,7 +70,7 @@ async function load() {
   try {
     const u = new URL(SOURCE); u.searchParams.set("config", "1");
     const p = await fetch(u).then(r => r.json()).then(c => c.penalty || {}).catch(() => ({}));
-    for (const k of ["hint", "wrong"]) if (Number.isFinite(p[k]) && p[k] >= 0) penalty[k] = p[k];
+    if (Number.isFinite(p.wrong) && p.wrong >= 0) penalty.wrong = p.wrong;
   } catch {}
   try { rows = await (await fetch(SOURCE)).json(); }
   catch (e) { document.getElementById("status").textContent = "Could not reach the leaderboard."; return; }
@@ -92,7 +87,6 @@ async function load() {
       <td>${t.done ? i + 1 : "-"}</td>
       <td>${esc(t.team)}</td>
       <td class="time">${t.done ? fmt(t.adjusted) : "chapter " + t.chapter + " of 8"}</td>
-      <td>${t.done ? t.hints : "-"}</td>
       <td>${t.done ? t.wrong : "-"}</td>
     </tr>`).join("");
   document.getElementById("empty").hidden = here.length > 0;

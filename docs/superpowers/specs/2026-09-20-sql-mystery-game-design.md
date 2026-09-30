@@ -12,7 +12,9 @@ Decided 2026-09-20 with the course owner. Supersedes `SQL/BACKLOG - SQL Mystery 
 - Part I chapters require a discovery query before the taught construct, and **hints are removed**
   (`2026-09-22-part1-multi-query-chapters-design.md`). Section 3's "Witnesses (hints)" describes the
   original design, not the shipped one; the `Clean Sweep` badge went with them and **rank counts
-  queries only**.
+  queries only**. 2026-09-30: the dormant hint code (witness button, hint counts and penalty) was deleted
+  outright; git history has it. The Apps Script keeps its `hints` column, now always 0, so the Sheet's
+  format is unchanged.
 - Section 5's "Google Fonts only, no artwork" no longer holds: twelve chapter props (inline SVG), a
   Part II night edition, a cork case board and painted portraits of the cast shipped 2026-09-22/23.
 - Section 4's compete flow is link-driven: the teacher shares `?season=N&board=<url>`; the season

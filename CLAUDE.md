@@ -29,7 +29,7 @@ Python side (build time) -> static files -> browser side (runtime, no server):
 ## Rules
 
 - Stdlib only, no build step. `python3 generate_db.py` rebuilds `site/` outputs and **is the test of the plot**: every solution must return exactly its answer and every trap must bite (the naive query must not yield the answer). `python3 -m unittest -v` pins the same plus normalisation and ERD layering.
-- `plot.py` is data; `V` (planted values) is drawn in `plant_values(seed)`; seed 1912 pins the learning-mode values quoted in the story and objective text (every chapter ships `hints: []` for now; the witness button renders only when a chapter has hints). Any text or data must be pure ASCII: `LC_ALL=C grep -n '[^ -~]' plot.py generate_db.py erd.py solution.sql site/chapters.json` must print nothing.
+- `plot.py` is data; `V` (planted values) is drawn in `plant_values(seed)`; seed 1912 pins the learning-mode values quoted in the story and objective text. Any text or data must be pure ASCII: `LC_ALL=C grep -n '[^ -~]' plot.py generate_db.py erd.py solution.sql site/chapters.json` must print nothing.
 - Answer normalisation lives twice: `generate_db.normalise` and `site/app.js normalise`; `chapters.json.normalise_fixture` is checked by the page in `?selftest` mode. Change both together. The fixture must never contain a planted value.
 - Chapter stories never quote an earlier chapter's answer literally (the JSON ships every chapter); they say "the plate you found in chapter 3".
 - Adding a chapter = one dict in `plot.CHAPTERS` (text + `solution` + `naive`) and its planting in `plant_part2`. Never edit `site/chapters.json`, `site/schema.svg` or `solution.sql` by hand.

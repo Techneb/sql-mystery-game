@@ -88,7 +88,6 @@ test("badges fire on the right query shapes and only once", () => {
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
   assert.equal(BADGES.length, 37);
   assert.deepEqual(names({ event: "theme" }), ["Lamplighter"]);
-  assert.ok(!BADGES.some(([name]) => name === "Clean Sweep"), "Clean Sweep is gone while hints are off");
 });
 
 test("rank thresholds", () => {
@@ -97,8 +96,8 @@ test("rank thresholds", () => {
   assert.equal(rank(40), "Chief Inspector");
   assert.equal(rank(41), "Inspector");
   assert.equal(rank(61), "Constable");
-  const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 }; s.hints = { 2: 1 };
-  assert.deepEqual(partStats(s, 1, 8), { queries: 12, hints: 1 });
+  const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 };
+  assert.deepEqual(partStats(s, 1, 8), { queries: 12 });
 });
 
 test("compete mode runs Part I only and never asks for the Part II code", () => {
@@ -117,10 +116,10 @@ test("compete mode runs Part I only and never asks for the Part II code", () => 
 
 test("compete events carry the Part I totals the leaderboard scores", () => {
   const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha", solved: [1, 2, 3],
-              queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, hints: { 2: 1, 10: 3 }, wrong: { 1: 2, 3: 1, 11: 9 } };
-  assert.deepEqual(competeStats(s), { queries: 15, hints: 1, wrong: 3 });
+              queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, wrong: { 1: 2, 3: 1, 11: 9 } };
+  assert.deepEqual(competeStats(s), { queries: 15, wrong: 3 });
   assert.deepEqual(eventPayload(s, "progress", 3),
-    { event: "progress", team: "Alpha", season: 7, chapter: 3, hints: 1, wrong: 3, queries: 15 });
+    { event: "progress", team: "Alpha", season: 7, chapter: 3, wrong: 3, queries: 15 });
   assert.equal(eventPayload(s, "start", 0).chapter, 3, "chapter defaults to the number solved");
   assert.equal(eventPayload({ ...freshState(), team: "B", season: 1 }, "start", 0).chapter, 0);
   assert.equal(fmtTime(0), "00:00");
@@ -162,8 +161,8 @@ test("admin settings: valid fields apply, invalid ones are refused and keep the 
     assert.equal(rank(10), "Ganimard himself");
     assert.equal(rank(31), "Constable");
     assert.deepEqual(TAUNTS, ["A L", "B"]);
-    assert.deepEqual(PENALTY, { hint: 120, wrong: 5 });
-    assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { hint: -1 } }), ["ranks", "taunts", "penalty.hint"]);
+    assert.deepEqual(PENALTY, { wrong: 5 });
+    assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { wrong: -1 } }), ["ranks", "taunts", "penalty.wrong"]);
     assert.deepEqual(currentConfig().ranks, [10, 20, 30], "refused ranks change nothing");
     assert.equal(configUrl("https://s.g/exec"), "https://s.g/exec?config=1");
   } finally {

@@ -168,10 +168,9 @@ class Text(unittest.TestCase):
     def test_every_chapter_has_all_text_and_formats(self):
         V = g.plant_values(1912)
         for ch in plot.CHAPTERS:
-            for k in ["title", "story", "objective", "answer_form", "hints", "telegram"]:
+            for k in ["title", "story", "objective", "answer_form", "telegram"]:
                 self.assertIn(k, ch, ch["n"])
-            self.assertEqual(len(ch["hints"]), 0, ch["n"])
-            for s in [ch["title"], ch["story"], ch["objective"], ch["answer_form"], ch["telegram"], *ch["hints"]]:
+            for s in [ch["title"], ch["story"], ch["objective"], ch["answer_form"], ch["telegram"]]:
                 s.format(**V).encode("ascii")
         self.assertEqual(len(plot.CAST), 6)
         for k, s in plot.WRONG_SUSPECTS.items():
