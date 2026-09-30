@@ -160,7 +160,7 @@
   },
   {
    "title": "Follow the Francs",
-   "story": "The jeweller keeps an account at the *Credit Lyonnais* and, since **Ganimard** has a warrant, the bank keeps nothing from him. 'Twenty-four payments in May, to a dozen people. A fence pays a thief in pieces, *so the bank does not blink*.'",
+   "story": "The jeweller keeps an account at the *Credit Lyonnais* and, since **Ganimard** has a warrant, the bank keeps nothing from him. Every transfer is one line in its ledger: the account that paid, the account that was paid, the sum and the day. 'A fence pays a thief in pieces, clerk, *so the bank does not blink*. Find me the account he paid.'",
    "objective": "Which account did the jeweller from chapter 5 pay the most in May, all payments counted?",
    "answer_form": "the account number",
    "telegram": "MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L",
