@@ -892,6 +892,7 @@ def solution_sql(V):
             lines.append("-- " + ch["explain"].format(**V))
         lines.append("-- The answer:")
         lines.append(format_sql(ch["solution"].format(**V) + ";"))
+        lines.append("-- Answer: %s" % V[ch["answer_key"]])
         out.append("\n".join(lines))
     return "\n\n".join(out) + "\n"
 
