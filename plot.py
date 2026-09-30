@@ -171,7 +171,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
-  story="The driver of the cab has *a bad memory and a good book*. **Ganimard** reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. More than once, more than twice, perhaps. Find me the address this cab kept returning to. *I do not want the list. I want the address.*'",
+  story="The driver of the cab has *a bad memory and a good book*. **Ganimard** snorts: 'A gentleman thief does not hail cabs, clerk. He keeps one. This driver is paid to forget where he goes -- but the company pays him to write it down.' He reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. More than once, more than twice, perhaps. Find me the address this cab kept returning to. *I do not want the list. I want the address.*'",
   objective="Where did the cab from chapter 3 keep going the week before the theft?",
   answer_form="the address (number and street)",
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
