@@ -28,7 +28,7 @@ Python side (build time) -> static files -> browser side (runtime, no server):
 
 ## Rules
 
-- Stdlib only, no build step. `python3 generate_db.py` rebuilds `site/` outputs and **is the test of the plot**: every solution must return exactly its answer and every trap must bite (the naive query must not yield the answer). `python3 -m unittest -v` pins the same plus normalisation and ERD layering.
+- Stdlib only, no build step. `python3 generate_db.py` rebuilds `site/` outputs and **is the test of the plot**: every solution must return exactly its answer and every trap must bite (the naive query, and each query in a chapter's optional `traps` list, must not yield the answer). `python3 -m unittest -v` pins the same plus normalisation and ERD layering.
 - `plot.py` is data; `V` (planted values) is drawn in `plant_values(seed)`; seed 1912 pins the learning-mode values quoted in the story and objective text. Any text or data must be pure ASCII: `LC_ALL=C grep -n '[^ -~]' plot.py generate_db.py erd.py solution.sql site/chapters.json` must print nothing.
 - Answer normalisation lives twice: `generate_db.normalise` and `site/app.js normalise`; `chapters.json.normalise_fixture` is checked by the page in `?selftest` mode. Change both together. The fixture must never contain a planted value.
 - Stories and endings in `plot.py` carry `**bold**` (people at first mention) and `*italic*` (atmosphere, documents, institutions), rendered by `richText` in `site/app.js` (escapes first, then only those two marks; a test checks every story's markup is balanced). Never emphasise clue values (times, amounts, dates, places searched for): objectives are deliberately bare (ch. 1 is only "Mr Duroc knows which night.") and formatting must not hand the clue back.

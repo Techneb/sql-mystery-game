@@ -354,6 +354,8 @@ def fill_noise(conn, V, r):
             nights = r.randint(1, 5)
             out = _add_days(day, nights)
             price = {1: 30, 2: 120, 3: 80, 4: 60, 5: 45}[suite // 100] + r.randint(0, 25)
+            if suite // 100 == 2 and r.random() < 0.15:   # a gala week on the second floor: dearer than Ashcombe's 190,
+                price = r.randint(195, 260)               # so ch2's ORDER BY price needs the date filter too
             rows.append((rid, r.choice(GUESTS), suite, suite // 100, price, day, out))
             rid += 1
             day = _add_days(out, r.randint(0, 1))
@@ -701,6 +703,9 @@ def check_chapter(conn, V, ch, compete=False):
     rows = conn.execute(ch["solution" + suf].format(**V)).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
         "chapter %d%s: solution returned %r" % (ch["n"], suf, rows[:3])
+    for trap in ch.get("traps" + suf, []):   # other plausible shortcuts that must not reach the answer
+        rows = conn.execute(trap.format(**V)).fetchall()
+        assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap %r does not bite" % (ch["n"], suf, trap)
     rows = conn.execute(ch["naive" + suf].format(**V)).fetchall()
     naive_rows = ch["naive_rows" + suf]
     assert naive_rows is None or len(rows) == naive_rows, \
