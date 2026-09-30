@@ -683,8 +683,9 @@ def check_discovery(conn, V, ch, compete=False):
         if "row_count" in d:
             assert len(rows) == d["row_count"], \
                 "chapter %s discovery: got %d rows, expected %d (%s)" % (ch["n"], len(rows), d["row_count"], d["query"])
-        if "must_contain" in d:
-            needle = d["must_contain"].format(**V)   # case-insensitive: telegrams are upper-cased
+        needles = d.get("must_contain", [])   # one string, or several facts the same query must show
+        for needle in [needles] if isinstance(needles, str) else needles:
+            needle = needle.format(**V)   # case-insensitive: telegrams are upper-cased
             assert needle.lower() in str(rows).lower(), \
                 "chapter %s discovery: %r not found in %r (%s)" % (ch["n"], needle, rows, d["query"])
             for k in ["story", "objective", "answer_form"]:   # the chapter's own text must not hand it back

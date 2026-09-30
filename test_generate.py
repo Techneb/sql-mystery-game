@@ -293,3 +293,11 @@ class Erd(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SolutionSql(unittest.TestCase):
+    def test_no_chapter_repeats_a_query(self):
+        for ch in plot.CHAPTERS:
+            for key in ("discovery", "discovery_compete"):
+                queries = [d["query"] for d in ch.get(key, [])]
+                self.assertEqual(len(queries), len(set(queries)), "chapter %d %s" % (ch["n"], key))

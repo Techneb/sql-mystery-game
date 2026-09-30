@@ -10,7 +10,6 @@ SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= 19120517 AN
 
 -- 03. A Plate in the Dark (LIKE) -> the plate (75- and four digits): 75-2041
 SELECT transcript FROM interview WHERE person_name = 'Lord Ashcombe';
-SELECT transcript FROM interview WHERE person_name = 'Lord Ashcombe';
 SELECT DISTINCT currency FROM cab_ride;
 SELECT plate FROM cab_ride WHERE plate LIKE '75-2%' AND date = 19120518 AND currency = 'pound';
 
