@@ -88,6 +88,11 @@ class Noise(unittest.TestCase):
             self.assertNotIn("'", name)
             self.assertFalse([f for f in films if f in name.lower()], name)
 
+    def test_census_surnames_stay_unambiguous(self):
+        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + ["Ernest Grimaud", "Marcel Duroc"]
+        for name in planted:
+            self.assertFalse([l for l in g.LAST if name.endswith(" " + l)], name)
+
 
 class Discovery(unittest.TestCase):
     def test_must_contain_passes_and_fails(self):

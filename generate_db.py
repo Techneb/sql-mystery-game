@@ -120,13 +120,20 @@ def plant_values(seed):
     return V
 
 
-FIRST = ["Jean", "Pierre", "Louis", "Marcel", "Henri", "Georges", "Emile", "Jules", "Albert", "Paul",
-         "Marie", "Jeanne", "Marguerite", "Louise", "Berthe", "Yvonne", "Madeleine", "Suzanne",
-         "John", "William", "Thomas", "Charles", "Heinrich", "Karl", "Otto", "Giuseppe", "Carlos"]
-LAST = ["Martin", "Bernard", "Dubois", "Thomas", "Robert", "Richard", "Petit", "Durand", "Leroy",
-        "Moreau", "Simon", "Laurent", "Lefebvre", "Michel", "Garcia", "David", "Bertrand", "Roux",
-        "Vincent", "Fournier", "Morel", "Girard", "Andre", "Lefevre", "Mercier", "Dupont", "Lambert",
-        "Bonnet", "Francois", "Martinez", "Smith", "Brown", "Schmidt", "Muller", "Rossi"]
+# Census names mix the archive's references ("Luigi Baggins"); planted surnames (Grimaud, Duroc, the cast,
+# plot.COMPETE_FENCE_NAMES) are never in LAST, so a person.name filter on one stays unambiguous.
+FIRST = ["Vito", "Rhett", "Dorothy", "Travis", "Forrest", "Bilbo", "Frodo", "Samwise", "Ilsa", "Rick", "Norman",
+         "Marty", "Emmett", "Sarah", "Kyle", "Leia", "Han", "Luke", "Jon", "Arya", "Eddard", "Mario", "Luigi",
+         "Peach", "Zelda", "Link", "Gordon", "Lara", "Leeroy", "Perceval", "Karadoc", "Arthur", "Lancelot",
+         "Bohort", "Gauvain", "Yvain", "Guenievre", "Seli", "Leodagan", "Phileas", "Gustave", "Gabrielle",
+         "Pablo", "Gaston", "Camille", "Auguste", "Edmond", "Cosette", "Cyrano", "Keyser", "Quint", "Oscar"]
+LAST = ["Kane", "Corleone", "Dawson", "Brody", "Gale", "Diggs", "Anderson", "Butler", "Bickle", "Montana",
+        "Gump", "Baggins", "Gamgee", "Blaine", "Lund", "Bates", "Bond", "McFly", "Sear", "Connor", "Reese",
+        "Solo", "Organa", "Kenobi", "Skywalker", "Stark", "Snow", "Soze", "Chaplin", "Toadstool", "Freeman",
+        "Robotnik", "Masters", "McCloud", "Croft", "Jenkins", "Pajitnov", "Pendragon", "du Lac", "de Galles",
+        "de Vannes", "de Gaunes", "Proust", "Fogg", "Eiffel", "Curie", "Chanel", "Picasso", "Magritte",
+        "Houdini", "Leroux", "Flammarion", "Lumiere", "Melies", "Bernhardt", "Monet", "Valjean", "Javert",
+        "Dantes", "de Bergerac", "Mustard", "Peacock", "Plum"]
 NATION = ["French"] * 8 + ["English", "German", "Italian", "Spanish", "American", "Argentine"]
 OCCUP = ["clerk", "seamstress", "cab driver", "waiter", "banker", "jeweller", "actress", "student",
          "engineer", "lawyer", "shopkeeper", "concierge", "journalist", "painter", "none"]
@@ -352,7 +359,7 @@ def fill_noise(conn, V, r):
             day = _add_days(out, r.randint(0, 1))
     c.executemany("INSERT INTO hotel_register VALUES (?,?,?,?,?,?,?)", rows)
     c.executemany("INSERT INTO interview VALUES (?,?,?,?)",
-        [(100 + i, _name(r), _date(r, 5, 5), r.choice(INTERVIEW_TEXT)) for i in range(600)])
+        [(100 + i, r.choice(GUESTS), _date(r, 5, 5), r.choice(INTERVIEW_TEXT)) for i in range(600)])
     plates = ["75-%04d" % r.randint(1000, 9999) for _ in range(400)] + \
              ["%s%03d" % (V["plate_prefix"], r.randint(100, 999)) for _ in range(40)]
     plates = [p for p in plates if p != V["plate"]]
@@ -368,7 +375,7 @@ def fill_noise(conn, V, r):
           r.choice(["transfer", "cheque", "deposit"])) for i in range(30000)])
     c.executemany("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         [(i, r.choice(["Ritz", "Bourse", "Gare du Nord", "Opera", "Central"]), _date(r, 5, 5), _time(r),
-          _name(r), _name(r), None, " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(4, 9))))
+          r.choice(GUESTS), r.choice(GUESTS), None, " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(4, 9))))
          for i in range(100, 3100) if i not in (V["night_telegram_id"], V["compete_telegram_id"])])
     c.executemany("INSERT INTO room_service VALUES (?,?,?,?,?,?)",
         [(100 + i, r.choice(range(101, 525)), _date(r, 5, 5), _time(r), *r.choice(ITEMS)) for i in range(5000)])
@@ -376,7 +383,7 @@ def fill_noise(conn, V, r):
         [(100 + i, r.randint(100, 5099), _date(r, 5, 6), r.choice(["Boat Train 9:15", "Nord Express", "Sud Express", "Orient Express"]),
           r.choice(["London", "Berlin", "Madrid", "Vienna", "Calais", "Lille"])) for i in range(2000)])
     c.executemany("INSERT INTO luggage VALUES (?,?,?,?,?)",
-        [(100 + i, r.randint(100, 2099), "%s-%d" % (r.choice("ABCD"), r.randint(1, 9)), _name(r), r.randint(8, 60))
+        [(100 + i, r.randint(100, 2099), "%s-%d" % (r.choice("ABCD"), r.randint(1, 9)), r.choice(GUESTS), r.randint(8, 60))
          for i in range(3000)])
     c.executemany("INSERT INTO lift_log VALUES (?,?,?,?,?,?)",
         [(100 + i, _date(r, 5, 5), _time(r), r.randint(1, 5), r.choice(range(101, 525)), r.choice(["up", "down"]))
@@ -518,7 +525,7 @@ def plant_part1(conn, V, r):
          V["lupin_suite"], "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
     for i in range(79):   # daytime Ritz telegrams that day
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
-            (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), _name(r), _name(r),
+            (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), r.choice(GUESTS), r.choice(GUESTS),
              r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
     # --- compete ch7: a second office, a different time bucket (evening, not night)
     c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=? AND time>=1800", (T,))
