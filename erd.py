@@ -3,7 +3,7 @@
 Tables without foreign keys come first, in reveal order, PER_ROW to a row. The linked tables follow as their own
 block, layered by foreign-key depth (a parent sits in the row above its children), so every relationship line runs
 in the gap between two rows and never crosses a table. Keys are drawn as icons (gold: primary, silver: foreign),
-and each line carries its cardinality: a crow's foot and N on the many side, a bar and 1 on the one side.
+and each line carries its cardinality: a dot at each end, with N on the many side and 1 on the one side.
 """
 W, GAP, LAYER_H, ROW, HEAD = 170, 40, 60, 14, 16
 PLAIN_H = 24   # between rows of tables without foreign keys: no line runs there
@@ -101,14 +101,10 @@ def svg(conn, order=()):
         c1, c2 = curve_controls(ey, bottom, sy)
         g = ['<g class="fk" data-from="%s.%s" data-to="%s">' % (t, col, ref),
              '<path class="rel" d="M%g %g C%g %g %g %g %g %g"/>' % (ex, ey, ex, c1, sx, c2, sx, sy),
-             '<path d="M%g %g H%g"/>' % (ex - 6, ey + 5, ex + 6),                       # one: a bar under the parent
-             '<text x="%g" y="%g">1</text>' % (ex + 5, ey + 12)]
-        if many:                                                                        # many: a crow's foot on the child
-            g.append('<path d="M%g %g L%g %g M%g %g L%g %g M%g %g V%g"/>'
-                     % (sx, sy - 9, sx - 6, sy, sx, sy - 9, sx + 6, sy, sx, sy - 9, sy))
-        else:
-            g.append('<path d="M%g %g H%g"/>' % (sx - 6, sy - 5, sx + 6))
-        g.append('<text x="%g" y="%g">%s</text>' % (sx + 6, sy - 9, "N" if many else "1"))
+             '<circle cx="%g" cy="%g" r="2.6"/>' % (ex, ey + 1),                   # a dot at each end,
+             '<circle cx="%g" cy="%g" r="2.6"/>' % (sx, sy - 1),                   # the cardinality written beside it
+             '<text x="%g" y="%g">1</text>' % (ex + 5, ey + 11),
+             '<text x="%g" y="%g">%s</text>' % (sx + 5, sy - 4, "N" if many else "1")]
         out.append("".join(g) + "</g>")
     for t, cols in tables.items():
         _, x, y, w, h = pos[t]

@@ -373,7 +373,8 @@ def fill_noise(conn, V, r):
          for i, k in ((i, cur()) for i in range(20000))])
     acct_ids = [i for i in range(100, 4100) if i not in (V["fence_account"], V["shell_account"])]
     c.executemany("INSERT INTO bank_account VALUES (?,?,?)",
-        [(i, r.randint(100, 5099), r.choice(["Credit Lyonnais", "Societe Generale", "Banque de Paris", "Comptoir National"]))
+        [(i, None if r.random() < 0.05 else r.randint(100, 5099),   # ~5% bearer accounts: no owner, like the shells
+          r.choice(["Credit Lyonnais", "Societe Generale", "Banque de Paris", "Comptoir National"]))
          for i in acct_ids])
     c.executemany("INSERT INTO bank_transaction VALUES (?,?,?,?,?,?)",
         [(100 + i, r.choice(acct_ids), r.choice(acct_ids), _date(r), r.randint(5, 900),
@@ -454,6 +455,15 @@ def plant_part1(conn, V, r):
         ("A gentleman paid his bar bill with a cheque drawn on the Bank of Monte Carlo. There is no such bank.",))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3500, 19120503, "Paris", "Hotel Ritz", "lost property", "Umbrella, black, with a duck's head. Reported by a Senora."))
     c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (3600, 19120611, "Paris", "Hotel Ritz", "theft", "Silver spoon. The guest denies everything and keeps the spoon."))
+    # the Comtesse, sapphires and a Blue Star appear elsewhere too, so a LIKE search on them is no shortcut to the report
+    for rid, d, place, typ, text in [
+            (3700, 19120503, "Hotel Ritz", "lost property", "A pair of gloves left by the Comtesse de Cagliostro in the Salon d'Ete. Returned with thanks."),
+            (3710, 19120512, "Place Vendome", "fraud", "A jeweller offers a copy of the Blue Star, the Cagliostro sapphire, for sale. Paste."),
+            (3720, 19120522, "Opera", "theft", "A sapphire ring taken from a box at the Opera. The owner suspects her husband."),
+            (3730, 19120601, "Hotel Meurice", "fraud", "A man sells the Blue Star at a tenth of its price. He has sold it three times this week."),
+            (3740, 19120509, "Grand Hotel", "disturbance", "A racehorse named Blue Star was led through the lobby. The owner insists it had a reservation."),
+            (3750, 19120527, "Hotel Ritz", "lost property", "The Comtesse de Cagliostro reports a lost fan. Found in her own suite, under a calling card.")]:
+        c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (rid, d, "Paris", place, typ, text))
     # --- compete ch1: a second, fixed decoy report at a different hotel/date/type, random id per season
     c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=19120611 AND type='burglary'")
     c.execute("INSERT INTO police_report VALUES (?,19120611,'Paris','Hotel Meurice','burglary',?)",
@@ -539,7 +549,7 @@ def plant_part1(conn, V, r):
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=?", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
-         V["lupin_suite"], "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
+         None, "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
     def clock(h0, h1):
         return r.randint(h0, h1 - 1) * 100 + r.randint(0, 59)
     places = ["Ritz, London", "Charvet, Place Vendome", "Halles, Pavillon 9", "Mme Duroc, Pantin", "Hotel de Paris, Monte Carlo",
@@ -566,6 +576,11 @@ def plant_part1(conn, V, r):
                 (5000 + k, "Ritz", T, t, r.choice(GUESTS), r.choice(GUESTS), r.choice(range(101, 525)),
                  " ".join(r.choice(TEL_WORDS) for _ in range(6))))
             k += 1
+    for i in range(8):
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+                  (80 + i, r.choice(["Bourse", "Gare du Nord", "Opera", "Central"]), _date(r, 5, 5), clock(8, 20),
+                   r.choice(GUESTS), r.choice(GUESTS), None,
+                   "PAYMENT TO %d RECEIVED STOP %s STOP" % (r.randint(10000, 99999), " ".join(r.choice(TEL_WORDS) for _ in range(3)))))
     # Ortega signs with an R too: his wire leaves the same desk at 06:20, morning by Ganimard's clock (ch7 decoy)
     c.execute("INSERT INTO telegram VALUES (7,'Ritz',?,620,'R.','Estancia Ortega, Buenos Aires',?,'SELL THE HERD STOP BUY WHEAT STOP R')",
               (T, V["ortega_suite"]))
@@ -607,17 +622,27 @@ def plant_part2(conn, V, r):
     c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
     c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,NULL,NULL)")
     c.execute("INSERT INTO train_ticket VALUES (2,17,19120519,'Boat Train 9:15','London')")
-    for i, trunk in enumerate(["A-1", "A-2", "A-3"]):
-        c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, 30 + i))
-    c.execute("INSERT INTO luggage VALUES (4,2,?,'Lord Ashcombe',12)", (V["trunk_no"],))
+    labels = ["A-%d" % k for k in range(1, 9) if "A-%d" % k != V["trunk_no"]][:7]   # no gap in the numbering, no odd weight
+    for i, trunk in enumerate(labels):
+        c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, r.randint(24, 38)))
+    c.execute("INSERT INTO luggage VALUES (9,2,?,'Lord Ashcombe',?)", (V["trunk_no"], r.randint(24, 38)))
     # --- ch10: Blakeney and Mr. Grey alternate weeks Jan-Apr in the same suite, never overlapping.
     #     Two suspects, Almagro and Sernine, are regulars too: they stay only in Grey's weeks, plus one single
     #     night inside a Blakeney week (11 January), so they crossed him once.
     c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<19120515", (V["lupin_suite"],))
     day, rid, who = 19120106, 20000, 0
     names = ["Rupert Blakeney", "Mr. Grey"]
+    grey_suites = [s for s in (216, 220, 222, 224) if s not in (V["lupin_suite"], V["neighbour_suite"], V["ortega_suite"])]
     while day < 19120501:
-        c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, names[who], V["lupin_suite"], day, _add_days(day, 6)))
+        out = _add_days(day, 6)
+        if who == 0:   # Blakeney, always in his suite
+            c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, "Rupert Blakeney", V["lupin_suite"], day, out))
+        else:          # Grey, a different suite each time (so the suite is no shortcut); a noise guest takes 214
+            s2 = grey_suites[(rid // 2) % len(grey_suites)]
+            c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<? AND checkout>?", (s2, out, day))
+            c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, "Mr. Grey", s2, day, out))
+            rid += 1
+            c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,145,?,?)", (rid, r.choice(GUESTS), V["lupin_suite"], day, out))
         rid += 1; who ^= 1; day = _add_days(day, 7)
     for i, name in enumerate(["Ines de Almagro", "Paul Sernine"]):
         d = 19120113 + i     # Grey's weeks start on the 13th
@@ -643,6 +668,9 @@ def plant_part2(conn, V, r):
         for s in FLOOR2:
             if s not in (V["lupin_suite"], V["velmont_suite"]):
                 c.execute("INSERT INTO lift_log VALUES (?,?,?,2,?,?)", (lid, T, t, s, r.choice(["up", "down"]))); lid += 1
+    near = [s for s in FLOOR2 if s not in (V["lupin_suite"], V["velmont_suite"])][:2]
+    c.execute("INSERT INTO lift_log VALUES (92,?,208,2,?,'up')", (T, near[0]))
+    c.execute("INSERT INTO lift_log VALUES (93,?,213,2,?,'down')", (T, near[1]))
     c.execute("INSERT INTO lift_log VALUES (90,?,230,2,?,'down')", (T, V["velmont_suite"]))
     c.execute("INSERT INTO lift_log VALUES (91,?,555,2,?,'up')", (T, V["velmont_suite"]))
     # --- ch12: the money chain, seven hops of 98%, one hop split in two, one shell with unrelated

@@ -96,18 +96,19 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .erd .table rect.head { fill: var(--ink); }
 .erd .table .tname { fill: var(--paper); }
 .erd .table .col { fill: var(--ink); font-size: 10px; }
-/* Relationship lines: soft ink, round ends, one S-curve each (erd.py); they follow the night edition via --ink. */
-.erd .fk path { stroke: var(--ink); stroke-opacity: .45; fill: none; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
-.erd .fk path.rel { stroke-opacity: .38; stroke-width: 1.4; }
-.erd .fk text { fill: var(--ink); fill-opacity: .55; font-size: 9px; }
+/* Relationship lines: one soft red S-curve each (erd.py), round ends, a dot and 1 / N at each end. */
+.erd .fk path { stroke: var(--red); stroke-opacity: .8; fill: none; stroke-width: 1.3; stroke-linecap: round; }
+.erd .fk circle { fill: var(--red); }
+.erd .fk text { fill: var(--red); font: 700 10px "Special Elite", monospace; }
 /* Keys (erd.py's #erd-key symbol, and the legend under the schema): gold = primary key, silver = foreign key. */
 .key { fill: none; stroke-width: 1.8; }
 .key.pk { stroke: #c9a227; }
 .key.fk { stroke: #9ea4aa; }
 .erd-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: 11px; margin: 4px 0 0; }
 .erd-legend svg { vertical-align: -1px; margin-right: 4px; }
-.erd-legend .rel { stroke: var(--ink); stroke-opacity: .45; fill: none; stroke-width: 1.2; stroke-linecap: round; }
-.erd-legend .rel-t { fill: var(--ink); fill-opacity: .55; font: 9px "Special Elite", monospace; }
+.erd-legend .rel { stroke: var(--red); stroke-opacity: .8; fill: none; stroke-width: 1.3; stroke-linecap: round; }
+.erd-legend .rel-dot { fill: var(--red); }
+.erd-legend .rel-t { fill: var(--red); font: 700 9px "Special Elite", monospace; }
 .erd .hidden { display: none; }
 /* A new table fades in with a glow on its frame. Opacity and stroke only: a CSS transform would replace the
    table's transform="translate(...)" placement. */
