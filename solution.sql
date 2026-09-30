@@ -1,6 +1,6 @@
 -- The Ritz Affair: reference path (seed 1912). Each chapter's discovery queries find the filter; the final query finds the answer.
 
--- 01. The Night of the 17th (SELECT / WHERE) -> the report id (a number): 4127
+-- 01. The Night of the 17th (SELECT / WHERE) -> the report id: 4127
 SELECT transcript FROM interview WHERE person_name = 'Marcel Duroc';
 SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND date = 19120518 AND type = 'theft';
 
@@ -8,12 +8,12 @@ SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND date = 19120518 AND 
 SELECT description FROM police_report WHERE id = 4127;
 SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= 19120517 AND checkout > 19120517 ORDER BY price DESC LIMIT 1;
 
--- 03. A Plate in the Dark (LIKE) -> the plate (75- and four digits): 75-2041
+-- 03. A Plate in the Dark (LIKE) -> the plate: 75-2041
 SELECT transcript FROM interview WHERE person_name = 'Lord Ashcombe';
 SELECT DISTINCT currency FROM cab_ride;
 SELECT plate FROM cab_ride WHERE plate LIKE '75-2%' AND date = 19120518 AND currency = 'pound';
 
--- 04. The Cab's Week (GROUP BY / HAVING) -> the address (number and street): 27 rue des Martyrs
+-- 04. The Cab's Week (GROUP BY / HAVING) -> the address: 27 rue des Martyrs
 SELECT dropoff, COUNT(*) AS n FROM cab_ride WHERE plate = '75-2041' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff ORDER BY n DESC;
 SELECT dropoff FROM cab_ride WHERE plate = '75-2041' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff HAVING COUNT(*) >= 3;
 
@@ -22,12 +22,12 @@ SELECT id FROM address WHERE number = 27 AND street = 'rue des Martyrs';
 SELECT name, occupation FROM person WHERE address_id = (SELECT id FROM address WHERE number = 27 AND street = 'rue des Martyrs');
 SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = 27 AND a.street = 'rue des Martyrs' AND p.occupation = 'jeweller';
 
--- 06. Follow the Francs (JOIN x3 + SUM) -> the account number (five digits): 88213
+-- 06. Follow the Francs (JOIN x3 + SUM) -> the account number: 88213
 SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = 'Ernest Grimaud');
 SELECT counterparty_id, SUM(amount) AS total FROM bank_transaction WHERE account_id = (SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = 'Ernest Grimaud')) AND date BETWEEN 19120501 AND 19120531 GROUP BY counterparty_id;
 SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = 'Ernest Grimaud' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY SUM(t.amount) DESC LIMIT 1;
 
--- 07. A Wire Before Dawn (CASE WHEN) -> the telegram id (a number): 2718
+-- 07. A Wire Before Dawn (CASE WHEN) -> the telegram id: 2718
 SELECT time FROM telegram WHERE office = 'Ritz' AND date = 19120518 ORDER BY time;
 SELECT id FROM (SELECT id, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period FROM telegram WHERE office = 'Ritz' AND date = 19120518) AS t WHERE period = 'night';
 
@@ -35,7 +35,7 @@ SELECT id FROM (SELECT id, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12
 SELECT text FROM telegram WHERE id = 2718;
 SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= 19120518 AND checkout > 19120518 AND suite = (SELECT suite FROM (SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time) AS rk FROM room_service WHERE date = 19120518) AS ranked WHERE rk = 1 AND item = 'Clicquot 1904' AND time < '06:00');
 
--- 09. The Trunk (CTE + JOIN) -> the trunk number (a letter, a dash, a digit): A-7
+-- 09. The Trunk (CTE + JOIN) -> the trunk number: A-7
 WITH ashcombe_trunks AS (SELECT l.trunk_no, t.person_id FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id WHERE l.owner_name = 'Lord Ashcombe') SELECT trunk_no FROM ashcombe_trunks AS a JOIN person AS p ON a.person_id = p.id WHERE p.name <> 'Lord Ashcombe';
 
 -- 10. Never Seen Together (NOT EXISTS / self-join) -> the guest's name: Mr. Grey
