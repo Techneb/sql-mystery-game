@@ -110,6 +110,10 @@
    "bio": "Cattle baron. Signs everything with a flourish and an R.",
    "notes": [
     [
+     7,
+     "Complains that the Ritz desk keeps mixing up his wires with another guest's, who also signs R."
+    ],
+    [
      8,
      "Wired Buenos Aires from the Ritz desk at 06:20 on the 18th: morning, by Ganimard's clock."
     ],
@@ -247,7 +251,7 @@
   },
   {
    "title": "The Quietest Hour",
-   "story": "The Ritz telegraph desk sent a hundred wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment, sent when the desk was at its quietest. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Quietest by my four boxes, clerk, not by your watch. He signs with one letter, *which is one more than he needs*.' **Senor Ortega**, down the corridor, signs everything with a flourish and an R.",
+   "story": "Lupin wrote that he confirmed the payment by wire from the Ritz desk, *at its quietest*. The desk sent a hundred wires on the 18th, and its clerk is *too proud to have read any of them*. **Ganimard** does not count hours the way you do: his day has four boxes. Night runs until six in the morning, morning until noon, afternoon until six in the evening, evening after that. 'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, *which is one more than he needs*. Which letter? Ask **Senor Ortega**: he has been complaining about it at the desk all week.'",
    "objective": "Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
    "answer_form": "the telegram id",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",

@@ -333,6 +333,19 @@ class Suspects(unittest.TestCase):
                 text.encode("ascii")
 
 
+class ChapterSeven(unittest.TestCase):
+    def test_the_letter_is_only_in_the_suspects(self):
+        ch = [c for c in plot.CHAPTERS if c["n"] == 7][0]
+        for k in ("story", "objective", "title"):
+            for leak in (" R.", " an R", "'R.'", "signs R"):
+                self.assertNotIn(leak, ch[k], k)
+        ortega = [c for c in plot.CAST if c["name"] == "Raul Ortega"][0]
+        self.assertLessEqual(ortega["meet"], 7)   # always in the gallery by chapter 7
+        card = ortega["bio"] + " ".join(t for n, t in ortega["notes"] if n <= 7)
+        self.assertIn("an R", card)
+        self.assertIn("also signs R", card)
+
+
 class SolutionSql(unittest.TestCase):
     def test_formatter_matches_the_site(self):
         import re

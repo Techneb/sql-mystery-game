@@ -530,8 +530,9 @@ def plant_part1(conn, V, r):
     c.execute("INSERT INTO bank_account VALUES (?,18,'Societe Generale')", (V["compete_fence_account"],))
     fence_payments(V["compete_fence_account"], V["compete_shell_account"], 60, (12000, 12000, 9000), "Societe Generale", decoys[3:])
     # --- ch7: telegrams from the Ritz desk on the 18th. Night is the quietest of Ganimard's four boxes (five wires:
-    #     Lupin's at 03:30, after the suite falls silent in ch11, and four from the staff, charged to no suite), and
-    #     Lupin's is the only one there signed R. (Ortega's R. is at 06:20, in the morning box).
+    #     Lupin's at 03:30, after the suite falls silent in ch11, and four from the staff, charged to no suite). All
+    #     five are signed with one initial, so the box is not enough: which letter is only in Ortega's suspect card
+    #     (plot.CAST), and his own R. is at 06:20, in the morning box.
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
@@ -540,10 +541,10 @@ def plant_part1(conn, V, r):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
             (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), r.choice(GUESTS), r.choice(GUESTS),
              r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
-    for i, (t, who, to, text) in enumerate([(40, "The night manager", "Ritz, London", "ROOMS FULL STOP SEND LINEN STOP"),
-            (115, "The head valet", "Charvet, Place Vendome", "TWELVE COLLARS BY NOON STOP"),
-            (410, "The kitchen", "Halles, Pavillon 9", "FORTY LOBSTERS STOP ALIVE STOP"),
-            (530, "The night porter", "Mme Duroc, Pantin", "HOME AT EIGHT STOP")]):
+    for i, (t, who, to, text) in enumerate([(40, "M.", "Ritz, London", "ROOMS FULL STOP SEND LINEN STOP M"),
+            (115, "V.", "Charvet, Place Vendome", "TWELVE COLLARS BY NOON STOP V"),
+            (410, "C.", "Halles, Pavillon 9", "FORTY LOBSTERS STOP ALIVE STOP C"),
+            (530, "D.", "Mme Duroc, Pantin", "HOME AT EIGHT STOP D")]):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (20 + i, "Ritz", T, t, who, to, None, text))
     # Ortega signs with an R too: his wire leaves the same desk at 06:20, morning by Ganimard's clock (ch7 decoy)
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time>=600 AND time<700", (T,))

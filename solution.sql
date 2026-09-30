@@ -116,12 +116,18 @@ WHERE office = 'Ritz'
   AND date = 19120518
 GROUP BY period
 ORDER BY wires;
--- Two wires signed with one letter, R.: one at night, Ortega's in the morning.
+-- The night box: five wires, each signed with one initial. Ortega's suspect card gives the letter, R.
 SELECT id, time, sender
 FROM telegram
 WHERE office = 'Ritz'
   AND date = 19120518
-  AND sender LIKE '_.';
+  AND time < '06:00';
+-- Two wires signed R.: one at night, and Ortega's own in the morning.
+SELECT id, time, sender
+FROM telegram
+WHERE office = 'Ritz'
+  AND date = 19120518
+  AND sender = 'R.';
 -- The answer:
 WITH boxed AS (
   SELECT id, sender, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
