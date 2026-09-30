@@ -56,7 +56,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .chapter-head { display: flex; align-items: center; gap: 10px; }
 .chapter-icon { width: 44px; height: 44px; flex: none; }
 .chapter-icon .accent { stroke: var(--accent); }
-.story { text-align: justify; }
+.story { text-align: justify; hyphens: none; font-size: 17px; line-height: 1.5; }
+/* same front-page treatment as the landing story: a drop cap on the chapter text */
+.story::first-letter { float: left; font: 900 44px/.85 "Playfair Display", serif; margin: 4px 7px 0 0; }
+.story b { font-weight: 700; }
 
 /* terminal */
 .editor { position: relative; background: var(--term); border: 1px solid #6b5a33; }

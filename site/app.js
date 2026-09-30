@@ -131,7 +131,7 @@ function renderChapter() {
     $("masthead-chapter").textContent = "REVIEWING CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
     $("chapter-icon").innerHTML = PROPS[ch.n] || "";
     $("chapter-title").textContent = ch.title;
-    $("story").textContent = ch.story;
+    $("story").innerHTML = richText(ch.story);
     $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n]);
     $("witnesses").innerHTML = "";
     return;
@@ -140,16 +140,16 @@ function renderChapter() {
   $("masthead-chapter").textContent = "CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
   $("chapter-icon").innerHTML = PROPS[ch.n] || "";
   $("chapter-title").textContent = ch.title;
-  $("story").textContent = ch.story;
+  $("story").innerHTML = richText(ch.story);
   $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form);
   if (awaitingCode(state)) {
-    $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + esc(data.endings.part1);   // the unmasking: his face, only now
+    $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + richText(data.endings.part1);   // the unmasking: his face, only now
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
     $("btn-print").hidden = false;
   }
   // The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
   if (state.solved.includes(12)) {
-    $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + esc(data.endings.part2) +
+    $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + richText(data.endings.part2) +
       '<figure class="ending-photo"><img src="blue-star.jpg" alt="The Blue Star, re-set as a ring, on dark velvet by a window over London">' +
       "<figcaption>Enclosed with the telegram, a photograph. No message. The jeweller has been busy.</figcaption></figure>";
     $("objective").textContent = "Case closed. Twice.";
@@ -319,6 +319,11 @@ export const FILM_LINES = ["would be back", "rosebud", "offer he could not refus
   "do not give a damn", "i see dead people", "houston", "elementary, inspector", "may the force", "simply walk into",
   "little friend", "you talking to me", "there is no spoon", "bond, jean bond"];
 export function seenFilms(text, have) { return have.concat(FILM_LINES.filter(m => text.includes(m) && !have.includes(m))); }
+
+// Stories and endings carry **bold** and *italic* (plot.py); escaped first, so nothing else becomes markup.
+export function richText(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>");
+}
 
 export function detectBadges(ctx, have) {
   return BADGES.filter(([name, , pred]) => !have.includes(name) && pred(ctx)).map(([name, text]) => ({ name, text }));
