@@ -352,3 +352,31 @@ framework, no bundler.
   `docs/superpowers/plans/2026-09-22-plan-4-compete-button.md`. The season comes from the teacher's
   link (`?season=N&board=<url>`), or is typed when there is no link; there is no picker listing which
   seasons exist, since one class plays one season and the teacher already knows which.
+
+- **Usage analytics** (course owner, 2026-09-30: how much the site is used, which chapters, how long a
+  chapter takes). Not built. Notes for when it is:
+  - **What to measure.** Per chapter: how many players open it and solve it (the funnel, where
+    students drop out), time from opening to solving (`state.opened[n]` is already recorded), queries
+    and wrong answers before solving, and badges earned. Per day: distinct players, learn vs compete.
+    This is also what phase 4 needs to tune `RANKS` from real query counts, so it can replace the
+    class-trial spreadsheet work.
+  - **Recommended: reuse the Apps Script backend, learn events on a second sheet.** The compete path
+    already queues events in `state.outbox` and posts them to the `/exec` URL (`eventPayload`,
+    `flushOutbox`), so learn mode would add `open`, `solve` and `finish` events with: a random
+    per-browser id generated on first visit (no name, no pseudo, not linkable to a student), the
+    chapter, the seconds since the chapter opened, the query and wrong-answer counts, and the mode.
+    `apps_script.gs` appends them to a `learn` sheet; a `?stats=1` read (or a tab in the `?admin`
+    panel) shows the funnel, median time and median queries per chapter. No new service, no account,
+    no cookie, stays within the stdlib/no-build rules, and the data stays in the course owner's Drive.
+    Needs a board URL in learn mode too: today it only arrives via the compete link, so the learn
+    link would carry `&board=` as well (or the URL becomes a constant, which the "never commit a
+    deployment URL" rule forbids; keep it in the link).
+  - **Alternatives considered.** A hosted cookie-free counter (GoatCounter, Plausible, Cloudflare Web
+    Analytics) gives page views and visitors for one script tag, but not chapter funnels or solve
+    times without custom events, adds a third party to `privacy.html`, and Plausible is paid.
+    Google Analytics: cookies and a consent banner for EU students; rejected.
+  - **Privacy.** Students are in the EU: anonymous, aggregate, no cookies, no fingerprinting, no IP
+    stored (Apps Script does not expose it). `site/privacy.html` currently says the game "runs no
+    analytics" and that learn mode sends nothing; it must be rewritten in the same change to list the
+    learn events field by field, and the landing card could say so in one line. Offer an opt-out
+    (a `?nostats` flag remembered in localStorage) and ask the school whether its policy needs more.
