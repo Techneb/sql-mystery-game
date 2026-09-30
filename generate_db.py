@@ -137,6 +137,36 @@ ITEMS = [("coffee", 2), ("tea", 2), ("croissants", 3), ("omelette", 5), ("consom
          ("sole meuniere", 14), ("Clicquot 1904", 40), ("Pommery 1906", 35), ("cognac", 8),
          ("oysters", 18), ("chateaubriand", 22), ("ice", 1)]
 TYPES = ["theft", "burglary", "assault", "fraud", "lost property", "disturbance", "vandalism"]
+# Hotel guests reuse the noise's references (films, games, Kaamelott, the Belle Epoque, Cluedo) in 1912 dress.
+# Keep it noise: no cast name, no apostrophe (students type these), no FILM_LINES fragment.
+GUESTS = [
+    # films
+    "Mr. C. F. Kane", "Don Vito Corleone", "Mr. Michael Corleone", "Mlle Cendrillon", "Mr. Jack Dawson",
+    "Miss Rose DeWitt Bukater", "Chief Martin Brody", "Captain Quint", "Miss Dorothy Gale", "Mr. Oscar Diggs",
+    "Mr. Thomas Anderson", "Mlle Trinity", "Mr. Rhett Butler", "Mr. Travis Bickle", "Mr. Tony Montana",
+    "Mr. Forrest Gump", "Mr. Bilbo Baggins", "Mr. Samwise Gamgee", "Mr. Rick Blaine", "Miss Ilsa Lund",
+    "Mr. Norman Bates", "Mr. J. Bond", "Dr. Emmett Brown", "Mr. Marty McFly", "Master Cole Sear",
+    "Dr. Malcolm Crowe", "Mrs. Sarah Connor", "Mr. Kyle Reese", "Mr. Han Solo", "Princess Leia Organa",
+    "Mr. Obi-Wan Kenobi", "Captain Jim Lovell", "Lord Eddard Stark", "Mr. Jon Snow", "Mr. Waldo",
+    "Mr. Keyser Soze", "Mr. Charles Chaplin",
+    # games
+    "Signor Mario Mario", "Signor Luigi Mario", "Princess Peach Toadstool", "Mr. Link", "Princess Zelda",
+    "Mr. Gordon Freeman", "Miss Chell", "Dr. Ivo Robotnik", "Mr. Ryu", "Mr. Ken Masters", "Miss Chun-Li",
+    "Mr. Fox McCloud", "Mr. Solid Snake", "Mr. Leeroy Jenkins", "M. Pac-Man", "Mr. Alexey Pajitnov",
+    "Lady Lara Croft",
+    # Kaamelott
+    "Perceval de Galles", "Karadoc de Vannes", "Arthur Pendragon", "Lancelot du Lac", "Leodagan de Carmelide",
+    "M. Merlin", "Bohort de Gaunes", "Dame Guenievre", "Dame Seli", "Pere Blaise", "M. Kadoc", "M. Venec",
+    "Yvain de Carmelide", "Gauvain des Orcades",
+    # the Belle Epoque, books and paintings
+    "M. Marcel Proust", "M. Phileas Fogg", "M. Gustave Eiffel", "Mme Marie Curie", "Mlle Gabrielle Chanel",
+    "Senor Pablo Picasso", "M. Rene Magritte", "Mr. Harry Houdini", "M. Gaston Leroux", "M. Camille Flammarion",
+    "M. Auguste Lumiere", "M. Louis Lumiere", "M. Athos", "M. Porthos", "M. Aramis", "Mme Lisa Gherardini",
+    "M. Obelix", "M. Georges Melies", "Mme Sarah Bernhardt", "M. Claude Monet", "Captain Nemo",
+    "M. Jean Valjean", "Inspector Javert", "Mlle Cosette", "M. Cyrano de Bergerac", "M. Edmond Dantes",
+    # Cluedo
+    "Colonel Mustard", "Mrs. Peacock", "Professor Plum", "Miss Scarlett", "Reverend Green", "Mrs. White",
+]
 TEL_WORDS = ["ARRIVE", "TOMORROW", "STOP", "SEND", "MONEY", "LOVE", "MOTHER", "ILL", "TRAIN",
              "DELAYED", "CONTRACT", "SIGNED", "REGARDS", "WEATHER", "FINE", "BUY", "SELL", "SHARES"]
 # Noise reads like a real, tired Prefecture: famous lines, famous people, anachronisms on purpose.
@@ -317,7 +347,7 @@ def fill_noise(conn, V, r):
             nights = r.randint(1, 5)
             out = _add_days(day, nights)
             price = {1: 30, 2: 120, 3: 80, 4: 60, 5: 45}[suite // 100] + r.randint(0, 25)
-            rows.append((rid, _name(r), suite, suite // 100, price, day, out))
+            rows.append((rid, r.choice(GUESTS), suite, suite // 100, price, day, out))
             rid += 1
             day = _add_days(out, r.randint(0, 1))
     c.executemany("INSERT INTO hotel_register VALUES (?,?,?,?,?,?,?)", rows)

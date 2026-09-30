@@ -77,6 +77,17 @@ class Noise(unittest.TestCase):
         self.assertIsNone(conn.execute("SELECT id FROM police_report WHERE id=?", (V["report_id"],)).fetchone())
         conn.close()
 
+    def test_guests_stay_noise(self):
+        import re
+        films = re.search(r"FILM_LINES = \[([^\]]*)\]", open("site/app.js").read()).group(1)
+        films = re.findall(r'"([^"]+)"', films)
+        planted = {c["name"] for c in plot.CAST} | {"Mr. Grey", "Baron von Stroheim", "Cornelius Bell"}
+        self.assertEqual(len(set(g.GUESTS)), len(g.GUESTS))
+        for name in g.GUESTS:
+            self.assertNotIn(name, planted)
+            self.assertNotIn("'", name)
+            self.assertFalse([f for f in films if f in name.lower()], name)
+
 
 class Discovery(unittest.TestCase):
     def test_must_contain_passes_and_fails(self):
