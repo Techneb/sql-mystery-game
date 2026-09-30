@@ -181,6 +181,40 @@ export function highlightSql(src) {
   }
   return out + "\n";   // a trailing newline in a <pre> is dropped; keep the last empty line as tall as the textarea's
 }
+// Ctrl+F in the query box: one clause per line, AND/OR indented, keywords upper-cased. Only whitespace and
+// case change (strings, comments and identifiers are kept), so the query means exactly the same.
+const SQL_FUNCS = new Set("count sum avg min max abs round length lower upper substr trim replace coalesce ifnull nullif date time strftime rank dense_rank row_number lag lead ntile first_value last_value printf cast".split(" "));
+const JOIN_LEAD = new Set(["left", "right", "inner", "full", "cross", "natural", "outer"]);
+export function formatSql(src) {
+  const re = /(\s+)|(--[^\n]*)|(\/\*[\s\S]*?(?:\*\/|$))|('(?:[^']|'')*'?|"(?:[^"]|"")*"?)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])/g;
+  const parens = [];                                 // true for a subquery "(", false for a call, list or OVER
+  let out = "", m, space = false, prev = "", start = true, between = false;
+  const depth = () => parens.filter(Boolean).length;
+  const top = () => !parens.length || parens[parens.length - 1];
+  const br = extra => { out = out.replace(/\s+$/, "") + "\n" + "  ".repeat(depth() + extra); space = false; };
+  while ((m = re.exec(src))) {
+    const [t, ws, line, block, str, word] = m;
+    if (ws) { space = out !== ""; continue; }
+    const w = word ? word.toLowerCase() : "";
+    if (word && top() && !start) {
+      if (["from", "where", "group", "having", "order", "limit", "union", "intersect", "except", "window"].includes(w)
+          || (w === "select" && prev !== "(") || ((JOIN_LEAD.has(w) || w === "join") && !JOIN_LEAD.has(prev))) br(0);
+      else if ((w === "and" || w === "or") && !between) br(1);
+    }
+    if (w === "and" && between) between = false;
+    if (w === "between") between = true;
+    const text = word && (SQL_KEYWORDS.has(w) || (SQL_FUNCS.has(w) && /^\s*\(/.test(src.slice(re.lastIndex)))) ? word.toUpperCase() : t;
+    if (t === ")" && parens.pop()) br(0);           // a subquery closes on its own line, under its opening
+    if (space && out && !/\s$/.test(out)) out += " ";
+    out += text; space = false;
+    if (t === "(") { parens.push(/^\s*(select|with)\b/i.test(src.slice(re.lastIndex))); if (top() && parens.length) br(0); }
+    if (line) br(0);
+    if (t === ";") { out += "\n"; start = true; prev = ""; parens.length = 0; continue; }
+    if (!str && !line && !block) prev = w || t;
+    start = false;
+  }
+  return out.replace(/[ \t]+$/gm, "").trim();
+}
 function syncSql() {
   const ta = $("sql");
   $("sql-hl").innerHTML = highlightSql(ta.value);
@@ -826,6 +860,12 @@ async function boot() {
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
+    else if (e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "f") {   // Ctrl only: Cmd+F stays the browser's find
+      e.preventDefault();
+      e.target.value = formatSql(e.target.value);
+      e.target.selectionStart = e.target.selectionEnd = e.target.value.length;
+      syncSql();
+    }
     else if (e.key === "Tab") {
       e.preventDefault();
       const el = e.target, s = el.selectionStart, en = el.selectionEnd;

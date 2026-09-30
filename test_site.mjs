@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -234,3 +234,21 @@ test("story markup: bold and italic only, everything else escaped", () => {
   for (const c of data.chapters) assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in chapter " + c.n);
   for (const e of Object.values(data.endings)) assert.ok(!/\*/.test(richText(e)), "unbalanced markup in an ending");
 });
+
+test("formatSql changes only whitespace and keyword case, and is stable", () => {
+  const squash = q => q.replace(/\s+/g, "").toLowerCase();
+  const queries = fs.readFileSync(new URL("./solution.sql", import.meta.url), "utf8").split("\n").filter(l => /^(select|with)/i.test(l));
+  assert.ok(queries.length > 10);
+  for (const q of queries) {
+    const f = formatSql(q);
+    assert.equal(squash(f), squash(q), q);
+    assert.equal(formatSql(f), f, "formatting twice changes nothing: " + q);
+  }
+  const f = formatSql("select name from person where name = 'Paul from Where' and born between 1850 and 1890 -- and so on\n or id = 1");
+  assert.match(f, /'Paul from Where'/, "strings keep their case and words");
+  assert.match(f, /BETWEEN 1850 AND 1890/, "BETWEEN's AND stays on its line");
+  assert.match(f, /-- and so on\n  OR id = 1$/, "a line comment still ends its line");
+  assert.equal(formatSql("select rank() over (partition by suite order by time) from t"),
+    "SELECT RANK() OVER (PARTITION BY suite ORDER BY time)\nFROM t", "OVER (...) stays on one line");
+});
+
