@@ -116,13 +116,13 @@ WHERE office = 'Ritz'
   AND date = 19120518
 GROUP BY period
 ORDER BY wires;
--- The night box: five wires, each signed with one initial. Ortega's suspect card gives the letter, R.
+-- The night box: thirty-six wires, each signed with one initial. Ortega's suspect card gives the letter, R.
 SELECT id, time, sender
 FROM telegram
 WHERE office = 'Ritz'
   AND date = 19120518
   AND time < '06:00';
--- Two wires signed R.: one at night, and Ortega's own in the morning.
+-- Five wires signed R. that day: one at night, Ortega's in the morning, three more later.
 SELECT id, time, sender
 FROM telegram
 WHERE office = 'Ritz'

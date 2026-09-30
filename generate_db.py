@@ -533,21 +533,40 @@ def plant_part1(conn, V, r):
     #     Lupin's at 03:30, after the suite falls silent in ch11, and four from the staff, charged to no suite). All
     #     five are signed with one initial, so the box is not enough: which letter is only in Ortega's suspect card
     #     (plot.CAST), and his own R. is at 06:20, in the morning box.
-    c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
+    # Every Ritz wire of the 18th is planted, so the box counts are exact: night 36 (Lupin's and 35 decoys, each signed
+    # with one initial, never R., paid at the desk so no suite: ch11 is untouched), morning 45 (Ortega's R. at 06:20),
+    # afternoon 49 and evening 41 (three more R. wires). Night is the quietest, but only by counting.
+    c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=?", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
          V["lupin_suite"], "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
-    for i in range(79):   # daytime Ritz telegrams that day
-        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
-            (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), r.choice(GUESTS), r.choice(GUESTS),
-             r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
-    for i, (t, who, to, text) in enumerate([(40, "M.", "Ritz, London", "ROOMS FULL STOP SEND LINEN STOP M"),
-            (115, "V.", "Charvet, Place Vendome", "TWELVE COLLARS BY NOON STOP V"),
-            (410, "C.", "Halles, Pavillon 9", "FORTY LOBSTERS STOP ALIVE STOP C"),
-            (530, "D.", "Mme Duroc, Pantin", "HOME AT EIGHT STOP D")]):
-        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (20 + i, "Ritz", T, t, who, to, None, text))
+    def clock(h0, h1):
+        return r.randint(h0, h1 - 1) * 100 + r.randint(0, 59)
+    places = ["Ritz, London", "Charvet, Place Vendome", "Halles, Pavillon 9", "Mme Duroc, Pantin", "Hotel de Paris, Monte Carlo",
+              "Savoy, London", "Credit Lyonnais, Lyon", "Gare de Lyon, Paris", "Negresco, Nice", "Adlon, Berlin",
+              "Waldorf-Astoria, New York", "Le Figaro, Paris", "Maxim's, Paris", "Opera, Vienna"]
+    initials = [ch + "." for ch in "BCDEFGHJKLMNPSTVW"]
+    for i in range(35):
+        t = clock(0, 6)
+        while t == 330:
+            t = clock(0, 6)
+        who = r.choice(initials)
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (42 + i, "Ritz", T, t, who, r.choice(places), None,
+                  " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(3, 6))) + " STOP " + who[0]))
+    for i, t in enumerate((1415, 1640, 2105)):   # other guests who sign R.: the letter alone is not enough
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (77 + i, "Ritz", T, t, "R.", r.choice(places),
+                  r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(5)) + " STOP R"))
+    k = 0
+    for h0, h1, n in ((6, 12, 44), (12, 18, 47), (18, 24, 40)):
+        for _ in range(n):
+            t = clock(h0, h1)
+            while t == 620:
+                t = clock(h0, h1)
+            c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+                (5000 + k, "Ritz", T, t, r.choice(GUESTS), r.choice(GUESTS), r.choice(range(101, 525)),
+                 " ".join(r.choice(TEL_WORDS) for _ in range(6))))
+            k += 1
     # Ortega signs with an R too: his wire leaves the same desk at 06:20, morning by Ganimard's clock (ch7 decoy)
-    c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time>=600 AND time<700", (T,))
     c.execute("INSERT INTO telegram VALUES (7,'Ritz',?,620,'R.','Estancia Ortega, Buenos Aires',?,'SELL THE HERD STOP BUY WHEAT STOP R')",
               (T, V["ortega_suite"]))
     # --- compete ch7: a second office. Its quietest box is the evening (one wire, the broker's at 19:30); the
