@@ -36,7 +36,7 @@ CHAPTERS = [
   naive="SELECT plate FROM cab_ride WHERE plate LIKE '{plate_prefix}%' AND date = {theft_date}", naive_rows=None,
   discovery_compete=[dict(query="SELECT transcript FROM interview WHERE person_name = 'the rival despatcher'", must_contain="{compete_plate_prefix}")],
   objective_compete="A rival cab company keeps its own book. Its despatcher remembers half of the plate, and where the fare got out.",
-  answer_form_compete="the plate (75-9 and three digits)",
+  answer_form_compete="the plate (75- and four digits)",
   solution_compete="SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND dropoff = 'Gare Saint-Lazare' AND date = {theft_date}",
   naive_compete="SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND date = {theft_date}", naive_rows_compete=None,
   answer_key_compete="compete_plate"),
@@ -163,7 +163,7 @@ TEXT = {
   title="A Plate in the Dark",
   story="**His Lordship**, when woken, is displeased but useful. 'My valet saw the man,' he says, 'and gave his account to your inspector already -- read it yourself if you doubt *a peer's memory*.' **Ganimard** taps the stack: 'His statement is in interview, clerk. The company keeps a book of every cab, too. Find me the one that left the Place Vendome after two in the morning.'",
   objective="Read what the neighbour told Ganimard, then find the cab.",
-  answer_form="the plate (75-2 and three digits)",
+  answer_form="the plate (75- and four digits)",
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",

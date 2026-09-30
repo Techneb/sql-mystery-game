@@ -669,6 +669,9 @@ def check_discovery(conn, V, ch, compete=False):
             needle = d["must_contain"].format(**V)   # case-insensitive: telegrams are upper-cased
             assert needle.lower() in str(rows).lower(), \
                 "chapter %s discovery: %r not found in %r (%s)" % (ch["n"], needle, rows, d["query"])
+            for k in ["story", "objective", "answer_form"]:   # the chapter's own text must not hand it back
+                text = ch.get(k + ("_compete" if compete else ""), ch.get(k, "")).format(**V)
+                assert needle.lower() not in text.lower(), "chapter %s %s gives away %r" % (ch["n"], k, needle)
 
 
 def check_chapter(conn, V, ch, compete=False):

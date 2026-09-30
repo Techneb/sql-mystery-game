@@ -8,7 +8,7 @@ SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND date = 19120518 AND 
 SELECT description FROM police_report WHERE id = 4127;
 SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= 19120517 AND checkout > 19120517 ORDER BY price DESC LIMIT 1;
 
--- 03. A Plate in the Dark (LIKE) -> the plate (75-2 and three digits): 75-2041
+-- 03. A Plate in the Dark (LIKE) -> the plate (75- and four digits): 75-2041
 SELECT transcript FROM interview WHERE person_name = 'Lord Ashcombe';
 SELECT plate FROM cab_ride WHERE plate LIKE '75-2%' AND pickup = 'Place Vendome' AND date = 19120518 AND time >= 200;
 
