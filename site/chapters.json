@@ -237,7 +237,7 @@
    "story": "The jeweller banks at the *Credit Lyonnais*, and **Ganimard** has a warrant, so the bank hides nothing. Its ledger has one line per transfer: the account that paid, the account that was paid, the sum and the day. 'A fence pays a thief in three pieces, clerk -- one for the job, one for the silence, one for the road -- *so the bank does not blink*. And of all the men he pays that way, ours is paid best. Find me his account.'",
    "objective": "Of the accounts the jeweller from chapter 5 paid in three pieces in May, which received the most?",
    "answer_form": "the account number",
-   "telegram": "MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L",
+   "telegram": "MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L",
    "answer_sha256": "9d312e53839cd7a0c527c53d195beae1b007bd43b60a69c604feed4a7ddb13da",
    "n": 6,
    "tables": [
@@ -247,8 +247,8 @@
   },
   {
    "title": "A Wire Before Dawn",
-   "story": "The Ritz telegraph desk sent eighty wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Bring me the one sent at night, clerk. He signs with one letter, *which is one more than he needs*.' **Senor Ortega**, down the corridor, signs everything with a flourish and an R.",
-   "objective": "Find the wire the Ritz desk sent at night on the 18th.",
+   "story": "The Ritz telegraph desk sent a hundred wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment, sent when the desk was at its quietest. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Quietest by my four boxes, clerk, not by your watch. He signs with one letter, *which is one more than he needs*.' **Senor Ortega**, down the corridor, signs everything with a flourish and an R.",
+   "objective": "Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
    "answer_form": "the telegram id",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
    "answer_sha256": "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729",
@@ -316,7 +316,7 @@
   }
  ],
  "decoys": {
-  "1": 1874
+  "1": 1571
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **Rupert Blakeney, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",

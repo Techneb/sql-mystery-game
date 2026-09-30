@@ -108,22 +108,38 @@ HAVING COUNT(*) = 3
 ORDER BY SUM(t.amount) DESC
 LIMIT 1;
 
--- 07. A Wire Before Dawn (CASE WHEN) -> the telegram id: 2718
--- The Ritz desk's wires that day: one before six in the morning, at 03:30.
-SELECT time
+-- 07. A Wire Before Dawn (CASE WHEN + GROUP BY) -> the telegram id: 2718
+-- Ganimard's four boxes, counted: the night is the quietest.
+SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period, COUNT(*) AS wires
 FROM telegram
 WHERE office = 'Ritz'
   AND date = 19120518
-ORDER BY time;
+GROUP BY period
+ORDER BY wires;
+-- Two wires signed with one letter, R.: one at night, Ortega's in the morning.
+SELECT id, time, sender
+FROM telegram
+WHERE office = 'Ritz'
+  AND date = 19120518
+  AND sender LIKE '_.';
 -- The answer:
 SELECT id
 FROM (
-  SELECT id, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
+  SELECT id, sender, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
   FROM telegram
   WHERE office = 'Ritz'
     AND date = 19120518
 ) AS t
-WHERE period = 'night';
+WHERE sender = 'R.'
+  AND period = (
+  SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period
+  FROM telegram
+  WHERE office = 'Ritz'
+    AND date = 19120518
+  GROUP BY period
+  ORDER BY COUNT(*)
+  LIMIT 1
+);
 
 -- 08. The First Order Before Dawn (RANK() OVER + subquery) -> the guest's name: Rupert Blakeney
 -- The night wire names his first order before dawn: Clicquot 1904.

@@ -301,12 +301,12 @@ class Erd(unittest.TestCase):
         tables, fks = erd.read_schema(conn)
         pos = erd.layout(tables, fks, [t for ch in plot.CHAPTERS for t in ch["tables"]])
         for t, col, ref, (sx, sy), (ex, ey), bottom in erd.fk_paths(tables, fks, pos):
-            mid = (bottom + sy) / 2
-            pts = [(ex, ey + (bottom - ey) * k / 20) for k in range(1, 21)]   # straight down out of the parent's row
-            for k in range(1, 20):   # then the curve (control points at mid height) down to the child
-                u = k / 20
+            c1, c2 = erd.curve_controls(ey, bottom, sy)
+            pts = []
+            for k in range(1, 40):   # the one cubic from the parent's bottom edge to the child's top edge
+                u = k / 40
                 bx = (1 - u) ** 3 * ex + 3 * (1 - u) ** 2 * u * ex + 3 * (1 - u) * u * u * sx + u ** 3 * sx
-                by = (1 - u) ** 3 * bottom + 3 * (1 - u) ** 2 * u * mid + 3 * (1 - u) * u * u * mid + u ** 3 * sy
+                by = (1 - u) ** 3 * ey + 3 * (1 - u) ** 2 * u * c1 + 3 * (1 - u) * u * u * c2 + u ** 3 * sy
                 pts.append((bx, by))
             for name, (_, x, y, w, h) in pos.items():
                 for px, py in pts:

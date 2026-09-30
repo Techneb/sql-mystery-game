@@ -529,7 +529,9 @@ def plant_part1(conn, V, r):
     # --- compete ch6: a second fence, a second shell account, the same three decoys
     c.execute("INSERT INTO bank_account VALUES (?,18,'Societe Generale')", (V["compete_fence_account"],))
     fence_payments(V["compete_fence_account"], V["compete_shell_account"], 60, (12000, 12000, 9000), "Societe Generale", decoys[3:])
-    # --- ch7: telegrams from the Ritz desk on the 18th; exactly one at night (03:30, after the suite falls silent, ch11)
+    # --- ch7: telegrams from the Ritz desk on the 18th. Night is the quietest of Ganimard's four boxes (five wires:
+    #     Lupin's at 03:30, after the suite falls silent in ch11, and four from the staff, charged to no suite), and
+    #     Lupin's is the only one there signed R. (Ortega's R. is at 06:20, in the morning box).
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time<600", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
@@ -538,15 +540,26 @@ def plant_part1(conn, V, r):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
             (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), r.choice(GUESTS), r.choice(GUESTS),
              r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
+    for i, (t, who, to, text) in enumerate([(40, "The night manager", "Ritz, London", "ROOMS FULL STOP SEND LINEN STOP"),
+            (115, "The head valet", "Charvet, Place Vendome", "TWELVE COLLARS BY NOON STOP"),
+            (410, "The kitchen", "Halles, Pavillon 9", "FORTY LOBSTERS STOP ALIVE STOP"),
+            (530, "The night porter", "Mme Duroc, Pantin", "HOME AT EIGHT STOP")]):
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (20 + i, "Ritz", T, t, who, to, None, text))
     # Ortega signs with an R too: his wire leaves the same desk at 06:20, morning by Ganimard's clock (ch7 decoy)
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time>=600 AND time<700", (T,))
     c.execute("INSERT INTO telegram VALUES (7,'Ritz',?,620,'R.','Estancia Ortega, Buenos Aires',?,'SELL THE HERD STOP BUY WHEAT STOP R')",
               (T, V["ortega_suite"]))
-    # --- compete ch7: a second office, a different time bucket (evening, not night)
-    c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=? AND time>=1800", (T,))
+    # --- compete ch7: a second office. Its quietest box is the evening (one wire, the broker's at 19:30); the
+    #     broker also wired at 17:45, in the afternoon. Every Bourse wire of the day is planted, so the counts are exact.
+    c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=?", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["compete_telegram_id"], "Bourse", T, 1930, "A Broker", "A Client", None,
          "SHARES SOLD STOP PROCEEDS TO FOLLOW STOP COFFEE BEFORE THE OPENING BELL AS ALWAYS STOP"))
+    bourse = [(210, "A Clerk"), (330, "A Clerk"), (520, "A Porter"), (905, "A Jobber"), (930, "A Jobber"), (1010, "A Clerk"),
+              (1045, "A Jobber"), (1130, "A Clerk"), (1215, "A Jobber"), (1400, "A Clerk"), (1530, "A Jobber"), (1745, "A Broker")]
+    for i, (t, who) in enumerate(bourse):
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
+                  (30 + i, "Bourse", T, t, who, "A Client", None, " ".join(r.choice(TEL_WORDS) for _ in range(5))))
     # --- ch8: room service on the 18th; Ortega's suite orders coffee first
     c.execute("DELETE FROM room_service WHERE date=? AND time<600", (T,))
     rs = [(V["lupin_suite"], 320, V["champagne"], 40), (V["lupin_suite"], 900, "coffee", 2),

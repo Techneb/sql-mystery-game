@@ -83,6 +83,12 @@ def fk_paths(tables, fks, pos):
     return out
 
 
+def curve_controls(ey, bottom, sy):
+    """One soft S from the parent's bottom edge to the child's top edge. Both control points sit below the parent's
+    row (bottom), so the curve leaves the parent straight down and only swings sideways in the gap between rows."""
+    return bottom + (sy - bottom) * 0.62, bottom + (sy - bottom) * 0.38
+
+
 def svg(conn, order=()):
     tables, fks = read_schema(conn)
     pos = layout(tables, fks, order)
@@ -92,9 +98,9 @@ def svg(conn, order=()):
            "<defs>%s</defs>" % KEY]
     for t, col, ref, (sx, sy), (ex, ey), bottom in fk_paths(tables, fks, pos):
         many = cardinality(conn, t, col) == "N"
-        mid = (bottom + sy) / 2
+        c1, c2 = curve_controls(ey, bottom, sy)
         g = ['<g class="fk" data-from="%s.%s" data-to="%s">' % (t, col, ref),
-             '<path d="M%g %g V%g C%g %g %g %g %g %g"/>' % (ex, ey, bottom, ex, mid, sx, mid, sx, sy),
+             '<path class="rel" d="M%g %g C%g %g %g %g %g %g"/>' % (ex, ey, ex, c1, sx, c2, sx, sy),
              '<path d="M%g %g H%g"/>' % (ex - 6, ey + 5, ex + 6),                       # one: a bar under the parent
              '<text x="%g" y="%g">1</text>' % (ex + 5, ey + 12)]
         if many:                                                                        # many: a crow's foot on the child
