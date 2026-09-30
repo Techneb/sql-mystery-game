@@ -125,7 +125,7 @@
   },
   {
    "title": "A Plate in the Dark",
-   "story": "**His Lordship**, when woken, is displeased but useful. 'My valet saw the man,' he says, 'and gave his account to your inspector already -- read it yourself if you doubt *a peer's memory*.' **Ganimard** taps the stack: 'His statement is in interview, clerk. The company keeps a book of every cab, too. Find me the one that left the Place Vendome after two in the morning.'",
+   "story": "**His Lordship**, when woken, is displeased but useful. 'My valet saw the man,' he says, 'and gave his account to your inspector already -- read it yourself if you doubt *a peer's memory*.' **Ganimard** taps the stack: 'His statement is in interview, clerk. The company keeps a book of every cab, too. Find me his.'",
    "objective": "Read what the neighbour told Ganimard, then find the cab.",
    "answer_form": "the plate (75- and four digits)",
    "telegram": "MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L",
@@ -242,7 +242,7 @@
   }
  ],
  "decoys": {
-  "1": 1360
+  "1": 1298
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **Rupert Blakeney, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",

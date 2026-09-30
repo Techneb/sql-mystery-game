@@ -37,7 +37,7 @@ CREATE TABLE interview (
   id INTEGER PRIMARY KEY, person_name TEXT, date INTEGER, transcript TEXT);
 CREATE TABLE cab_ride (
   id INTEGER PRIMARY KEY, plate TEXT, date INTEGER, time INTEGER, pickup TEXT, dropoff TEXT,
-  fare INTEGER);
+  fare INTEGER, currency TEXT);
 CREATE TABLE bank_account (
   id INTEGER PRIMARY KEY, person_id INTEGER REFERENCES person(id), bank TEXT);
 CREATE TABLE bank_transaction (
@@ -363,9 +363,12 @@ def fill_noise(conn, V, r):
     plates = ["75-%04d" % r.randint(1000, 9999) for _ in range(400)] + \
              ["%s%03d" % (V["plate_prefix"], r.randint(100, 999)) for _ in range(40)]
     plates = [p for p in plates if p != V["plate"]]
-    c.executemany("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)",
+    # fares are mostly in francs; tourists pay a coin or two of their own (the ch3 cab is paid in pounds)
+    cur = lambda: r.choices(["franc", "pound", "dollar", "mark"], [94, 3, 2, 1])[0]
+    c.executemany("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)",
         [(100 + i, r.choice(plates), _date(r, 5, 5), _time(r), r.choice(PLACES),
-          "%d %s" % (r.randint(1, 120), r.choice(STREETS)), r.randint(2, 15)) for i in range(20000)])
+          "%d %s" % (r.randint(1, 120), r.choice(STREETS)), *((r.randint(2, 15), "franc") if k == "franc" else (r.randint(1, 3), k)))
+         for i, k in ((i, cur()) for i in range(20000))])
     acct_ids = [i for i in range(100, 4100) if i not in (V["fence_account"], V["shell_account"])]
     c.executemany("INSERT INTO bank_account VALUES (?,?,?)",
         [(i, r.randint(100, 5099), r.choice(["Credit Lyonnais", "Societe Generale", "Banque de Paris", "Comptoir National"]))
@@ -471,14 +474,15 @@ def plant_part1(conn, V, r):
         "and take a motor-cab on the Place. He says the plate began with {plate_prefix}, the rest he could not read. "
         "The fellow tipped in English coins.".format(**V)))
     c.execute("DELETE FROM cab_ride WHERE date=? AND pickup='Place Vendome' AND time>=200 AND plate LIKE ?", (T, V["plate_prefix"] + "%"))
-    # decoys: same prefix that night elsewhere, and from Vendome earlier in the evening
-    c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5)", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
-    c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,7)", (V["plate_prefix"] + "290", E, "9 rue Royale"))
+    c.execute("DELETE FROM cab_ride WHERE date=? AND currency='pound' AND plate LIKE ?", (T, V["plate_prefix"] + "%"))
+    # decoys: same prefix that night elsewhere in francs, and paid in pounds from Vendome the evening before
+    c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5,'franc')", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
+    c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,1,'pound')", (V["plate_prefix"] + "290", E, "9 rue Royale"))
     # --- compete ch3: same construct (LIKE), a different cab, identified by where it dropped, not where it was hailed
     c.execute("INSERT INTO interview VALUES (4,?,?,?)", ("the rival despatcher", T,
         "One of our drivers dropped a fare at Gare Saint-Lazare that night. He swears the plate "
         "began with {compete_plate_prefix}, the rest he never wrote down.".format(**V)))
-    c.execute("INSERT INTO cab_ride VALUES (4,?,?,320,'Opera','Gare Saint-Lazare',6)", (V["compete_plate"], T))
+    c.execute("INSERT INTO cab_ride VALUES (4,?,?,320,'Opera','Gare Saint-Lazare',6,'franc')", (V["compete_plate"], T))
     # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
     rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
@@ -492,14 +496,15 @@ def plant_part1(conn, V, r):
             seen.add(drop)
             rides.append((drop, r.choice(week), _time(r), None))
     for i, (drop, d, t, pick) in enumerate(rides):
-        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (10 + i, V["plate"], d, t, pick or r.choice(PLACES), drop, r.randint(2, 12)))
+        fare = (1, "pound") if d == T else (r.randint(2, 12), "franc")   # the night ride: the English coins
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)", (10 + i, V["plate"], d, t, pick or r.choice(PLACES), drop, *fare))
     # --- compete ch4: a second cab's week, three drops at a second fence's address, two at Gare de Lyon
     #     (a PLACES name, never produced by fill_noise's dropoff generator, so it cannot collide)
     rides_c = [(V["compete_fence_address"], T, 300), (V["compete_fence_address"], 19120514, 1100),
                (V["compete_fence_address"], 19120516, 900),
                ("Gare de Lyon", 19120515, 1000), ("Gare de Lyon", 19120517, 1600)]
     for i, (drop, d, t) in enumerate(rides_c):
-        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?)", (5 + i, V["compete_plate"], d, t, r.choice(PLACES), drop, r.randint(2, 12)))
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)", (5 + i, V["compete_plate"], d, t, r.choice(PLACES), drop, r.randint(2, 12), "franc"))
     # --- ch6: the fence's account and payments in May; largest single payment goes to a decoy
     c.execute("INSERT INTO bank_account VALUES (?,7,'Credit Lyonnais')", (V["fence_account"],))
     c.execute("INSERT INTO bank_account VALUES (?,NULL,'Credit Lyonnais')", (V["shell_account"],))

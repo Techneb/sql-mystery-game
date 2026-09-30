@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1112" width="390" height="1112">
-<path class="fk" data-from="bank_account.person_id" data-to="person" d="M85 893 C85 853 85 836 85 796"/>
-<path class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account" d="M85 1053 C85 1013 85 954 85 914"/>
-<path class="fk" data-from="bank_transaction.account_id" data-to="bank_account" d="M85 1039 C85 999 85 954 85 914"/>
-<path class="fk" data-from="luggage.ticket_id" data-to="train_ticket" d="M295 1039 C295 999 295 982 295 942"/>
-<path class="fk" data-from="person.address_id" data-to="address" d="M85 789 C85 749 85 112 85 72"/>
-<path class="fk" data-from="train_ticket.person_id" data-to="person" d="M295 893 C295 853 85 836 85 796"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1126" width="390" height="1126">
+<path class="fk" data-from="bank_account.person_id" data-to="person" d="M85 907 C85 867 85 850 85 810"/>
+<path class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account" d="M85 1067 C85 1027 85 968 85 928"/>
+<path class="fk" data-from="bank_transaction.account_id" data-to="bank_account" d="M85 1053 C85 1013 85 968 85 928"/>
+<path class="fk" data-from="luggage.ticket_id" data-to="train_ticket" d="M295 1053 C295 1013 295 996 295 956"/>
+<path class="fk" data-from="person.address_id" data-to="address" d="M85 803 C85 763 85 112 85 72"/>
+<path class="fk" data-from="train_ticket.person_id" data-to="person" d="M295 907 C295 867 85 850 85 810"/>
 <g class="table" data-table="address" transform="translate(0,0)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
@@ -13,14 +13,14 @@
 <text class="col" x="6" y="41">number</text>
 <text class="col" x="6" y="55">street</text>
 <text class="col" x="6" y="69">arrondissement</text></g>
-<g class="table" data-table="bank_account" transform="translate(0,856)">
+<g class="table" data-table="bank_account" transform="translate(0,870)">
 <rect width="170" height="58"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_account</text>
 <text class="col" x="6" y="27">*id</text>
 <text class="col" x="6" y="41">person_id -> person</text>
 <text class="col" x="6" y="55">bank</text></g>
-<g class="table" data-table="bank_transaction" transform="translate(0,1002)">
+<g class="table" data-table="bank_transaction" transform="translate(0,1016)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_transaction</text>
@@ -31,7 +31,7 @@
 <text class="col" x="6" y="83">amount</text>
 <text class="col" x="6" y="97">type</text></g>
 <g class="table" data-table="cab_ride" transform="translate(210,0)">
-<rect width="170" height="114"/>
+<rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">cab_ride</text>
 <text class="col" x="6" y="27">*id</text>
@@ -40,8 +40,9 @@
 <text class="col" x="6" y="69">time</text>
 <text class="col" x="6" y="83">pickup</text>
 <text class="col" x="6" y="97">dropoff</text>
-<text class="col" x="6" y="111">fare</text></g>
-<g class="table" data-table="hotel_register" transform="translate(0,174)">
+<text class="col" x="6" y="111">fare</text>
+<text class="col" x="6" y="125">currency</text></g>
+<g class="table" data-table="hotel_register" transform="translate(0,188)">
 <rect width="170" height="114"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">hotel_register</text>
@@ -52,7 +53,7 @@
 <text class="col" x="6" y="83">price</text>
 <text class="col" x="6" y="97">checkin</text>
 <text class="col" x="6" y="111">checkout</text></g>
-<g class="table" data-table="interview" transform="translate(210,174)">
+<g class="table" data-table="interview" transform="translate(210,188)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">interview</text>
@@ -60,7 +61,7 @@
 <text class="col" x="6" y="41">person_name</text>
 <text class="col" x="6" y="55">date</text>
 <text class="col" x="6" y="69">transcript</text></g>
-<g class="table" data-table="lift_log" transform="translate(0,348)">
+<g class="table" data-table="lift_log" transform="translate(0,362)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">lift_log</text>
@@ -70,7 +71,7 @@
 <text class="col" x="6" y="69">floor</text>
 <text class="col" x="6" y="83">suite</text>
 <text class="col" x="6" y="97">direction</text></g>
-<g class="table" data-table="luggage" transform="translate(210,1002)">
+<g class="table" data-table="luggage" transform="translate(210,1016)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">luggage</text>
@@ -79,7 +80,7 @@
 <text class="col" x="6" y="55">trunk_no</text>
 <text class="col" x="6" y="69">owner_name</text>
 <text class="col" x="6" y="83">weight_kg</text></g>
-<g class="table" data-table="person" transform="translate(0,696)">
+<g class="table" data-table="person" transform="translate(0,710)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">person</text>
@@ -89,7 +90,7 @@
 <text class="col" x="6" y="69">born_year</text>
 <text class="col" x="6" y="83">occupation</text>
 <text class="col" x="6" y="97">address_id -> address</text></g>
-<g class="table" data-table="police_report" transform="translate(210,348)">
+<g class="table" data-table="police_report" transform="translate(210,362)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">police_report</text>
@@ -99,7 +100,7 @@
 <text class="col" x="6" y="69">place</text>
 <text class="col" x="6" y="83">type</text>
 <text class="col" x="6" y="97">description</text></g>
-<g class="table" data-table="room_service" transform="translate(0,508)">
+<g class="table" data-table="room_service" transform="translate(0,522)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">room_service</text>
@@ -109,7 +110,7 @@
 <text class="col" x="6" y="69">time</text>
 <text class="col" x="6" y="83">item</text>
 <text class="col" x="6" y="97">amount</text></g>
-<g class="table" data-table="telegram" transform="translate(210,508)">
+<g class="table" data-table="telegram" transform="translate(210,522)">
 <rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">telegram</text>
@@ -121,7 +122,7 @@
 <text class="col" x="6" y="97">recipient</text>
 <text class="col" x="6" y="111">suite</text>
 <text class="col" x="6" y="125">text</text></g>
-<g class="table" data-table="train_ticket" transform="translate(210,856)">
+<g class="table" data-table="train_ticket" transform="translate(210,870)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">train_ticket</text>
