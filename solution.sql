@@ -164,7 +164,7 @@ JOIN person AS p ON a.person_id = p.id
 WHERE p.name <> 'Lord Ashcombe';
 
 -- 10. Never Seen Together (NOT EXISTS / self-join) -> the guest's name: Mr. Grey
--- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. The Baron and Mr. Bell each share exactly one, so one name is left: the same man, under two names.
+-- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.
 -- The answer:
 SELECT g.guest_name
 FROM (
@@ -190,7 +190,7 @@ FROM lift_log
 WHERE date = 19120518
   AND time < '06:00'
 ORDER BY time;
--- Merge the night's three ledgers into one list of (suite, time); LAG gives each event the suite's previous one. The silent suite has an event at or before 02:05 followed by nothing until 03:10 or later. Suite 407's longer silence only starts at 03:10.
+-- Merge the night's three ledgers into one list of (suite, time); LAG gives each event the suite's previous one. The silent suite has an event at or before 02:05 followed by nothing until 03:10 or later. Velmont's suite is silent longer, 02:30 to 05:55, but only after the lift the porter heard.
 -- The answer:
 WITH ev AS (
   SELECT suite, time

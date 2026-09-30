@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -253,5 +253,23 @@ test("formatSql changes only whitespace and keyword case, and is stable", () => 
   assert.match(f, /-- and so on\n  OR id = 1$/, "a line comment still ends its line");
   assert.equal(formatSql("select rank() over (partition by suite order by time) from t"),
     "SELECT RANK() OVER (PARTITION BY suite ORDER BY time)\nFROM t", "OVER (...) stays on one line");
+});
+
+test("suspects appear when met, and their notes when their chapter is reached", () => {
+  const cast = data.cast, st = freshState();
+  assert.deepEqual(metSuspects(cast, st, data.chapters), [], "chapter 1: nobody yet");
+  st.solved = [1, 2]; st.suspects = [];
+  assert.deepEqual(metSuspects(cast, st, data.chapters).map(s => s.name), ["Lord Ashcombe"], "chapter 3 names His Lordship");
+  const ash = metSuspects(cast, st, data.chapters)[0];
+  assert.equal(ash.notes.length, 1, "only the notes of chapters reached");
+  const res = { values: [["Raul Ortega", 218], ["Paul Sernine", 202]] };
+  assert.deepEqual(foundSuspects(cast, res, []), ["Paul Sernine", "Raul Ortega"], "a result shows them: met");
+  assert.deepEqual(foundSuspects(cast, res, ["Raul Ortega"]), ["Paul Sernine"]);
+  const far = { values: Array(ROW_CAP).fill(["nobody"]).concat([["Horace Velmont"]]) };
+  assert.deepEqual(foundSuspects(cast, far, []), [], "a row past the screen is not seen");
+  st.suspects = ["Paul Sernine"];
+  assert.ok(metSuspects(cast, st, data.chapters).some(s => s.name === "Paul Sernine" && s.notes.length === 0));
+  st.solved = [1, 2, 3, 4, 5, 6, 7, 8]; st.part2 = true; st.solved.push(9, 10, 11);
+  assert.equal(metSuspects(cast, st, data.chapters).length, 6, "chapter 12: all six met");
 });
 

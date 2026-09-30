@@ -127,6 +127,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .card:nth-child(even) { transform: rotate(1.5deg); }
 
 /* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
+.suspect .note { font-style: italic; margin-top: 4px; }
+#btn-suspects.new::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 4px; border-radius: 50%; background: var(--red); vertical-align: 2px; }
 .suspects { position: fixed; inset: 0; z-index: 19; background: var(--paper); overflow: auto; padding: 20px 16px 40px;
   display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-content: flex-start; }
 .suspects[hidden] { display: none; }

@@ -18,7 +18,7 @@ export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {} };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0 };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
@@ -112,6 +112,7 @@ function backToInvestigation() {
 const objectiveHtml = (text, label, value) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>";
 
 function renderChapter() {
+  markSuspects();
   const total = state.part2 ? 12 : 8;
   // Speed Reader: when the current chapter was first put in front of the player
   if (reviewing == null) { const n = currentChapter(state, data.chapters).n; if (!state.opened[n]) { state.opened[n] = Date.now(); save(state); } }
@@ -254,6 +255,8 @@ function runQuery() {
   renderHistory();
   const text = eggText(res);
   state.film = seenFilms(text, state.film);
+  const faces = foundSuspects(data.cast, res, state.suspects || (state.suspects = []));
+  if (faces.length) { state.suspects.push(...faces); markSuspects(); }
   award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), cols: res ? res.columns.length : 0, error: !!error }), state.badges));
   save(state);
   return { sql, res, error };
@@ -421,17 +424,34 @@ function renderBoard() {
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
 }
 
-let suspectsBuilt = false;
+// A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
+// their name (state.suspects); each note joins the bio once its chapter is reached (plot.py CAST).
+export function metSuspects(cast, state, chapters) {
+  const reached = currentChapter(state, chapters).n, found = state.suspects || [];
+  return cast.filter(s => s.meet <= reached || found.includes(s.name))
+    .map(s => ({ ...s, notes: (s.notes || []).filter(([n]) => n <= reached).map(([, t]) => t) }));
+}
+export function foundSuspects(cast, res, have) {
+  if (!res) return [];
+  const text = res.values.slice(0, ROW_CAP).map(r => r.join(" ")).join(" ").toLowerCase();   // only rows on screen
+  return cast.map(s => s.name).filter(n => !have.includes(n) && text.includes(n.toLowerCase()));
+}
 function renderSuspects() {
-  if (suspectsBuilt) return;
-  const el = $("suspects");
-  el.innerHTML = '<button class="quiet suspects-close">Close</button>' + data.cast.map(s => {
+  const el = $("suspects"), met = metSuspects(data.cast, state, data.chapters);
+  el.innerHTML = '<button class="quiet suspects-close">Close</button>' + (met.length ? met.map(s => {
     const file = PORTRAIT_FILE[s.name];
     const img = file ? '<img src="portraits/' + file + '.jpg" alt="">' : "";
-    return '<div class="suspect">' + img + '<b>' + esc(s.name) + '</b><span class="muted">' + esc(s.nationality) + '</span><p>' + esc(s.bio) + '</p></div>';
-  }).join("");
+    return '<div class="suspect">' + img + '<b>' + esc(s.name) + '</b><span class="muted">' + esc(s.nationality) + '</span><p>' + esc(s.bio) + '</p>' +
+      s.notes.map(n => '<p class="note">' + esc(n) + '</p>').join("") + '</div>';
+  }).join("") : '<p class="muted">Nobody yet. Ganimard suspects everyone, which is the same thing.</p>');
   el.querySelector(".suspects-close").onclick = () => el.hidden = true;
-  suspectsBuilt = true;
+  state.suspectsSeen = met.reduce((k, s) => k + 1 + s.notes.length, 0); save(state);
+  markSuspects();
+}
+// The Suspects button carries a dot while the gallery holds a face or a note the student has not opened yet.
+function markSuspects() {
+  const met = metSuspects(data.cast, state, data.chapters);
+  $("btn-suspects").classList.toggle("new", met.reduce((k, s) => k + 1 + s.notes.length, 0) > (state.suspectsSeen || 0));
 }
 
 // Every badge is listed; a locked one shows no name and no text at all, so the DOM gives nothing away.

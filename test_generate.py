@@ -81,7 +81,7 @@ class Noise(unittest.TestCase):
         import re
         films = re.search(r"FILM_LINES = \[([^\]]*)\]", open("site/app.js").read()).group(1)
         films = re.findall(r'"([^"]+)"', films)
-        planted = {c["name"] for c in plot.CAST} | {"Mr. Grey", "Baron von Stroheim", "Cornelius Bell"}
+        planted = {c["name"] for c in plot.CAST} | {"Mr. Grey"}
         self.assertEqual(len(set(g.GUESTS)), len(g.GUESTS))
         for name in g.GUESTS:
             self.assertNotIn(name, planted)
@@ -313,6 +313,24 @@ class Erd(unittest.TestCase):
                     self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (t, col, name))
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
         conn.close()
+
+
+class Suspects(unittest.TestCase):
+    def test_notes_never_give_away_the_chapter_being_played(self):
+        V = g.plant_values(1912)
+        chapters = {ch["n"]: ch for ch in plot.CHAPTERS}
+        for s in plot.CAST:
+            self.assertIn(s["meet"], chapters)
+            surname = s["name"].split()[-1]
+            self.assertIn(surname, chapters[s["meet"]]["story"].format(**V) + s["name"] * (s["meet"] == 3),
+                          "%s is met in chapter %d, whose story names them" % (s["name"], s["meet"]))
+            for n, text in s["notes"]:
+                for d in chapters[n].get("discovery", []):
+                    needles = d.get("must_contain", [])
+                    for needle in [needles] if isinstance(needles, str) else needles:
+                        self.assertNotIn(needle.format(**V).lower(), text.lower(), "%s note %d" % (s["name"], n))
+                self.assertNotIn(str(V[chapters[n]["answer_key"]]).lower(), text.lower(), "%s note %d" % (s["name"], n))
+                text.encode("ascii")
 
 
 class SolutionSql(unittest.TestCase):

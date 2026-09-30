@@ -54,32 +54,106 @@
   {
    "name": "Lord Ashcombe",
    "nationality": "English",
-   "bio": "Peer of the realm, Suite Imperiale. Collects clocks and grievances."
+   "meet": 3,
+   "bio": "Peer of the realm, Suite Imperiale. Collects clocks and grievances.",
+   "notes": [
+    [
+     3,
+     "Was at the Opera until one. His valet saw a man in an English coat leave by the service door."
+    ],
+    [
+     9,
+     "Left for London on the boat train of the 19th, with his trunks."
+    ],
+    [
+     10,
+     "Carried the Blue Star through customs with a clear conscience, in a trunk he never packed."
+    ]
+   ]
   },
   {
    "name": "Paul Sernine",
    "nationality": "French",
-   "bio": "Rentier. Nobody has ever seen him pay for anything."
+   "meet": 10,
+   "bio": "Rentier. Nobody has ever seen him pay for anything.",
+   "notes": [
+    [
+     10,
+     "A regular at the Ritz since January."
+    ],
+    [
+     11,
+     "Slept at the Ritz on the night of 11 January, when Mr. Blakeney did."
+    ]
+   ]
   },
   {
    "name": "Horace Velmont",
    "nationality": "French",
-   "bio": "Painter of society portraits. Paints mostly at night."
+   "meet": 11,
+   "bio": "Painter of society portraits. Paints mostly at night.",
+   "notes": [
+    [
+     11,
+     "Seldom in his suite after dark."
+    ],
+    [
+     12,
+     "Out from 02:30 to 05:55 on the night of the theft, painting the Prefect's wife. The Prefect confirms it, twice."
+    ]
+   ]
   },
   {
    "name": "Raul Ortega",
    "nationality": "Argentine",
-   "bio": "Cattle baron. Signs everything with a flourish and an R."
+   "meet": 7,
+   "bio": "Cattle baron. Signs everything with a flourish and an R.",
+   "notes": [
+    [
+     8,
+     "Wired Buenos Aires from the Ritz desk at 06:20 on the 18th: morning, by Ganimard's clock."
+    ],
+    [
+     9,
+     "Drinks champagne before dawn, but only after his coffee."
+    ]
+   ]
   },
   {
    "name": "Ines de Almagro",
    "nationality": "Spanish",
-   "bio": "Widow. Travels with eleven trunks and one maid."
+   "meet": 10,
+   "bio": "Widow. Travels with eleven trunks and one maid.",
+   "notes": [
+    [
+     10,
+     "A regular at the Ritz since January, never without her maid."
+    ],
+    [
+     11,
+     "Slept at the Ritz on the night of 11 January, when Mr. Blakeney did."
+    ]
+   ]
   },
   {
    "name": "Rupert Blakeney",
    "nationality": "English",
-   "bio": "Gentleman of leisure from Bath. Excellent coat."
+   "meet": 10,
+   "bio": "Gentleman of leisure from Bath. Excellent coat.",
+   "notes": [
+    [
+     9,
+     "His first order before dawn on the 18th: champagne, as always."
+    ],
+    [
+     11,
+     "At the Ritz every other week since January, never on the same nights as Mr. Grey."
+    ],
+    [
+     12,
+     "His suite was silent from 02:05 to 03:10 on the night of the theft."
+    ]
+   ]
   }
  ],
  "wrong_suspects": {
@@ -173,7 +247,7 @@
   },
   {
    "title": "A Wire Before Dawn",
-   "story": "The Ritz telegraph desk sent eighty wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Bring me the one sent at night, clerk. He signs with one letter, *which is one more than he needs*.'",
+   "story": "The Ritz telegraph desk sent eighty wires on the 18th, and its clerk is *too proud to have read any of them*. Lupin boasts that one of them confirmed his payment. **Ganimard** divides a day his own way: night until six, morning until noon, afternoon until six, evening after that. 'Bring me the one sent at night, clerk. He signs with one letter, *which is one more than he needs*.' **Senor Ortega**, down the corridor, signs everything with a flourish and an R.",
    "objective": "Find the wire the Ritz desk sent at night on the 18th.",
    "answer_form": "the telegram id",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
@@ -210,7 +284,7 @@
   },
   {
    "title": "Never Seen Together",
-   "story": "The other ticket was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor. **Mr. Blakeney** is a regular too. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
+   "story": "The other ticket was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor. The regulars include the **Senora de Almagro**, **M. Sernine** and **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
    "objective": "Find the regular (six stays or more) who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L",
@@ -220,7 +294,7 @@
   },
   {
    "title": "The Silence",
-   "story": "Every suite makes noise at night: the lift boy writes down who rings, room service writes down who is thirsty, the telegraph desk writes down who wires, and charges it to the suite. Laid side by side, the three ledgers show one suite on the second floor falling silent for an hour, around the time the porter heard the lift at 02:10.",
+   "story": "Every suite makes noise at night: the lift boy writes down who rings, room service writes down who is thirsty, the telegraph desk writes down who wires, and charges it to the suite. Laid side by side, the three ledgers show one suite on the second floor falling silent for an hour, around the time the porter heard the lift at 02:10. **M. Velmont**, who paints mostly at night, is seldom in his suite after dark.",
    "objective": "Which suite fell silent on the night of the theft?",
    "answer_form": "the suite number",
    "telegram": "MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L",
@@ -242,7 +316,7 @@
   }
  ],
  "decoys": {
-  "1": 1180
+  "1": 1874
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **Rupert Blakeney, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",

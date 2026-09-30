@@ -538,6 +538,10 @@ def plant_part1(conn, V, r):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
             (5000 + i, "Ritz", T, r.randint(6, 23) * 100 + r.randint(0, 59), r.choice(GUESTS), r.choice(GUESTS),
              r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(6))))
+    # Ortega signs with an R too: his wire leaves the same desk at 06:20, morning by Ganimard's clock (ch7 decoy)
+    c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=? AND time>=600 AND time<700", (T,))
+    c.execute("INSERT INTO telegram VALUES (7,'Ritz',?,620,'R.','Estancia Ortega, Buenos Aires',?,'SELL THE HERD STOP BUY WHEAT STOP R')",
+              (T, V["ortega_suite"]))
     # --- compete ch7: a second office, a different time bucket (evening, not night)
     c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=? AND time>=1800", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
@@ -555,6 +559,7 @@ def plant_part1(conn, V, r):
     c.execute("INSERT INTO room_service VALUES (7,?,?,150,'tea',2)", (others[0], T))
     c.execute("INSERT INTO room_service VALUES (8,?,?,220,'coffee',2)", (others[0], T))
     V["compete_suite8"] = others[0]
+    V["velmont_suite"] = others[1]
     conn.commit()
 
 
@@ -573,14 +578,15 @@ def plant_part2(conn, V, r):
         c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, 30 + i))
     c.execute("INSERT INTO luggage VALUES (4,2,?,'Lord Ashcombe',12)", (V["trunk_no"],))
     # --- ch10: Blakeney and Mr. Grey alternate weeks Jan-Apr in the same suite, never overlapping.
-    #     Two other frequent guests stay only in Grey's weeks, plus one single night inside a Blakeney week.
+    #     Two suspects, Almagro and Sernine, are regulars too: they stay only in Grey's weeks, plus one single
+    #     night inside a Blakeney week (11 January), so they crossed him once.
     c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<19120515", (V["lupin_suite"],))
     day, rid, who = 19120106, 20000, 0
     names = ["Rupert Blakeney", "Mr. Grey"]
     while day < 19120501:
         c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, names[who], V["lupin_suite"], day, _add_days(day, 6)))
         rid += 1; who ^= 1; day = _add_days(day, 7)
-    for i, name in enumerate(["Baron von Stroheim", "Cornelius Bell"]):
+    for i, name in enumerate(["Ines de Almagro", "Paul Sernine"]):
         d = 19120113 + i     # Grey's weeks start on the 13th
         for k in range(7):
             c.execute("INSERT INTO hotel_register VALUES (?,?,?,3,80,?,?)", (rid, name, 301 + i, d, _add_days(d, 4))); rid += 1
@@ -593,7 +599,8 @@ def plant_part2(conn, V, r):
             c.execute("INSERT INTO hotel_register VALUES (?,?,303,3,80,19120111,19120112)", (rid, name)); rid += 1
     # --- ch11: the night of the theft. Lupin's suite is silent 02:05-03:10 (lift down, lift up), then
     #     champagne at 03:20 and the telegram at 03:30. Every other second-floor suite has a lift event
-    #     inside the window; suite 407 has a longer silence, 03:10-05:55, after the window.
+    #     inside the window, except Velmont's: he goes down at 02:30 to paint and comes back at 05:55, a longer
+    #     silence than Lupin's but after the lift the porter heard.
     c.execute("DELETE FROM lift_log WHERE date=? AND time<600", (T,))
     c.execute("DELETE FROM telegram WHERE date=? AND time<600 AND suite IS NOT NULL AND id<>?", (T, V["night_telegram_id"]))
     c.execute("INSERT INTO lift_log VALUES (1,?,205,2,?,'down')", (T, V["lupin_suite"]))
@@ -601,10 +608,10 @@ def plant_part2(conn, V, r):
     lid = 10
     for t in (130, 230, 330):
         for s in FLOOR2:
-            if s != V["lupin_suite"]:
+            if s not in (V["lupin_suite"], V["velmont_suite"]):
                 c.execute("INSERT INTO lift_log VALUES (?,?,?,2,?,?)", (lid, T, t, s, r.choice(["up", "down"]))); lid += 1
-    c.execute("INSERT INTO lift_log VALUES (90,?,310,4,407,'up')", (T,))
-    c.execute("INSERT INTO lift_log VALUES (91,?,555,4,407,'down')", (T,))
+    c.execute("INSERT INTO lift_log VALUES (90,?,230,2,?,'down')", (T, V["velmont_suite"]))
+    c.execute("INSERT INTO lift_log VALUES (91,?,555,2,?,'up')", (T, V["velmont_suite"]))
     # --- ch12: the money chain, seven hops of 98%, one hop split in two, one shell with unrelated
     #     traffic the same day, crossing into June. The last account belongs to the Comtesse (person 9).
     amt, acct, chain, day = V["chain_amount"], V["shell_account"], [], 19120520
