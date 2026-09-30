@@ -42,6 +42,7 @@ WITH ashcombe_trunks AS (SELECT l.trunk_no, t.person_id FROM luggage AS l JOIN t
 SELECT g.guest_name FROM (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6) AS g WHERE g.guest_name <> 'Rupert Blakeney' AND NOT EXISTS (SELECT 1 FROM hotel_register AS x JOIN hotel_register AS y ON x.guest_name = 'Rupert Blakeney' AND y.guest_name = g.guest_name WHERE x.checkin < y.checkout AND y.checkin < x.checkout);
 
 -- 11. The Silence (LAG() OVER) -> the suite number: 214
+SELECT time, suite, direction FROM lift_log WHERE date = 19120518 AND time < '06:00' ORDER BY time;
 WITH ev AS (SELECT suite, time FROM lift_log WHERE date = 19120518 AND time < '06:00' UNION ALL SELECT suite, time FROM room_service WHERE date = 19120518 AND time < '06:00' UNION ALL SELECT suite, time FROM telegram WHERE date = 19120518 AND time < '06:00' AND suite IS NOT NULL), gaps AS (SELECT suite, time, LAG(time) OVER (PARTITION BY suite ORDER BY time) AS prev FROM ev) SELECT suite FROM gaps WHERE prev <= '02:05' AND time >= '03:10';
 
 -- 12. Follow the Money (WITH RECURSIVE) -> the person's name: Comtesse de Cagliostro

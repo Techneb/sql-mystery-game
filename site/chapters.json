@@ -103,7 +103,7 @@
    "story": "*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse, and drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.* 'One of these is ours. **Duroc**, the night porter, was in the lobby. He never sleeps and never forgets.'",
    "objective": "Mr Duroc knows which night.",
    "answer_form": "the report id (a number)",
-   "telegram": "MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP ASK WHO PAYS THE MOST STOP A L",
+   "telegram": "MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L",
    "answer_sha256": "f0f92eb79cec3fad7e7ad71ccfff43a904058162827b274830c05ffc6ec501fb",
    "n": 1,
    "tables": [
@@ -137,7 +137,7 @@
   },
   {
    "title": "The Cab's Week",
-   "story": "The driver of the cab has *a bad memory and a good book*. **Ganimard** snorts: 'A gentleman thief does not hail cabs, clerk. He keeps one. This driver is paid to forget where he goes -- but the company pays him to write it down.' He reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. More than once, more than twice, perhaps. Find me the address this cab kept returning to. *I do not want the list. I want the address.*'",
+   "story": "The driver of the cab has *a bad memory and a good book*. **Ganimard** snorts: 'A gentleman thief does not hail cabs, clerk. He keeps one. This driver is paid to forget where he goes -- but the company pays him to write it down.' He reads the week before the theft: sixty fares, the 13th to the 19th. 'A thief with a plan visits his fence before the job. Find me the address this cab kept returning to. *I do not want the list. I want the address.*'",
    "objective": "Where did the cab from chapter 3 keep going the week before the theft?",
    "answer_form": "the address (number and street)",
    "telegram": "MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L",
@@ -150,7 +150,7 @@
    "story": "The address is a boarding house: five tenants and a landlady who has *seen nothing since 1889*. **Ganimard** wants the tenant whose trade is jeweller; *every fence in Paris calls himself a jeweller*.",
    "objective": "Who is the jeweller at the address from chapter 4?",
    "answer_form": "the person's name",
-   "telegram": "MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP ADD IT UP STOP A L",
+   "telegram": "MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP A L",
    "answer_sha256": "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c",
    "n": 5,
    "tables": [
@@ -160,7 +160,7 @@
   },
   {
    "title": "Follow the Francs",
-   "story": "The jeweller keeps an account at the *Credit Lyonnais* and, since **Ganimard** has a warrant, the bank keeps nothing from him. 'Find his account first, clerk, then see what it paid out in May. Twenty-four payments, to a dozen people. A fence pays a thief in pieces, *so the bank does not blink*. Do not show me the biggest cheque, that is what he wants you to see. Show me the account that received the most from him in total this month.'",
+   "story": "The jeweller keeps an account at the *Credit Lyonnais* and, since **Ganimard** has a warrant, the bank keeps nothing from him. 'Twenty-four payments in May, to a dozen people. A fence pays a thief in pieces, *so the bank does not blink*.'",
    "objective": "Which account did the jeweller from chapter 5 pay the most in May, all payments counted?",
    "answer_form": "the account number (five digits)",
    "telegram": "MY DEAR GANIMARD STOP THE SUM NOT THE LARGEST STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK BEFORE DAWN STOP THE CLERK THERE READS NOTHING STOP A L",
@@ -173,7 +173,7 @@
   },
   {
    "title": "A Wire Before Dawn",
-   "story": "The Ritz telegraph desk sent eighty wires on the 18th and its clerk is *too proud to have read any of them*. **Ganimard** has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Look at the times first, clerk, before you sort them into my four boxes, and bring me the one sent at night. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, *which is one more than he needs*.'",
+   "story": "The Ritz telegraph desk sent eighty wires on the 18th and its clerk is *too proud to have read any of them*. **Ganimard** has his own idea of a day: night before six, morning before noon, afternoon before six, evening after that. 'Bring me the one sent at night, clerk. The sender confirms a payment to the account you found in chapter 6. He signs with one letter, *which is one more than he needs*.'",
    "objective": "Find the wire the Ritz desk sent at night on the 18th.",
    "answer_form": "the telegram id (a number)",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
@@ -185,7 +185,7 @@
   },
   {
    "title": "The First Order Before Dawn",
-   "story": "*'As always my first order before dawn.'* **Ganimard** underlines it, then taps the telegram itself. 'Read the whole thing this time, clerk -- *he names his poison*. The Ritz keeps a room-service ledger. Find me the suite whose FIRST order of the 18th matches it, before six. Not any order. The first.' **Senor Ortega**, you recall, also likes champagne.",
+   "story": "*'As always my first order before dawn.'* **Ganimard** underlines it, then taps the telegram itself. 'Read the whole thing this time, clerk -- *he names his poison*. The Ritz keeps a room-service ledger.'",
    "objective": "His first order of the 18th, before dawn, is named in the wire from chapter 7. Whose suite was it?",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L",
@@ -197,7 +197,7 @@
   },
   {
    "title": "The Trunk",
-   "story": "**Ganimard** has gone home to his cat. *You have not.* The Blue Star *'sends regards from London'*: the boat train left the Gare du Nord on the 19th and **Lord Ashcombe** was on it, with his trunks. So was somebody else's ticket. Every trunk in the baggage car is entered under an owner's name and a ticket number, and nobody at the *Compagnie du Nord* checks that the two agree. Find the trunk that says Ashcombe on the label but travelled on a ticket bought by a man who is not Ashcombe.",
+   "story": "**Ganimard** has gone home to his cat. *You have not.* The Blue Star *'sends regards from London'*: the boat train left the Gare du Nord on the 19th and **Lord Ashcombe** was on it, with his trunks. So was somebody else's ticket. Every trunk in the baggage car is entered under an owner's name and a ticket number, and nobody at the *Compagnie du Nord* checks that the two agree.",
    "objective": "Find the trunk labelled for the neighbour that travelled on somebody else's ticket.",
    "answer_form": "the trunk number (a letter, a dash, a digit)",
    "telegram": "MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L",
@@ -210,8 +210,8 @@
   },
   {
    "title": "Never Seen Together",
-   "story": "The ticket was bought for cash. The clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the second floor. The Ritz has a handful of regulars who have stayed often since January. So has **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man, and a man cannot sleep in two suites on the same night. Among the regular guests, six stays or more, find the one who has never once been in the hotel on the same night as Blakeney. Beware: the **Baron** and **Mr. Bell** each crossed him for exactly one night, and one night is enough to be two people.",
-   "objective": "Find the regular who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
+   "story": "The ticket was bought for cash. The clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the second floor. The Ritz has a handful of regulars who have stayed often since January. So has **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man, and a man cannot sleep in two suites on the same night.",
+   "objective": "Find the regular (six stays or more) who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L",
    "answer_sha256": "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46",
@@ -220,7 +220,7 @@
   },
   {
    "title": "The Silence",
-   "story": "Every suite makes noise at night: the lift boy writes down who rings, room service writes down who is thirsty, the telegraph desk writes down who wires, and charges it to the suite. Put the three ledgers together for the night of the 18th, suite by suite, in order of time. Somewhere on the second floor a suite fell silent at 02:05, when the lift went down, and woke at 03:10, when it came back up; the porter heard it at 02:10. Suite 407 slept longer, but later. *That is not your suite.*",
+   "story": "Every suite makes noise at night: the lift boy writes down who rings, room service writes down who is thirsty, the telegraph desk writes down who wires, and charges it to the suite. Put the three ledgers together. Somewhere on the second floor a suite fell silent for an hour, around the time the porter heard the lift at 02:10.",
    "objective": "Which suite fell silent on the night of the theft?",
    "answer_form": "the suite number",
    "telegram": "MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L",
@@ -232,7 +232,7 @@
   },
   {
    "title": "Follow the Money",
-   "story": "The last of the forty thousand francs reached the shell account of chapter 6 on the 21st; the first of it had already left on the 20th. From there the money moves every three days, less two percent at every door, through shell accounts at four banks, into June. One hop was paid in two halves. One shell account did other business the same day. Follow the ninety-eight percent, and only the ninety-eight percent, seven doors down, and read the name on the last account. **Ganimard** will not like it.",
+   "story": "The last of the forty thousand francs reached the shell account of chapter 6 on the 21st; the first of it had already left on the 20th. From there the money moves every three days, less two percent at every door, through shell accounts at four banks, into June. Follow the ninety-eight percent, and only the ninety-eight percent, seven doors down, and read the name on the last account. **Ganimard** will not like it.",
    "objective": "Follow the ninety-eight percent from the account of chapter 6, seven doors down. Whose is the last account?",
    "answer_form": "the person's name",
    "telegram": "MY DEAR GANIMARD STOP INSURANCE PAYS THREE HUNDRED THOUSAND FOR A STONE WORTH FORTY THOUSAND STOP ARITHMETIC IS THE GREATEST OF CRIMES STOP A L",
