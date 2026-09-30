@@ -640,6 +640,18 @@ def scatter_planted(conn, noise, r):
     assert not conn.execute("PRAGMA foreign_key_check").fetchall(), "scatter_planted broke a foreign key"
 
 
+def clock_times(conn):
+    """Planting works on HHMM integers (205 = 02:05); students read 'HH:MM' text, which still sorts and compares."""
+    for (t, ddl) in conn.execute("SELECT name, sql FROM sqlite_master WHERE type='table' AND sql LIKE '% time INTEGER%'").fetchall():
+        cols = [c[1] for c in conn.execute("PRAGMA table_info(%s)" % t)]
+        conn.execute("ALTER TABLE %s RENAME TO %s_old" % (t, t))
+        conn.execute(ddl.replace(" time INTEGER", " time TEXT"))
+        conn.execute("INSERT INTO %s SELECT %s FROM %s_old" % (t, ", ".join(
+            "printf('%02d:%02d', time / 100, time % 100)" if c == "time" else c for c in cols), t))
+        conn.execute("DROP TABLE %s_old" % t)
+    conn.commit()   # an open transaction would leave write_outputs' backup retrying forever
+
+
 def build_db(seed):
     V = plant_values(seed)
     r = random.Random(seed)
@@ -650,6 +662,7 @@ def build_db(seed):
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
     scatter_planted(conn, noise, r)
+    clock_times(conn)
     # The ch.1 decoy (the eve's Ritz theft): a wrong answer the site's "Filed Under the 17th" badge recognises,
     # looked up after scatter_planted moved it. Shipped in chapters.json, so it must never be the answer.
     (V["decoy_report_id"],) = conn.execute(
