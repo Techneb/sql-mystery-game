@@ -1,6 +1,6 @@
 # Video 2: "Case Closed, Twice" (closes Part II)
 
-Plays after chapter XII, above the ending text. About 46 s, 6 shots. The forty thousand francs ended in the
+Plays after chapter XII, above the ending text. About 28 s, 6 shots (4 s each, 6 s for the gestures). The forty thousand francs ended in the
 Comtesse's account and the stone was insured for three hundred thousand: she hired the thief. Ganimard knows
 it and cannot prove it. Lupin, in London, sends a telegram with a photograph. Night palette: dusk, then
 lamplight.
@@ -19,7 +19,7 @@ what to save. Use the same folder as Video 1: `~/Downloads/ritz-video/`.
 | What | Image steps (stills) | Video steps |
 |---|---|---|
 | Tool in OpenGen | Image | Video |
-| Model | **Nano Banana Pro** | **Veo 3.1** (use **Veo 3.1 Fast** for drafts, full Veo 3.1 for the final take) |
+| Model | **Nano Banana Pro** | **Veo 3.1**, **4 s** (6 s only where the shot says so); 8 s was too long and costs 800 credits a clip |
 | Mode | Image to Image / with reference images | **Image to Video** |
 | Aspect ratio | **16:9** | **16:9** |
 | Size / resolution | the largest 16:9 offered (1920x1080 or more) | **1080p** if offered, else 720p |
@@ -38,7 +38,7 @@ If a face drifts in Veo, redo that shot with **Kling 2.6 Pro**, Image to Video, 
 
 ---
 
-## Shot 1: The Ritz at dusk (8 s)
+## Shot 1: The Ritz at dusk (4 s)
 
 **1a. Still**
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
@@ -49,14 +49,14 @@ The Place Vendome in Paris at dusk, May 1912, seen from across the square: the b
 - Save as **`p2_s1.png`**.
 
 **1b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p2_s1.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s1.png`.
 - Paste:
 ```
 Slow drift towards the lit second-floor windows of the Ritz; the lamplighter's flame catches and a gas lamp begins to glow; the cab horse shifts its weight; the sky deepens towards night. Subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: an evening square, hooves on cobbles, a far church bell. No music, no speech.
 ```
 - Save as **`p2_s1.mp4`**. Caption: *THE RITZ, 23 MAY 1912, EVENING.*
 
-## Shot 2: The Comtesse receives Ganimard (8 s)
+## Shot 2: The Comtesse receives Ganimard (6 s)
 
 **2a. Still**
 - Image, Nano Banana Pro, 16:9. References: `comtesse.jpg`, `ganimard_ref.png`, `style_ref.png`.
@@ -67,7 +67,7 @@ The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls
 - Save as **`p2_s2.png`**.
 
 **2b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p2_s2.png`. References (if allowed):
+- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s2.png`. References (if allowed):
   `comtesse.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
@@ -75,7 +75,7 @@ She finishes pouring and offers the cup with a faint, perfectly polite smile. Ga
 ```
 - Save as **`p2_s2.mp4`**. Caption: *She offered tea. Ganimard declined, which was a first.*
 
-## Shot 3: The insurance policy (8 s)
+## Shot 3: The insurance policy (4 s)
 
 **3a. Still**
 - Image, Nano Banana Pro, 16:9. References: `comtesse.jpg`, `style_ref.png`.
@@ -86,14 +86,14 @@ Close-up on a writing desk in the Comtesse's suite by candlelight: an insurance 
 - Save as **`p2_s3.png`**.
 
 **3b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p2_s3.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s3.png`.
 - Paste:
 ```
 Her fingers tap the wax seal once, unhurried, then slide the policy an inch towards the empty jewel case. The candle flame flickers; the camera tilts slowly from the policy to the empty case. Subtle realistic motion, painted texture visible. Sound: paper on wood, a candle's soft flutter, the clock. No music, no speech.
 ```
 - Save as **`p2_s3.mp4`**. Caption: *Insured for three hundred thousand francs. Worth forty.*
 
-## Shot 4: Ganimard leaves (6 s)
+## Shot 4: Ganimard leaves (4 s)
 
 **4a. Still**
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `style_ref.png`.
@@ -104,14 +104,14 @@ A long lamplit corridor of the Ritz at night, red carpet, gilt wall sconces: Ins
 - Save as **`p2_s4.png`**.
 
 **4b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s4.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s4.png`.
 - Paste:
 ```
 Ganimard walks slowly away down the corridor; the door beside the camera swings shut and the warm slice of light narrows to nothing. Subtle realistic motion, painted texture visible, steady camera. Sound: footsteps on carpet, the door's soft click. No music, no speech.
 ```
 - Save as **`p2_s4.mp4`**. Caption: *Case closed. Twice.*
 
-## Shot 5: London (8 s)
+## Shot 5: London (4 s)
 
 **5a. Still**
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `style_ref.png`.
@@ -122,7 +122,7 @@ A London telegraph office at night in gaslight, rain running down the window ont
 - Save as **`p2_s5.png`**.
 
 **5b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p2_s5.png`. Reference (if allowed):
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s5.png`. Reference (if allowed):
   `blakeney.jpg`.
 - Paste:
 ```
@@ -130,7 +130,7 @@ The form slides across the counter; the clerk takes it and starts tapping the te
 ```
 - Save as **`p2_s5.mp4`**. Caption: *LONDON. A TELEGRAM, AND A PHOTOGRAPH.*
 
-## Shot 6: The ring, then the clerk's desk (6 s + 6 s)
+## Shot 6: The ring, then the clerk's desk (4 s + 4 s)
 
 **6a. Still: the photograph**
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
@@ -141,7 +141,7 @@ A sepia photograph lying on a desk at the Paris Prefecture under a green banker'
 - Save as **`p2_s6a.png`**.
 
 **6b. Video: the photograph**
-- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s6a.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s6a.png`.
 - Paste:
 ```
 Slow push-in on the photograph until the ring fills the frame; the lamp's light catches the sheen of the paper and the blue of the stone. Subtle realistic motion, painted texture visible. Sound: the hum of the lamp, a page turning somewhere. No music, no speech.
@@ -157,7 +157,7 @@ Morning at the Paris Prefecture: a small tidy desk by a tall window over the roo
 - Save as **`p2_s6b.png`**.
 
 **6d. Video: the desk**
-- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s6b.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s6b.png`.
 - Paste:
 ```
 The morning light slowly warms across the desk; a pigeon lands on the window sill; dust motes drift in the sun. Subtle realistic motion, painted texture visible, still camera. Sound: the city waking outside, a pigeon's wings. No music, no speech.

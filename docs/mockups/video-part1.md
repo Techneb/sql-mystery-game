@@ -1,6 +1,6 @@
 # Video 1: "The Boat Train" (closes Part I)
 
-Plays at the top of the Chapter VIII extra edition. About 46 s, 6 shots. Gare du Nord, 20 May 1912, 09:10:
+Plays at the top of the Chapter VIII extra edition. About 28 s, 6 shots (4 s each, 6 s for the gestures). Gare du Nord, 20 May 1912, 09:10:
 Ganimard arrests Rupert Blakeney (Lupin), but the stone has already left on the boat train. Never show the
 stone: only the empty case.
 
@@ -17,8 +17,8 @@ All in the owner's OpenGen **Creations** (Image library), Nano Banana Pro, 16:9:
 - Shot 5 end (open, empty case) and shot 6 came out well.
 - Videos: shot 1 generated with **Veo 3.1, 8 s, 720p: 800 credits per clip** (the menu says "from 400",
   that is 4 s). Six clips for Part I is about 4,800 credits, both films about 9,600. Cheaper image-to-video
-  models in the same tool: Kling 3.0 (from 126), Seedance 2.0 (from 60), Wan 2.7 (from 50). Next: check
-  shot 1's clip with the owner, then decide Veo vs a cheaper model (or 4-6 s clips) for the other five.
+  models in the same tool: Kling 3.0 (from 126), Seedance 2.0 (from 60), Wan 2.7 (from 50). Decided: 4 s clips
+  (6 s for shots 3 and 5); shot 1's 8 s clip is kept and trimmed to 4 s in assembly. Next: check it with the owner, then decide Veo vs a cheaper model (or 4-6 s clips) for the other five.
   Video 2 not started.
 
 How driving OpenGen works (for the next session): typing into the prompt box drops characters, so set the
@@ -39,7 +39,7 @@ From the project folder, `site/portraits/`: `blakeney.jpg`, `ashcombe.jpg`. Copy
 | What | Image steps (stills) | Video steps |
 |---|---|---|
 | Tool in OpenGen | Image | Video |
-| Model | **Nano Banana Pro** | **Veo 3.1** (use **Veo 3.1 Fast** for drafts, full Veo 3.1 for the final take) |
+| Model | **Nano Banana Pro** | **Veo 3.1**, **4 s** (6 s only where the shot says so); 8 s was too long and costs 800 credits a clip |
 | Mode | Image to Image / with reference images | **Image to Video** |
 | Aspect ratio | **16:9** | **16:9** |
 | Size / resolution | the largest 16:9 offered (1920x1080 or more) | **1080p** if offered, else 720p |
@@ -80,7 +80,7 @@ A wide painted establishing image that sets the look of a short film: Paris, May
 
 ---
 
-## Shot 1: The station (8 s)
+## Shot 1: The station (4 s)
 
 **1a. Still**
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
@@ -91,14 +91,14 @@ The Gare du Nord in Paris at nine in the morning, May 1912, seen from high at th
 - Save as **`p1_s1.png`**.
 
 **1b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p1_s1.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s1.png`.
 - Paste:
 ```
 Slow push-in towards the boat train along the platform. Steam rises and drifts through the shafts of sunlight, a porter crosses the frame from left to right with a trolley, pigeons flutter under the roof girders, travellers walk at an unhurried morning pace. The painting comes alive with subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: the echo of a large station, a distant whistle, footsteps, steam hissing. No music, no speech.
 ```
 - Save as **`p1_s1.mp4`**. Caption (added later): *GARE DU NORD, 20 MAY 1912, 09:10.*
 
-## Shot 2: The gentleman, followed (8 s)
+## Shot 2: The gentleman, followed (4 s)
 
 **2a. Still**
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
@@ -109,7 +109,7 @@ Medium tracking view along the platform beside the boat train: Rupert Blakeney, 
 - Save as **`p1_s2.png`**.
 
 **2b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p1_s2.png`. Reference images (if
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s2.png`. Reference images (if
   allowed with a first frame): `blakeney.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
@@ -117,7 +117,7 @@ The camera tracks alongside Blakeney at walking pace as he strolls beside the ca
 ```
 - Save as **`p1_s2.mp4`**. Caption: *Mr. Blakeney had a train to catch.*
 
-## Shot 3: The hand on the shoulder (6 s, start and end frames)
+## Shot 3: The hand on the shoulder (6 s)
 
 **3a. Start still**
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
@@ -144,7 +144,7 @@ The gloved hand comes down and settles on the shoulder, the grip tightens on the
 ```
 - Save as **`p1_s3.mp4`**. Caption: *Inspector Ganimard had not slept in three days.*
 
-## Shot 4: The smile and the case (8 s)
+## Shot 4: The smile and the case (4 s)
 
 **4a. Still**
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
@@ -155,7 +155,7 @@ Two-shot at the carriage door, faces in profile to each other and very close: Ru
 - Save as **`p1_s4.png`**.
 
 **4b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p1_s4.png`. References (if
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s4.png`. References (if
   allowed): `blakeney.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
@@ -163,7 +163,7 @@ Blakeney's smile widens slightly; with exaggerated courtesy he offers the small 
 ```
 - Save as **`p1_s4.mp4`**. Caption: *'You have my name, Inspector.'*
 
-## Shot 5: The empty case (6 s, start and end frames)
+## Shot 5: The empty case (6 s)
 
 **5a. Start still**
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `style_ref.png`.
@@ -190,7 +190,7 @@ A gloved thumb lifts the clasp and the lid opens slowly on the empty satin hollo
 ```
 - Save as **`p1_s5.mp4`**. Caption: *The case was empty.*
 
-## Shot 6: The train leaves (8 s, then extend)
+## Shot 6: The train leaves (4 s)
 
 **6a. Still**
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `blakeney.jpg`, `ashcombe.jpg`, `style_ref.png`.
@@ -201,13 +201,12 @@ Wide shot along the platform: the boat train beginning to pull out towards the b
 - Save as **`p1_s6.png`**.
 
 **6b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **8 s**, audio on. First frame: `p1_s6.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s6.png`.
 - Paste:
 ```
 The train accelerates away towards the light, the luggage van and its trunks receding, steam filling the platform. In the foreground the two men stand still; Blakeney's smile does not change. As the steam clears the camera pulls slowly back and up; pigeons lift off the roof girders. Subtle realistic motion, painted texture visible. Sound: the train's whistle, the rhythm of wheels fading, then the quiet station. No music, no speech.
 ```
-- If OpenGen offers **Extend** on the result, extend it once (about 4-7 s) with: `The station empties; the last steam drifts up into the sunlight; the two men remain still.`
-- Save as **`p1_s6.mp4`**. Captions: *'The Blue Star has a train to catch.'*, then on the last seconds:
+- - Save as **`p1_s6.mp4`**. Captions: *'The Blue Star has a train to catch.'*, then on the last seconds:
   *Part I closed. The stone was not.*
 
 ---
