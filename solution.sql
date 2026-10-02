@@ -186,6 +186,13 @@ WHERE floor = 2
 );
 -- Answer: Rupert Blakeney
 
+-- Part II: the code. Lupin mentioned a Chapter IX; a telegram is addressed to a curious clerk.
+SELECT *
+FROM telegram
+WHERE recipient LIKE '%CURIOUS%';
+-- Type the first four words of its text in the answer box.
+-- Answer: STOP READING THE NOISE
+
 -- 09. The Trunk (CTE + JOIN) -> the trunk number: A-7
 -- Put each of Ashcombe's trunks next to the ticket it travelled on, then keep the one whose ticket belongs to somebody else: the unknown gentleman who paid cash.
 -- The answer:

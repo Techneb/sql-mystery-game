@@ -964,6 +964,12 @@ def solution_sql(V):
         lines.append(format_sql(ch["solution"].format(**V) + ";"))
         lines.append("-- Answer: %s" % V[ch["answer_key"]])
         out.append("\n".join(lines))
+        if ch["n"] == 8:   # between the parts: the telegram whose code, typed in the answer box, opens Part II
+            out.append("\n".join([
+                "-- Part II: the code. Lupin mentioned a Chapter IX; a telegram is addressed to a curious clerk.",
+                format_sql("SELECT * FROM telegram WHERE recipient LIKE '%CURIOUS%';"),
+                "-- Type the first four words of its text in the answer box.",
+                "-- Answer: %s" % V["part2_code"]]))
     return "\n\n".join(out) + "\n"
 
 

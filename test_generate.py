@@ -229,7 +229,7 @@ class Outputs(unittest.TestCase):
     def test_solution_sql_runs_per_chapter(self):
         conn, V = g.build_db(1912)
         blocks = [b for b in g.solution_sql(V).split("\n\n") if any(not l.startswith("--") for l in b.strip().splitlines())]
-        self.assertEqual(len(blocks), 12)
+        self.assertEqual(len(blocks), 13)   # twelve chapters and the Part II code
         for b in blocks:
             code = "\n".join(l for l in b.splitlines() if not l.startswith("--"))
             stmts = [q.strip() for q in code.split(";") if q.strip()]   # formatted: one statement spans several lines
