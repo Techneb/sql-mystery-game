@@ -42,6 +42,6 @@ watchful expression, a closed fan in a gloved hand.
 clean-shaven, dark hair neatly combed, a knowing, amused look, an impeccable dark overcoat with a velvet collar
 (the "excellent coat"), white silk scarf, top hat in hand.
 
-**Comtesse de Cagliostro** (Part II ending, not a suspect) -- an Italian countess of about 40, striking, auburn
-hair piled high, pale skin, a long sapphire-blue evening gown, holding an open, empty velvet jewel case, a cool
-half-smile.
+**Comtesse de Cagliostro** (Part II ending, not a suspect; already generated, `comtesse.jpg`) -- a woman of
+about 30, pale, dark hair in a low loose chignon with a few strands free, red lips, a faint knowing half-smile, a
+sapphire-blue silk and lace gown off the shoulders, a high black lace collar, long drop earrings.
