@@ -420,7 +420,9 @@ function ctx(extra) {
 }
 
 function renderBoard() {
-  $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + "</b> " + esc(state.answers[n]) + "</div>").join("");
+  const label = n => (data.chapters.find(c => c.n === n) || {}).board || "";
+  $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + '</b> <span class="card-label">' +
+    esc(label(n)) + "</span><br>" + esc(state.answers[n]) + "</div>").join("");
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
 }
 

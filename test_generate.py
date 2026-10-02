@@ -346,6 +346,15 @@ class ChapterSeven(unittest.TestCase):
         self.assertIn("also signs R", card)
 
 
+class Board(unittest.TestCase):
+    def test_every_card_says_what_its_answer_is(self):
+        for mode, seed in (("learn", 1912), ("compete", 7)):
+            conn, V = g.build_db(seed)
+            for ch in g.chapters_json(V, mode)["chapters"]:
+                self.assertTrue(ch["board"], (mode, ch["n"]))
+            conn.close()
+
+
 class SolutionSql(unittest.TestCase):
     def test_formatter_matches_the_site(self):
         import re

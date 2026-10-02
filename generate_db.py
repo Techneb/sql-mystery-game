@@ -808,6 +808,7 @@ def chapters_json(V, mode="learn"):
         d["objective"] = ch["objective" + suf].format(**V)
         d["answer_form"] = ch["answer_form" + suf].format(**V)
         d["telegram"] = ch["telegram"].format(**V)
+        d["board"] = ch.get("board" + suf, ch["board"])   # what the answer is, on its case-board card
         d.update(answer_sha256=sha(V[ch["answer_key" + suf]]), n=ch["n"], tables=ch["tables"])
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,
