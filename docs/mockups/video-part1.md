@@ -20,6 +20,12 @@ All in the owner's OpenGen **Creations** (Image library), Nano Banana Pro, 16:9:
   models in the same tool: Kling 3.0 (from 126), Seedance 2.0 (from 60), Wan 2.7 (from 50). Decided: 4 s clips
   (6 s for shots 3 and 5); shot 1's 8 s clip is kept and trimmed to 4 s in assembly. Next: check it with the owner, then decide Veo vs a cheaper model (or 4-6 s clips) for the other five.
   Video 2 not started.
+- Videos made (Veo 3.1, 720p, OpenGen Video library): shot 1 (8 s, trim to 4 s) and shot 2 (4 s, 400
+  credits). **Veo 3.1 on OpenGen takes no end image** ("This model doesn't support end images"): shots 3 and
+  5 use the start image only and describe the gesture (shot 3 starts from the clear shoulder, the hand comes
+  in; shot 5 from the closed case, the lid opens on empty satin); if a gesture fails, redo that one shot on
+  Kling 3.0, which takes start and end images. Shot 3 was refused for lack of credits. Left for Part I:
+  shot 3 (6 s, 600), shot 4 (4 s, 400), shot 5 (6 s, 600), shot 6 (4 s, 400): about 2,000 credits.
 
 How driving OpenGen works (for the next session): typing into the prompt box drops characters, so set the
 textarea value by script (native value setter + input event), then type one space so the page registers it,
