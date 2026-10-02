@@ -344,7 +344,9 @@ framework, no bundler.
     text. The generator's corner watermark was cropped off all eight files (a uniform 5% tighter
     frame, 3:4 kept), so the committed assets are clean, not just hidden by the oval mask.
 
-- **Redo three portraits: Ashcombe, Sernine, Ortega** (course owner, 2026-09-30: they read as the same
+- ~~Redo three portraits: Ashcombe, Sernine, Ortega~~ Done 2026-10-02: the course owner generated all seven
+  (the six suspects and the Comtesse) from `docs/mockups/portrait-prompts.md`, 1024x1024; white margins trimmed
+  (Velmont's sides and corners, Almagro's bottom corners), centre-cropped 3:4, 450x600. Original note: (course owner, 2026-09-30: they read as the same
   lean, dark, moustached man, and Ashcombe should look about 55-60). Blocked: the free no-login endpoint
   (image.pollinations.ai, model flux) now answers 402 after one image. Generate elsewhere, square, same
   Lavery template (prompts: `docs/mockups/portrait-prompts.md`), distinct sitters (Ashcombe: elderly, white mutton-chops, monocle, ruddy; Sernine: ~30,
