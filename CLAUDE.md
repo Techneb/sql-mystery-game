@@ -56,7 +56,7 @@ Python side (build time) -> static files -> browser side (runtime, no server):
 ## Local-only work (cloud sessions cannot do these)
 
 - Visual checks in a real browser (layout, overlaps, phone width, night mode) run through the owner's local Chrome; a cloud session can run both test suites but should say when something is untested visually.
-- Images arrive in the owner's `~/Downloads` (the sapphire was one; the three pending portraits will be): a cloud session needs them committed or attached.
+- Images arrive in the owner's `~/Downloads` (the sapphire, the landing photograph and the 2026-10-02 portraits came that way; the closing videos will): a cloud session needs them committed or attached.
 - `../SQL` (course correction file) only exists on the owner's Mac: after plot changes made elsewhere, run `python3 generate_db.py` there once.
 - Secrets never enter the repo: the admin passphrase (hash in `ADMIN_PASS_SHA256`, same value as the Apps Script's `ADMIN_KEY`) and the Apps Script `/exec` URL come from the owner in chat.
 - Open work: the spec's section 8 backlog (usage analytics with Google Analytics 4, designed there but not built: custom chapter events, Consent Mode with an opt-in banner, privacy.html rewritten in the same change; needs the owner's G- measurement ID) a big UI/UX pass once the student-eye review reaches chapter 12, and phase 4 (a class trial, then tune `RANKS` from real query counts, via the admin panel's Settings).
