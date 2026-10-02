@@ -351,7 +351,7 @@ def fill_noise(conn, V, r):
     for suite in [f * 100 + n for f in range(1, 6) for n in range(1, 41)]:
         day = 19120101
         while day < 19120630:
-            nights = r.randint(1, 5)
+            nights = r.randint(1, 6)   # up to six, like Blakeney's and Grey's weeks: their length is no shortcut
             out = _add_days(day, nights)
             price = {1: 30, 2: 120, 3: 80, 4: 60, 5: 45}[suite // 100] + r.randint(0, 25)
             if suite // 100 == 2 and r.random() < 0.15:   # a gala week on the second floor: dearer than Ashcombe's 190,
@@ -458,11 +458,17 @@ def plant_part1(conn, V, r):
     # the Comtesse, sapphires and a Blue Star appear elsewhere too, so a LIKE search on them is no shortcut to the report
     for rid, d, place, typ, text in [
             (3700, 19120503, "Hotel Ritz", "lost property", "A pair of gloves left by the Comtesse de Cagliostro in the Salon d'Ete. Returned with thanks."),
-            (3710, 19120512, "Place Vendome", "fraud", "A jeweller offers a copy of the Blue Star, the Cagliostro sapphire, for sale. Paste."),
+            (3710, 19120519, "Hotel Ritz", "theft", "A paste copy of the Blue Star, the Cagliostro sapphire, taken from a jeweller's case in the lobby."),
             (3720, 19120522, "Opera", "theft", "A sapphire ring taken from a box at the Opera. The owner suspects her husband."),
             (3730, 19120601, "Hotel Meurice", "fraud", "A man sells the Blue Star at a tenth of its price. He has sold it three times this week."),
             (3740, 19120509, "Grand Hotel", "disturbance", "A racehorse named Blue Star was led through the lobby. The owner insists it had a reservation."),
-            (3750, 19120527, "Hotel Ritz", "lost property", "The Comtesse de Cagliostro reports a lost fan. Found in her own suite, under a calling card.")]:
+            (3750, 19120527, "Hotel Ritz", "lost property", "The Comtesse de Cagliostro reports a lost fan. Found in her own suite, under a calling card."),
+            # and so do the report's own words (balcony, porter, lift, A. L., Duroc), so LIKE on them is no shortcut either
+            (3760, 19120517, "Hotel Ritz", "theft", "The night porter reports a ham taken from a second-floor balcony. A cat is suspected."),
+            (3770, 19120516, "Hotel Ritz", "theft", "A silk glove taken from the lift at ten past two. Marked A. L. in red thread."),
+            (3780, 19120519, "Hotel Ritz", "theft", "Mme Duroc, laundress, reports a pillowcase taken from her cart. A calling card was left in its place."),
+            (3790, 19120517, "Hotel Ritz", "theft", "A card case taken from the cloakroom. The calling cards inside were signed A. L. and are worthless."),
+            (3800, 19120602, "Hotel Ritz", "disturbance", "A guest rang for the lift forty times in one night. The night porter wishes to be transferred.")]:
         c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (rid, d, "Paris", place, typ, text))
     # --- compete ch1: a second, fixed decoy report at a different hotel/date/type, random id per season
     c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=19120611 AND type='burglary'")
@@ -539,38 +545,35 @@ def plant_part1(conn, V, r):
     # --- compete ch6: a second fence, a second shell account, the same three decoys
     c.execute("INSERT INTO bank_account VALUES (?,18,'Societe Generale')", (V["compete_fence_account"],))
     fence_payments(V["compete_fence_account"], V["compete_shell_account"], 60, (12000, 12000, 9000), "Societe Generale", decoys[3:])
-    # --- ch7: telegrams from the Ritz desk on the 18th. Night is the quietest of Ganimard's four boxes (five wires:
-    #     Lupin's at 03:30, after the suite falls silent in ch11, and four from the staff, charged to no suite). All
-    #     five are signed with one initial, so the box is not enough: which letter is only in Ortega's suspect card
-    #     (plot.CAST), and his own R. is at 06:20, in the morning box.
-    # Every Ritz wire of the 18th is planted, so the box counts are exact: night 36 (Lupin's and 35 decoys, each signed
-    # with one initial, never R., paid at the desk so no suite: ch11 is untouched), morning 45 (Ortega's R. at 06:20),
-    # afternoon 49 and evening 41 (three more R. wires). Night is the quietest, but only by counting.
+    # --- ch7: telegrams from the Ritz desk on the 18th.
+    # Every Ritz wire of the 18th is planted, so the box counts are exact. Lupin's wire is in the AFTERNOON (15:10;
+    # Saturday, the races at Longchamp: the quietest box, 36 wires), not at night, so guessing "a thief wires at night"
+    # fails. Night 46 (45 initialled wires paid at the desk, no suite, so ch11 is untouched, and an R. lookalike at
+    # 03:30), morning 48 (Ortega's own R. at 06:20), evening 44 (another R. lookalike at 21:05). The lookalikes read like
+    # Lupin's (payment received, a drink, "first order before dawn"), so neither the hour nor the text gives his away:
+    # only counting the boxes does.
     c.execute("DELETE FROM telegram WHERE office='Ritz' AND date=?", (T,))
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
-        (V["night_telegram_id"], "Ritz", T, 330, "R.", "E. G., Paris",
-         None, "PAYMENT TO {shell_account} RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))
+        (V["night_telegram_id"], "Ritz", T, 1510, "R.", "Poste restante, Paris",   # no account, no E. G.: chapters 5-6
+         None, "PAYMENT RECEIVED STOP {champagne} AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R".format(**V).upper()))   # would name it
     def clock(h0, h1):
         return r.randint(h0, h1 - 1) * 100 + r.randint(0, 59)
     places = ["Ritz, London", "Charvet, Place Vendome", "Halles, Pavillon 9", "Mme Duroc, Pantin", "Hotel de Paris, Monte Carlo",
               "Savoy, London", "Credit Lyonnais, Lyon", "Gare de Lyon, Paris", "Negresco, Nice", "Adlon, Berlin",
               "Waldorf-Astoria, New York", "Le Figaro, Paris", "Maxim's, Paris", "Opera, Vienna"]
     initials = [ch + "." for ch in "BCDEFGHJKLMNPSTVW"]
-    for i in range(35):
-        t = clock(0, 6)
-        while t == 330:
-            t = clock(0, 6)
+    for i in range(45):
         who = r.choice(initials)
-        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (42 + i, "Ritz", T, t, who, r.choice(places), None,
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (20 + i, "Ritz", T, clock(0, 6), who, r.choice(places), None,
                   " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(3, 6))) + " STOP " + who[0]))
-    for i, t in enumerate((1415, 1640, 2105)):   # other guests who sign R.: the letter alone is not enough
-        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (77 + i, "Ritz", T, t, "R.", r.choice(places),
-                  r.choice(range(101, 525)), " ".join(r.choice(TEL_WORDS) for _ in range(5)) + " STOP R"))
+    for i, (t, drink) in enumerate(((330, "POMMERY 1906"), (2105, "KRUG 1904"))):   # R. lookalikes in other boxes
+        c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)", (66 + i, "Ritz", T, t, "R.", "Poste restante, Paris", None,
+                  "PAYMENT RECEIVED STOP %s AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP R" % drink))
     k = 0
-    for h0, h1, n in ((6, 12, 44), (12, 18, 47), (18, 24, 40)):
+    for h0, h1, n in ((6, 12, 47), (12, 18, 35), (18, 24, 43)):
         for _ in range(n):
             t = clock(h0, h1)
-            while t == 620:
+            while t in (620, 1510, 2105):
                 t = clock(h0, h1)
             c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
                 (5000 + k, "Ritz", T, t, r.choice(GUESTS), r.choice(GUESTS), r.choice(range(101, 525)),
@@ -594,11 +597,13 @@ def plant_part1(conn, V, r):
               (1045, "A Jobber"), (1130, "A Clerk"), (1215, "A Jobber"), (1400, "A Clerk"), (1530, "A Jobber"), (1745, "A Broker")]
     for i, (t, who) in enumerate(bourse):
         c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
-                  (30 + i, "Bourse", T, t, who, "A Client", None, " ".join(r.choice(TEL_WORDS) for _ in range(5))))
+                  (88 + i, "Bourse", T, t, who, "A Client", None,
+                   "SHARES BOUGHT STOP PAYMENT TO FOLLOW STOP TEA BEFORE THE OPENING BELL AS ALWAYS STOP" if who == "A Broker"
+                   else " ".join(r.choice(TEL_WORDS) for _ in range(5))))   # the broker's decoy reads like his real wire
     # --- ch8: room service on the 18th; Ortega's suite orders coffee first
     c.execute("DELETE FROM room_service WHERE date=? AND time<600", (T,))
     rs = [(V["lupin_suite"], 320, V["champagne"], 40), (V["lupin_suite"], 900, "coffee", 2),
-          (V["ortega_suite"], 500, "coffee", 2), (V["ortega_suite"], 530, V["champagne"], 40),
+          (V["ortega_suite"], 240, "coffee", 2), (V["ortega_suite"], 300, V["champagne"], 40),   # earliest champagne, not his first
           (V["neighbour_suite"], 730, V["champagne"], 40), (305, 1300, V["champagne"], 40)]
     for i, (s, t, item, amt) in enumerate(rs):
         c.execute("INSERT INTO room_service VALUES (?,?,?,?,?,?)", (1 + i, s, T, t, item, amt))
@@ -617,14 +622,16 @@ def plant_part2(conn, V, r):
     # --- the Part II code, hidden in a noise telegram (Egg Hunter)
     c.execute("INSERT INTO telegram VALUES (9001,'Central',19120519,1512,'A. L.','TO THE CURIOUS CLERK',NULL,?)",
               ("%s STOP THE CODE IS THE FIRST FOUR WORDS STOP" % V["part2_code"],))
-    # --- ch9: Ashcombe's trunks. Three under his own ticket; one under a ticket bought for cash by an
+    # --- ch9: Ashcombe's trunks. Seven under his three tickets; one under a ticket bought for cash by an
     #     unnamed regular (so chapter 10 has to deduce Mr. Grey from the register, not read him here).
     c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
     c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,NULL,NULL)")
     c.execute("INSERT INTO train_ticket VALUES (2,17,19120519,'Boat Train 9:15','London')")
+    c.execute("INSERT INTO train_ticket VALUES (3,1,19120519,'Boat Train 9:15','London')")   # his valet's, bought in his name
+    c.execute("INSERT INTO train_ticket VALUES (4,1,19120519,'Boat Train 9:15','London')")   # his maid's, the same
     labels = ["A-%d" % k for k in range(1, 9) if "A-%d" % k != V["trunk_no"]][:7]   # no gap in the numbering, no odd weight
-    for i, trunk in enumerate(labels):
-        c.execute("INSERT INTO luggage VALUES (?,1,?,'Lord Ashcombe',?)", (1 + i, trunk, r.randint(24, 38)))
+    for i, trunk in enumerate(labels):   # split 3 / 3 / 1 over his three tickets: a trunk alone on its ticket is no tell
+        c.execute("INSERT INTO luggage VALUES (?,?,?,'Lord Ashcombe',?)", (1 + i, (1, 1, 1, 3, 3, 3, 4)[i], trunk, r.randint(24, 38)))
     c.execute("INSERT INTO luggage VALUES (9,2,?,'Lord Ashcombe',?)", (V["trunk_no"], r.randint(24, 38)))
     # --- ch10: Blakeney and Mr. Grey alternate weeks Jan-Apr in the same suite, never overlapping.
     #     Two suspects, Almagro and Sernine, are regulars too: they stay only in Grey's weeks, plus one single
@@ -640,7 +647,7 @@ def plant_part2(conn, V, r):
         else:          # Grey, a different suite each time (so the suite is no shortcut); a noise guest takes 214
             s2 = grey_suites[(rid // 2) % len(grey_suites)]
             c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<? AND checkout>?", (s2, out, day))
-            c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,150,?,?)", (rid, "Mr. Grey", s2, day, out))
+            c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,?,?,?)", (rid, "Mr. Grey", s2, r.randint(121, 145), day, out))
             rid += 1
             c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,145,?,?)", (rid, r.choice(GUESTS), V["lupin_suite"], day, out))
         rid += 1; who ^= 1; day = _add_days(day, 7)
@@ -656,7 +663,7 @@ def plant_part2(conn, V, r):
         if name != V["double_alias"]:
             c.execute("INSERT INTO hotel_register VALUES (?,?,303,3,80,19120111,19120112)", (rid, name)); rid += 1
     # --- ch11: the night of the theft. Lupin's suite is silent 02:05-03:10 (lift down, lift up), then
-    #     champagne at 03:20 and the telegram at 03:30. Every other second-floor suite has a lift event
+    #     champagne at 03:20. Every other second-floor suite has a lift event
     #     inside the window, except Velmont's: he goes down at 02:30 to paint and comes back at 05:55, a longer
     #     silence than Lupin's but after the lift the porter heard.
     c.execute("DELETE FROM lift_log WHERE date=? AND time<600", (T,))

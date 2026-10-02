@@ -143,11 +143,15 @@
    "name": "Rupert Blakeney",
    "nationality": "English",
    "meet": 10,
-   "bio": "Gentleman of leisure from Bath. Excellent coat.",
+   "bio": "Gentleman of leisure from Bath.",
    "notes": [
     [
      9,
      "His first order before dawn on the 18th: champagne, as always."
+    ],
+    [
+     10,
+     "Wears an excellent coat, the kind a booking clerk remembers."
     ],
     [
      11,
@@ -261,7 +265,7 @@
    "objective": "Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
    "answer_form": "the telegram id",
    "telegram": "MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
-   "board": "Night wire",
+   "board": "Lupin's wire",
    "answer_sha256": "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729",
    "n": 7,
    "tables": [
@@ -332,7 +336,7 @@
   }
  ],
  "decoys": {
-  "1": 2274
+  "1": 963
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **Rupert Blakeney, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",
