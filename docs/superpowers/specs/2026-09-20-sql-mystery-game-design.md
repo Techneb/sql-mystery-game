@@ -403,5 +403,5 @@ framework, no bundler.
   velvet case, the train pulling out (it would sit at the top of the Chapter VIII extra edition, `showExtra`).
   Part II: the Comtesse receiving Ganimard in her suite, the insurance papers, Lupin's telegram from London and
   the Blue Star re-set as a ring (after chapter XII). Keep each to a handful of shots, silent, with captions in
-  the paper's voice; plan for a still-image fallback so the page stays light. Prompts written 2026-10-02: `docs/mockups/closing-video-prompts.md`
+  the paper's voice; plan for a still-image fallback so the page stays light. Prompts written 2026-10-02 for OpenGen: `docs/mockups/video-part1.md` and `video-part2.md`
   (seven shots each, keyframe then image-to-video, captions added afterwards, stills fallback).
