@@ -40,7 +40,7 @@ CHAPTERS = [
   solution_compete="SELECT id FROM police_report WHERE place = 'Hotel Meurice' AND date = 19120611 AND type = 'burglary'",
   naive_compete="SELECT id FROM police_report WHERE place = 'Hotel Meurice'", naive_rows_compete=None,
   answer_key_compete="compete_report_id"),
- dict(n=2, board="The neighbour", board_compete="His suite", part=1, construct="ORDER BY / LIMIT", tables=["hotel_register"], answer_key="neighbour",
+ dict(n=2, board="The neighbour", board_compete="His suite", part=1, construct="ORDER BY / LIMIT", tables=["hotel_register", "suite"], answer_key="neighbour",
   discovery=[dict(query="SELECT description FROM police_report WHERE id = {report_id}", must_contain="neighbouring suite", note="The report: the thief came from the neighbouring suite, the most expensive one on the floor, the night of the 17th.")],
   solution="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date} ORDER BY price DESC LIMIT 1",
   naive="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date}", naive_rows=6,
@@ -74,7 +74,7 @@ CHAPTERS = [
   solution_compete="SELECT dropoff FROM cab_ride WHERE plate = '{compete_plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff HAVING COUNT(*) >= 3",
   naive_compete="SELECT DISTINCT dropoff FROM cab_ride WHERE plate = '{compete_plate}' AND date BETWEEN 19120513 AND 19120519", naive_rows_compete=None,
   answer_key_compete="compete_fence_address"),
- dict(n=5, board="The fence", part=1, construct="JOIN", tables=["person", "address"], answer_key="fence",
+ dict(n=5, board="The fence", part=1, construct="JOIN", tables=["person", "address", "guest_card"], answer_key="fence",
   discovery=[
     dict(query="SELECT id FROM address WHERE number = {fence_number} AND street = '{fence_street}'", row_count=1, note="The address's own id."),
     dict(query="SELECT name, occupation FROM person WHERE address_id = (SELECT id FROM address WHERE number = {fence_number} AND street = '{fence_street}')", row_count=5, note="Its five tenants, one of them a jeweller."),

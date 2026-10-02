@@ -33,12 +33,28 @@ class Schema(unittest.TestCase):
         tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         self.assertEqual(tables, {"address", "person", "police_report", "hotel_register", "interview",
                                   "cab_ride", "bank_account", "bank_transaction", "telegram",
-                                  "room_service", "train_ticket", "luggage", "lift_log"})
+                                  "room_service", "train_ticket", "luggage", "lift_log", "suite"})
         fks = {(t, r[3], r[2]) for t in tables
                for r in conn.execute(f"PRAGMA foreign_key_list({t})")}
         self.assertIn(("bank_transaction", "counterparty_id", "bank_account"), fks)
         self.assertIn(("luggage", "ticket_id", "train_ticket"), fks)
-        self.assertEqual(len(fks), 6)
+        self.assertIn(("room_service", "suite", "suite"), fks)
+        self.assertEqual(len(fks), 10)   # + the suite hub; interview, cab_ride and guest_card links come in link_tables
+        conn.close()
+
+    def test_links_after_the_build(self):
+        conn, V = g.build_db(1912)
+        self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(), [])
+        fks = {(t, r[3], r[2]) for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+               for r in conn.execute(f"PRAGMA foreign_key_list({t})")}
+        for link in [("interview", "person_id", "person"), ("cab_ride", "dropoff_address_id", "address"),
+                     ("guest_card", "person_id", "person"), ("hotel_register", "suite", "suite")]:
+            self.assertIn(link, fks)
+        n, d = conn.execute("SELECT COUNT(*), COUNT(DISTINCT person_id) FROM guest_card").fetchone()
+        self.assertEqual(n, d)   # one card per person: drawn 1:1
+        cast = [c["name"] for c in plot.CAST]
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM guest_card g JOIN person p ON p.id = g.person_id WHERE p.name IN (%s)"
+                                      % ",".join("?" * len(cast)), cast).fetchone()[0], 0)   # fun only: no card for a suspect
         conn.close()
 
 
@@ -68,7 +84,7 @@ class Noise(unittest.TestCase):
                   for t in ["person", "cab_ride", "bank_transaction", "telegram", "hotel_register"]}
         self.assertGreaterEqual(counts["person"], 5000)
         self.assertGreaterEqual(counts["cab_ride"], 20000)
-        self.assertGreaterEqual(counts["hotel_register"], 9000)
+        self.assertGreaterEqual(counts["hotel_register"], 5000)   # stays of 1-14 nights with gaps: about 5,500
         for t in ["person", "telegram", "interview", "police_report", "cab_ride"]:
             for row in conn.execute(f"SELECT * FROM {t}"):
                 for v in row:
@@ -285,13 +301,13 @@ class Erd(unittest.TestCase):
         self.assertEqual(pos["bank_transaction"][0], 3)
         self.assertEqual(pos["luggage"][0], 3)
         s = erd.svg(conn)
-        self.assertEqual(s.count('class="table"'), 13)
-        self.assertEqual(s.count('class="fk"'), 6)
+        self.assertEqual(s.count('class="table"'), 14)   # 13 + suite; guest_card is added later, by link_tables
+        self.assertEqual(s.count('class="fk"'), 10)
         self.assertIn('data-table="lift_log"', s)
         self.assertNotIn("-&gt;", s)
         self.assertNotIn("->", s)
-        self.assertEqual(s.count('class="key pk"'), 13)
-        self.assertEqual(s.count('class="key fk"'), 6)
+        self.assertEqual(s.count('class="key pk"'), 14)
+        self.assertEqual(s.count('class="key fk"'), 10)
         s.encode("ascii")
         conn.close()
 
@@ -300,17 +316,10 @@ class Erd(unittest.TestCase):
         conn, V = g.build_db(1912)
         tables, fks = erd.read_schema(conn)
         pos = erd.layout(tables, fks, [t for ch in plot.CHAPTERS for t in ch["tables"]])
-        for t, col, ref, (sx, sy), (ex, ey), bottom in erd.fk_paths(tables, fks, pos):
-            c1, c2 = erd.curve_controls(ey, bottom, sy)
-            pts = []
-            for k in range(1, 40):   # the one cubic from the parent's bottom edge to the child's top edge
-                u = k / 40
-                bx = (1 - u) ** 3 * ex + 3 * (1 - u) ** 2 * u * ex + 3 * (1 - u) * u * u * sx + u ** 3 * sx
-                by = (1 - u) ** 3 * ey + 3 * (1 - u) ** 2 * u * c1 + 3 * (1 - u) * u * u * c2 + u ** 3 * sy
-                pts.append((bx, by))
+        for e in erd.fk_paths(tables, fks, pos):
             for name, (_, x, y, w, h) in pos.items():
-                for px, py in pts:
-                    self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (t, col, name))
+                for px, py in e["points"]:
+                    self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (e["t"], e["col"], name))
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
         conn.close()
 

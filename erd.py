@@ -51,7 +51,8 @@ def layout(tables, fks, order=()):
             if L < 0:
                 return (rank.get(t, len(rank)), t)
             xs = [pos[r][1] for r in refs[t] if r in pos]
-            return (sum(xs) / len(xs) if xs else 0, t)
+            parent = any(t in refs[c] for c in tables if c != t)   # parents go last in their layer, next to their children,
+            return (parent, sum(xs) / len(xs) if xs else 0, t)       # so fewer lines need the gutter
         ordered = sorted(rows[L], key=bary)
         for k in range(0, len(ordered), PER_ROW):
             chunk = ordered[k:k + PER_ROW]
@@ -68,8 +69,17 @@ def cardinality(conn, table, col):
 
 
 def fk_paths(tables, fks, pos):
-    """-> [(table, col, ref, (sx, sy), (ex, ey), row_bottom)]: from the child's top edge to the parent's bottom edge.
-    Several lines between the same two tables are spread sideways so each stays visible."""
+    """-> [dict(t, col, ref, start=(x, y) on the child's top edge, end=(x, y) on the parent's bottom edge, d=SVG path,
+    points=the line sampled, for the test that keeps lines off tables)]. A child in the row just below its parent gets
+    one soft S in the gap between the rows. A child further down runs in the gutter between the two columns: down
+    out of the parent's row, across the gap, down the gutter, across the gap above the child, and in, corners rounded.
+    Lines sharing a gutter or two tables are spread apart, and a parent's lines leave it at different points."""
+    bands = {}
+    for (_, _, y, _, h) in pos.values():
+        bands[y] = max(bands.get(y, 0), y + h)
+    tops = sorted(bands)
+    gutter = W + GAP / 2
+    long_edges = [(t, col, ref) for t, col, ref in fks if tops.index(pos[t][2]) > tops.index(pos[ref][2]) + 1]
     out, seen = [], {}
     for t, col, ref in fks:
         k = seen[(t, ref)] = seen.get((t, ref), -1) + 1
@@ -77,10 +87,39 @@ def fk_paths(tables, fks, pos):
         dx = (k - (n - 1) / 2) * 50
         _, x1, y1, w1, _ = pos[t]
         _, x2, y2, w2, h2 = pos[ref]
-        lean = max(-40, min(40, (x1 + w1 / 2 - (x2 + w2 / 2)) / 4))   # leave the parent leaning towards the child,
-        bottom = max(yy + hh for (_, _, yy, _, hh) in pos.values() if yy == y2)   # the parent's row, not just the parent
-        out.append((t, col, ref, (x1 + w1 / 2 + dx, y1), (x2 + w2 / 2 + dx + lean, y2 + h2), bottom))   # so lines to two children do not share a start
+        lean = max(-40, min(40, (x1 + w1 / 2 - (x2 + w2 / 2)) / 4))   # leave the parent leaning towards the child
+        sx, sy = x1 + w1 / 2 + dx, y1
+        ex, ey = x2 + w2 / 2 + dx + lean, y2 + h2
+        i, j = tops.index(y2), tops.index(y1)
+        if j == i + 1:   # the next row: one S in the gap
+            c1, c2 = curve_controls(ey, bands[y2], sy)
+            d = "M%g %g C%g %g %g %g %g %g" % (ex, ey, ex, c1, sx, c2, sx, sy)
+            pts = [((1 - u) ** 3 * ex + 3 * (1 - u) ** 2 * u * ex + 3 * (1 - u) * u * u * sx + u ** 3 * sx,
+                    (1 - u) ** 3 * ey + 3 * (1 - u) ** 2 * u * c1 + 3 * (1 - u) * u * u * c2 + u ** 3 * sy)
+                   for u in [m / 40 for m in range(1, 40)]]
+        else:            # further down: through the gutter, each line in its own lane
+            lane = long_edges.index((t, col, ref)) - (len(long_edges) - 1) / 2
+            gx = gutter + lane * 6
+            g1 = (bands[y2] + tops[i + 1]) / 2 + lane * 3
+            g2 = (bands[tops[j - 1]] + y1) / 2 + lane * 3
+            corners = [(ex, ey), (ex, g1), (gx, g1), (gx, g2), (sx, g2), (sx, sy)]
+            d = rounded(corners, 6)
+            pts = [(ax + (bx - ax) * m / 20, ay + (by - ay) * m / 20)
+                   for (ax, ay), (bx, by) in zip(corners, corners[1:]) for m in range(21)][1:-1]
+        out.append(dict(t=t, col=col, ref=ref, start=(sx, sy), end=(ex, ey), d=d, points=pts))
     return out
+
+
+def rounded(points, r):
+    """An orthogonal polyline as an SVG path, each corner rounded by r (less where a leg is shorter)."""
+    d = "M%g %g" % points[0]
+    for (ax, ay), (bx, by), (cx, cy) in zip(points, points[1:], points[2:]):
+        r1 = min(r, (abs(bx - ax) + abs(by - ay)) / 2, (abs(cx - bx) + abs(cy - by)) / 2)
+        sgn = lambda v: (v > 0) - (v < 0)
+        px, py = bx - sgn(bx - ax) * r1, by - sgn(by - ay) * r1
+        qx, qy = bx + sgn(cx - bx) * r1, by + sgn(cy - by) * r1
+        d += " L%g %g Q%g %g %g %g" % (px, py, bx, by, qx, qy)
+    return d + " L%g %g" % points[-1]
 
 
 def curve_controls(ey, bottom, sy):
@@ -96,11 +135,11 @@ def svg(conn, order=()):
     height = max(y + h for (_, _, y, _, h) in pos.values()) + 10
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">' % (width, height, width, height),
            "<defs>%s</defs>" % KEY]
-    for t, col, ref, (sx, sy), (ex, ey), bottom in fk_paths(tables, fks, pos):
+    for e in fk_paths(tables, fks, pos):
+        t, col, ref, (sx, sy), (ex, ey) = e["t"], e["col"], e["ref"], e["start"], e["end"]
         many = cardinality(conn, t, col) == "N"
-        c1, c2 = curve_controls(ey, bottom, sy)
         g = ['<g class="fk" data-from="%s.%s" data-to="%s">' % (t, col, ref),
-             '<path class="rel" d="M%g %g C%g %g %g %g %g %g"/>' % (ex, ey, ex, c1, sx, c2, sx, sy),
+             '<path class="rel" d="%s"/>' % e["d"],
              '<circle cx="%g" cy="%g" r="2.6"/>' % (ex, ey + 1),                   # a dot at each end,
              '<circle cx="%g" cy="%g" r="2.6"/>' % (sx, sy - 1),                   # the cardinality written beside it
              '<text x="%g" y="%g">1</text>' % (ex + 5, ey + 11),

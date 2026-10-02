@@ -393,4 +393,5 @@ framework, no bundler.
 - **Big UI/UX pass** (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
-  fixes keep landing during the review (section labels 11px -> 13px on 2026-10-02).
+  fixes keep landing during the review (section labels 11px -> 13px on 2026-10-02). Include the schema's gutter, where up to four
+  relationship lines run close together since the 2026-10-02 links (suite hub, interview, cab dropoff, guest_card).

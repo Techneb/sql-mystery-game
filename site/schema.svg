@@ -1,12 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1100" width="390" height="1100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 1222" width="390" height="1222">
 <defs><symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol></defs>
-<g class="fk" data-from="bank_account.person_id" data-to="person"><path class="rel" d="M85 784 C85 821.2 85 806.8 85 844"/><circle cx="85" cy="785" r="2.6"/><circle cx="85" cy="843" r="2.6"/><text x="90" y="795">1</text><text x="90" y="840">N</text></g>
-<g class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account"><path class="rel" d="M60 902 C60 967.2 60 952.8 60 990"/><circle cx="60" cy="903" r="2.6"/><circle cx="60" cy="989" r="2.6"/><text x="65" y="913">1</text><text x="65" y="986">N</text></g>
-<g class="fk" data-from="bank_transaction.account_id" data-to="bank_account"><path class="rel" d="M110 902 C110 967.2 110 952.8 110 990"/><circle cx="110" cy="903" r="2.6"/><circle cx="110" cy="989" r="2.6"/><text x="115" y="913">1</text><text x="115" y="986">N</text></g>
-<g class="fk" data-from="luggage.ticket_id" data-to="train_ticket"><path class="rel" d="M295 930 C295 967.2 295 952.8 295 990"/><circle cx="295" cy="931" r="2.6"/><circle cx="295" cy="989" r="2.6"/><text x="300" y="941">1</text><text x="300" y="986">N</text></g>
-<g class="fk" data-from="person.address_id" data-to="address"><path class="rel" d="M85 624 C85 661.2 85 646.8 85 684"/><circle cx="85" cy="625" r="2.6"/><circle cx="85" cy="683" r="2.6"/><text x="90" y="635">1</text><text x="90" y="680">N</text></g>
-<g class="fk" data-from="train_ticket.person_id" data-to="person"><path class="rel" d="M125 784 C125 821.2 295 806.8 295 844"/><circle cx="125" cy="785" r="2.6"/><circle cx="295" cy="843" r="2.6"/><text x="130" y="795">1</text><text x="300" y="840">N</text></g>
-<g class="table" data-table="address" transform="translate(0,552)">
+<g class="fk" data-from="bank_account.person_id" data-to="person"><path class="rel" d="M255 718 L255 762.5 Q255 768.5 249 768.5 L181 768.5 Q175 768.5 175 774.5 L175 922.5 Q175 928.5 169 928.5 L91 928.5 Q85 928.5 85 934.5 L85 966"/><circle cx="255" cy="719" r="2.6"/><circle cx="85" cy="965" r="2.6"/><text x="260" y="729">1</text><text x="90" y="962">N</text></g>
+<g class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account"><path class="rel" d="M60 1024 C60 1089.2 60 1074.8 60 1112"/><circle cx="60" cy="1025" r="2.6"/><circle cx="60" cy="1111" r="2.6"/><text x="65" y="1035">1</text><text x="65" y="1108">N</text></g>
+<g class="fk" data-from="bank_transaction.account_id" data-to="bank_account"><path class="rel" d="M110 1024 C110 1089.2 110 1074.8 110 1112"/><circle cx="110" cy="1025" r="2.6"/><circle cx="110" cy="1111" r="2.6"/><text x="115" y="1035">1</text><text x="115" y="1108">N</text></g>
+<g class="fk" data-from="cab_ride.dropoff_address_id" data-to="address"><path class="rel" d="M85 196 C85 233.2 85 218.8 85 256"/><circle cx="85" cy="197" r="2.6"/><circle cx="85" cy="255" r="2.6"/><text x="90" y="207">1</text><text x="90" y="252">N</text></g>
+<g class="fk" data-from="guest_card.person_id" data-to="person"><path class="rel" d="M255 718 C255 783.2 85 768.8 85 806"/><circle cx="255" cy="719" r="2.6"/><circle cx="85" cy="805" r="2.6"/><text x="260" y="729">1</text><text x="90" y="802">1</text></g>
+<g class="fk" data-from="hotel_register.suite" data-to="suite"><path class="rel" d="M295 182 C295 233.2 295 218.8 295 256"/><circle cx="295" cy="183" r="2.6"/><circle cx="295" cy="255" r="2.6"/><text x="300" y="193">1</text><text x="300" y="252">N</text></g>
+<g class="fk" data-from="interview.person_id" data-to="person"><path class="rel" d="M295 718 C295 783.2 295 768.8 295 806"/><circle cx="295" cy="719" r="2.6"/><circle cx="295" cy="805" r="2.6"/><text x="300" y="729">1</text><text x="300" y="802">N</text></g>
+<g class="fk" data-from="lift_log.suite" data-to="suite"><path class="rel" d="M255 182 L255 215.5 Q255 221.5 249 221.5 L187 221.5 Q181 221.5 181 227.5 L181 417.5 Q181 423.5 175 423.5 L91 423.5 Q85 423.5 85 429.5 L85 458"/><circle cx="255" cy="183" r="2.6"/><circle cx="85" cy="457" r="2.6"/><text x="260" y="193">1</text><text x="90" y="454">N</text></g>
+<g class="fk" data-from="luggage.ticket_id" data-to="train_ticket"><path class="rel" d="M295 1052 C295 1089.2 295 1074.8 295 1112"/><circle cx="295" cy="1053" r="2.6"/><circle cx="295" cy="1111" r="2.6"/><text x="300" y="1063">1</text><text x="300" y="1108">N</text></g>
+<g class="fk" data-from="person.address_id" data-to="address"><path class="rel" d="M125 196 L125 218.5 Q125 224.5 131 224.5 L181 224.5 Q187 224.5 187 230.5 L187 580.5 Q187 586.5 193 586.5 L289 586.5 Q295 586.5 295 592.5 L295 618"/><circle cx="125" cy="197" r="2.6"/><circle cx="295" cy="617" r="2.6"/><text x="130" y="207">1</text><text x="300" y="614">N</text></g>
+<g class="fk" data-from="room_service.suite" data-to="suite"><path class="rel" d="M295 182 L295 221.5 Q295 227.5 289 227.5 L199 227.5 Q193 227.5 193 233.5 L193 423.5 Q193 429.5 199 429.5 L289 429.5 Q295 429.5 295 435.5 L295 458"/><circle cx="295" cy="183" r="2.6"/><circle cx="295" cy="457" r="2.6"/><text x="300" y="193">1</text><text x="300" y="454">N</text></g>
+<g class="fk" data-from="telegram.suite" data-to="suite"><path class="rel" d="M255 182 L255 224.5 Q255 230.5 249 230.5 L205 230.5 Q199 230.5 199 236.5 L199 586.5 Q199 592.5 193 592.5 L91 592.5 Q85 592.5 85 598.5 L85 618"/><circle cx="255" cy="183" r="2.6"/><circle cx="85" cy="617" r="2.6"/><text x="260" y="193">1</text><text x="90" y="614">N</text></g>
+<g class="fk" data-from="train_ticket.person_id" data-to="person"><path class="rel" d="M295 718 L295 777.5 Q295 783.5 289 783.5 L211 783.5 Q205 783.5 205 789.5 L205 937.5 Q205 943.5 211 943.5 L289 943.5 Q295 943.5 295 949.5 L295 966"/><circle cx="295" cy="719" r="2.6"/><circle cx="295" cy="965" r="2.6"/><text x="300" y="729">1</text><text x="300" y="962">N</text></g>
+<g class="table" data-table="address" transform="translate(0,124)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">address</text>
@@ -15,7 +22,7 @@
 <text class="col" x="21" y="41">number</text>
 <text class="col" x="21" y="55">street</text>
 <text class="col" x="21" y="69">arrondissement</text></g>
-<g class="table" data-table="bank_account" transform="translate(0,844)">
+<g class="table" data-table="bank_account" transform="translate(0,966)">
 <rect width="170" height="58"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_account</text>
@@ -24,7 +31,7 @@
 <use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
 <text class="col" x="21" y="41">person_id</text>
 <text class="col" x="21" y="55">bank</text></g>
-<g class="table" data-table="bank_transaction" transform="translate(0,990)">
+<g class="table" data-table="bank_transaction" transform="translate(0,1112)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">bank_transaction</text>
@@ -37,8 +44,8 @@
 <text class="col" x="21" y="69">date</text>
 <text class="col" x="21" y="83">amount</text>
 <text class="col" x="21" y="97">type</text></g>
-<g class="table" data-table="cab_ride" transform="translate(210,124)">
-<rect width="170" height="128"/>
+<g class="table" data-table="cab_ride" transform="translate(0,256)">
+<rect width="170" height="142"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">cab_ride</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
@@ -49,29 +56,46 @@
 <text class="col" x="21" y="83">pickup</text>
 <text class="col" x="21" y="97">dropoff</text>
 <text class="col" x="21" y="111">fare</text>
-<text class="col" x="21" y="125">currency</text></g>
-<g class="table" data-table="hotel_register" transform="translate(0,124)">
+<text class="col" x="21" y="125">currency</text>
+<use href="#erd-key" class="key fk" x="4" y="131" width="14" height="9"/>
+<text class="col" x="21" y="139">dropoff_address_id</text></g>
+<g class="table" data-table="guest_card" transform="translate(0,806)">
+<rect width="170" height="100"/>
+<rect class="head" width="170" height="16"/>
+<text class="tname" x="6" y="12">guest_card</text>
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">person_id</text>
+<text class="col" x="21" y="55">favourite_drink</text>
+<text class="col" x="21" y="69">pet</text>
+<text class="col" x="21" y="83">habit</text>
+<text class="col" x="21" y="97">desk_remark</text></g>
+<g class="table" data-table="hotel_register" transform="translate(210,256)">
 <rect width="170" height="114"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">hotel_register</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
 <text class="col" x="21" y="27">id</text>
 <text class="col" x="21" y="41">guest_name</text>
+<use href="#erd-key" class="key fk" x="4" y="47" width="14" height="9"/>
 <text class="col" x="21" y="55">suite</text>
 <text class="col" x="21" y="69">floor</text>
 <text class="col" x="21" y="83">price</text>
 <text class="col" x="21" y="97">checkin</text>
 <text class="col" x="21" y="111">checkout</text></g>
-<g class="table" data-table="interview" transform="translate(210,0)">
-<rect width="170" height="72"/>
+<g class="table" data-table="interview" transform="translate(210,806)">
+<rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">interview</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
 <text class="col" x="21" y="27">id</text>
 <text class="col" x="21" y="41">person_name</text>
 <text class="col" x="21" y="55">date</text>
-<text class="col" x="21" y="69">transcript</text></g>
-<g class="table" data-table="lift_log" transform="translate(0,428)">
+<text class="col" x="21" y="69">transcript</text>
+<use href="#erd-key" class="key fk" x="4" y="75" width="14" height="9"/>
+<text class="col" x="21" y="83">person_id</text></g>
+<g class="table" data-table="lift_log" transform="translate(0,458)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">lift_log</text>
@@ -80,9 +104,10 @@
 <text class="col" x="21" y="41">date</text>
 <text class="col" x="21" y="55">time</text>
 <text class="col" x="21" y="69">floor</text>
+<use href="#erd-key" class="key fk" x="4" y="75" width="14" height="9"/>
 <text class="col" x="21" y="83">suite</text>
 <text class="col" x="21" y="97">direction</text></g>
-<g class="table" data-table="luggage" transform="translate(210,990)">
+<g class="table" data-table="luggage" transform="translate(210,1112)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">luggage</text>
@@ -93,7 +118,7 @@
 <text class="col" x="21" y="55">trunk_no</text>
 <text class="col" x="21" y="69">owner_name</text>
 <text class="col" x="21" y="83">weight_kg</text></g>
-<g class="table" data-table="person" transform="translate(0,684)">
+<g class="table" data-table="person" transform="translate(210,618)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">person</text>
@@ -116,18 +141,27 @@
 <text class="col" x="21" y="69">place</text>
 <text class="col" x="21" y="83">type</text>
 <text class="col" x="21" y="97">description</text></g>
-<g class="table" data-table="room_service" transform="translate(210,276)">
+<g class="table" data-table="room_service" transform="translate(210,458)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">room_service</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
 <text class="col" x="21" y="27">id</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
 <text class="col" x="21" y="41">suite</text>
 <text class="col" x="21" y="55">date</text>
 <text class="col" x="21" y="69">time</text>
 <text class="col" x="21" y="83">item</text>
 <text class="col" x="21" y="97">amount</text></g>
-<g class="table" data-table="telegram" transform="translate(0,276)">
+<g class="table" data-table="suite" transform="translate(210,124)">
+<rect width="170" height="58"/>
+<rect class="head" width="170" height="16"/>
+<text class="tname" x="6" y="12">suite</text>
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="col" x="21" y="41">floor</text>
+<text class="col" x="21" y="55">view</text></g>
+<g class="table" data-table="telegram" transform="translate(0,618)">
 <rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">telegram</text>
@@ -138,9 +172,10 @@
 <text class="col" x="21" y="69">time</text>
 <text class="col" x="21" y="83">sender</text>
 <text class="col" x="21" y="97">recipient</text>
+<use href="#erd-key" class="key fk" x="4" y="103" width="14" height="9"/>
 <text class="col" x="21" y="111">suite</text>
 <text class="col" x="21" y="125">text</text></g>
-<g class="table" data-table="train_ticket" transform="translate(210,844)">
+<g class="table" data-table="train_ticket" transform="translate(210,966)">
 <rect width="170" height="86"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">train_ticket</text>

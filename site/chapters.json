@@ -204,7 +204,8 @@
    "answer_sha256": "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432",
    "n": 2,
    "tables": [
-    "hotel_register"
+    "hotel_register",
+    "suite"
    ]
   },
   {
@@ -242,7 +243,8 @@
    "n": 5,
    "tables": [
     "person",
-    "address"
+    "address",
+    "guest_card"
    ]
   },
   {
@@ -336,7 +338,7 @@
   }
  ],
  "decoys": {
-  "1": 963
+  "1": 2037
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **Rupert Blakeney, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",

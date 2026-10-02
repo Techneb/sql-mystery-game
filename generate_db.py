@@ -30,8 +30,10 @@ CREATE TABLE person (
   address_id INTEGER REFERENCES address(id));
 CREATE TABLE police_report (
   id INTEGER PRIMARY KEY, date INTEGER, city TEXT, place TEXT, type TEXT, description TEXT);
+CREATE TABLE suite (
+  id INTEGER PRIMARY KEY, floor INTEGER, view TEXT);
 CREATE TABLE hotel_register (
-  id INTEGER PRIMARY KEY, guest_name TEXT, suite INTEGER, floor INTEGER, price INTEGER,
+  id INTEGER PRIMARY KEY, guest_name TEXT, suite INTEGER REFERENCES suite(id), floor INTEGER, price INTEGER,
   checkin INTEGER, checkout INTEGER);
 CREATE TABLE interview (
   id INTEGER PRIMARY KEY, person_name TEXT, date INTEGER, transcript TEXT);
@@ -45,9 +47,9 @@ CREATE TABLE bank_transaction (
   counterparty_id INTEGER REFERENCES bank_account(id), date INTEGER, amount INTEGER, type TEXT);
 CREATE TABLE telegram (
   id INTEGER PRIMARY KEY, office TEXT, date INTEGER, time INTEGER, sender TEXT, recipient TEXT,
-  suite INTEGER, text TEXT);
+  suite INTEGER REFERENCES suite(id), text TEXT);
 CREATE TABLE room_service (
-  id INTEGER PRIMARY KEY, suite INTEGER, date INTEGER, time INTEGER, item TEXT, amount INTEGER);
+  id INTEGER PRIMARY KEY, suite INTEGER REFERENCES suite(id), date INTEGER, time INTEGER, item TEXT, amount INTEGER);
 CREATE TABLE train_ticket (
   id INTEGER PRIMARY KEY, person_id INTEGER REFERENCES person(id), date INTEGER, train TEXT,
   destination TEXT);
@@ -55,7 +57,7 @@ CREATE TABLE luggage (
   id INTEGER PRIMARY KEY, ticket_id INTEGER REFERENCES train_ticket(id), trunk_no TEXT,
   owner_name TEXT, weight_kg INTEGER);
 CREATE TABLE lift_log (
-  id INTEGER PRIMARY KEY, date INTEGER, time INTEGER, floor INTEGER, suite INTEGER, direction TEXT);
+  id INTEGER PRIMARY KEY, date INTEGER, time INTEGER, floor INTEGER, suite INTEGER REFERENCES suite(id), direction TEXT);
 """
 
 
@@ -334,6 +336,8 @@ def _add_days(d, n):
 def fill_noise(conn, V, r):
     """Noise ids start at 100 in every table and skip the reserved planted ids (scatter_planted mixes them later)."""
     c = conn.cursor()
+    c.executemany("INSERT INTO suite VALUES (?,?,?)",   # x01-x10 face the Place, x11-x25 the garden, the rest the courtyard
+        [(s, s // 100, "Place Vendome" if s % 100 <= 10 else "garden" if s % 100 <= 25 else "courtyard") for s in SUITES])
     c.executemany("INSERT INTO address VALUES (?,?,?,?)",
         [(100 + i, r.randint(1, 120), r.choice(STREETS), r.randint(1, 20)) for i in range(1200)])
     c.executemany("INSERT INTO person VALUES (?,?,?,?,?,?)",
@@ -348,17 +352,18 @@ def fill_noise(conn, V, r):
          for i in range(100, 3100) if i not in reserved])
     # hotel: 200 suites (x01-x40 on 5 floors), back-to-back stays through Jan-Jun; floor = suite // 100
     rows, rid = [], 100
-    for suite in [f * 100 + n for f in range(1, 6) for n in range(1, 41)]:
-        day = 19120101
+    for suite in SUITES:
+        day = _add_days(19120101, r.randint(0, 9))   # each suite opens on its own day
         while day < 19120630:
-            nights = r.randint(1, 6)   # up to six, like Blakeney's and Grey's weeks: their length is no shortcut
+            # mostly short stays, now and then a fortnight; six nights (Blakeney's and Grey's weeks) is common too
+            nights = r.choices(range(1, 15), [14, 16, 14, 10, 8, 9, 6, 3, 2, 2, 1, 1, 1, 2])[0]
             out = _add_days(day, nights)
             price = {1: 30, 2: 120, 3: 80, 4: 60, 5: 45}[suite // 100] + r.randint(0, 25)
             if suite // 100 == 2 and r.random() < 0.15:   # a gala week on the second floor: dearer than Ashcombe's 190,
                 price = r.randint(195, 260)               # so ch2's ORDER BY price needs the date filter too
             rows.append((rid, r.choice(GUESTS), suite, suite // 100, price, day, out))
             rid += 1
-            day = _add_days(out, r.randint(0, 1))
+            day = _add_days(out, r.choices([0, 1, 2, 3, 5, 8, 12], [40, 20, 12, 10, 8, 6, 4])[0])   # empty nights between guests
     c.executemany("INSERT INTO hotel_register VALUES (?,?,?,?,?,?,?)", rows)
     c.executemany("INSERT INTO interview VALUES (?,?,?,?)",
         [(100 + i, r.choice(GUESTS), _date(r, 5, 5), r.choice(INTERVIEW_TEXT)) for i in range(600)])
@@ -384,7 +389,7 @@ def fill_noise(conn, V, r):
           r.choice(GUESTS), r.choice(GUESTS), None, " ".join(r.choice(TEL_WORDS) for _ in range(r.randint(4, 9))))
          for i in range(100, 3100) if i not in (V["night_telegram_id"], V["compete_telegram_id"])])
     c.executemany("INSERT INTO room_service VALUES (?,?,?,?,?,?)",
-        [(100 + i, r.choice(range(101, 525)), _date(r, 5, 5), _time(r), *r.choice(ITEMS)) for i in range(5000)])
+        [(100 + i, r.choice(SUITES), _date(r, 5, 5), _time(r), *r.choice(ITEMS)) for i in range(5000)])
     c.executemany("INSERT INTO train_ticket VALUES (?,?,?,?,?)",
         [(100 + i, r.randint(100, 5099), _date(r, 5, 6), r.choice(["Boat Train 9:15", "Nord Express", "Sud Express", "Orient Express"]),
           r.choice(["London", "Berlin", "Madrid", "Vienna", "Calais", "Lille"])) for i in range(2000)])
@@ -392,8 +397,8 @@ def fill_noise(conn, V, r):
         [(100 + i, r.randint(100, 2099), "%s-%d" % (r.choice("ABCD"), r.randint(1, 9)), r.choice(GUESTS), r.randint(8, 60))
          for i in range(3000)])
     c.executemany("INSERT INTO lift_log VALUES (?,?,?,?,?,?)",
-        [(100 + i, _date(r, 5, 5), _time(r), r.randint(1, 5), r.choice(range(101, 525)), r.choice(["up", "down"]))
-         for i in range(10000)])
+        [(100 + i, _date(r, 5, 5), _time(r), s // 100, s, r.choice(["up", "down"]))
+         for i, s in ((i, r.choice(SUITES)) for i in range(10000))])
     conn.commit()
 
 
@@ -411,6 +416,7 @@ CAST_PERSONS = [  # id, name, nationality, born, occupation  (address_id set in 
     (11, "Ganimard", "French", 1855, "inspector"),
     (12, "Minou Ganimard", "French", 1908, "cat"),
 ]
+SUITES = [f * 100 + n for f in range(1, 6) for n in range(1, 41)]   # the hotel: 200 suites, floor = suite // 100
 FLOOR2 = [202, 204, 206, 208, 210, 212, 216, 218, 220, 222, 224]
 
 
@@ -576,7 +582,7 @@ def plant_part1(conn, V, r):
             while t in (620, 1510, 2105):
                 t = clock(h0, h1)
             c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
-                (5000 + k, "Ritz", T, t, r.choice(GUESTS), r.choice(GUESTS), r.choice(range(101, 525)),
+                (5000 + k, "Ritz", T, t, r.choice(GUESTS), r.choice(GUESTS), r.choice(SUITES),
                  " ".join(r.choice(TEL_WORDS) for _ in range(6))))
             k += 1
     for i in range(8):
@@ -651,17 +657,20 @@ def plant_part2(conn, V, r):
             rid += 1
             c.execute("INSERT INTO hotel_register VALUES (?,?,?,2,145,?,?)", (rid, r.choice(GUESTS), V["lupin_suite"], day, out))
         rid += 1; who ^= 1; day = _add_days(day, 7)
+    def book(rid, name, suite, price, day, out):   # a planted stay: whoever the noise had put in that suite then leaves
+        c.execute("DELETE FROM hotel_register WHERE suite=? AND checkin<? AND checkout>?", (suite, out, day))
+        c.execute("INSERT INTO hotel_register VALUES (?,?,?,?,?,?,?)", (rid, name, suite, suite // 100, price, day, out))
     for i, name in enumerate(["Ines de Almagro", "Paul Sernine"]):
         d = 19120113 + i     # Grey's weeks start on the 13th
         for k in range(7):
-            c.execute("INSERT INTO hotel_register VALUES (?,?,?,3,80,?,?)", (rid, name, 301 + i, d, _add_days(d, 4))); rid += 1
+            book(rid, name, 301 + i, 80, d, _add_days(d, 4)); rid += 1
             d = _add_days(d, 14)
-        c.execute("INSERT INTO hotel_register VALUES (?,?,?,3,80,19120111,19120112)", (rid, name, 301 + i)); rid += 1
+        book(rid, name, 301 + i, 80, 19120111, 19120112); rid += 1
     # noise guests are frequent too (few names, many stays): give every one that never met Blakeney one night that does
     ch10 = [ch for ch in plot.CHAPTERS if ch["n"] == 10][0]
-    for (name,) in c.execute(ch10["solution"].format(**V)).fetchall():
+    for k, (name,) in enumerate(c.execute(ch10["solution"].format(**V)).fetchall()):
         if name != V["double_alias"]:
-            c.execute("INSERT INTO hotel_register VALUES (?,?,303,3,80,19120111,19120112)", (rid, name)); rid += 1
+            book(rid, name, 310 + k % 30, 80, 19120111, 19120112); rid += 1   # one suite each, never two guests at once
     # --- ch11: the night of the theft. Lupin's suite is silent 02:05-03:10 (lift down, lift up), then
     #     champagne at 03:20. Every other second-floor suite has a lift event
     #     inside the window, except Velmont's: he goes down at 02:30 to paint and comes back at 05:55, a longer
@@ -726,6 +735,55 @@ def scatter_planted(conn, noise, r):
     assert not conn.execute("PRAGMA foreign_key_check").fetchall(), "scatter_planted broke a foreign key"
 
 
+GUEST_DRINKS = ["absinthe, louched", "tea with three lumps", "hot chocolate", "Vichy water", "a Kir", "lemonade on ice",
+                "green Chartreuse", "Calvados", "Byrrh", "cafe au lait", "any Bordeaux", "beer from Strasbourg", "barley water"]
+GUEST_PETS = ["a parrot that swears in Latin", "a tortoise named Achille", "a greyhound afraid of pigeons", "two Siamese cats",
+              "a goldfish in a travelling bowl", "none, but asks after yours", "a ferret, undeclared", "a canary that sings Offenbach",
+              "a dachshund in a knitted jumper", "a hedgehog, for the garden", None]
+GUEST_HABITS = ["counts the stairs out loud", "sleeps with the window open in January", "complains about the soup, then orders more",
+                "writes to the newspapers", "whistles in the corridors", "reads the menu like a novel", "rearranges the furniture",
+                "asks the time and argues with the answer", "keeps a diary in code", "brings his own teaspoon", "naps in the reading room"]
+GUEST_REMARKS = ["Always settles. Eventually.", "Charming. Sings in the bath.", "Do not seat near the Baroness.",
+                 "Tips the cat, not the staff.", "Has asked for the moon. Twice.", "No complaints. Suspicious.",
+                 "Prefers the garden side.", "Never before noon.", "A delight, by all accounts but his own.", None]
+
+
+def link_tables(conn, r):
+    """The links between tables, added once every row is planted and the ids are final (after scatter_planted).
+    Each is read from the data itself, so no puzzle changes: an interview's speaker, a cab's dropoff address, and a
+    guest card (1:1 with a person; fun only, never a clue, and none for the cast)."""
+    c = conn.cursor()
+    # the hotel guests who talk to the police join the census (ids above the noise range)
+    guest_id = {name: 6000 + i for i, name in enumerate(GUESTS)}
+    c.executemany("INSERT INTO person VALUES (?,?,?,?,?,?)",
+        [(guest_id[n], n, r.choice(NATION), r.randint(1840, 1894), r.choice(OCCUP), r.randint(100, 1299)) for n in GUESTS])
+    c.execute("ALTER TABLE interview ADD COLUMN person_id INTEGER REFERENCES person(id)")
+    for (iid, name) in c.execute("SELECT id, person_name FROM interview").fetchall():
+        pid = guest_id.get(name) or c.execute("SELECT MIN(id) FROM person WHERE name=?", (name,)).fetchone()[0]
+        c.execute("UPDATE interview SET person_id=? WHERE id=?", (pid, iid))   # unnamed witnesses stay NULL
+    # every street dropoff points to an address row (created when the cab book names one the census does not have)
+    c.execute("ALTER TABLE cab_ride ADD COLUMN dropoff_address_id INTEGER REFERENCES address(id)")
+    known = {}
+    for (aid, num, street) in c.execute("SELECT id, number, street FROM address ORDER BY id").fetchall():
+        known.setdefault("%d %s" % (num, street), aid)
+    nxt = c.execute("SELECT MAX(id) FROM address").fetchone()[0] + 1
+    for (drop,) in c.execute("SELECT DISTINCT dropoff FROM cab_ride").fetchall():
+        num, _, street = drop.partition(" ")
+        if not num.isdigit():
+            continue   # a station or a square: no address
+        if drop not in known:
+            c.execute("INSERT INTO address VALUES (?,?,?,?)", (nxt, int(num), street, r.randint(1, 20)))
+            known[drop] = nxt; nxt += 1
+        c.execute("UPDATE cab_ride SET dropoff_address_id=? WHERE dropoff=?", (known[drop], drop))
+    # guest cards: one per hotel guest, 1:1 with the person (UNIQUE), fun only
+    c.execute("CREATE TABLE guest_card (id INTEGER PRIMARY KEY, person_id INTEGER UNIQUE REFERENCES person(id), "
+              "favourite_drink TEXT, pet TEXT, habit TEXT, desk_remark TEXT)")
+    c.executemany("INSERT INTO guest_card VALUES (?,?,?,?,?,?)",
+        [(100 + i, guest_id[n], r.choice(GUEST_DRINKS), r.choice(GUEST_PETS), r.choice(GUEST_HABITS), r.choice(GUEST_REMARKS))
+         for i, n in enumerate(GUESTS)])
+    conn.commit()
+
+
 def clock_times(conn):
     """Planting works on HHMM integers (205 = 02:05); students read 'HH:MM' text, which still sorts and compares."""
     for (t, ddl) in conn.execute("SELECT name, sql FROM sqlite_master WHERE type='table' AND sql LIKE '% time INTEGER%'").fetchall():
@@ -748,6 +806,7 @@ def build_db(seed):
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
     scatter_planted(conn, noise, r)
+    link_tables(conn, r)
     clock_times(conn)
     # The ch.1 decoy (the eve's Ritz theft): a wrong answer the site's "Filed Under the 17th" badge recognises,
     # looked up after scatter_planted moved it. Shipped in chapters.json, so it must never be the answer.
