@@ -395,3 +395,10 @@ framework, no bundler.
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
   fixes keep landing during the review (section labels 11px -> 13px on 2026-10-02). Include the schema's gutter, where up to four
   relationship lines run close together since the 2026-10-02 links (suite hub, interview, cab dropoff, guest_card).
+- **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
+  video (or a sequence of still images, cross-faded) in the portraits' Lavery style, one to close each part.
+  Part I: the boat train at the Gare du Nord, 20 May 1912, Ganimard's hand on Blakeney's shoulder, the empty
+  velvet case, the train pulling out (it would sit at the top of the Chapter VIII extra edition, `showExtra`).
+  Part II: the Comtesse receiving Ganimard in her suite, the insurance papers, Lupin's telegram from London and
+  the Blue Star re-set as a ring (after chapter XII). Keep each to a handful of shots, silent, with captions in
+  the paper's voice; plan for a still-image fallback so the page stays light.

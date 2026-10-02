@@ -87,7 +87,7 @@ test("badges fire on the right query shapes and only once", () => {
   assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
   assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
-  assert.equal(BADGES.length, 37);
+  assert.equal(BADGES.length, 38);
   assert.deepEqual(names({ event: "theme" }), ["Lamplighter"]);
 });
 

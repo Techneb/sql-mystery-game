@@ -748,15 +748,18 @@ GUEST_REMARKS = ["Always settles. Eventually.", "Charming. Sings in the bath.", 
                  "Prefers the garden side.", "Never before noon.", "A delight, by all accounts but his own.", None]
 
 
-def link_tables(conn, r):
+def link_tables(conn, V, r):
     """The links between tables, added once every row is planted and the ids are final (after scatter_planted).
     Each is read from the data itself, so no puzzle changes: an interview's speaker, a cab's dropoff address, and a
     guest card (1:1 with a person; fun only, never a clue, and none for the cast)."""
     c = conn.cursor()
     # the hotel guests who talk to the police join the census (ids above the noise range)
     guest_id = {name: 6000 + i for i, name in enumerate(GUESTS)}
+    homes = [a for (a,) in c.execute(   # any address but the two boarding houses, whose tenants ch5 counts (5)
+        "SELECT id FROM address WHERE NOT (number=? AND street=?) AND NOT (number=? AND street=?) ORDER BY id",
+        (V["fence_number"], V["fence_street"], V["compete_fence_number"], V["compete_fence_street"])).fetchall()]
     c.executemany("INSERT INTO person VALUES (?,?,?,?,?,?)",
-        [(guest_id[n], n, r.choice(NATION), r.randint(1840, 1894), r.choice(OCCUP), r.randint(100, 1299)) for n in GUESTS])
+        [(guest_id[n], n, r.choice(NATION), r.randint(1840, 1894), r.choice(OCCUP), r.choice(homes)) for n in GUESTS])
     c.execute("ALTER TABLE interview ADD COLUMN person_id INTEGER REFERENCES person(id)")
     for (iid, name) in c.execute("SELECT id, person_name FROM interview").fetchall():
         pid = guest_id.get(name) or c.execute("SELECT MIN(id) FROM person WHERE name=?", (name,)).fetchone()[0]
@@ -806,7 +809,7 @@ def build_db(seed):
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
     scatter_planted(conn, noise, r)
-    link_tables(conn, r)
+    link_tables(conn, V, r)
     clock_times(conn)
     # The ch.1 decoy (the eve's Ritz theft): a wrong answer the site's "Filed Under the 17th" badge recognises,
     # looked up after scatter_planted moved it. Shipped in chapters.json, so it must never be the answer.

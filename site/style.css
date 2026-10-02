@@ -144,6 +144,17 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .suspects { position: fixed; inset: 0; z-index: 19; background: var(--paper); overflow: auto; padding: 20px 16px 40px;
   display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-content: flex-start; }
 .suspects[hidden] { display: none; }
+/* Chapter VIII: the extra edition (showExtra in app.js), a full page over the game, styled off the tokens */
+.extra { position: fixed; inset: 0; z-index: 22; background: var(--paper); overflow: auto; padding: 24px 16px 48px; }
+.extra[hidden] { display: none; }
+.extra-card { max-width: 640px; margin: 0 auto; border: 2px solid var(--ink); padding: 24px; text-align: center; animation: fadein .8s ease-out both; }
+.extra-card h1 { font: 900 34px/1.1 "Playfair Display", serif; margin: 12px 0 16px; padding-top: 12px; border-top: 3px double var(--ink); letter-spacing: .5px; }
+.extra-card .story { text-align: justify; margin-bottom: 12px; }
+.extra-card .portrait { width: 180px; }
+.extra-badge, .extra-next { clear: both; text-align: left; border: 1px solid var(--rule); padding: 10px 12px; margin: 12px 0; }
+.extra-badge b { font: 700 20px "Playfair Display", serif; display: inline-block; margin-right: 6px; }
+.extra-next { font-size: 17px; }
+#btn-extra { margin-top: 8px; padding: 8px 22px; }
 .suspects-close { position: fixed; top: 16px; right: 16px; }
 /* the Day/Night button shares that corner: step aside while a panel with its own Close is open */
 body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }

@@ -18,7 +18,7 @@ export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0 };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
@@ -325,6 +325,7 @@ export const BADGES = [
   ["Filed Under the 17th", "Filed the case under the wrong night. Duroc never sleeps, but he does count.",
     c => c.event === "answer" && c.chapter === 1 && c.decoy != null && c.norm === String(c.decoy)],
   ["Lamplighter", "Switched between the day and night editions. Paris has lit its lamps by hand since 1667.", c => c.event === "theme"],
+  ["Gare du Nord", "Part I closed: Lupin has a name, if not a cell.", c => c.event === "part1"],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],
 ];
 
@@ -434,6 +435,24 @@ function renderBoard() {
   $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + '</b> <span class="card-label">' +
     esc(label(n)) + "</span><br>" + esc(state.answers[n]) + "</div>").join("");
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
+}
+
+// Chapter VIII solved (learn mode): a one-off extra edition, the capture, the badge and rank, then the new objective.
+// Shown once (state.extraSeen), on the solve or, if the page was closed first, on the next visit.
+function showExtra() {
+  const el = $("extra"), p1 = partStats(state, 1, 8);
+  const badge = BADGES.find(([name]) => name === "Gare du Nord");
+  el.innerHTML = '<div class="extra-card">' +
+    '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">EXTRA EDITION &mdash; PARIS &mdash; 20 MAY 1912</div>' +
+    "<h1>LUPIN TAKEN AT THE GARE DU NORD</h1>" +
+    '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
+    '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
+    '<div class="muted">Part I in ' + p1.queries + " queries. Rank: " + esc(rank(p1.queries)) + "</div></div>" +
+    '<div class="extra-next"><div class="label">A NEW OBJECTIVE</div>Lupin mentioned a Chapter IX. Somewhere in the archives a ' +
+    "telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.</div>" +
+    '<button id="btn-extra">Continue</button></div>';
+  el.hidden = false;
+  $("btn-extra").onclick = () => { el.hidden = true; state.extraSeen = true; save(state); };
 }
 
 // A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
@@ -563,6 +582,7 @@ function afterSolve(ch, event) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
       $("reply").textContent += " Rank: " + rank(p1.queries);
+      if (state.mode !== "compete") showExtra();
     }
     if (state.mode === "compete") {
       if (ch.n === 8) { state.finishedAt = Date.now(); queueEvent("finish", 8); renderChapter(); tickClock(); }
@@ -829,7 +849,10 @@ async function renderAdminPanel() {
   document.body.appendChild(el);
 }
 
-function enterGame() { $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel(); }
+function enterGame() {
+  $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel();
+  if (awaitingCode(state) && !state.extraSeen) showExtra();   // solved chapter VIII, closed the page before the extra edition
+}
 
 async function boot() {
   $("btn-theme").onclick = toggleTheme;
