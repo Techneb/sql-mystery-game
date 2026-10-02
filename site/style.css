@@ -37,6 +37,9 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-card { max-width: 640px; text-align: center; border: 2px solid var(--ink); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0 0; padding-top: 12px; border-top: 3px double var(--ink); }
 .landing-gem { display: block; width: 26px; height: auto; margin: 10px auto 8px; color: var(--ink); }
+.landing-photo { margin: 4px 0 16px; }
+.landing-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.landing-photo figcaption { font: italic 400 15px/1.3 "Cormorant Garamond", Georgia, serif; margin-top: 4px; text-align: left; }
 .landing-story { text-align: justify; hyphens: none; font-size: 18px; line-height: 1.5; margin: 0 auto; max-width: 34em; }
 .landing-story::first-letter { float: left; font: 900 48px/.85 "Playfair Display", serif; margin: 4px 8px 0 0; }
 .landing-kicker { font: italic 400 21px/1.3 "Cormorant Garamond", Georgia, serif; margin: 16px 0 0; }
