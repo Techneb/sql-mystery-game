@@ -14,7 +14,12 @@ All in the owner's OpenGen **Creations** (Image library), Nano Banana Pro, 16:9:
 - Stills: shot 1, shot 2, shot 3 end (hand on the shoulder) and shot 3 start (the same picture with the
   hand removed: removing worked where "raise the hand" did not), shot 4, shot 5 start (closed case); shot 6
   and shot 5 end (open, empty case) were generating at the end of the session: check them.
-- Not started: the six Veo 3.1 videos (check Veo's credit cost first), and Video 2.
+- Shot 5 end (open, empty case) and shot 6 came out well.
+- Videos: shot 1 generated with **Veo 3.1, 8 s, 720p: 800 credits per clip** (the menu says "from 400",
+  that is 4 s). Six clips for Part I is about 4,800 credits, both films about 9,600. Cheaper image-to-video
+  models in the same tool: Kling 3.0 (from 126), Seedance 2.0 (from 60), Wan 2.7 (from 50). Next: check
+  shot 1's clip with the owner, then decide Veo vs a cheaper model (or 4-6 s clips) for the other five.
+  Video 2 not started.
 
 How driving OpenGen works (for the next session): typing into the prompt box drops characters, so set the
 textarea value by script (native value setter + input event), then type one space so the page registers it,
