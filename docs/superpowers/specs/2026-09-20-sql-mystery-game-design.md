@@ -405,3 +405,7 @@ framework, no bundler.
   the Blue Star re-set as a ring (after chapter XII). Keep each to a handful of shots, silent, with captions in
   the paper's voice; plan for a still-image fallback so the page stays light. Prompts written 2026-10-02 for OpenGen: `docs/mockups/video-part1.md` and `video-part2.md`
   (seven shots each, keyframe then image-to-video, captions added afterwards, stills fallback).
+- **Chapter icons as images** (course owner, 2026-10-02): replace the twelve single-line SVG props (`PROPS` in
+  `site/app.js`, e.g. chapter 8's bottle and glass) with small images generated the same way as the portraits
+  (OpenGen, Nano Banana Pro, the Lavery style frame as reference), one per chapter, transparent or on the
+  paper colour, legible at the chapter header's size and in the night edition. Not started.

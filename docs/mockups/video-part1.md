@@ -7,6 +7,23 @@ stone: only the empty case.
 Work top to bottom. Each step says where to go in OpenGen, what to set, what to upload, what to paste, and
 what to save. Make a folder `~/Downloads/ritz-video/` and save everything there under the names given.
 
+## Status (2026-10-02, made by Claude driving OpenGen in Chrome)
+
+All in the owner's OpenGen **Creations** (Image library), Nano Banana Pro, 16:9:
+- Step A Ganimard sheet, step B style frame: done.
+- Stills: shot 1, shot 2, shot 3 end (hand on the shoulder) and shot 3 start (the same picture with the
+  hand removed: removing worked where "raise the hand" did not), shot 4, shot 5 start (closed case); shot 6
+  and shot 5 end (open, empty case) were generating at the end of the session: check them.
+- Not started: the six Veo 3.1 videos (check Veo's credit cost first), and Video 2.
+
+How driving OpenGen works (for the next session): typing into the prompt box drops characters, so set the
+textarea value by script (native value setter + input event), then type one space so the page registers it,
+and check the value. Upload references one at a time, from the project folder (the browser extension only
+uploads files this session may read, e.g. `site/portraits/`); earlier creations are picked from the
+reference panel's Creations tab (newest first; take a zoomed look before clicking, the order shifts). The
+send button stays grey until every reference has finished uploading. Each Nano Banana Pro image costs 38
+credits; a "CREDIT BALANCE TOO LOW" card means stop and ask the owner (never click Unlock).
+
 ## Before you start: files to have at hand
 
 From the project folder, `site/portraits/`: `blakeney.jpg`, `ashcombe.jpg`. Copy them into
