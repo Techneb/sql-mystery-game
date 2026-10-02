@@ -343,7 +343,7 @@ framework, no bundler.
 - **Redo three portraits: Ashcombe, Sernine, Ortega** (course owner, 2026-09-30: they read as the same
   lean, dark, moustached man, and Ashcombe should look about 55-60). Blocked: the free no-login endpoint
   (image.pollinations.ai, model flux) now answers 402 after one image. Generate elsewhere, square, same
-  Lavery template, distinct sitters (Ashcombe: elderly, white mutton-chops, monocle, ruddy; Sernine: ~30,
+  Lavery template (prompts: `docs/mockups/portrait-prompts.md`), distinct sitters (Ashcombe: elderly, white mutton-chops, monocle, ruddy; Sernine: ~30,
   fair, clean-shaven, boyish, grey suit and carnation; Ortega: stout, tanned, grey-streaked black beard,
   bald crown, cream linen). The endpoint renders square and stretches other sizes, which is why all
   seven files were squeezed back to square and centre-cropped to 3:4 (450x600) on 2026-09-30; crop new
