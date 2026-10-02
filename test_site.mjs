@@ -231,6 +231,10 @@ test("story markup: bold and italic only, everything else escaped", () => {
   assert.equal(richText("**Ganimard** has *a cat*."), "<b>Ganimard</b> has <i>a cat</i>.");
   assert.equal(richText("*'sends regards'*"), "<i>'sends regards'</i>");
   assert.equal(richText("<script>x</script> **<b>**"), "&lt;script&gt;x&lt;/script&gt; <b>&lt;b&gt;</b>");
+  assert.equal(richText("One.\n\nTwo *b*."), "<p>One.</p><p>Two <i>b</i>.</p>", "a blank line starts a paragraph");
+  assert.equal(richText("Boxes:\n\n| Box | From |\n| Night | 00:00 |"),
+    "<p>Boxes:</p><table><thead><tr><th>Box</th><th>From</th></tr></thead><tbody><tr><td>Night</td><td>00:00</td></tr></tbody></table>");
+  assert.ok(!richText("| <i> | x |").includes("<i>"), "table cells are escaped too");
   for (const c of data.chapters) assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in chapter " + c.n);
   for (const e of Object.values(data.endings)) assert.ok(!/\*/.test(richText(e)), "unbalanced markup in an ending");
 });

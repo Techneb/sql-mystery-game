@@ -62,6 +62,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* same front-page treatment as the landing story: a drop cap on the chapter text */
 .story::first-letter { float: left; font: 900 44px/.85 "Playfair Display", serif; margin: 4px 7px 0 0; }
 .story b { font-weight: 700; }
+.story p { margin: 0 0 .6em; }
+.story table { border-collapse: collapse; margin: .2em 0 .8em; font-size: 15px; text-align: left; width: 100%; }
+.story th { font: 700 11px "Cormorant Garamond", Georgia, serif; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--ink); padding: 2px 8px 2px 0; }
+.story td { border-bottom: 1px solid var(--rule); padding: 3px 8px 3px 0; vertical-align: top; }
 
 /* terminal */
 .editor { position: relative; background: var(--term); border: 1px solid #6b5a33; }

@@ -341,7 +341,17 @@ export function seenFilms(text, have) { return have.concat(FILM_LINES.filter(m =
 
 // Stories and endings carry **bold** and *italic* (plot.py); escaped first, so nothing else becomes markup.
 export function richText(s) {
-  return esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>");
+  const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>");
+  const blocks = String(s).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+  const html = blocks.map(block => {
+    const lines = block.split("\n").map(l => l.trim());
+    if (!lines.every(l => l.startsWith("|"))) return blocks.length > 1 ? "<p>" + inline(lines.join(" ")) + "</p>" : inline(lines.join(" "));
+    // a table: lines of | cells |, the first one the header
+    const [head, ...rows] = lines.map(l => l.replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim())));
+    return "<table><thead><tr>" + head.map(c => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" +
+      rows.map(r => "<tr>" + r.map(c => "<td>" + c + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+  });
+  return html.join("");
 }
 
 export function detectBadges(ctx, have) {
