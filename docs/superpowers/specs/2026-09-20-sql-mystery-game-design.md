@@ -390,3 +390,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
+- **Big UI/UX pass** (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
+  chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
+  case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
+  fixes keep landing during the review (section labels 11px -> 13px on 2026-10-02).

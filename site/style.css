@@ -10,7 +10,7 @@ button { font: inherit; background: var(--ink); color: var(--paper); border: 1px
 button.quiet { background: transparent; color: var(--ink); }
 button:disabled { opacity: .4; cursor: default; }
 input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; }
-.label { font-weight: 700; letter-spacing: 1px; font-size: 11px; }
+.label { font-weight: 700; letter-spacing: 1px; font-size: 13px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
 .col-erd .label-row { position: relative; z-index: 16; }
 .muted { opacity: .6; font-size: 13px; }
@@ -20,6 +20,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 
 /* masthead */
 .masthead { position: relative; text-align: center; border-bottom: 2px solid var(--ink); padding: 10px 16px 6px; }
+.back-small { margin-left: 10px; padding: 0 6px; font-size: 11px; letter-spacing: 0; vertical-align: 1px; }
+.back-small[hidden] { display: none; }
 .chapter-menu-toggle { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .chapter-menu { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px; max-width: 90vw; background: var(--card); border: 1px solid var(--ink); box-shadow: 2px 2px 5px rgba(0,0,0,.25); padding: 8px; z-index: 21; }
 .chapter-menu[hidden] { display: none; }
