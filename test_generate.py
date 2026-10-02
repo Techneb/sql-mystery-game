@@ -320,6 +320,17 @@ class Erd(unittest.TestCase):
             for name, (_, x, y, w, h) in pos.items():
                 for px, py in e["points"]:
                     self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (e["t"], e["col"], name))
+        # no two lines share a leg: legs on the same line (same x, or same y) never overlap
+        legs = [(e["t"] + "." + e["col"], (min(ax, bx), min(ay, by), max(ax, bx), max(ay, by)))
+                for e in erd.fk_paths(tables, fks, pos) for (ax, ay), (bx, by) in e["segments"] if (ax, ay) != (bx, by)]
+        for n1, (x1, y1, X1, Y1) in legs:
+            for n2, (x2, y2, X2, Y2) in legs:
+                if n1 >= n2:
+                    continue
+                if x1 == X1 == x2 == X2:    # two vertical legs on the same x
+                    self.assertFalse(min(Y1, Y2) - max(y1, y2) > 0.5, "%s and %s overlap" % (n1, n2))
+                if y1 == Y1 == y2 == Y2:    # two horizontal legs on the same y
+                    self.assertFalse(min(X1, X2) - max(x1, x2) > 0.5, "%s and %s overlap" % (n1, n2))
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
         conn.close()
 

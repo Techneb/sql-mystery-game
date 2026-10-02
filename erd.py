@@ -2,7 +2,7 @@
 
 Tables without foreign keys come first, in reveal order, PER_ROW to a row. The linked tables follow as their own
 block, layered by foreign-key depth (a parent sits in the row above its children), so every relationship line runs
-in the gap between two rows and never crosses a table. Keys are drawn as icons (gold: primary, silver: foreign),
+in the gaps between rows and the gutter between columns, never crosses a table and never overlaps another line. Keys are drawn as icons (gold: primary, silver: foreign),
 and each line carries its cardinality: a dot at each end, with N on the many side and 1 on the one side.
 """
 W, GAP, LAYER_H, ROW, HEAD = 170, 40, 60, 14, 16
@@ -70,62 +70,74 @@ def cardinality(conn, table, col):
 
 def fk_paths(tables, fks, pos):
     """-> [dict(t, col, ref, start=(x, y) on the child's top edge, end=(x, y) on the parent's bottom edge, d=SVG path,
-    points=the line sampled, for the test that keeps lines off tables)]. A child in the row just below its parent gets
-    one soft S in the gap between the rows. A child further down runs in the gutter between the two columns: down
-    out of the parent's row, across the gap, down the gutter, across the gap above the child, and in, corners rounded.
-    Lines sharing a gutter or two tables are spread apart, and a parent's lines leave it at different points."""
+    segments=[((x1, y1), (x2, y2)), ...] the straight legs, points=the line sampled)].
+    Every line is straight legs joined by smooth rounded turns, and no two lines share a leg: each leaves its parent
+    from its own point (right half of the bottom edge) and enters its child at its own point (left half of the top
+    edge), runs across each gap between rows in its own lane and, when the child is further down, down its own lane
+    in the gutter between the two columns."""
     bands = {}
     for (_, _, y, _, h) in pos.values():
         bands[y] = max(bands.get(y, 0), y + h)
     tops = sorted(bands)
+    row = lambda t: tops.index(pos[t][2])
+    edges = list(fks)
+    def spread(group, side):   # distinct points along an edge: right half for exits, left half for entries
+        out = {}
+        for t in {g[side] for g in group}:
+            mine = [e for e in group if e[side] == t]
+            _, x, _, w, _ = pos[t]
+            for k, e in enumerate(mine):
+                f = (k + 1) / (len(mine) + 1)
+                out[e] = x + w * (0.55 + 0.35 * f) if side == 2 else x + w * (0.1 + 0.35 * f)
+        return out
+    exit_x, entry_x = spread(edges, 2), spread(edges, 0)
+    # which gaps each line crosses horizontally (gap g lies between row g and row g + 1), and which need the gutter
+    use, long_edges = {}, []
+    for e in edges:
+        i, j = row(e[2]), row(e[0])
+        use.setdefault(i, []).append(e)
+        if j > i + 1:
+            long_edges.append(e)
+            use.setdefault(j - 1, []).append(e)
+    lane_y = {}
+    for g, es in use.items():
+        es = sorted(es, key=lambda e: exit_x[e] if row(e[2]) == g else entry_x[e])
+        top, bottom = bands[tops[g]], tops[g + 1]
+        step = min(7, (bottom - top - 16) / max(len(es), 1))
+        for k, e in enumerate(es):
+            lane_y[(e, g)] = (top + bottom) / 2 + (k - (len(es) - 1) / 2) * step
     gutter = W + GAP / 2
-    long_edges = [(t, col, ref) for t, col, ref in fks if tops.index(pos[t][2]) > tops.index(pos[ref][2]) + 1]
-    out, seen = [], {}
-    for t, col, ref in fks:
-        k = seen[(t, ref)] = seen.get((t, ref), -1) + 1
-        n = sum(1 for (tt, _, rr) in fks if (tt, rr) == (t, ref))
-        dx = (k - (n - 1) / 2) * 50
-        _, x1, y1, w1, _ = pos[t]
-        _, x2, y2, w2, h2 = pos[ref]
-        lean = max(-40, min(40, (x1 + w1 / 2 - (x2 + w2 / 2)) / 4))   # leave the parent leaning towards the child
-        sx, sy = x1 + w1 / 2 + dx, y1
-        ex, ey = x2 + w2 / 2 + dx + lean, y2 + h2
-        i, j = tops.index(y2), tops.index(y1)
-        if j == i + 1:   # the next row: one S in the gap
-            c1, c2 = curve_controls(ey, bands[y2], sy)
-            d = "M%g %g C%g %g %g %g %g %g" % (ex, ey, ex, c1, sx, c2, sx, sy)
-            pts = [((1 - u) ** 3 * ex + 3 * (1 - u) ** 2 * u * ex + 3 * (1 - u) * u * u * sx + u ** 3 * sx,
-                    (1 - u) ** 3 * ey + 3 * (1 - u) ** 2 * u * c1 + 3 * (1 - u) * u * u * c2 + u ** 3 * sy)
-                   for u in [m / 40 for m in range(1, 40)]]
-        else:            # further down: through the gutter, each line in its own lane
-            lane = long_edges.index((t, col, ref)) - (len(long_edges) - 1) / 2
-            gx = gutter + lane * 6
-            g1 = (bands[y2] + tops[i + 1]) / 2 + lane * 3
-            g2 = (bands[tops[j - 1]] + y1) / 2 + lane * 3
-            corners = [(ex, ey), (ex, g1), (gx, g1), (gx, g2), (sx, g2), (sx, sy)]
-            d = rounded(corners, 6)
-            pts = [(ax + (bx - ax) * m / 20, ay + (by - ay) * m / 20)
-                   for (ax, ay), (bx, by) in zip(corners, corners[1:]) for m in range(21)][1:-1]
-        out.append(dict(t=t, col=col, ref=ref, start=(sx, sy), end=(ex, ey), d=d, points=pts))
+    gstep = min(6, (GAP - 12) / max(len(long_edges), 1))
+    lane_x = {e: gutter + (k - (len(long_edges) - 1) / 2) * gstep for k, e in enumerate(long_edges)}
+    out = []
+    for e in edges:
+        t, col, ref = e
+        i, j = row(ref), row(t)
+        ex, ey = exit_x[e], pos[ref][2] + pos[ref][4]
+        sx, sy = entry_x[e], pos[t][2]
+        if j == i + 1:
+            y = lane_y[(e, i)]
+            corners = [(ex, ey), (ex, y), (sx, y), (sx, sy)]
+        else:
+            y1, y2, gx = lane_y[(e, i)], lane_y[(e, j - 1)], lane_x[e]
+            corners = [(ex, ey), (ex, y1), (gx, y1), (gx, y2), (sx, y2), (sx, sy)]
+        legs = list(zip(corners, corners[1:]))
+        pts = [(ax + (bx - ax) * m / 20, ay + (by - ay) * m / 20) for (ax, ay), (bx, by) in legs for m in range(21)][1:-1]
+        out.append(dict(t=t, col=col, ref=ref, start=(sx, sy), end=(ex, ey), d=rounded(corners, 8), segments=legs, points=pts))
     return out
 
 
 def rounded(points, r):
-    """An orthogonal polyline as an SVG path, each corner rounded by r (less where a leg is shorter)."""
+    """An orthogonal polyline as an SVG path: straight legs, each turn a smooth quarter curve of radius r (less where
+    a leg is too short)."""
     d = "M%g %g" % points[0]
+    sgn = lambda v: (v > 0) - (v < 0)
     for (ax, ay), (bx, by), (cx, cy) in zip(points, points[1:], points[2:]):
         r1 = min(r, (abs(bx - ax) + abs(by - ay)) / 2, (abs(cx - bx) + abs(cy - by)) / 2)
-        sgn = lambda v: (v > 0) - (v < 0)
         px, py = bx - sgn(bx - ax) * r1, by - sgn(by - ay) * r1
         qx, qy = bx + sgn(cx - bx) * r1, by + sgn(cy - by) * r1
         d += " L%g %g Q%g %g %g %g" % (px, py, bx, by, qx, qy)
     return d + " L%g %g" % points[-1]
-
-
-def curve_controls(ey, bottom, sy):
-    """One soft S from the parent's bottom edge to the child's top edge. Both control points sit below the parent's
-    row (bottom), so the curve leaves the parent straight down and only swings sideways in the gap between rows."""
-    return bottom + (sy - bottom) * 0.62, bottom + (sy - bottom) * 0.38
 
 
 def svg(conn, order=()):
