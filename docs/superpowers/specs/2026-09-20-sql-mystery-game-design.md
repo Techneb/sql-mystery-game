@@ -280,7 +280,11 @@ framework, no bundler.
    2026-09-30: the course owner played chapters 1-2 as a student; the review was applied (bare objectives,
    English dates in statements, planted rows scattered, funnier noise, fitted schema, SQL colouring, Next
    chapter button, Badges panel, Day/Night edition button, formatted stories), then a ponytail audit
-   removed the dormant hints code. Chapters 3-12 have not had that student-eye review yet.
+   removed the dormant hints code. 2026-09-30 to 10-02: the student-eye playtest went on through chapter 8
+   (noise names, HH:MM times, cab currency, ch6 three-payment decoys, ch7 GROUP BY CASE with the letter in
+   Ortega's suspect card, suspects met progressively, a guessing audit pinned as `traps`, schema redrawn).
+   Chapters 9-12 have not been played as a student yet; open question there: ch11's answer is Lupin's own
+   suite, already known from ch8.
 
 ## 8. Backlog (not scheduled)
 
