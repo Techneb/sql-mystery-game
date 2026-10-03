@@ -902,14 +902,14 @@ function toggleTheme() {
 
 // Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
 // Passphrase is asked for once per page load (adminUnlocked persists after); ask the course owner
-// for it, it is not committed in plaintext anywhere.
-const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
+// for it, it is not committed in plaintext anywhere. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
+const ADMIN_PASS_SHA256 = "3de5a3e0e457fb7a7e3ce4297694fe5e4a18fccdbab443b251a2858d2483adc8";
 let adminUnlocked = false, adminPass = "";  // adminPass: memory only, sent as the key when saving settings
 async function unlockAdmin() {
   if (adminUnlocked) return true;
   const pass = prompt("Admin passphrase:");
   if (!pass) return false;
-  adminUnlocked = (await sha256(normalise(pass))) === ADMIN_PASS_SHA256;
+  adminUnlocked = (await sha256(pass.trim().toLowerCase())) === ADMIN_PASS_SHA256;   // trimmed, lowercased: exactly what apps_script.gs compares; never the answer normaliser (its rules change)
   if (adminUnlocked) adminPass = pass;
   if (!adminUnlocked) alert("Wrong passphrase.");
   return adminUnlocked;
