@@ -183,6 +183,6 @@ The morning light slowly warms across the desk; a pigeon lands on the window sil
 You should have in `~/Downloads/ritz-video/`: `p2_s1.mp4` to `p2_s5.mp4`, `p2_s6a.mp4`, `p2_s6b.mp4` (and the
 stills). Tell Claude which seconds to keep in each (or "all"). Claude assembles them on the Mac with ffmpeg:
 cuts, 0.8 s cross-fades, the captions above in the paper's typefaces, a poster image, MP4 and WebM under
-6 MB, and puts the film above the Part II ending (decided 2026-10-03: it does not autoplay; it opens on its poster with a large "Play with sound" button, since browsers allow sound only after a click; then Replay and Full screen, exactly as Video 1 now does; subtitles stay for anyone with the sound off).
+6 MB, and puts the film above the Part II ending (decided 2026-10-03: it does not autoplay; it opens on its poster with a large "Play with sound" button, since browsers allow sound only after a click; then the player controls and Replay, exactly as Video 1 now does; subtitles stay for anyone with the sound off).
 
 If a shot will not animate well, keep its still: the film can show it with a slow zoom instead.

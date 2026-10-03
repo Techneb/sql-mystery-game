@@ -447,7 +447,7 @@ function showExtra() {
     '<div class="film-wrap"><video class="film" playsinline preload="auto" poster="video/part1.jpg">' +
     '<source src="video/part1.webm" type="video/webm"><source src="video/part1.mp4" type="video/mp4"></video>' +
     '<button class="film-play" id="film-play">&#9654; Play with sound</button></div>' +
-    '<div class="film-controls"><button class="quiet" id="film-replay">Replay</button> <button class="quiet" id="film-full">Full screen</button></div>' +
+    '<div class="film-controls"><button class="quiet" id="film-replay">Replay</button></div>' +
     "<h1>LUPIN TAKEN AT THE GARE DU NORD</h1>" +
     '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
     '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
@@ -456,12 +456,12 @@ function showExtra() {
     "telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.</div>" +
     '<button id="btn-extra">Continue</button></div>';
   el.hidden = false;
-  // The film waits on its poster: browsers only allow sound after a click, so the student starts it.
+  // The film waits on its poster: browsers only allow sound after a click, so the student starts it; then the
+  // browser's own controls (play/pause, timeline, sound, full screen) take over, plus Replay from the start.
   const film = el.querySelector(".film");
-  const play = () => { $("film-play").hidden = true; film.currentTime = 0; film.play(); };
+  const play = () => { $("film-play").hidden = true; film.controls = true; film.currentTime = 0; film.play(); };
   $("film-play").onclick = play;
   $("film-replay").onclick = play;
-  $("film-full").onclick = () => film.requestFullscreen?.();
   $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); };
 }
 
