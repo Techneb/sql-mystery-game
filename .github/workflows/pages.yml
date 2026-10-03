@@ -30,6 +30,14 @@ jobs:
         # season-N.sqlite/json are gitignored; every deploy builds all twenty (~4 MB, ~1.5 s each) so the
         # teacher picks and shares one from the ?admin panel without touching the repo.
         run: for n in $(seq 1 20); do python3 generate_db.py --season "$n"; done
+      - name: Send the season answers to the leaderboard backend
+        # Compete answers are checked by the Apps Script, which must hold the hashes of the seasons just built.
+        # Set the repository secrets BOARD_URL (the /exec URL) and ADMIN_KEY (the admin passphrase); without
+        # them the step only says so, and the admin panel's Settings shows which seasons are stale.
+        env:
+          BOARD_URL: ${{ secrets.BOARD_URL }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: python3 generate_db.py --post
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -898,13 +898,29 @@ def hashes(answer, form):
     return [sha(n)] + [sha(n.split()[-1])] * ("name" in form and " " in n)
 
 
+def compete_hashes(V):
+    return [hashes(V[ch["answer_key_compete"]], ch["answer_form_compete"]) for ch in plot.CHAPTERS[:8]]
+
+
 def season_hashes(seasons=range(1, 21)):
-    """{"N": [8 compete chapters' hash lists]}: pasted into the admin panel, kept by the backend, never in the season JSON."""
-    out = {}
-    for n in seasons:
-        V = plant_values(n)
-        out[str(n)] = [hashes(V[ch["answer_key_compete"]], ch["answer_form_compete"]) for ch in plot.CHAPTERS[:8]]
-    return out
+    """{"N": [8 compete chapters' hash lists]}: posted to the backend by the deploy (or pasted in the admin panel),
+    kept there, never in the season JSON."""
+    return {str(n): compete_hashes(plant_values(n)) for n in seasons}
+
+
+def fingerprint(lists):
+    """sha256 over a season's hashes, in order: the season JSON ships it and the backend keeps the one it was sent,
+    so the admin panel can tell a stale backend. Same formula in apps_script.gs (saveHashes_)."""
+    return sha("".join(h for hs in lists for h in hs))
+
+
+def post_hashes(board, key):
+    """POST the season hashes to the Apps Script (the deploy does this with the BOARD_URL and ADMIN_KEY secrets)."""
+    import urllib.request
+    body = json.dumps({"hashes": season_hashes(), "key": key}).encode()
+    req = urllib.request.Request(board, data=body, headers={"Content-Type": "text/plain;charset=utf-8"})
+    with urllib.request.urlopen(req, timeout=60) as r:   # Apps Script answers a POST with a redirect; urllib follows it
+        return json.loads(r.read().decode())
 
 
 # shipped in chapters.json for the page's ?selftest: uses no planted value
@@ -935,6 +951,8 @@ def chapters_json(V, mode="learn"):
     out = dict(mode=mode, normalise_fixture=FIXTURE,
                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,
                chapters=chapters, decoys={"1": V["decoy_report_id"]} if mode == "learn" else {})
+    if mode == "compete":
+        out["hashes_sha256"] = fingerprint(compete_hashes(V))   # a fingerprint only: it cannot be turned back into answers
     if mode == "learn":
         out["endings"] = {k: v.format(**V) for k, v in plot.ENDINGS.items()}
         out["part2_code_sha256"] = [sha(V["part2_code"]), sha(V["part2_code"].split(" ", 1)[1])]   # with or without its STOP
@@ -1066,7 +1084,18 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=1912)
     ap.add_argument("--season", type=int, help="build season-N.* for compete mode (re-draws the planted values)")
     ap.add_argument("--hashes", action="store_true", help="print the compete answer hashes of seasons 1-20 (for the admin panel)")
+    ap.add_argument("--post", action="store_true", help="POST the hashes to $BOARD_URL with $ADMIN_KEY (the deploy workflow)")
     a = ap.parse_args(argv)
+    if a.post:
+        board, key = os.environ.get("BOARD_URL", ""), os.environ.get("ADMIN_KEY", "")
+        if not board or not key:
+            print("season answers not posted: BOARD_URL and ADMIN_KEY are not both set")
+            return
+        r = post_hashes(board, key)
+        if not r.get("ok"):
+            raise SystemExit("season answers refused by the backend: " + str(r.get("error", r)))
+        print("season answers posted: %s seasons" % r.get("seasons"))
+        return
     if a.hashes:
         print(json.dumps(season_hashes()))
         return

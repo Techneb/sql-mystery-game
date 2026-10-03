@@ -307,6 +307,9 @@ class Compete(unittest.TestCase):
             self.assertEqual(len(hs), 2 if ch["n"] == 5 else 1)   # the jeweller's surname alone is accepted too
         self.assertEqual(got, g.season_hashes([1]))   # deterministic
         self.assertEqual(len(g.season_hashes()), 20)
+        j = g.chapters_json(V, mode="compete")
+        self.assertEqual(j["hashes_sha256"], g.fingerprint(got["1"]), "the season JSON carries the fingerprint of its hashes")
+        self.assertNotIn(j["hashes_sha256"], sum(got["1"], []), "a fingerprint is not a hash")
         conn.close()
 
     def test_compete_values_vary_by_season(self):

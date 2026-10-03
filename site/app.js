@@ -115,7 +115,7 @@ function backToInvestigation() {
 }
 const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
   (ch && (ch.construct || (ch.tables || []).length) ? '<div class="muted chapter-tools">' +
-    (ch.construct ? "This week's tool: <b>" + esc(ch.construct) + "</b>" : "") +
+    (ch.construct ? "This chapter's tool: <b>" + esc(ch.construct) + "</b>" : "") +
     (ch.construct && ch.tables.length ? " &middot; " : "") + (ch.tables.length ? "New evidence: " + esc(ch.tables.join(", ")) : "") + "</div>" : "");
 
 function renderChapter() {
@@ -891,13 +891,21 @@ function toggleTheme() {
 // for it, it is not committed in plaintext anywhere. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
 const ADMIN_PASS_SHA256 = "3de5a3e0e457fb7a7e3ce4297694fe5e4a18fccdbab443b251a2858d2483adc8";
 let adminUnlocked = false, adminPass = "";  // adminPass: memory only, sent as the key when saving settings
+function askPassphrase() {   // #passgate: a native <dialog> with a password field, so the letters are masked (Escape cancels)
+  return new Promise(resolve => {
+    const d = $("passgate"), input = d.querySelector("input");
+    input.value = "";
+    d.onclose = () => resolve(d.returnValue === "ok" ? input.value : "");
+    d.showModal();
+  });
+}
 async function unlockAdmin() {
   if (adminUnlocked) return true;
-  const pass = prompt("Admin passphrase:");
+  const pass = await askPassphrase();
   if (!pass) return false;
   adminUnlocked = (await sha256(pass.trim().toLowerCase())) === ADMIN_PASS_SHA256;   // trimmed, lowercased: exactly what apps_script.gs compares; never the answer normaliser (its rules change)
   if (adminUnlocked) adminPass = pass;
-  if (!adminUnlocked) alert("Wrong passphrase.");
+  if (!adminUnlocked) toast("Wrong passphrase.", "Admin");
   return adminUnlocked;
 }
 
@@ -948,7 +956,8 @@ async function renderAdminPanel() {
     '<input id="cfg-pw" type="number" min="0"><br>Telegrams after every third wrong answer, one per line:' +
     '<textarea id="cfg-taunts" rows="4"></textarea><button id="cfg-save">Save</button>' +
     '<div id="cfg-msg" class="admin-msg"></div>' +
-    '<br>Season answers, the output of <code>python3 generate_db.py --hashes</code> (the backend checks compete answers against it):' +
+    '<br><span id="cfg-hashes-status">Season answers: checking...</span>' +
+    '<br>By hand, if the deploy cannot post them (repository secrets BOARD_URL and ADMIN_KEY): paste the output of <code>python3 generate_db.py --hashes</code>:' +
     '<textarea id="cfg-hashes" rows="3" placeholder=\'{"1": [[...], ...], ...}\'></textarea><button id="cfg-hashes-save">Save answers</button>' +
     '<div id="cfg-hashes-msg" class="admin-msg"></div></div>' +
     '<div id="admin-seasons" class="admin-seasons" hidden>' +
@@ -989,11 +998,25 @@ async function renderAdminPanel() {
     q("cfg-pw").value = c.penalty.wrong;
     q("cfg-taunts").value = c.taunts.join("\n");
   };
+  // Each season file carries a fingerprint of its answer hashes; the backend keeps the one it was last sent.
+  const hashesStatus = async board => {
+    const el = q("cfg-hashes-status");
+    if (!board) { el.textContent = "Season answers: no /exec URL to check against."; return; }
+    try {
+      const u = new URL(board); u.searchParams.set("hashes", "1");
+      const have = await (await fetch(u)).json();
+      const seasons = await Promise.all([...Array(20)].map((_, i) => fetchSeason(i + 1)));
+      const stale = seasons.map((s, i) => s && s.hashes_sha256 !== have[i + 1] ? i + 1 : 0).filter(Boolean);
+      el.textContent = stale.length ? "Season answers STALE on the backend for seasons " + stale.join(", ") + ": the deploy posts them when the repository secrets are set; otherwise paste below."
+        : "Season answers: up to date for all " + seasons.filter(Boolean).length + " seasons on this server.";
+    } catch { el.textContent = "Season answers: could not read the backend."; }
+  };
   q("admin-settings-btn").onclick = async () => {
     const s = q("admin-settings"); s.hidden = !s.hidden;
     if (s.hidden) return;
     const board = q("admin-board").value.trim();
     q("cfg-msg").textContent = board ? "Loading..." : "No /exec URL: showing the built-in defaults, saving is off.";
+    hashesStatus(board);
     if (board) {
       try { applyConfig(await (await fetch(configUrl(board))).json()); q("cfg-msg").textContent = ""; }
       catch { q("cfg-msg").textContent = "Could not read the settings; showing what this page has."; }
@@ -1027,6 +1050,7 @@ async function renderAdminPanel() {
       const r = await (await fetch(board, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
                                             body: JSON.stringify({ hashes, key: adminPass }) })).json();
       q("cfg-hashes-msg").textContent = r.ok ? "Saved: " + r.seasons + " seasons." : "Refused by the backend: " + (r.error || "unknown") + ".";
+      if (r.ok) hashesStatus(board);
     } catch { q("cfg-hashes-msg").textContent = "Could not reach the backend."; }
   };
   q("admin-load").onclick = loadUsage;

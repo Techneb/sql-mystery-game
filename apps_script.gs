@@ -7,12 +7,13 @@
 //   SHEET_ID   the log sheet's id (required)
 //   ADMIN_KEY  the admin passphrase: lets the ?admin panel save settings and season answers (required for that)
 //   TOKEN_SECRET  optional; signs the per-team tokens (falls back to ADMIN_KEY, then SHEET_ID)
-//   CONFIG, HASHES_<season>  written by the admin panel, never by hand
+//   CONFIG, HASHES_<season>, HASHES_FP_<season>  written by the admin panel or the deploy workflow, never by hand
 //
 // Anyone with a class link can POST here, so every row is validated, every event after "start" must carry the
 // token "start" returned, and a "finish" needs its seven "progress" rows first. Compete answers are checked
-// here against the season hashes (python3 generate_db.py --hashes, pasted in the admin panel): the season
-// files on the site carry none. Nothing here can tell two browsers typing the same pseudo apart: compete
+// here against the season hashes, which the deploy workflow posts (python3 generate_db.py --post, with the
+// BOARD_URL and ADMIN_KEY repository secrets) or the admin panel pastes: the season files on the site carry
+// only a fingerprint of them, which ?hashes=1 lets the admin panel compare. Nothing here can tell two browsers typing the same pseudo apart: compete
 // stays honour-based against a student who posts a rival's "start" first.
 
 var EVENTS = ["start", "progress", "finish"];
@@ -40,12 +41,19 @@ function doPost(e) {
   return json_(ev === "start" ? {ok: true, token: token} : {ok: true});
 }
 
-// ?config=1 -> the settings; ?season=N -> that season's rows; nothing -> every row (the admin panel's usage view).
+// ?config=1 -> the settings; ?hashes=1 -> the fingerprint of each season's stored answers; ?season=N -> that
+// season's rows; nothing -> every row (the admin panel's usage view).
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  var props = PropertiesService.getScriptProperties();
   if (p.config) {
-    var c = PropertiesService.getScriptProperties().getProperty("CONFIG");
+    var c = props.getProperty("CONFIG");
     return json_(c ? JSON.parse(c) : {});
+  }
+  if (p.hashes) {
+    var fp = {};
+    for (var s = 1; s <= 20; s++) { var f = props.getProperty("HASHES_FP_" + s); if (f) fp[s] = f; }
+    return json_(fp);
   }
   var sheet = getLogSheet_();
   var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues() : [];
@@ -85,9 +93,12 @@ function check_(season, chapter, answer) {
   var h = PropertiesService.getScriptProperties().getProperty("HASHES_" + season);
   if (!h) return {ok: false, error: "no answers stored for season " + season + ": paste them in the admin panel"};
   var hashes = JSON.parse(h)[chapter - 1] || [];
-  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, answer, Utilities.Charset.UTF_8);
-  var hex = digest.map(function (b) { return ("0" + (b & 255).toString(16)).slice(-2); }).join("");
-  return {ok: true, correct: hashes.indexOf(hex) >= 0};
+  return {ok: true, correct: hashes.indexOf(sha256_(answer)) >= 0};
+}
+
+function sha256_(s) {
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8);
+  return digest.map(function (b) { return ("0" + (b & 255).toString(16)).slice(-2); }).join("");
 }
 
 function getLogSheet_() {
@@ -133,6 +144,7 @@ function saveHashes_(data) {
     var s = int_(season, 1, 20), list = data.hashes[season];
     if (s === null || !Array.isArray(list) || list.length !== 8) return;
     props.setProperty("HASHES_" + s, JSON.stringify(list));
+    props.setProperty("HASHES_FP_" + s, sha256_(list.map(function (hs) { return hs.join(""); }).join("")));   // same formula as generate_db.fingerprint
     n++;
   });
   return n ? {ok: true, seasons: n} : {ok: false, error: "no season in the payload"};

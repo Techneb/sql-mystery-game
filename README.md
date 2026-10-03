@@ -115,10 +115,14 @@ itself), and deploy as a web app (see the comment at the top of the file, or Tas
 endpoint. It travels in links instead.
 
 Compete answers are checked by the backend, not the page, so a season link needs `board=` to be
-playable. `python3 generate_db.py --hashes` prints the answer hashes of seasons 1-20 as one JSON object:
-paste it into the admin panel's **Settings**, field **Season answers**, which stores it in the Script
-Property `HASHES`. Re-run and re-paste after any change to `plot.py` or `generate_db.py` that moves a
-compete value. Integrity is honour-based: the repo is public and a student can rebuild a season locally.
+playable. The backend must hold the answer hashes of the seasons on the site: the deploy workflow posts
+them after building the seasons (`python3 generate_db.py --post`), provided the repository has the
+secrets **BOARD_URL** (the `/exec` URL) and **ADMIN_KEY** (the admin passphrase) under Settings >
+Secrets and variables > Actions. Without them the step says so and nothing is posted; the fallback is
+`python3 generate_db.py --hashes`, pasted into the admin panel's **Settings**, field **Season answers**.
+Either way the panel's Settings view says whether the backend's answers are up to date: each season file
+carries a fingerprint of its hashes (not invertible) and the backend reports the fingerprint it last
+received. Integrity is honour-based: the repo is public and a student can rebuild a season locally.
 A push to `main` during a timed session rebuilds the live seasons under the players: do not push mid-session.
 
 Playing a season: share one link with the class,
