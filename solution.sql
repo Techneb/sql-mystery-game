@@ -1,5 +1,20 @@
 -- The Ritz Affair: reference path (seed 1912). Each chapter first finds the facts the story withholds, then answers.
 
+-- Answers, in play order:
+--    1. The Night of the 17th          2127
+--    2. The Neighbouring Suite         Lord Ashcombe
+--    3. A Plate in the Dark            75-2041
+--    4. The Cab's Week                 27 rue des Martyrs
+--    5. The Boarding House             Ernest Grimaud
+--    6. Follow the Francs              3213
+--    7. The Quietest Hour              2718
+--    8. The First Order Before Dawn    Rupert Blakeney
+--       Part II code (telegram)        STOP READING THE NOISE
+--    9. The Trunk                      A-7
+--   10. Never Seen Together            Mr. Grey
+--   11. The Silence                    214
+--   12. Follow the Money               Comtesse de Cagliostro
+
 -- 01. The Night of the 17th (SELECT / WHERE) -> the report id: 2127
 -- Duroc says the lift went at 02:10, past midnight: the theft is filed under the 18th, not the 17th.
 SELECT transcript

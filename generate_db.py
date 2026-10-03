@@ -1021,6 +1021,13 @@ def format_sql(src):
 
 def solution_sql(V):
     out = ["-- The Ritz Affair: reference path (seed %d). Each chapter first finds the facts the story withholds, then answers." % V["seed"]]
+    # the answer key first, in the order a player needs it (the Part II code between chapters 8 and 9)
+    key = ["-- Answers, in play order:"]
+    for ch in plot.CHAPTERS:
+        key.append("--   %2d. %-30s %s" % (ch["n"], ch["title"].format(**V), V[ch["answer_key"]]))
+        if ch["n"] == 8:
+            key.append("--       %-30s %s" % ("Part II code (telegram)", V["part2_code"]))
+    out.append("\n".join(key))
     for ch in plot.CHAPTERS:
         lines = ["-- %02d. %s (%s) -> %s: %s" % (ch["n"], ch["title"].format(**V), ch["construct"],
                  ch["answer_form"].format(**V), V[ch["answer_key"]])]
