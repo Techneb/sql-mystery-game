@@ -132,6 +132,5 @@ the page lands a team back in its running game. Compete progress lives under the
 localStorage key, learning-mode progress under `ritz.learn`; "New investigation" in a season game
 abandons the season (rows already on the sheet stay).
 
-To watch teams as they play, open `site/leaderboard.html?data=<the same /exec URL>`. Bookmark that
-link, or set `APPS_SCRIPT_URL` in your own local, uncommitted copy of `leaderboard.html` (and of
-`app.js`, whose constant of the same name replaces the `board=` parameter) if you want fixed links.
+To watch teams as they play, open `site/leaderboard.html?data=<the same /exec URL>` and bookmark that
+link (the admin panel's **Seasons** section copies it).
