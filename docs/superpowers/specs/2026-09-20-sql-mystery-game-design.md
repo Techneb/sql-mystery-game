@@ -360,7 +360,9 @@ framework, no bundler.
   seasons exist, since one class plays one season and the teacher already knows which.
 
 - **Usage analytics** (course owner, 2026-09-30: how much the site is used, which chapters, how long a
-  chapter takes). Not built. **Chosen route: Google Analytics 4** (course owner, same day). Notes for
+  chapter takes). **Built and live 2026-10-03** (property `G-QG0K0D1NQZ`; banner, Consent Mode v2, the four
+  events below, privacy.html rewritten; the owner chose 14-month retention and granular location, and
+  registered the custom definitions; the school agreed). **Chosen route: Google Analytics 4** (course owner, same day). Notes for
   when it is built:
   - **What to measure.** Per chapter: how many players open it and solve it (the funnel, where
     students drop out), time from opening to solving (`state.opened[n]` is already recorded), queries
@@ -392,7 +394,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03): ads may come later. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; waiting for AdSense approval, see Status below): ads may come later. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
@@ -433,4 +435,6 @@ framework, no bundler.
 - **Chapter icons as images** (course owner, 2026-10-02): replace the twelve single-line SVG props (`PROPS` in
   `site/app.js`, e.g. chapter 8's bottle and glass) with small images generated the same way as the portraits
   (OpenGen, Nano Banana Pro, the Lavery style frame as reference), one per chapter, transparent or on the
-  paper colour, legible at the chapter header's size and in the night edition. Not started.
+  paper colour, legible at the chapter header's size and in the night edition. **Done 2026-10-03:** made by
+  the owner from `docs/mockups/chapter-icon-prompts.md`, background cut to transparency, `site/icons/chNN.png`;
+  `PROPS` removed.
