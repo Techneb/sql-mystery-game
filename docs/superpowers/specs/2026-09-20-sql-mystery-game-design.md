@@ -401,6 +401,19 @@ framework, no bundler.
   for what, how to withdraw); (4) in GA: Google signals and ads personalisation on, Google Ads linked under
   Administration > Associations de produits. Also decide where ads would show (never inside the game panes)
   and check the school is fine with ads shown to students.
+  **Status 2026-10-03:** chosen product is **Google AdSense** (showing ads), not Google Ads (buying them),
+  so step (4)'s Google Ads link is not needed. Done: AdSense account `pub-9765732642926043` for the root
+  domain `alephb.uk` (subdomains included); verification meta tag on both `alephb.uk` (alephb-site repo) and
+  the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
+  Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
+  messages. The ad box exists: a `<details id="ad-box">` under the schema, open by default, closed state
+  remembered per browser (`ritz.ads`), hidden until `ADS_ON` in `site/app.js` (preview: `localhost:8000/?ads=1`).
+  **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
+  id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
+  it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
+  340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.ad-slot`; (c) `ADS_ON = true`;
+  (d) privacy.html: an advertising section (AdSense cookies, personalised vs non-personalised ads, the
+  consent message, how to withdraw); (e) check day, night and phone width in Chrome, then push.
 - **Big UI/UX pass** (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
