@@ -446,7 +446,7 @@ function showExtra() {
     '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">EXTRA EDITION &mdash; PARIS &mdash; 20 MAY 1912</div>' +
     '<div class="film-wrap"><video class="film" playsinline preload="auto" poster="video/part1.jpg">' +
     '<source src="video/part1.webm" type="video/webm"><source src="video/part1.mp4" type="video/mp4"></video>' +
-    '<button class="film-play" id="film-play">&#9654; Play with sound<#9654; Play</button></div>' +
+    '<button class="film-play" id="film-play">&#9654; Play</button></div>' +
     '<div class="film-controls"><button class="quiet" id="film-replay">Replay</button></div>' +
     "<h1>LUPIN TAKEN AT THE GARE DU NORD</h1>" +
     '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
