@@ -217,7 +217,7 @@ WRONG_DEFAULT = [
   "Not that, mon petit. Look at the data again.",
 ]
 ENDINGS = dict(
-  part1="Gare du Nord, 20 May, 09:10. **Ganimard**'s hand falls on the shoulder of **{lupin_alias}, Esq.** The gentleman turns, smiles, and hands the inspector a small velvet case. *It is empty.* 'You have my name, Inspector. The Blue Star has a train to catch.' Behind him, the boat train pulls out.",
+  part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n'Monsieur {lupin_alias}. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out: *the Blue Star has a train to catch.*",
   part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
 )
 

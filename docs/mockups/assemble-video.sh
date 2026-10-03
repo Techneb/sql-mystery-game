@@ -8,8 +8,8 @@ X=0.8
 # caption files (textfile= avoids quoting apostrophes)
 printf '%s' "GARE DU NORD, 20 MAY 1912, 09:10" > t1.txt
 printf '%s' "Mr. Blakeney had a train to catch." > t2.txt
-printf '%s' "Inspector Ganimard had not slept in three days." > t3.txt
-printf '%s' "'You have my name, Inspector.'" > t4.txt
+printf '%s' "Inspector Ganimard was early. Lupin had asked him not to be late." > t3.txt
+printf '%s' "'Delighted, Inspector.'" > t4.txt
 printf '%s' "The case was empty." > t5.txt
 printf '%s' "'The Blue Star has a train to catch.'" > t6.txt
 printf '%s' "Part I closed. The stone was not." > t7.txt

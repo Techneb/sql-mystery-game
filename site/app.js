@@ -138,7 +138,7 @@ function renderChapter() {
   $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form);
   if (awaitingCode(state)) {
     $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + richText(data.endings.part1);   // the unmasking: his face, only now
-    $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.";
+    $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box...";
     $("btn-print").hidden = false;
   }
   // The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
@@ -453,7 +453,7 @@ function showExtra() {
     '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
     '<div class="muted">Part I in ' + p1.queries + " queries. Rank: " + esc(rank(p1.queries)) + "</div></div>" +
     '<div class="extra-next"><div class="label">A NEW OBJECTIVE</div>Lupin mentioned a Chapter IX. Somewhere in the archives a ' +
-    "telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.</div>" +
+    "telegram is addressed to a curious clerk; its code, typed in the answer box...</div>" +
     '<button id="btn-extra">Continue</button></div>';
   el.hidden = false;
   // The film waits on its poster: browsers only allow sound after a click, so the student starts it; then the
