@@ -109,7 +109,7 @@ Chapter 7 needs its CASE: Lupin wired "at the desk's quietest", the one of Ganim
 
 ### Badges
 
-- `BADGES` in `site/app.js` (name, text, predicate on an event ctx: query, solve, answer, code, part2, theme, suspects).
+- `BADGES` in `site/app.js` (name, text, predicate on an event ctx: query, solve, answer, code, part2, theme, suspects). Every badge and how to earn it: `docs/badges.md` (teacher-facing, spoilers); update it with any badge change.
 - Easter-egg badges only read results of `EGG_ROWS` (10) rows or fewer (`eggText`), so a `SELECT *` over the archive hands none out. Tourist counts result columns (7+), not table rows. "Filed Under the 17th" reads `chapters.json.decoys` (the learn ch. 1 decoy report id, asserted never to be the answer).
 - The Trespasser badge checks table names against `sqlite_master`, not the FROM/JOIN regex alone, so CTE names never trigger it.
 
