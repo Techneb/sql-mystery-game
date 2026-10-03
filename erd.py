@@ -2,14 +2,15 @@
 
 Tables without foreign keys come first, in reveal order, PER_ROW to a row. The linked tables follow as their own
 block, layered by foreign-key depth (a parent sits in the row above its children), so every relationship line runs
-in the gaps between rows and the gutter between columns, never crosses a table and never overlaps another line. Keys are drawn as icons (gold: primary, silver: foreign),
+in the gaps between rows and the gutters beside and between the columns, never crosses a table and never overlaps another line. Keys are drawn as icons (gold: primary, silver: foreign),
 and each line carries its cardinality: a dot at each end, with N on the many side and 1 on the one side.
 """
 import itertools
 
 W, GAP, LAYER_H, ROW, HEAD = 170, 56, 60, 14, 16
 PLAIN_H = 24   # between rows of tables without foreign keys: no line runs there
-PER_ROW = 2   # a row wraps after this many tables, so the schema stays about one column wide (the site fits it to ~340 px)
+MARGIN = 28   # a lane down each outer side, for lines that stay in their column
+PER_ROW = 2   # a row wraps after this many tables, so the schema stays about one column wide (the site fits it to its 340-440 px column)
 KEY = ('<symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/>'
        '<path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol>')
 
@@ -28,7 +29,9 @@ def read_schema(conn):
 def layout(tables, fks, order=()):
     """-> {name: (layer, x, y, w, h)}. Layer -1 = no FK either way (placed first, in `order`, then by name);
     else 0 for a linked table referencing nothing, 1 + deepest referenced table otherwise (self-refs ignored).
-    Within a layer, ordered by the mean x of the referenced tables, ties by name, wrapped every PER_ROW tables."""
+    Within a layer, ordered by the mean x of the referenced tables, ties by name, wrapped every PER_ROW tables; when a
+    layer's tables hang off both columns, each goes in its parents' column instead (the longer column hands its last
+    table that is not a parent to the other), so most lines run straight down their own side."""
     refs = {t: {ref for (tt, _, ref) in fks if tt == t and ref != t} for t in tables}
     linked = {t for (t, _, ref) in fks} | {ref for (_, _, ref) in fks}
     layer = {}
@@ -56,12 +59,21 @@ def layout(tables, fks, order=()):
             parent = any(t in refs[c] for c in tables if c != t)   # parents go last in their layer, next to their children,
             return (parent, sum(xs) / len(xs) if xs else 0, t)       # so fewer lines need the gutter
         ordered = sorted(rows[L], key=bary)
-        for k in range(0, len(ordered), PER_ROW):
-            chunk = ordered[k:k + PER_ROW]
-            if L >= 0:   # within a row, each table on the side of its parents (person under address, left)
-                chunk.sort(key=lambda t: bary(t)[1])
+        chunks = [ordered[k:k + PER_ROW] for k in range(0, len(ordered), PER_ROW)]
+        cols = [[t for t in ordered if bary(t)[1] < MARGIN + W], [t for t in ordered if bary(t)[1] >= MARGIN + W]] if L >= 0 else []
+        if PER_ROW == 2 and cols and all(cols):
+            n = len(chunks)
+            for a, b in ((0, 1), (1, 0)):
+                while len(cols[a]) > n:
+                    kids = [t for t in cols[a] if not bary(t)[0]] or cols[a]
+                    cols[a].remove(kids[-1])
+                    cols[b] = sorted(cols[b] + [kids[-1]], key=ordered.index)
+            chunks = [[c[k] if k < len(c) else None for c in cols] for k in range(n)]
+        for chunk in chunks:
             for i, t in enumerate(chunk):
-                pos[t] = (L, i * (W + GAP), y, W, HEAD + ROW * len(tables[t]))
+                if t:
+                    pos[t] = (L, MARGIN + i * (W + GAP), y, W, HEAD + ROW * len(tables[t]))
+            chunk = [t for t in chunk if t]
             y += max(pos[t][4] for t in chunk) + (PLAIN_H if L < 0 else LAYER_H)
     return pos
 
@@ -78,8 +90,9 @@ def fk_paths(tables, fks, pos):
     Every line is straight legs joined by smooth rounded turns, and no two lines share a leg: each leaves its parent
     from its own point (right half of the bottom edge) and enters its child at its own point (left half of the top
     edge), runs across each gap between rows in its own lane and, when the child is further down, down its own lane
-    in the gutter between the two columns. The order of the points on each edge, of the lanes in each gap and in the
-    gutter is then searched (swap two, keep it if fewer lines cross) so the lines cross as little as the layout allows."""
+    in a gutter: its column's outer side when it stays in its column, the middle when it changes column. Exits,
+    entries and gap lanes are ordered by where each line heads, every lane order in each gutter is tried, then any
+    two are swapped while fewer lines cross."""
     bands = {}
     for (_, _, y, _, h) in pos.values():
         bands[y] = max(bands.get(y, 0), y + h)
@@ -90,8 +103,14 @@ def fk_paths(tables, fks, pos):
     for e in edges:
         orders.setdefault(("exit", e[2]), []).append(e)
         orders.setdefault(("entry", e[0]), []).append(e)
+    right = max(x + w for (_, x, _, w, _) in pos.values())
+    col = lambda t: int(pos[t][1] > MARGIN)
+    centre = {"left": MARGIN / 2, "mid": MARGIN + W + GAP / 2, "right": right + MARGIN / 2}
+    width = {"left": MARGIN, "mid": GAP, "right": MARGIN}
     long_edges = [e for e in edges if row(e[0]) > row(e[2]) + 1]
-    orders["gutter"] = long_edges
+    side = {e: "mid" if col(e[0]) != col(e[2]) else ("left", "right")[col(e[0])] for e in long_edges}
+    for g in centre:   # a line that stays in its column runs down that column's outer side, else down the middle
+        orders[("gutter", g)] = [e for e in long_edges if side[e] == g]
     for e in edges:   # which gaps each line crosses horizontally (gap g lies between row g and row g + 1)
         i, j = row(e[2]), row(e[0])
         orders.setdefault(("gap", i), []).append(e)
@@ -100,22 +119,24 @@ def fk_paths(tables, fks, pos):
 
     def route():
         x = {}
-        for (kind, t), es in [(k, v) for k, v in orders.items() if k != "gutter" and k[0] != "gap"]:
+        for (kind, t), es in [(k, v) for k, v in orders.items() if k[0] in ("exit", "entry")]:
             _, tx, _, w, _ = pos[t]
             for k, e in enumerate(es):   # distinct points along an edge: right half for exits, left half for entries
                 f = (k + 1) / (len(es) + 1)
                 x[(kind, e)] = tx + w * (0.55 + 0.35 * f) if kind == "exit" else tx + w * (0.1 + 0.35 * f)
         lane_y = {}
         for key, es in orders.items():
-            if key != "gutter" and key[0] == "gap":
+            if key[0] == "gap":
                 g = key[1]
                 top, bottom = bands[tops[g]], tops[g + 1]
                 step = min(7, (bottom - top - 16) / len(es))
                 for k, e in enumerate(es):
                     lane_y[(e, g)] = (top + bottom) / 2 + (k - (len(es) - 1) / 2) * step
-        gutter = W + GAP / 2
-        gstep = min(8, (GAP - 12) / max(len(long_edges), 1))
-        lane_x = {e: gutter + (k - (len(long_edges) - 1) / 2) * gstep for k, e in enumerate(long_edges)}
+        lane_x = {}
+        for g in centre:
+            es = orders[("gutter", g)]
+            step = min(8, (width[g] - 12) / max(len(es), 1))
+            lane_x.update({e: centre[g] + (k - (len(es) - 1) / 2) * step for k, e in enumerate(es)})
         out = []
         for e in edges:
             t, _, ref = e
@@ -132,18 +153,18 @@ def fk_paths(tables, fks, pos):
         return out
 
     def tidy():   # given the gutter order, order exits, entries and lanes the way that keeps lines apart
-        gx = {e: k for k, e in enumerate(long_edges)}
+        gx = {e: (centre[side[e]], k) for g in centre for k, e in enumerate(orders[("gutter", g)])}
         mid = lambda t: pos[t][1] + pos[t][3] / 2
         for key, es in orders.items():
-            if key != "gutter" and key[0] == "exit":     # exits in the order of where each line heads
-                es.sort(key=lambda e: (W + GAP / 2, gx[e]) if e in gx else (mid(e[0]), 0))
+            if key[0] == "exit":     # exits in the order of where each line heads
+                es.sort(key=lambda e: gx[e] if e in gx else (mid(e[0]), 0))
         xs = {e: c[0][0] for e, c in route()}
         for key, es in orders.items():
-            if key != "gutter" and key[0] == "entry":    # entries in the order of where each line comes from
-                es.sort(key=lambda e: (W + GAP / 2, gx[e]) if e in gx else (xs[e], 0))
+            if key[0] == "entry":    # entries in the order of where each line comes from
+                es.sort(key=lambda e: gx[e] if e in gx else (xs[e], 0))
         paths = dict(route())
         for key, es in orders.items():
-            if key != "gutter" and key[0] == "gap":      # leftward lines: the one starting further left runs higher;
+            if key[0] == "gap":      # leftward lines: the one starting further left runs higher;
                 def lane(e):                             # rightward: the one starting further right; rightward first
                     c = paths[e]
                     a, b = (c[1][0], c[2][0]) if row(e[2]) == key[1] else (c[-3][0], c[-2][0])
@@ -151,14 +172,17 @@ def fk_paths(tables, fks, pos):
                 es.sort(key=lane)
 
     best = None
-    for perm in itertools.permutations(long_edges) if len(long_edges) <= 6 else [tuple(long_edges)]:
-        long_edges[:] = perm
+    gutters = [orders[("gutter", g)] for g in centre]
+    tries = itertools.product(*[itertools.permutations(es) for es in gutters])
+    for perms in itertools.islice(tries, 5040):   # every order of the lanes in each gutter (capped)
+        for es, perm in zip(gutters, perms):
+            es[:] = perm
         tidy()
         c = crossings(route())
         if best is None or c < best[0]:
             best = (c, {k: list(v) for k, v in orders.items()})
-    orders.update(best[1])
-    long_edges = orders["gutter"]
+    for k, v in best[1].items():
+        orders[k][:] = v
     best = best[0]
     improved = True
     while improved and best:   # then polish: swap any two, keep it if fewer lines cross
@@ -217,7 +241,7 @@ def rounded(points, r):
 def svg(conn, order=()):
     tables, fks = read_schema(conn)
     pos = layout(tables, fks, order)
-    width = max(x + w for (_, x, _, w, _) in pos.values()) + 10
+    width = max(x + w for (_, x, _, w, _) in pos.values()) + MARGIN
     height = max(y + h for (_, _, y, _, h) in pos.values()) + 10
     out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">' % (width, height, width, height),
            "<defs>%s</defs>" % KEY]

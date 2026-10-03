@@ -570,6 +570,10 @@ function fitErd() {
     x1 = Math.max(x1, tx + Number(r.getAttribute("width"))); y1 = Math.max(y1, ty + Number(r.getAttribute("height")));
   }
   if (x0 === Infinity) return;
+  for (const g of svg.querySelectorAll("g.fk:not(.hidden)")) {   // lines may run down the outer side of a column
+    const b = g.getBBox();
+    if (b.width || b.height) { x0 = Math.min(x0, b.x); x1 = Math.max(x1, b.x + b.width); }
+  }
   const m = 8, w = x1 - x0 + 2 * m, h = y1 - y0 + 2 * m;
   svg.setAttribute("viewBox", [x0 - m, y0 - m, w, h].join(" "));
   svg.removeAttribute("width"); svg.removeAttribute("height");

@@ -331,9 +331,9 @@ class Erd(unittest.TestCase):
                     self.assertFalse(min(Y1, Y2) - max(y1, y2) > 0.5, "%s and %s overlap" % (n1, n2))
                 if y1 == Y1 == y2 == Y2:    # two horizontal legs on the same y
                     self.assertFalse(min(X1, X2) - max(x1, x2) > 0.5, "%s and %s overlap" % (n1, n2))
-        # the only crossing left is address->person across suite->lift_log, which the layout forces (all 720 orders tried)
+        # no two relationship lines cross
         paths = erd.fk_paths(tables, fks, pos)
-        self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 1)
+        self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
         conn.close()
 

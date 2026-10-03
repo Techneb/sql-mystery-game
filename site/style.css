@@ -54,7 +54,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .compete-info[hidden] { display: none; }
 
 /* columns */
-.columns { display: grid; grid-template-columns: 340px minmax(0, 1fr) 380px; gap: 16px; padding: 16px; align-items: start; }
+.columns { display: grid; grid-template-columns: clamp(340px, 28vw, 440px) minmax(0, 1fr) 380px; gap: 16px; padding: 16px; align-items: start; }
 .col-story h2 { font: 700 22px/1.15 "Playfair Display", serif; margin: 0 0 6px; }
 .chapter-head { display: flex; align-items: center; gap: 10px; }
 .chapter-icon { width: 44px; height: 44px; flex: none; }
