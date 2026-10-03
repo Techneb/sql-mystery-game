@@ -1068,7 +1068,7 @@ def svg(conn, override=None):
 ```markdown
 # CLAUDE.md
 
-Browser SQL game for the Albert School SQL course. Spec: `docs/superpowers/specs/2026-09-20-sql-mystery-game-design.md`; plans in `docs/superpowers/plans/`.
+Browser SQL game for an SQL course. Spec: `docs/superpowers/specs/2026-09-20-sql-mystery-game-design.md`; plans in `docs/superpowers/plans/`.
 
 - Stdlib only, no build step. `python3 generate_db.py` rebuilds `site/` outputs and **is the test of the plot**: every solution must return exactly its answer and every trap must bite. `python3 -m unittest -v` pins the same plus normalisation and ERD layering.
 - `plot.py` is data; `V` (planted values) is drawn in `plant_values(seed)`; seed 1912 pins the learning-mode values quoted in hints. Any text or data must be pure ASCII.

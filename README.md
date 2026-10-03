@@ -1,6 +1,6 @@
 # The Ritz Affair - SQL Mystery Game
 
-A browser game for the Albert School MSc SQL course: Paris, May 1912, the Comtesse de Cagliostro's
+A browser game for an SQL course: Paris, May 1912, the Comtesse de Cagliostro's
 sapphire vanishes from the Ritz, and the student, Inspector Ganimard's clerk, unmasks Arsene Lupin with
 SQL, one course construct per chapter (12 chapters, Part I strictly within the course material).
 The database is SQLite in the browser; nothing runs on a server.

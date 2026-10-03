@@ -1,6 +1,6 @@
 # SQL Mystery Game — design
 
-*The Ritz Affair*: a browser game that replaces SQL Murder Mystery for the Albert School MSc SQL course.
+*The Ritz Affair*: a browser game that replaces SQL Murder Mystery for an MSc SQL course.
 Students play Inspector Ganimard's clerk in Paris, May 1912, and unmask Arsene Lupin with SQL, one
 course construct per chapter.
 
