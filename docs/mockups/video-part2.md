@@ -1,7 +1,7 @@
 # Video 2: "Case Closed, Twice" (closes Part II)
 
 Plays above the Part II ending (after chapter XII), like Video 1: poster, "Play", the browser's
-player controls and Replay, subtitles burned in. About 32 s. Made the Part I way (read the Status and the
+player controls, subtitles burned in. About 32 s. Made the Part I way (read the Status and the
 lessons in `video-part1.md` first): Nano Banana Pro stills, Veo 3.1 clips at 720p, the narrator from separate
 voice-only clips, assembled by a copy of `assemble-video.sh`.
 
