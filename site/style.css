@@ -12,7 +12,6 @@ button:disabled { opacity: .4; cursor: default; }
 input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; }
 .label { font-weight: 700; letter-spacing: 1px; font-size: 13px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.col-erd .label-row { position: relative; z-index: 16; }
 .muted { opacity: .6; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); padding: 6px 8px; margin: 10px 0; }
@@ -98,6 +97,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* ERD */
 .erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 80vh; position: relative; }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
+/* enlarged, its Close sits in the overlay's top-right corner (clear of the scrollbar), like the panels' Close */
+body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index: 16; background: var(--paper); }
 /* fitErd() (app.js) crops the viewBox to the revealed tables and sets the width: the column's, capped at natural size. */
 .erd svg { display: block; height: auto; margin: 0 auto; font: 11px "Special Elite", monospace; }
 .erd .table rect { fill: var(--paper); stroke: var(--ink); }
