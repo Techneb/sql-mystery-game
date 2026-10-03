@@ -1,7 +1,8 @@
 """The Ritz Affair: plot as data. Templates are str.format over V (planted values). ASCII only."""
 
 STOP_WORDS = {"the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "senor",
-              "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate"}
+              "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate",
+              "m", "monsieur", "madame", "mme", "miss", "sir", "lady", "countess", "room", "id", "wire", "paris"}
 
 # Season-varying but noise-safe: these full names cannot be produced by generate_db.py's FIRST x LAST pool
 # (none of these surnames appear in LAST), so a person.name filter on one is always unambiguous.
@@ -33,8 +34,10 @@ CHAPTERS = [
          "SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND description LIKE '%calling card%'",
          "SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND description LIKE '%sapphire%'",
          "SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND description LIKE '%Blue Star%'",
-         "SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND description LIKE '%porter%'"],
+         "SELECT id FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND description LIKE '%porter%'",
+         "SELECT id FROM police_report ORDER BY id DESC LIMIT 1"],
   discovery_compete=[dict(query="SELECT transcript FROM interview WHERE person_name = 'the Meurice night manager'", must_contain="11th of June")],
+  traps_compete=["SELECT id FROM police_report ORDER BY id DESC LIMIT 1"],
   objective_compete="Another case, same method: find the report of the burglary at the Hotel Meurice. The Meurice night manager knows which night.",
   answer_form_compete="the report id",
   solution_compete="SELECT id FROM police_report WHERE place = 'Hotel Meurice' AND date = 19120611 AND type = 'burglary'",
@@ -43,7 +46,7 @@ CHAPTERS = [
  dict(n=2, board="The neighbour", board_compete="His suite", part=1, construct="ORDER BY / LIMIT", tables=["hotel_register", "suite"], answer_key="neighbour",
   discovery=[dict(query="SELECT description FROM police_report WHERE id = {report_id}", must_contain="neighbouring suite", note="The report: the thief came from the neighbouring suite, the most expensive one on the floor, the night of the 17th.")],
   solution="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date} ORDER BY price DESC LIMIT 1",
-  naive="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date}", naive_rows=6,
+  naive="SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {eve_date} AND checkout > {eve_date}", naive_rows=7,
   traps=["SELECT guest_name FROM hotel_register WHERE floor = 2 ORDER BY price DESC LIMIT 1"],
   discovery_compete=[dict(query="SELECT description FROM police_report WHERE id = {compete_report_id}", must_contain="cheapest")],
   objective_compete="Back at the Ritz, second floor, the night of the 17th of May. The report from chapter 1 tells you which room to look for. Ganimard wants its suite number.",
@@ -63,6 +66,7 @@ CHAPTERS = [
   answer_form_compete="the plate",
   solution_compete="SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND dropoff = 'Gare Saint-Lazare' AND date = {theft_date}",
   naive_compete="SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND date = {theft_date}", naive_rows_compete=None,
+  traps_compete=["SELECT DISTINCT plate FROM cab_ride WHERE dropoff_address_id IS NULL"],
   answer_key_compete="compete_plate"),
  dict(n=4, board="Fence's address", part=1, construct="GROUP BY / HAVING", tables=[], answer_key="fence_address",
   discovery=[dict(query="SELECT dropoff, COUNT(*) AS n FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff ORDER BY n DESC", must_contain="{fence_address}", note="The cab's week, 13th to 19th: one address comes back three times.")],
@@ -99,7 +103,8 @@ CHAPTERS = [
   traps=["SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY SUM(t.amount) DESC LIMIT 1",
          "SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id HAVING COUNT(*) >= 3 ORDER BY SUM(t.amount) DESC LIMIT 1",
          "SELECT CAST(substr(text, 12, 5) AS INTEGER) FROM telegram WHERE text LIKE 'PAYMENT TO %'",
-         "SELECT id FROM bank_account WHERE person_id IS NULL"],
+         "SELECT id FROM bank_account WHERE person_id IS NULL",
+         "SELECT id FROM bank_account ORDER BY id DESC LIMIT 1"],
   naive="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{fence}' AND t.date BETWEEN 19120501 AND 19120531 ORDER BY t.amount DESC LIMIT 1", naive_rows=1,
   discovery_compete=[
     dict(query="SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = '{compete_fence_name}')", row_count=1),
@@ -109,11 +114,12 @@ CHAPTERS = [
   answer_form_compete="the account number",
   solution_compete="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{compete_fence_name}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id HAVING COUNT(*) = 3 ORDER BY SUM(t.amount) DESC LIMIT 1",
   traps_compete=["SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{compete_fence_name}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id ORDER BY SUM(t.amount) DESC LIMIT 1",
-         "SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{compete_fence_name}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id HAVING COUNT(*) >= 3 ORDER BY SUM(t.amount) DESC LIMIT 1"],
+         "SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{compete_fence_name}' AND t.date BETWEEN 19120501 AND 19120531 GROUP BY t.counterparty_id HAVING COUNT(*) >= 3 ORDER BY SUM(t.amount) DESC LIMIT 1",
+         "SELECT id FROM bank_account ORDER BY id DESC LIMIT 1"],
   naive_compete="SELECT t.counterparty_id FROM person AS p JOIN bank_account AS b ON b.person_id = p.id JOIN bank_transaction AS t ON t.account_id = b.id WHERE p.name = '{compete_fence_name}' AND t.date BETWEEN 19120501 AND 19120531 ORDER BY t.amount DESC LIMIT 1", naive_rows_compete=1,
   answer_key_compete="compete_shell_account"),
  dict(n=7, board="Lupin's wire", board_compete="Evening wire", part=1, construct="CASE WHEN + GROUP BY", tables=["telegram"], answer_key="night_telegram_id",
-  discovery=[dict(query="SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period, COUNT(*) AS wires FROM telegram WHERE office = 'Ritz' AND date = {theft_date} GROUP BY period ORDER BY wires", row_count=4, note="Ganimard's four boxes, counted: the night is the quietest."),
+  discovery=[dict(query="SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period, COUNT(*) AS wires FROM telegram WHERE office = 'Ritz' AND date = {theft_date} GROUP BY period ORDER BY wires", row_count=4, note="Ganimard's four boxes, counted: the afternoon is the quietest (36), not the night."),
              dict(query="SELECT id, time, sender FROM telegram WHERE office = 'Ritz' AND date = {theft_date} AND time >= '12:00' AND time < '18:00'", row_count=36, note="The quietest box is the afternoon (the races at Longchamp): thirty-six wires. Ortega's suspect card gives the letter, R."),
              dict(query="SELECT id, time, sender FROM telegram WHERE office = 'Ritz' AND date = {theft_date} AND sender = 'R.'", row_count=4, note="Four wires signed R. that day, one per box; three read alike. Only the afternoon one is in the quietest box.")],
   solution="WITH boxed AS (SELECT id, sender, CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period FROM telegram WHERE office = 'Ritz' AND date = {theft_date}), quietest AS (SELECT period FROM boxed GROUP BY period ORDER BY COUNT(*) LIMIT 1) SELECT id FROM boxed WHERE sender = 'R.' AND period = (SELECT period FROM quietest)",
@@ -137,6 +143,7 @@ CHAPTERS = [
   traps=["SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {theft_date} AND checkout > {theft_date} AND suite = (SELECT suite FROM telegram WHERE id = {night_telegram_id})",
          "SELECT guest_name FROM hotel_register WHERE floor = 2 AND checkin <= {theft_date} AND checkout > {theft_date} AND suite = (SELECT suite FROM room_service WHERE date = {theft_date} AND item = '{champagne}' ORDER BY time LIMIT 1)"],
   discovery_compete=[dict(query="SELECT text FROM telegram WHERE id = {compete_telegram_id}", must_contain="coffee")],
+  telegram_compete="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP A L",
   objective_compete="The telegram from chapter 7 names his habit before the market opens. Find the suite whose SECOND order of the 18th, before dawn, matches it.",
   answer_form_compete="the suite number",
   solution_compete="WITH ranked AS (SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time) AS rk FROM room_service WHERE date = {theft_date}) SELECT suite FROM ranked WHERE rk = 2 AND item = 'coffee' AND time < '06:00'",
@@ -148,24 +155,30 @@ CHAPTERS = [
   naive="SELECT trunk_no FROM luggage WHERE owner_name = '{neighbour}'", naive_rows=8,
   traps=["SELECT MIN(trunk_no) FROM luggage WHERE owner_name = '{neighbour}' GROUP BY ticket_id HAVING COUNT(*) = 1",
          "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id WHERE l.owner_name = '{neighbour}' AND t.person_id IN (SELECT t2.person_id FROM luggage AS l2 JOIN train_ticket AS t2 ON l2.ticket_id = t2.id WHERE l2.owner_name = '{neighbour}' GROUP BY t2.person_id HAVING COUNT(*) = 1)",
-         "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE l.owner_name = '{neighbour}' AND p.name <> '{neighbour}'"]),
- dict(n=10, board="Second alias", explain="Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.",
+         "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE l.owner_name = '{neighbour}' AND p.name <> '{neighbour}'",
+         "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE p.address_id IS NULL"]),
+ dict(n=10, board="Second alias", explain="Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine share a night with him (11 January, and the week of the theft), so one name is left: the same man, under two names.",
   part=2, construct="LEFT JOIN / self-join", tables=[], answer_key="double_alias",
   solution="WITH regulars AS (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6), blakeney AS (SELECT checkin, checkout FROM hotel_register WHERE guest_name = '{lupin_alias}'), shared AS (SELECT DISTINCT y.guest_name FROM hotel_register AS y JOIN blakeney AS x ON x.checkin < y.checkout AND y.checkin < x.checkout) SELECT r.guest_name FROM regulars AS r LEFT JOIN shared AS s ON s.guest_name = r.guest_name WHERE s.guest_name IS NULL",
   naive="SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6", naive_rows=None,
   traps=["SELECT DISTINCT guest_name FROM hotel_register WHERE suite = {lupin_suite} AND checkin < 19120501 AND guest_name <> '{lupin_alias}'",
          "SELECT DISTINCT guest_name FROM hotel_register WHERE price = 150 AND guest_name <> '{lupin_alias}'",
-         "SELECT guest_name FROM hotel_register WHERE guest_name <> '{lupin_alias}' GROUP BY guest_name ORDER BY SUM(checkout - checkin = 6) DESC LIMIT 1"]),
+         "SELECT guest_name FROM hotel_register WHERE guest_name <> '{lupin_alias}' GROUP BY guest_name ORDER BY SUM(checkout - checkin = 6) DESC LIMIT 1",
+         "SELECT name FROM person WHERE occupation = 'gentleman' AND name <> '{lupin_alias}'"]),
  dict(n=11, board="Silent suite", explain="Merge the night's three ledgers into one list of (suite, time); LAG gives each event the suite's previous one. The silent suite has an event at or before 02:05 followed by nothing until 03:10 or later. Velmont's suite is silent longer, 02:30 to 05:55, but only after the lift the porter heard.",
   part=2, construct="LAG() OVER", tables=["lift_log"], answer_key="lupin_suite",
   solution="WITH ev AS (SELECT suite, time FROM lift_log WHERE date = {theft_date} AND time < '06:00' UNION ALL SELECT suite, time FROM room_service WHERE date = {theft_date} AND time < '06:00' UNION ALL SELECT suite, time FROM telegram WHERE date = {theft_date} AND time < '06:00' AND suite IS NOT NULL), gaps AS (SELECT suite, time, LAG(time) OVER (PARTITION BY suite ORDER BY time) AS prev FROM ev) SELECT suite FROM gaps WHERE prev <= '02:05' AND time >= '03:10'",
   naive="SELECT suite FROM lift_log WHERE date = {theft_date} AND time < '06:00' GROUP BY suite HAVING COUNT(*) <= 2", naive_rows=2,
-  traps=["SELECT suite FROM lift_log WHERE date = {theft_date} AND time BETWEEN '02:00' AND '02:20'"],
+  traps=["SELECT suite FROM lift_log WHERE date = {theft_date} AND time BETWEEN '02:00' AND '02:20'",
+         "WITH ev AS (SELECT suite, time FROM lift_log WHERE date = {theft_date} AND time < '06:00' UNION ALL SELECT suite, time FROM room_service WHERE date = {theft_date} AND time < '06:00' UNION ALL SELECT suite, time FROM telegram WHERE date = {theft_date} AND time < '06:00' AND suite IS NOT NULL), gaps AS (SELECT suite, time, LAG(time) OVER (PARTITION BY suite ORDER BY time) AS prev FROM ev) SELECT suite FROM gaps WHERE prev <= '02:10' AND time >= '02:10' AND (CAST(substr(time, 1, 2) AS INTEGER) * 60 + CAST(substr(time, 4, 2) AS INTEGER)) - (CAST(substr(prev, 1, 2) AS INTEGER) * 60 + CAST(substr(prev, 4, 2) AS INTEGER)) = 60"],
   discovery=[dict(query="SELECT time, suite, direction FROM lift_log WHERE date = {theft_date} AND time < '06:00' ORDER BY time", must_contain=["02:05", "03:10"], note="The lift that night: one suite rang at 02:05 (down) and 03:10 (up), and nothing in between.")]),
  dict(n=12, board="Where the money went", explain="Add up each account's transfers to each counterparty after the theft (one hop was paid in two halves). From the shell account's {chain_amount} francs, follow only the transfer worth 98 percent of the previous one, to the franc (a shell account's other deal that day falls away), seven hops down, then read the owner.",
   part=2, construct="WITH RECURSIVE", tables=[], answer_key="comtesse",
   solution="WITH RECURSIVE flows AS (SELECT account_id, counterparty_id, SUM(amount) AS amount FROM bank_transaction WHERE date >= {theft_date} AND type = 'transfer' GROUP BY account_id, counterparty_id), chain(account_id, amount, hop) AS (SELECT {shell_account}, {chain_amount}, 0 UNION ALL SELECT f.counterparty_id, f.amount, c.hop + 1 FROM chain AS c JOIN flows AS f ON f.account_id = c.account_id WHERE ABS(f.amount - c.amount * 0.98) <= 1) SELECT p.name FROM chain AS c JOIN bank_account AS b ON b.id = c.account_id JOIN person AS p ON p.id = b.person_id WHERE c.hop = 7",
-  naive="WITH RECURSIVE chain(account_id, amount, hop) AS (SELECT {shell_account}, {chain_amount}, 0 UNION ALL SELECT t.counterparty_id, t.amount, c.hop + 1 FROM chain AS c JOIN bank_transaction AS t ON t.account_id = c.account_id WHERE ABS(t.amount - c.amount * 0.98) <= 1) SELECT account_id FROM chain WHERE hop = 7", naive_rows=0),
+  naive="WITH RECURSIVE chain(account_id, amount, hop) AS (SELECT {shell_account}, {chain_amount}, 0 UNION ALL SELECT t.counterparty_id, t.amount, c.hop + 1 FROM chain AS c JOIN bank_transaction AS t ON t.account_id = c.account_id WHERE ABS(t.amount - c.amount * 0.98) <= 1) SELECT account_id FROM chain WHERE hop = 7", naive_rows=0,
+  traps=["SELECT p.name FROM bank_transaction AS t JOIN bank_account AS b ON b.id = t.counterparty_id JOIN person AS p ON p.id = b.person_id WHERE t.amount > 20000 AND t.date >= {theft_date} ORDER BY t.date DESC LIMIT 1",
+         "SELECT p.name FROM bank_account AS b JOIN person AS p ON p.id = b.person_id WHERE b.id >= 60000",
+         "SELECT p.name FROM bank_account AS b JOIN person AS p ON p.id = b.person_id ORDER BY b.id DESC LIMIT 1"]),
 ]
 
 # The Suspects gallery. A suspect appears once met: when the story of an unlocked chapter names them (`meet`),
@@ -173,7 +186,7 @@ CHAPTERS = [
 # is unlocked (reached), so it may tell what the chapter before it revealed, never the one being played.
 CAST = [
     dict(name="Lord Ashcombe", nationality="English", meet=3,
-         bio="Peer of the realm, Suite Imperiale. Collects clocks and grievances.",
+         bio="Peer of the realm. Collects clocks and grievances.",
          notes=[[3, "Was at the Opera until one. His valet saw a man in an English coat leave by the service door."],
                 [9, "Left for London on the boat train of the 19th, with his trunks."],
                 [10, "Carried the Blue Star through customs with a clear conscience, in a trunk he never packed."]]),
@@ -191,10 +204,10 @@ CAST = [
                 [8, "Wired Buenos Aires from the Ritz desk at 06:20 on the 18th: morning, by Ganimard's clock."],
                 [9, "Drinks champagne before dawn, but only after his coffee."]]),
     dict(name="Ines de Almagro", nationality="Spanish", meet=10,
-         bio="Widow. Travels with eleven trunks and one maid.",
+         bio="Widow. Never travels without her maid.",
          notes=[[10, "A regular at the Ritz since January, never without her maid."],
                 [11, "Slept at the Ritz on the night of 11 January, when Mr. Blakeney did."]]),
-    dict(name="Rupert Blakeney", nationality="English", meet=10,
+    dict(name="Rupert Blakeney", nationality="English", meet=9,
          bio="Gentleman of leisure from Bath.",
          notes=[[9, "His first order before dawn on the 18th: champagne, as always."],
                 [10, "Wears an excellent coat, the kind a booking clerk remembers."],
@@ -219,14 +232,14 @@ WRONG_DEFAULT = [
   "Not that, mon petit. Look at the data again.",
 ]
 ENDINGS = dict(
-  part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n'Monsieur {lupin_alias}. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out: *the Blue Star has a train to catch.*",
-  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n'Arithmetic, Inspector.'\n\n'Madame la Comtesse, you are under arrest.' She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
+  part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n'Monsieur {lupin_alias}. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out, a day behind the Blue Star: *it crossed yesterday, in a trunk.*",
+  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n'Arithmetic, Inspector.'\n\n'Madame la Comtesse, you are under arrest.' The jeweller bought nothing: the forty thousand were hers, sent round seven doors to come home as a sale. She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
 )
 
 TEXT = {
  1: dict(
   title="The Night of the 17th",
-  story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n'One of these is ours, clerk. **Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'",
+  story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n'One of these is ours, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'",
   objective="Mr Duroc knows which night.",
   answer_form="the report id",
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L"),
@@ -244,7 +257,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
-  story="**Ganimard** snorts at the plate. 'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'\n\nThe book holds sixty fares for that cab in the week before the theft, from the 13th to the 19th of May. 'A thief with a plan visits his fence before the job. Find me the address this cab kept going back to. *I do not want the list. I want the address.*'",
+  story="**Ganimard** snorts at the plate. 'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'\n\nThe book holds some sixty fares for that cab in the week before the theft, from the 13th to the 19th of May. 'A thief with a plan visits his fence before the job. Find me the address this cab kept going back to. *I do not want the list. I want the address.*'",
   objective="Where did the cab from chapter 3 keep going the week before the theft?",
   answer_form="the address",
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
@@ -262,7 +275,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="The Quietest Hour",
-  story="Lupin wrote that he confirmed the payment by wire from the Ritz desk, *at its quietest*. The desk sent a hundred and seventy wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, *which is one more than he needs*. Which letter? Ask **Senor Ortega**: he has been complaining about it at the desk all week.'",
+  story="Lupin wrote that he confirmed the payment by wire from the Ritz desk, *at its quietest*. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, *which is one more than he needs*. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'",
   objective="Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
   answer_form="the telegram id",
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
@@ -274,16 +287,16 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
  9: dict(
   title="The Trunk",
-  story="**Ganimard** has gone home to his cat. *You have not.*\n\nThe Blue Star *'sends regards from London'*. The boat train left the Gare du Nord on the 19th, and **{neighbour}** was on it with his valet, **Bertram Hobbs**, his maid, **Ada Pringle**, and his trunks. Each of the three held a ticket. The *Compagnie du Nord* enters every trunk under an owner's name and a ticket number, and nobody checks that the two agree.",
+  story="**Ganimard** has gone home to his cat: his prisoner walked out of the *Depot* on the 21st, and the gendarme who led him away has not been found. *You have not gone home.*\n\nThe Blue Star *'sends regards from London'*. The boat train left the Gare du Nord on the 19th, and the peer from chapter 2 was on it with his valet, **Bertram Hobbs**, his maid, **Ada Pringle**, and his trunks. Each of the three held a ticket. The *Compagnie du Nord* enters every trunk under an owner's name and a ticket number, and nobody checks that the two agree.",
   objective="Find the trunk labelled for the neighbour that travelled on the ticket of someone outside his household.",
   answer_form="the trunk number",
   telegram="MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L"),
  10: dict(
   title="Never Seen Together",
-  story="The ticket held by nobody of His Lordship's household was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
+  story="The ticket held by nobody of His Lordship's household was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and the gentleman from chapter 8. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
   objective="Find the regular (six stays or more) who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
   answer_form="the guest's name",
-  telegram="MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L"),
+  telegram="MY DEAR CLERK STOP BLAKENEY IN THE ODD WEEKS GREY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L"),
  11: dict(
   title="The Silence",
   story="**Ganimard** wants to know who was out of his suite when the sapphire went. A Ritz suite is never quite silent at night: the lift boy notes every ring, room service every order, and the telegraph desk every wire charged to a suite.\n\nLaid side by side, the three ledgers show one suite on the second floor going quiet for an hour, around the time the porter heard the lift at 02:10. It is not the only quiet suite. **M. Velmont** paints at night, in his studio, and often comes back to the Ritz only at dawn.",
@@ -292,7 +305,7 @@ TEXT = {
   telegram="MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L"),
  12: dict(
   title="Follow the Money",
-  story="The forty thousand francs did not stay in the shell account of chapter 6. They moved on, through shell accounts at four banks, into June. What **Ganimard** knows:\n\n| The road | |\n| Starts | at the shell account of chapter 6, forty thousand francs |\n| First move | the 20th of May, then every three days or so |\n| At every door | two percent stays behind: the next account gets ninety-eight |\n| Doors | seven |\n\nFollow the ninety-eight percent, and only the ninety-eight percent, and read the name on the last account. Ganimard will not like it.",
+  story="The forty thousand francs did not stay in the shell account of chapter 6. They moved on, through shell accounts at four banks, into June. What **Ganimard** knows:\n\n| The road | |\n| Starts | at the shell account of chapter 6, forty thousand francs |\n| First move | the 20th of May, then every three days or so |\n| At every door | two percent stays behind: the next account gets ninety-eight |\n| One door | was paid in two halves, the same day |\n| Doors | seven |\n\nFollow the ninety-eight percent, and only the ninety-eight percent, and read the name on the last account. Ganimard will not like it.",
   objective="Follow the ninety-eight percent from the account of chapter 6, seven doors down. Whose is the last account?",
   answer_form="the person's name",
   telegram="MY DEAR GANIMARD STOP INSURANCE PAYS THREE HUNDRED THOUSAND FOR A STONE WORTH FORTY THOUSAND STOP ARITHMETIC IS THE GREATEST OF CRIMES STOP A L"),

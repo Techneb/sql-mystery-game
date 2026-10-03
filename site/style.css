@@ -1,9 +1,9 @@
 :root { --rel: #8a2b2b; --paper: #f3ead7; --ink: #1c1a17; --red: #8a2b2b; --term: #0f0d0a; --term-text: #d9c89a; --gold: #c9a35a; --card: #fffdf5; --rule: #c9b98f; --shade: #e9dfc6; --accent: var(--red);
-  --sql-kw: #e8a652; --sql-fn: #8fc1dc; --sql-str: #a6cf8c; --sql-num: #df9bbd; --sql-com: #7f7667; }
+  --sql-kw: #e8a652; --sql-fn: #8fc1dc; --sql-str: #a6cf8c; --sql-num: #df9bbd; --sql-com: #9a9080; }
 /* Part II mood, set once as data-mood="night" on <html> when the code is accepted (see app.js).
    Same tokens, dark values: everything already styled off these variables shifts for free. */
 :root[data-mood="night"] { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
-  --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #5e6c7e; }
+  --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.4 "Cormorant Garamond", Georgia, serif; transition: background .8s, color .8s; }
 button { font: inherit; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); padding: 4px 12px; cursor: pointer; letter-spacing: 1px; }
@@ -12,7 +12,7 @@ button:disabled { opacity: .4; cursor: default; }
 input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; }
 .label { font-weight: 700; letter-spacing: 1px; font-size: 13px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.muted { opacity: .6; font-size: 13px; }
+.muted { opacity: .75; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); padding: 6px 8px; margin: 10px 0; }
 .answer-form { margin-top: 6px; padding-top: 5px; border-top: 1px dotted var(--rule); }
@@ -248,3 +248,15 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .ending-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
 .ending-photo figcaption { font-style: italic; font-size: 14px; margin-top: 6px; text-align: center; }
 :root[data-mood="night"] .ending-photo img { filter: brightness(.9) contrast(1.05); }
+
+/* audit 2026-10-03: the current chapter's tables stay marked until it is solved (R2) */
+.erd .current rect:first-child { stroke: var(--accent); stroke-width: 2.5; }
+.chapter-tools { margin-top: 6px; }
+.chapter-tools b { font-weight: 700; }
+/* night edition: a darker accent behind the Next chapter button keeps its text at AA (T8) */
+:root[data-mood="night"] .next-chapter { background: #2b5190; }
+/* keyboard users see where they are (T7) */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

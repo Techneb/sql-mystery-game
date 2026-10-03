@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js" integrity="sha384-DJiKBv+LC78e5InEB+MvFIAH079ynMK/ERTtFUCpDzXhH1Bht7aVfpg3yOVsuYl9" crossorigin="anonymous"></script>
 </head>
 <body>
 <button id="btn-theme" class="quiet theme-corner">Night edition</button>
@@ -19,10 +19,10 @@
     <div class="mast-sub">PARIS &mdash; 18 MAY 1912 &mdash; FIVE CENTIMES</div>
     <h1>THE BLUE STAR VANISHES FROM THE RITZ</h1>
     <figure class="landing-photo">
-      <img src="landing-pillow.jpg" width="960" height="640" alt="A calling card signed Arsene Lupin, lying on a white damask pillow with gold tassels">
+      <img src="landing-pillow.jpg" width="960" height="640" alt="A calling card signed A. L., lying on a white damask pillow with gold tassels">
       <figcaption>The pillow, as the maid found it. <i>Photograph: Prefecture of Police.</i></figcaption>
     </figure>
-    <p class="landing-story">A calling card signed <i>Arsene Lupin</i> was found on the pillow of the <b>Comtesse de Cagliostro</b>.<br><b>Inspector Ganimard</b>, summoned in the night, has promised an arrest <i>before the week is out</i>. He has also, we are told, hired a clerk.</p>
+    <p class="landing-story">A calling card signed <i>A. L.</i> was found on the pillow of the <b>Comtesse de Cagliostro</b>.<br><b>Inspector Ganimard</b>, summoned in the night, has promised an arrest <i>before the week is out</i>. He has also, we are told, hired a clerk.</p>
     <p class="landing-kicker">You are <b>the clerk</b>. Your only weapon is <b>SQL</b>.</p>
     <div class="landing-buttons">
       <button id="btn-investigate" disabled>Investigate</button>
@@ -48,7 +48,7 @@
 <main class="columns">
   <aside class="col-erd">
     <div class="label-row"><span class="label">SCHEMA</span><button id="btn-erd" class="quiet">Enlarge</button></div>
-    <div id="erd" class="erd"></div>
+    <div id="erd" class="erd" role="img" aria-label="Database schema: the tables revealed so far and their relationships"></div>
     <p class="erd-legend muted">
       <span><svg width="16" height="10" viewBox="0 0 16 10" class="key pk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>primary key</span>
       <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
@@ -61,16 +61,16 @@
   </aside>
 
   <section class="col-terminal">
-    <div class="label-row"><span class="label">TERMINAL</span><span class="muted">Ctrl+Enter to run, Ctrl+F to format</span></div>
-    <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" placeholder="SELECT * FROM police_report WHERE ..."></textarea></div>
-    <div class="row"><button id="btn-run">Run</button><span id="run-info" class="muted"></span></div>
-    <div id="results" class="results"></div>
+    <div class="label-row"><span class="label">TERMINAL</span><span class="muted">Ctrl+Enter to run, Ctrl+F to format, Shift+Tab to leave the box</span></div>
+    <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" aria-label="SQL query" placeholder="SELECT * FROM police_report WHERE ..."></textarea></div>
+    <div class="row"><button id="btn-run">Run</button><span id="run-info" class="muted" aria-live="polite"></span></div>
+    <div id="results" class="results" aria-live="polite"></div>
     <div class="answer-row">
       <span class="label">ANSWER</span>
-      <input id="answer" autocomplete="off">
+      <input id="answer" autocomplete="off" aria-label="Answer">
       <button id="btn-answer">Submit</button>
     </div>
-    <p id="reply" class="reply"></p>
+    <p id="reply" class="reply" aria-live="polite"></p>
     <button id="btn-next" class="next-chapter" hidden></button>
     <details><summary class="label">HISTORY</summary><ol id="history"></ol></details>
   </section>
@@ -86,7 +86,8 @@
     <div class="box"><div class="label">OBJECTIVE</div><div id="objective"></div></div>
     <div class="label-row"><span class="label">CASE BOARD</span><span><button id="btn-badges" class="quiet">Badges</button> <button id="btn-suspects" class="quiet">Suspects</button></span></div>
     <div id="board" class="board"></div>
-    <pre id="telegram" class="telegram"></pre>
+    <pre id="telegram" class="telegram" aria-label="Telegram"></pre>
+    <pre id="taunt" class="telegram" aria-label="Telegram" aria-live="polite"></pre>
     <div class="label">NOTEPAD</div>
     <textarea id="notes" placeholder="Ganimard does not read your notes. Write anyway."></textarea>
     <div class="row"><button id="btn-print" hidden>Print certificate</button></div>
@@ -105,7 +106,7 @@
   <div class="label"></div><div class="cards"></div>
   <button autofocus>Noted</button>
 </form></dialog>
-<div id="toasts"></div>
+<div id="toasts" role="status" aria-live="polite"></div>
 <div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
   <span>Help improve the course: allow anonymous usage statistics?</span>
   <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="privacy.html">Privacy</a></span>

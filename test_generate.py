@@ -18,6 +18,10 @@ FIXTURE = [
     ("Comtesse de Cagliostro", "cagliostro"),
     ("Cagliostro", "cagliostro"),
     ("Trunk no 7", "7"),
+    ("A-7", "a7"), ("A 7", "a7"), ("A7", "a7"), ("Trunk no A-7", "a7"),
+    ("Report id 4127", "4127"), ("Suite no 0214", "214"), ("Monsieur Ernest Grimaud", "ernest grimaud"),
+    ("WIRE 2718 STOP", "2718"), ("STOP READING THE NOISE", "stop reading noise"), ("READING THE NOISE STOP", "reading noise"),
+    ("stop", "stop"), ("STOP STOP", "stop"), ("27 rue des Martyrs, Paris", "27 des martyrs"), ("0", "0"), ("000", "0"),
 ]
 
 
@@ -63,7 +67,7 @@ class Plant(unittest.TestCase):
         V = g.plant_values(1912)
         self.assertEqual(V["plate"], "75-2041")
         self.assertEqual(V["fence_address"], "27 rue des Martyrs")
-        self.assertEqual(V["shell_account"], 88213)
+        self.assertEqual(V["shell_account"], 3213)
         self.assertEqual(V["lupin_alias"], "Rupert Blakeney")
         self.assertEqual(V["theft_date"], 19120518)
 
@@ -167,6 +171,18 @@ class PartI(unittest.TestCase):
         self.assertNotIn(self.V["report_id"], first("SELECT id FROM police_report WHERE date BETWEEN 19120501 AND 19120531"))
         self.assertNotIn(self.V["neighbour"], first("SELECT guest_name FROM hotel_register"))
 
+    def test_pinned_ids_hide_among_the_noise(self):
+        # D2: MAX(id), ORDER BY id DESC and id ranges land on noise (scatter_planted swaps every planted id but the
+        # ones pinned in V, which are drawn inside the noise range); only the Part II code wire (9001) is meant to be found that way
+        V, q = self.V, lambda sql: [r[0] for r in self.conn.execute(sql)]
+        self.assertNotIn(q("SELECT MAX(id) FROM police_report")[0], (V["report_id"], V["compete_report_id"]))
+        self.assertNotIn(q("SELECT MAX(id) FROM bank_account")[0], V["accounts"])
+        self.assertTrue(100 <= q("SELECT b.id FROM bank_account b JOIN person p ON p.id = b.person_id WHERE p.name = 'Comtesse de Cagliostro'")[0] < 4100)
+        self.assertLessEqual(q("SELECT amount FROM bank_transaction ORDER BY id DESC LIMIT 1")[0], 900)   # noise, not the chain
+        planted = {c["name"] for c in plot.CAST} | {"Mr. Grey", "Comtesse de Cagliostro"}
+        self.assertFalse(set(q("SELECT guest_name FROM hotel_register WHERE id >= 20000")) & planted)
+        self.assertEqual(q("SELECT MAX(id) FROM telegram"), [9001])
+
     def test_transcripts_write_dates_in_english(self):
         for (t,) in self.conn.execute("SELECT transcript FROM interview"):
             self.assertNotRegex(t, r"1912\d{4}")
@@ -216,14 +232,27 @@ class Outputs(unittest.TestCase):
         j = g.chapters_json(V)
         self.assertEqual(len(j["chapters"]), 12)
         for ch in j["chapters"]:
-            self.assertEqual(len(ch["answer_sha256"]), 64)
+            self.assertTrue(ch["answer_sha256"] and all(len(h) == 64 for h in ch["answer_sha256"]), ch["n"])
+            self.assertEqual(ch["construct"], plot.CHAPTERS[ch["n"] - 1]["construct"])   # shown under the objective, not a secret
             self.assertNotIn("solution", ch)
             self.assertNotIn("naive", ch)
         dump = json.dumps(j)
         for secret in [V["plate"], str(V["shell_account"]), V["trunk_no"]]:
             self.assertNotIn(secret, dump)
-        self.assertEqual(j["chapters"][7]["answer_sha256"], g.sha(V["lupin_alias"]))
-        self.assertEqual(g.normalise(json.loads(dump)["normalise_fixture"][0][0]), "rupert blakeney")
+        self.assertEqual(j["chapters"][7]["answer_sha256"], [g.sha(V["lupin_alias"]), g.sha("Blakeney")])
+        self.assertEqual(j["chapters"][9]["answer_sha256"], [g.sha("grey")])   # one token: no second spelling
+        self.assertEqual(j["part2_code_sha256"], [g.sha("STOP READING THE NOISE"), g.sha("READING THE NOISE")])
+        self.assertEqual(g.normalise(json.loads(dump)["normalise_fixture"][0][0]), "phileas fogg")
+        # D4: no chapter's story or objective quotes an earlier chapter's answer (nor its surname), the lift times stay in the data
+        answers = [g.normalise(str(V[ch["answer_key"]])) for ch in plot.CHAPTERS]
+        for i, ch in enumerate(j["chapters"]):
+            text = (ch["story"] + " " + ch["objective"]).lower()
+            for a in answers[:i]:
+                for needle in {a, a.split()[-1]}:
+                    self.assertNotIn(needle, text, "chapter %d quotes %r" % (ch["n"], needle))
+            for k in ("title", "story", "objective", "telegram"):
+                for t in ("02:05", "03:10"):
+                    self.assertNotIn(t, ch[k], (ch["n"], k))
         conn.close()
 
     def test_solution_sql_runs_per_chapter(self):
@@ -263,7 +292,22 @@ class Compete(unittest.TestCase):
         j = g.chapters_json(self.V, mode="compete")
         self.assertEqual(len(j["chapters"]), 8)
         self.assertNotIn("endings", j)
-        self.assertNotIn("part2_code_sha256", j)
+        self.assertFalse([k for ch in j["chapters"] for k in ch if "sha256" in k] + [k for k in j if "sha256" in k])   # the backend checks
+        self.assertNotIn("CHAPTER IX", j["chapters"][7]["telegram"])   # compete has no chapter IX
+        self.assertIn("CHAPTER IX", g.chapters_json(self.V)["chapters"][7]["telegram"])
+        self.assertEqual(j["chapters"][3]["construct"], "GROUP BY / HAVING")
+
+    def test_season_hashes_match_the_compete_solutions(self):
+        conn, V = g.build_db(1)
+        got = g.season_hashes([1])
+        self.assertEqual(list(got), ["1"])
+        for ch, hs in zip(plot.CHAPTERS[:8], got["1"]):
+            (val,) = conn.execute(ch["solution_compete"].format(**V)).fetchone()
+            self.assertEqual(hs[0], g.sha(val), ch["n"])
+            self.assertEqual(len(hs), 2 if ch["n"] == 5 else 1)   # the jeweller's surname alone is accepted too
+        self.assertEqual(got, g.season_hashes([1]))   # deterministic
+        self.assertEqual(len(g.season_hashes()), 20)
+        conn.close()
 
     def test_compete_values_vary_by_season(self):
         v7, v8 = g.plant_values(7), g.plant_values(8)
@@ -345,8 +389,10 @@ class Suspects(unittest.TestCase):
         for s in plot.CAST:
             self.assertIn(s["meet"], chapters)
             surname = s["name"].split()[-1]
-            self.assertIn(surname, chapters[s["meet"]]["story"].format(**V) + s["name"] * (s["meet"] == 3),
-                          "%s is met in chapter %d, whose story names them" % (s["name"], s["meet"]))
+            named = chapters[s["meet"]]["story"].format(**V)
+            if V[chapters[s["meet"] - 1]["answer_key"]] == s["name"]:   # Ashcombe, Blakeney: the previous chapter's result named them
+                named += s["name"]
+            self.assertIn(surname, named, "%s is met in chapter %d, whose story names them" % (s["name"], s["meet"]))
             for n, text in s["notes"]:
                 for d in chapters[n].get("discovery", []):
                     needles = d.get("must_contain", [])

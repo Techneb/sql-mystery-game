@@ -1,12 +1,30 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
 test("normalise matches the generator's fixture", () => {
   for (const [raw, want] of data.normalise_fixture) assert.equal(normalise(raw), want, raw);
+});
+
+test("normalise: a lone letter glues to its digits, honorifics and labels go, a trailing STOP goes, leading zeros go", () => {
+  for (const s of ["B-3", "B 3", "B3"]) assert.equal(normalise(s), "b3", s);
+  assert.equal(normalise("room 305"), "305");
+  assert.equal(normalise("0305"), "305");
+  assert.equal(normalise("0"), "0");
+  assert.equal(normalise("M. Dupont"), "dupont");
+  assert.equal(normalise("Monsieur Dupont"), "dupont");
+  assert.equal(normalise("Countess Smith"), "smith");
+  assert.equal(normalise("wire 12 STOP"), "12");
+  assert.equal(normalise("stop reading the noise stop"), "stop reading noise");
+  assert.equal(normalise("stop"), "stop", "a lone STOP is the answer, not punctuation");
+});
+
+test("answer hashes are lists; the Part II code has more than one accepted spelling", () => {
+  for (const ch of data.chapters) assert.ok(Array.isArray(ch.answer_sha256) && ch.answer_sha256.length >= 1, "chapter " + ch.n);
+  assert.ok(Array.isArray(data.part2_code_sha256) && data.part2_code_sha256.length >= 2);
 });
 
 test("sha256 of a normalised answer is 64 hex chars", async () => {
@@ -47,6 +65,9 @@ test("history keeps 20, newest first, no consecutive duplicates", () => {
 test("wrong answers get suspect-specific or rotating default replies", () => {
   const s = freshState();
   assert.equal(judgeWrong("paul sernine", data, s), data.wrong_suspects["paul sernine"]);
+  assert.equal(judgeWrong("paul sernine", data, s, ["paul sernine"]), data.wrong_suspects["paul sernine"]);
+  assert.equal(judgeWrong("paul sernine", data, s, []), data.wrong_default[0], "an unmet suspect's alibi stays hidden");
+  assert.equal(judgeWrong("constructor", data, s), data.wrong_default[0], "own keys only");
   s.wrongStreak = 0; const a = judgeWrong("nobody", data, s);
   s.wrongStreak = 1; const b = judgeWrong("nobody", data, s);
   assert.notEqual(a, b);
@@ -85,7 +106,10 @@ test("badges fire on the right query shapes and only once", () => {
   assert.ok(names({ ...base(), sql: "x", rows: 1 }).includes("Needle"));
   assert.ok(names({ ...base(), sql: "x", rows: 500 }).includes("Haystack"));
   assert.ok(names({ ...base(), event: "answer", norm: "paul sernine" }).includes("Anagram"));
-  assert.ok(names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"));
+  const one = { ...freshState(), queries: { 1: 1 } };
+  assert.ok(names({ ...base(), event: "solve", lines: 2, state: one, chapter: 1 }).includes("Haiku"));
+  assert.ok(!names({ ...base(), event: "solve", lines: 2 }).includes("Haiku"), "a guess is not a haiku");
+  assert.ok(!names({ ...base(), event: "solve", elapsed: 1000 }).includes("Speed Reader"), "a fast guess is not reading");
   assert.deepEqual(detectBadges(q("SELECT * FROM person"), ["Tourist", "Trespasser"]), []);
   assert.equal(BADGES.length, 38);
   assert.deepEqual(names({ event: "theme" }), ["Lamplighter"]);
@@ -119,8 +143,11 @@ test("compete events carry the Part I totals the leaderboard scores", () => {
   const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha", solved: [1, 2, 3],
               queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, wrong: { 1: 2, 3: 1, 11: 9 } };
   assert.deepEqual(competeStats(s), { queries: 15, wrong: 3 });
-  assert.deepEqual(eventPayload(s, "progress", 3),
-    { event: "progress", team: "Alpha", season: 7, chapter: 3, wrong: 3, queries: 15 });
+  assert.deepEqual(eventPayload(s, "progress", 3, 1000),
+    { event: "progress", team: "Alpha", season: 7, chapter: 3, wrong: 3, queries: 15, clientAt: 1000 });
+  const f = { ...s, solved: [1, 2, 3, 4, 5, 6, 7, 8], startedAt: 5000, finishedAt: 65000 };
+  assert.equal(eventPayload(f, "finish", 8, 70000).elapsedMs, 60000, "the finish carries the browser's own elapsed time");
+  assert.equal(eventPayload(s, "progress", 3, 1000).elapsedMs, undefined);
   assert.equal(eventPayload(s, "start", 0).chapter, 3, "chapter defaults to the number solved");
   assert.equal(eventPayload({ ...freshState(), team: "B", season: 1 }, "start", 0).chapter, 0);
   assert.equal(fmtTime(0), "00:00");
@@ -142,7 +169,7 @@ test("admin seasons: usage per season, next free number, share links", () => {
   assert.equal(nextFreeSeason([]), 1);
   const l = seasonLinks("https://x.uk/g/", 2, "https://s.g/exec?a=1");
   assert.equal(l.student, "https://x.uk/g/?season=2&board=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
-  assert.equal(l.leaderboard, "https://x.uk/g/leaderboard.html?data=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
+  assert.equal(l.leaderboard, "https://x.uk/g/leaderboard.html?data=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1&season=2");
   assert.equal(seasonLinks("b/", 4, "").student, "b/?season=4");
 });
 
@@ -151,6 +178,7 @@ test("compete refuses a name already used in the same season, whatever the case"
   assert.ok(nameTaken(rows, 2, " alice"));
   assert.ok(nameTaken(rows, 3, "BOB"));
   assert.ok(!nameTaken(rows, 3, "Alice"), "same name in another season is fine");
+  assert.ok(nameTaken(rows, 2, "Al\u0131ce".replace("\u0131", "i")) && teamKey("\uFF21lice") === "alice", "look-alikes fold to the same key");
   assert.ok(!nameTaken([], 2, "Alice"));
 });
 
@@ -164,6 +192,9 @@ test("admin settings: valid fields apply, invalid ones are refused and keep the 
     assert.deepEqual(TAUNTS, ["A L", "B"]);
     assert.deepEqual(PENALTY, { wrong: 5 });
     assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { wrong: -1 } }), ["ranks", "taunts", "penalty.wrong"]);
+    assert.deepEqual(applyConfig({ penalty: { wrong: 1e12 } }), ["penalty.wrong"], "an hour is the most a wrong answer may cost");
+    assert.deepEqual(applyConfig({ penalty: { wrong: 0.5 } }), ["penalty.wrong"]);
+    assert.deepEqual(applyConfig({ taunts: ["x".repeat(301)] }), ["taunts"], "a telegram is short");
     assert.deepEqual(currentConfig().ranks, [10, 20, 30], "refused ranks change nothing");
     assert.equal(configUrl("https://s.g/exec"), "https://s.g/exec?config=1");
   } finally {
@@ -220,8 +251,9 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   assert.ok(detectBadges({ ...base(), state: s }, []).map(b => b.name).includes("Film Buff"));
   const ev = (event, extra = {}) => detectBadges({ ...base(), event, ...extra }, []).map(b => b.name);
   assert.deepEqual(ev("suspects"), ["Paparazzo"]);
-  assert.ok(ev("solve", { elapsed: 90000 }).includes("Speed Reader"));
-  assert.ok(!ev("solve", { elapsed: 200000 }).includes("Speed Reader"));
+  const quick = { ...freshState(), queries: { 1: 2 } };
+  assert.ok(ev("solve", { elapsed: 90000, state: quick }).includes("Speed Reader"));
+  assert.ok(!ev("solve", { elapsed: 200000, state: quick }).includes("Speed Reader"));
   assert.ok(ev("answer", { norm: "4100", decoy: 4100 }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
@@ -301,4 +333,13 @@ test("track sends nothing without consent and gtag", () => {
 
 test("GA_ID is empty or a GA4 measurement ID", () => {
   assert.match(GA_ID, /^(G-[A-Z0-9]+)?$/);
+});
+
+test("a comma join with nothing to match is refused before it can hang the page", () => {
+  assert.ok(cartesian("SELECT count(*) FROM bank_transaction, cab_ride"));
+  assert.ok(cartesian("select * from a as x, b"));
+  assert.ok(!cartesian("SELECT * FROM a, b WHERE a.id = b.a_id"));
+  assert.ok(!cartesian("SELECT * FROM a JOIN b ON a.id = b.a_id"));
+  assert.ok(!cartesian("SELECT * FROM a -- , b\nWHERE 1"), "a comment is not a join");
+  assert.ok(!cartesian("SELECT 'a, b' FROM t"), "a string is not a join");
 });

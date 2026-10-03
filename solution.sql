@@ -1,6 +1,6 @@
 -- The Ritz Affair: reference path (seed 1912). Each chapter first finds the facts the story withholds, then answers.
 
--- 01. The Night of the 17th (SELECT / WHERE) -> the report id: 4127
+-- 01. The Night of the 17th (SELECT / WHERE) -> the report id: 2127
 -- Duroc says the lift went at 02:10, past midnight: the theft is filed under the 18th, not the 17th.
 SELECT transcript
 FROM interview
@@ -11,13 +11,13 @@ FROM police_report
 WHERE place = 'Hotel Ritz'
   AND date = 19120518
   AND type = 'theft';
--- Answer: 4127
+-- Answer: 2127
 
 -- 02. The Neighbouring Suite (ORDER BY / LIMIT) -> the guest's name: Lord Ashcombe
 -- The report: the thief came from the neighbouring suite, the most expensive one on the floor, the night of the 17th.
 SELECT description
 FROM police_report
-WHERE id = 4127;
+WHERE id = 2127;
 -- The answer:
 SELECT guest_name
 FROM hotel_register
@@ -85,8 +85,8 @@ WHERE a.number = 27
   AND p.occupation = 'jeweller';
 -- Answer: Ernest Grimaud
 
--- 06. Follow the Francs (JOIN x3 + SUM + HAVING) -> the account number: 88213
--- The jeweller's account: 44170.
+-- 06. Follow the Francs (JOIN x3 + SUM + HAVING) -> the account number: 3213
+-- The jeweller's account: 2170.
 SELECT id
 FROM bank_account
 WHERE person_id = (
@@ -97,7 +97,7 @@ WHERE person_id = (
 -- What it paid each account in May. Decoys: the biggest single cheque (one payment), the biggest total (four payments, a supplier), and a second account paid in three small pieces.
 SELECT counterparty_id, COUNT(*) AS payments, SUM(amount) AS total, MAX(amount) AS biggest
 FROM bank_transaction
-WHERE account_id = 44170
+WHERE account_id = 2170
   AND date BETWEEN 19120501 AND 19120531
 GROUP BY counterparty_id
 ORDER BY total DESC;
@@ -112,10 +112,10 @@ GROUP BY t.counterparty_id
 HAVING COUNT(*) = 3
 ORDER BY SUM(t.amount) DESC
 LIMIT 1;
--- Answer: 88213
+-- Answer: 3213
 
 -- 07. The Quietest Hour (CASE WHEN + GROUP BY) -> the telegram id: 2718
--- Ganimard's four boxes, counted: the night is the quietest.
+-- Ganimard's four boxes, counted: the afternoon is the quietest (36), not the night.
 SELECT CASE WHEN time < '06:00' THEN 'night' WHEN time < '12:00' THEN 'morning' WHEN time < '18:00' THEN 'afternoon' ELSE 'evening' END AS period, COUNT(*) AS wires
 FROM telegram
 WHERE office = 'Ritz'
@@ -209,7 +209,7 @@ WHERE p.name NOT IN ('Lord Ashcombe', 'Bertram Hobbs', 'Ada Pringle');
 -- Answer: A-7
 
 -- 10. Never Seen Together (LEFT JOIN / self-join) -> the guest's name: Mr. Grey
--- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.
+-- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine share a night with him (11 January, and the week of the theft), so one name is left: the same man, under two names.
 -- The answer:
 WITH regulars AS (
   SELECT guest_name
@@ -277,7 +277,7 @@ WITH RECURSIVE flows AS (
     AND type = 'transfer'
   GROUP BY account_id, counterparty_id
 ), chain(account_id, amount, hop) AS (
-  SELECT 88213, 40000, 0
+  SELECT 3213, 40000, 0
   UNION ALL
   SELECT f.counterparty_id, f.amount, c.hop + 1
   FROM chain AS c

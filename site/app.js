@@ -1,11 +1,21 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
 export const STOP_WORDS = new Set(["the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "senor",
-  "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate"]);
+  "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate",
+  "m", "monsieur", "madame", "mme", "miss", "sir", "lady", "countess", "room", "id", "wire", "paris"]);
 
 export function normalise(s) {
   // Same rules as normalise() in generate_db.py. Keep both in sync (fixture in chapters.json).
-  const tokens = (String(s).toLowerCase().match(/[a-z0-9]+/g) || []).filter(t => !STOP_WORDS.has(t));
-  if (tokens.length && tokens.every(t => /^[0-9]+$/.test(t))) return tokens.join("");
+  // A lone letter glues to the digits after it ("A-7", "A 7", "A7" -> "a7") before stop words go, so "a" is not eaten;
+  // a trailing STOP is telegram punctuation; an all-digit answer drops leading zeros ("0214" -> "214").
+  const raw = String(s).toLowerCase().match(/[a-z0-9]+/g) || [];
+  const glued = [];
+  for (let i = 0; i < raw.length; i++) {
+    if (/^[a-z]$/.test(raw[i]) && i + 1 < raw.length && /^[0-9]+$/.test(raw[i + 1])) glued.push(raw[i] + raw[++i]);
+    else glued.push(raw[i]);
+  }
+  const tokens = glued.filter(t => !STOP_WORDS.has(t));
+  if (tokens.length > 1 && tokens[tokens.length - 1] === "stop") tokens.pop();
+  if (tokens.length && tokens.every(t => /^[0-9]+$/.test(t))) return tokens.join("").replace(/^0+(?=.)/, "");
   return tokens.join(" ");
 }
 
@@ -18,7 +28,7 @@ export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, token: "" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
@@ -37,7 +47,12 @@ export function storageKey(mode) { return mode === "compete" ? "ritz.compete" : 
 let key = storageKey("learn");
 export function loadFrom(k) { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(k) || "{}") }; } catch { return freshState(); } }
 let noPersist = false;
-export function save(state) { if (noPersist) return; try { localStorage.setItem(key, JSON.stringify(state)); } catch {} }
+let saveWarned = false;
+export function save(state) {
+  if (noPersist) return;
+  try { localStorage.setItem(key, JSON.stringify(state)); }
+  catch { if (!saveWarned && typeof document !== "undefined") { saveWarned = true; toast("Progress is not being saved in this browser.", "Not saved"); } }
+}
 
 // --- compete mode: season, team, clock, events -------------------------------------------------
 export function fmtTime(ms) {
@@ -50,11 +65,13 @@ export function competeStats(state) {
   for (let n = 1; n <= 8; n++) wrong += state.wrong[n] || 0;
   return { ...s, wrong };
 }
-// One row of the Apps Script's log sheet. The server stamps the time itself; nothing here is a clock.
-export function eventPayload(state, event, chapter) {
+// One row of the Apps Script's log sheet. The server stamps the time itself; the client's clock travels
+// too (clientAt, and elapsedMs at the finish) so the leaderboard can flag a start that arrived late.
+export function eventPayload(state, event, chapter, now = Date.now()) {
   const s = competeStats(state);
   return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
-           wrong: s.wrong, queries: s.queries };
+           wrong: s.wrong, queries: s.queries, clientAt: now,
+           ...(event === "finish" ? { elapsedMs: (state.finishedAt || now) - state.startedAt } : {}) };
 }
 
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -93,6 +110,7 @@ async function loadDb(stem) {
   const buf = await (await fetch(stem + ".sqlite")).arrayBuffer();
   if (db) db.close();
   db = new SQL.Database(new Uint8Array(buf));
+  db.run("PRAGMA query_only = 1");   // DROP/UPDATE/DELETE fail with "attempt to write a readonly database" instead of silently breaking the chapter
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
   tableSizes = {};
@@ -109,7 +127,10 @@ function backToInvestigation() {
   reviewing = null; nextPending = 0; clearTerminal(); renderChapter();
   if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
 }
-const objectiveHtml = (text, label, value) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>";
+const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
+  (ch && (ch.construct || (ch.tables || []).length) ? '<div class="muted chapter-tools">' +
+    (ch.construct ? "This week's tool: <b>" + esc(ch.construct) + "</b>" : "") +
+    (ch.construct && ch.tables.length ? " &middot; " : "") + (ch.tables.length ? "New evidence: " + esc(ch.tables.join(", ")) : "") + "</div>" : "");
 
 function renderChapter() {
   markSuspects();
@@ -127,7 +148,8 @@ function renderChapter() {
     $("chapter-icon").innerHTML = PROPS[ch.n] || "";
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n]);
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch);
+    showTelegram(ch.telegram);
     return;
   }
   const ch = currentChapter(state, data.chapters);
@@ -135,7 +157,9 @@ function renderChapter() {
   $("chapter-icon").innerHTML = PROPS[ch.n] || "";
   $("chapter-title").textContent = ch.title;
   $("story").innerHTML = richText(ch.story);
-  $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form);
+  $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form, ch);
+  const last = data.chapters.find(c => c.n === state.solved[state.solved.length - 1]);   // the bridge to this chapter stays in view
+  if (last) showTelegram(last.telegram);
   if (awaitingCode(state)) {
     $("story").innerHTML = '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + richText(data.endings.part1);   // the unmasking: his face, only now
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box...";
@@ -234,6 +258,12 @@ export function renderResults(res) {
   return "<table>" + head + body + "</table>" + more;
 }
 
+// FROM a, b with no ON/WHERE/USING anywhere: the one query that can hang the page (sql.js runs on the main thread).
+// ponytail: a text guard, not a timeout; move sql.js to a Worker with terminate() if students still find a way.
+export function cartesian(sql) {
+  const body = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
+  return /\bfrom\s+[a-z_][a-z0-9_]*(?:\s+(?:as\s+)?[a-z_][a-z0-9_]*)?\s*,\s*[a-z_]/i.test(body) && !/\b(?:where|on|using)\b/i.test(body);
+}
 export function pushHistory(state, sql) {
   if (state.history[0] !== sql) state.history.unshift(sql);
   state.history = state.history.slice(0, 20);
@@ -247,7 +277,8 @@ function runQuery() {
   state.totalQueries++;
   pushHistory(state, sql);
   let res = null, error = null, t0 = performance.now();
-  try { const all = db.exec(sql); res = all[all.length - 1] || null; state.errorStreak = 0; }
+  if (cartesian(sql)) { error = "Two ledgers side by side with nothing to match them: say what joins them (ON or WHERE)."; state.errorStreak++; }
+  else try { const all = db.exec(sql); res = all[all.length - 1] || null; state.errorStreak = 0; }
   catch (e) { error = e.message; state.errorStreak++; }
   const ms = Math.round(performance.now() - t0);
   $("results").innerHTML = error ? '<div class="error">' + esc(error) + "</div>" : renderResults(res);
@@ -265,7 +296,7 @@ function runQuery() {
 
 function renderHistory() {
   $("history").innerHTML = state.history.map(q => "<li>" + esc(q) + "</li>").join("");
-  [...$("history").children].forEach((li, i) => li.onclick = () => { $("sql").value = state.history[i]; syncSql(); });
+  [...$("history").children].forEach((li, i) => btnLike(li, () => { $("sql").value = state.history[i]; syncSql(); }));
 }
 
 export const TAUNTS = [
@@ -274,17 +305,36 @@ export const TAUNTS = [
   "MY DEAR CLERK STOP A QUERY IS CHEAPER THAN A GUESS STOP RUN ONE STOP A L",
 ];
 
-export function judgeWrong(norm, data, state) {
-  if (data.wrong_suspects[norm]) return data.wrong_suspects[norm];
+export function judgeWrong(norm, data, state, met) {
+  if (Object.hasOwn(data.wrong_suspects, norm) && (!met || met.includes(norm))) return data.wrong_suspects[norm];
   return data.wrong_default[state.wrongStreak % data.wrong_default.length];
 }
 
-let typer = null;
-function typeTelegram(text) {
+let typer = null, typing = "";
+function typeTelegram(text, id = "telegram") {
   clearInterval(typer);
-  const el = $("telegram"); el.textContent = ""; let i = 0;
-  typer = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typer); }, 25);
-  el.onclick = () => { clearInterval(typer); el.textContent = text; };
+  const el = $(id); el.textContent = ""; let i = 0; typing = text;
+  const stop = () => { clearInterval(typer); el.textContent = text; typing = ""; };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return stop();
+  typer = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) stop(); }, 25);
+  btnLike(el, stop);
+}
+// The last telegram is the only pointer to the current objective: shown at once (no typing) when a chapter is
+// reviewed or the page reloads, unless it is the one being typed right now.
+function showTelegram(text) {
+  if (typing === text || $("telegram").textContent === text) return;
+  clearInterval(typer); typing = "";
+  $("telegram").textContent = text || "";
+}
+// Click or keyboard (Enter, Space) on an element that is not a <button>.
+function btnLike(el, fn) {
+  el.tabIndex = 0; el.setAttribute("role", "button");
+  el.onclick = fn;
+  el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(e); } };
+}
+function toast(text, title) {
+  const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>" + esc(title) + "</b><br>" + esc(text);
+  $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000);
 }
 
 const tablesIn = sql => [...sql.matchAll(/\b(?:from|join)\s+([a-z_]+)/gi)].map(m => m[1].toLowerCase());
@@ -297,7 +347,7 @@ export const BADGES = [
   ["Early HAVING", "HAVING before chapter 4. Somebody has been reading ahead.", c => c.event === "query" && /\bhaving\b/i.test(c.sql) && c.chapter < 4],
   ["Aliased", "AS. Ganimard approves of short names.", c => c.event === "query" && /\bas\b/i.test(c.sql)],
   ["Novelist", "A query of more than fifteen lines.", c => c.event === "query" && c.sql.split("\n").length > 15],
-  ["Haiku", "A chapter solved in three lines or fewer.", c => c.event === "solve" && c.lines <= 3],
+  ["Haiku", "A chapter solved in three lines or fewer.", c => c.event === "solve" && c.lines <= 3 && (c.state.queries[c.chapter] || 0) > 0],
   ["Typo", "Five errors in a row. The typewriter is not to blame.", c => c.event === "query" && c.error && c.state.errorStreak >= 5],
   ["Persistent", "Twenty queries in one chapter.", c => c.event === "query" && (c.state.queries[c.chapter] || 0) >= 20],
   ["Sniper", "A chapter solved on the first query.", c => c.event === "solve" && c.state.queries[c.chapter] === 1],
@@ -322,7 +372,7 @@ export const BADGES = [
   ["Film Buff", "Five films quoted in the archives. Cinema was invented in Paris, after all.", c => c.event === "query" && c.state.film.length >= 5],
   ["Time Traveller", "Searched for a date after 1912. The banknote from 2000 was a hint.", c => c.event === "query" && /\b(19(1[3-9]|[2-9]\d)|20\d\d)\d{4}\b/.test(c.sql)],
   ["Paparazzo", "Opened the Suspects gallery. Faces, at last.", c => c.event === "suspects"],
-  ["Speed Reader", "A chapter solved within two minutes of opening it.", c => c.event === "solve" && c.elapsed < 120000],
+  ["Speed Reader", "A chapter solved within two minutes of opening it.", c => c.event === "solve" && c.elapsed < 120000 && (c.state.queries[c.chapter] || 0) > 0],
   ["Filed Under the 17th", "Filed the case under the wrong night. Duroc never sleeps, but he does count.",
     c => c.event === "answer" && c.chapter === 1 && c.decoy != null && c.norm === String(c.decoy)],
   ["Lamplighter", "Switched between the day and night editions. Paris has lit its lamps by hand since 1667.", c => c.event === "theme"],
@@ -381,20 +431,20 @@ export function applyConfig(cfg) {
   const bad = [];
   const r = cfg.ranks;
   if (r !== undefined) {
-    if (Array.isArray(r) && r.length === 3 && r.every((q, i) => Number.isInteger(q) && q > 0 && (!i || q > r[i - 1])))
+    if (Array.isArray(r) && r.length === 3 && r.every((q, i) => Number.isInteger(q) && q > 0 && q <= 10000 && (!i || q > r[i - 1])))
       r.forEach((q, i) => { RANKS[i][0] = q; });
     else bad.push("ranks");
   }
   const t = cfg.taunts;
   if (t !== undefined) {
-    if (Array.isArray(t) && t.length && t.every(s => typeof s === "string" && s.trim()))
+    if (Array.isArray(t) && t.length && t.length <= 10 && t.every(s => typeof s === "string" && s.trim() && s.length <= 300))
       TAUNTS.splice(0, TAUNTS.length, ...t.map(s => s.trim()));
     else bad.push("taunts");
   }
   for (const k of ["wrong"]) {
     const v = cfg.penalty?.[k];
     if (v === undefined) continue;
-    if (Number.isFinite(v) && v >= 0) PENALTY[k] = v; else bad.push("penalty." + k);
+    if (Number.isInteger(v) && v >= 0 && v <= 3600) PENALTY[k] = v; else bad.push("penalty." + k);
   }
   return bad;
 }
@@ -435,7 +485,7 @@ function renderBoard() {
   const label = n => (data.chapters.find(c => c.n === n) || {}).board || "";
   $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + '</b> <span class="card-label">' +
     esc(label(n)) + "</span><br>" + esc(state.answers[n]) + "</div>").join("");
-  $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
+  $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => reviewChapter(Number(el.dataset.n))));
 }
 
 // A closing film (site/video/<name>.*) waits on its poster: browsers only allow sound after a click, so the student
@@ -535,12 +585,20 @@ async function submitAnswer() {
   const hash = await sha256(norm);
   const ch = currentChapter(state, data.chapters);
   if (awaitingCode(state)) {
-    if (hash === data.part2_code_sha256) { state.part2 = true; applyMood(); $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
-    else { $("reply").textContent = "That is not the code. It is four words, in a telegram nobody was meant to read."; }
+    if (data.part2_code_sha256.includes(hash)) { state.part2 = true; applyMood(); $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
+    else { $("reply").textContent = "That is not the code. Four words, the first of them STOP, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
   }
-  if (hash === ch.answer_sha256) {
-    state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0;
+  let correct;
+  if (ch.answer_sha256) correct = ch.answer_sha256.includes(hash);
+  else {   // compete: the season file carries no hashes; the class backend holds them (python3 generate_db.py --hashes)
+    $("reply").textContent = "Asking the Prefecture...";
+    const r = await checkRemote(ch.n, norm);
+    if (r.error) { $("reply").textContent = r.error; return; }
+    correct = r.correct;
+  }
+  if (correct) {
+    state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
     track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
                              queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
     $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
@@ -548,8 +606,8 @@ async function submitAnswer() {
     afterSolve(ch, "solve");
   } else {
     state.wrong[ch.n] = (state.wrong[ch.n] || 0) + 1; state.wrongStreak++;
-    $("reply").textContent = judgeWrong(norm, data, state);
-    if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length]);
+    $("reply").textContent = judgeWrong(norm, data, state, metSuspects(data.cast, state, data.chapters).map(s => normalise(s.name)));
+    if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length], "taunt");
     afterWrong(norm);   // Task 7 badge hook; define as an empty function here
   }
   $("answer").value = ""; save(state);
@@ -566,10 +624,12 @@ let erdLoaded = false;
 async function renderErd(newTables = []) {
   if (!erdLoaded) { $("erd").innerHTML = await (await fetch("schema.svg")).text(); erdLoaded = true; }
   const vis = visibleTables(data.chapters, state);
+  const cur = awaitingCode(state) || competeDone(state) || state.solved.includes(12) ? [] : currentChapter(state, data.chapters).tables;   // R2: marked until solved
   for (const g of $("erd").querySelectorAll("g.table")) {
     const t = g.dataset.table;
     g.classList.toggle("hidden", !vis.has(t));
     g.classList.toggle("reveal", newTables.includes(t));
+    g.classList.toggle("current", cur.includes(t));
   }
   for (const p of $("erd").querySelectorAll("g.fk")) {
     const from = p.dataset.from.split(".")[0], to = p.dataset.to;
@@ -659,9 +719,9 @@ async function flushOutbox() {
   flushing = true;
   try {
     while (state.outbox.length) {
-      const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                        body: JSON.stringify(state.outbox[0]) });
-      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await postBoard({ ...state.outbox[0], token: state.token || "" });
+      if (j.ok && j.token) state.token = j.token;   // issued on "start", required on everything after
+      else if (!j.ok) console.warn("leaderboard refused a row:", j.error, state.outbox[0]);
       state.outbox.shift();
       save(state);
     }
@@ -673,6 +733,21 @@ async function flushOutbox() {
   }
 }
 
+// text/plain so the browser sends no CORS preflight (Apps Script cannot answer one). Throws on network or HTTP failure;
+// a JSON {ok:false, error} is the backend's own refusal and comes back as is.
+async function postBoard(body) {
+  const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+// Compete answers are checked by the backend: it holds the season hashes, the browser only sends the normalised answer.
+async function checkRemote(chapter, norm) {
+  if (!boardUrl) return { error: "This season needs the class link to check answers. Ask your teacher." };
+  try {
+    const j = await postBoard({ check: 1, team: state.team, season: state.season, chapter, answer: norm, token: state.token || "" });
+    return j.ok ? { correct: !!j.correct } : { error: "The Prefecture refused: " + (j.error || "unknown") + "." };
+  } catch { return { error: "The Prefecture is unreachable. Try again in a moment; the clock is still running." }; }
+}
 async function loadSeason() {
   data = seasonData || await (await fetch("season-" + season + ".json")).json();
   await loadDb("season-" + season);
@@ -682,9 +757,10 @@ async function loadSeason() {
 
 // One leaderboard row per name and season (leaderboard.html keys on name|season), so a second player
 // typing the same name would merge into the first: refuse it up front.
+export const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase();   // mirrored in leaderboard.html
 export function nameTaken(rows, season, name) {
-  const n = name.trim().toLowerCase();
-  return rows.some(r => Number(r.season) === season && String(r.team).trim().toLowerCase() === n);
+  const n = teamKey(name);
+  return rows.some(r => Number(r.season) === season && teamKey(r.team) === n);
 }
 
 async function startCompete() {
@@ -729,9 +805,9 @@ function offerCompete() {
     $("compete-note").innerHTML = boardUrl
       ? "Part I, chapters I to VIII, against the clock. " + duration(PENALTY.wrong) +
         " per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named." +
-        ' Your pseudo and progress go to the class leaderboard (<a href="privacy.html" target="_blank">what is sent</a>).'
-      : "No leaderboard is connected, so the clock runs locally and nothing is recorded.";
-    $("compete-form").hidden = false; $("team").focus();
+        ' Your pseudo, progress and answers go to the class leaderboard, which checks them (<a href="privacy.html" target="_blank">what is sent</a>).'
+      : "Compete needs your teacher's class link: the class leaderboard checks the answers. Investigate works without it.";
+    $("compete-form").hidden = !boardUrl; if (boardUrl) $("team").focus();
   };
   $("btn-start").onclick = startCompete;
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
@@ -816,7 +892,7 @@ function applyMood() {
   const mood = chosenTheme() || (state && state.part2 ? "night" : "day");
   document.documentElement.dataset.mood = mood;
   $("btn-theme").textContent = mood === "night" ? "Day edition" : "Night edition";
-  if (state) $("masthead-date").textContent = state.part2 ? "19 MAY 1912" : "18 MAY 1912";
+  if (state) $("masthead-date").textContent = state.part2 ? "21 MAY 1912" : "18 MAY 1912";
 }
 function toggleTheme() {
   try { localStorage.setItem(THEME_KEY, document.documentElement.dataset.mood === "night" ? "day" : "night"); } catch {}
@@ -868,11 +944,11 @@ export function seasonLinks(base, n, board) {
   const q = encodeURIComponent(board);
   return { investigate: base + (board ? "?board=" + q : ""),
            student: base + "?season=" + n + (board ? "&board=" + q : ""),
-           leaderboard: base + "leaderboard.html" + (board ? "?data=" + q : "") };
+           leaderboard: base + "leaderboard.html" + (board ? "?data=" + q + "&season=" + n : "") };
 }
 
 async function renderAdminPanel() {
-  if (!location.search.includes("admin") || !(await unlockAdmin())) return;
+  if (!new URLSearchParams(location.search).has("admin") || !(await unlockAdmin())) return;
   document.getElementById("admin-panel")?.remove();
   const el = document.createElement("div"); el.id = "admin-panel"; el.className = "admin-panel";
   el.innerHTML = '<span class="label">ADMIN</span>' +
@@ -885,7 +961,10 @@ async function renderAdminPanel() {
     '<br>Leaderboard penalty, seconds per wrong answer ' +
     '<input id="cfg-pw" type="number" min="0"><br>Telegrams after every third wrong answer, one per line:' +
     '<textarea id="cfg-taunts" rows="4"></textarea><button id="cfg-save">Save</button>' +
-    '<div id="cfg-msg" class="admin-msg"></div></div>' +
+    '<div id="cfg-msg" class="admin-msg"></div>' +
+    '<br>Season answers, the output of <code>python3 generate_db.py --hashes</code> (the backend checks compete answers against it):' +
+    '<textarea id="cfg-hashes" rows="3" placeholder=\'{"1": [[...], ...], ...}\'></textarea><button id="cfg-hashes-save">Save answers</button>' +
+    '<div id="cfg-hashes-msg" class="admin-msg"></div></div>' +
     '<div id="admin-seasons" class="admin-seasons" hidden>' +
     '<button id="admin-load">Reload</button>' +
     '<table id="admin-usage"></table>' +
@@ -951,6 +1030,19 @@ async function renderAdminPanel() {
         : "Refused by the backend: " + (r.error || "unknown") + ". Is ADMIN_KEY set to the admin passphrase?";
     } catch { q("cfg-msg").textContent = "Could not reach the backend (is apps_script.gs redeployed?)."; }
   };
+  q("cfg-hashes-save").onclick = async () => {
+    const board = q("admin-board").value.trim();
+    if (!board) { q("cfg-hashes-msg").textContent = "Paste the /exec URL first."; return; }
+    let hashes;
+    try { hashes = JSON.parse(q("cfg-hashes").value); if (!Object.values(hashes).every(s => Array.isArray(s) && s.length === 8)) throw 0; }
+    catch { q("cfg-hashes-msg").textContent = "Not valid: paste the whole output of python3 generate_db.py --hashes."; return; }
+    q("cfg-hashes-msg").textContent = "Saving...";
+    try {
+      const r = await (await fetch(board, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                                            body: JSON.stringify({ hashes, key: adminPass }) })).json();
+      q("cfg-hashes-msg").textContent = r.ok ? "Saved: " + r.seasons + " seasons." : "Refused by the backend: " + (r.error || "unknown") + ".";
+    } catch { q("cfg-hashes-msg").textContent = "Could not reach the backend."; }
+  };
   q("admin-load").onclick = loadUsage;
   q("admin-copy-student").onclick = () => copy("student");
   q("admin-copy-board").onclick = () => copy("leaderboard");
@@ -971,6 +1063,8 @@ async function boot() {
   const params = new URLSearchParams(location.search);
   season = Number(params.get("season")) || 0;
   boardUrl = params.get("board") || "";   // the deployment URL travels in links, never in this public repo
+  let badBoard = false;
+  try { if (boardUrl) new URL(boardUrl); } catch { boardUrl = ""; badBoard = true; }
   // Not awaited: settings only matter at the first wrong answer or the rank, well after load.
   if (boardUrl) fetch(configUrl(boardUrl)).then(r => r.json()).then(applyConfig).catch(() => {});
   const debugChapter = Number(params.get("chapter"));
@@ -1002,26 +1096,26 @@ async function boot() {
     }
     await loadDb("mystery");
   }
-  $("status").textContent = "The archives are open.";
+  $("status").textContent = badBoard ? "The archives are open. The leaderboard link in this address is broken, so nothing is recorded." : "The archives are open.";
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = enterGame;
   // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
   if (resuming || (!linked && state.solved.length) || debugOk) enterGame(); else renderAdminPanel();
   if (!resuming) offerCompete();
   $("btn-back").onclick = backToInvestigation;
-  $("masthead-chapter").onclick = e => {
+  btnLike($("masthead-chapter"), e => {
     e.stopPropagation();
     const menu = $("chapter-menu");
     if (!menu.hidden) { menu.hidden = true; return; }
     menu.innerHTML = ['<div class="chapter-menu-item" data-n="0">Current</div>']
       .concat(state.solved.map(n => '<div class="chapter-menu-item" data-n="' + n + '">' + ROMAN[n] + "</div>")).join("");
-    menu.querySelectorAll(".chapter-menu-item").forEach(el => el.onclick = () => {
+    menu.querySelectorAll(".chapter-menu-item").forEach(el => btnLike(el, () => {
       const n = Number(el.dataset.n);
       if (n === 0) backToInvestigation(); else reviewChapter(n);
       menu.hidden = true;
-    });
+    }));
     menu.hidden = false;
-  };
+  });
   document.addEventListener("click", () => { $("chapter-menu").hidden = true; });
   $("btn-run").onclick = runQuery;
   $("sql").addEventListener("keydown", e => {
@@ -1032,7 +1126,7 @@ async function boot() {
       e.target.selectionStart = e.target.selectionEnd = e.target.value.length;
       syncSql();
     }
-    else if (e.key === "Tab") {
+    else if (e.key === "Tab" && !e.shiftKey) {   // Shift+Tab stays the browser's: it leaves the box
       e.preventDefault();
       const el = e.target, s = el.selectionStart, en = el.selectionEnd;
       el.value = el.value.slice(0, s) + "\t" + el.value.slice(en);
@@ -1074,7 +1168,7 @@ async function boot() {
     renderCertificate();
     window.print();
   };
-  if (location.search.includes("selftest")) {
+  if (params.has("selftest")) {
     let failures = 0;
     for (const [raw, want] of data.normalise_fixture) {
       const got = normalise(raw);
