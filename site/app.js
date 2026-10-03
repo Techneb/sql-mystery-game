@@ -74,6 +74,11 @@ export function eventPayload(state, event, chapter, now = Date.now()) {
            ...(event === "finish" ? { elapsedMs: (state.finishedAt || now) - state.startedAt } : {}) };
 }
 
+// The deploy loads this script as app.js?v=<commit> (.github/workflows/pages.yml); the data files are fetched
+// with the same query, so a page never mixes this deploy's code with a previous deploy's cached data.
+// Empty locally and under node.
+const VERSION = new URL(import.meta.url).search;
+
 const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 
 // One painted object per chapter beside its title: site/icons/chNN.png (96 px, transparent; prompts and
@@ -93,7 +98,7 @@ let season = 0, seasonData = null, boardUrl = "";
 
 async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
-  const buf = await (await fetch(stem + ".sqlite")).arrayBuffer();
+  const buf = await (await fetch(stem + ".sqlite" + VERSION)).arrayBuffer();
   if (db) db.close();
   db = new SQL.Database(new Uint8Array(buf));
   db.run("PRAGMA query_only = 1");   // DROP/UPDATE/DELETE fail with "attempt to write a readonly database" instead of silently breaking the chapter
@@ -608,7 +613,7 @@ export function visibleTables(chapters, state) {
 
 let erdLoaded = false;
 async function renderErd(newTables = []) {
-  if (!erdLoaded) { $("erd").innerHTML = await (await fetch("schema.svg")).text(); erdLoaded = true; }
+  if (!erdLoaded) { $("erd").innerHTML = await (await fetch("schema.svg" + VERSION)).text(); erdLoaded = true; }
   const vis = visibleTables(data.chapters, state);
   const cur = awaitingCode(state) || competeDone(state) || state.solved.includes(12) ? [] : currentChapter(state, data.chapters).tables;   // R2: marked until solved
   for (const g of $("erd").querySelectorAll("g.table")) {
@@ -735,7 +740,7 @@ async function checkRemote(chapter, norm) {
   } catch { return { error: "The Prefecture is unreachable. Try again in a moment; the clock is still running." }; }
 }
 async function loadSeason() {
-  data = seasonData || await (await fetch("season-" + season + ".json")).json();
+  data = seasonData || await (await fetch("season-" + season + ".json" + VERSION)).json();
   await loadDb("season-" + season);
   startClock();
   flushOutbox();
@@ -772,7 +777,7 @@ async function startCompete() {
 }
 
 async function fetchSeason(n) {
-  return fetch("season-" + n + ".json").then(r => r.ok ? r.json() : null).catch(() => null);
+  return fetch("season-" + n + ".json" + VERSION).then(r => r.ok ? r.json() : null).catch(() => null);
 }
 
 // The teacher's link (?season=N) names the season; without one, Compete asks for the number instead.
@@ -1094,7 +1099,7 @@ async function boot() {
     state = saved;
     await loadSeason();
   } else {
-    data = await (await fetch("chapters.json")).json();
+    data = await (await fetch("chapters.json" + VERSION)).json();
     debugOk = debugChapter >= 1 && debugChapter <= 12 && await unlockAdmin();
     if (debugOk) {
       noPersist = true;

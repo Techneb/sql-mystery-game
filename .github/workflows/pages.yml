@@ -38,6 +38,13 @@ jobs:
           BOARD_URL: ${{ secrets.BOARD_URL }}
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
         run: python3 generate_db.py --post
+      - name: Tie the pages to this deploy's script and stylesheet
+        # Browsers keep app.js and style.css for 10 minutes; versioned URLs stop a fresh index.html from running
+        # a stale cached app.js (app.js passes the same ?v= to the data files it fetches).
+        run: |
+          v="${GITHUB_SHA::7}"
+          sed -i "s#src=\"app.js\"#src=\"app.js?v=$v\"#; s#href=\"style.css\"#href=\"style.css?v=$v\"#" site/index.html site/privacy.html
+          grep -q "app.js?v=$v" site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
