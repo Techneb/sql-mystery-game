@@ -1,5 +1,12 @@
 # Video 2: "Case Closed, Twice" (closes Part II)
 
+**Done 2026-10-03, live:** `site/video/part2.*` (41 s, 6.3 MB / 5.2 MB), built by `assemble-video-part2.sh`, at the
+top of the Part II ending column (`filmHtml("part2", " inline")` in `renderChapter`). Changes from the plan below:
+the arrest line is "Madame la Comtesse, you are under arrest." (naming the Comtesse de Cagliostro, a real
+historical figure, got the clip blocked by the content policy); her corridor line is "I do hope your prison is
+warm, Inspector." (she already wears her furs); shot order is Ritz, tea, ledger, corridor, London, photograph,
+desk. Shots 5 and 6 carried the painted signature (blurred). Credits: about 5,100.
+
 Plays above the Part II ending (after chapter XII), like Video 1: poster, "Play", the browser's
 player controls, subtitles burned in. About 32 s. Made the Part I way (read the Status and the
 lessons in `video-part1.md` first): Nano Banana Pro stills, Veo 3.1 clips at 720p, the narrator from separate
