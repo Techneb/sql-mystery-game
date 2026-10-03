@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 406 1222" width="406" height="1222">
 <defs><symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol></defs>
-<g class="fk" data-from="bank_account.person_id" data-to="person"><path class="rel" d="M343.3 718 L343.3 764.5 Q343.3 772.5 335.3 772.5 L187.667 772.5 Q179.667 772.5 179.667 780.5 L179.667 931.5 Q179.667 939.5 171.667 939.5 L54.75 939.5 Q46.75 939.5 46.75 947.5 L46.75 966"/><circle cx="343.3" cy="719" r="2.6"/><circle cx="46.75" cy="965" r="2.6"/><text x="348.3" y="729">1</text><text x="51.75" y="962">N</text></g>
+<g class="fk" data-from="bank_account.person_id" data-to="person"><path class="rel" d="M117.3 718 L117.3 771.5 Q117.3 779.5 125.3 779.5 L171.667 779.5 Q179.667 779.5 179.667 787.5 L179.667 931.5 Q179.667 939.5 171.667 939.5 L54.75 939.5 Q46.75 939.5 46.75 947.5 L46.75 966"/><circle cx="117.3" cy="719" r="2.6"/><circle cx="46.75" cy="965" r="2.6"/><text x="122.3" y="729">1</text><text x="51.75" y="962">N</text></g>
 <g class="fk" data-from="bank_transaction.counterparty_id" data-to="bank_account"><path class="rel" d="M113.333 1024 L113.333 1067 Q113.333 1075 105.333 1075 L44.8333 1075 Q36.8333 1075 36.8333 1083 L36.8333 1112"/><circle cx="113.333" cy="1025" r="2.6"/><circle cx="36.8333" cy="1111" r="2.6"/><text x="118.333" y="1035">1</text><text x="41.8333" y="1108">N</text></g>
 <g class="fk" data-from="bank_transaction.account_id" data-to="bank_account"><path class="rel" d="M133.167 1024 L133.167 1074 Q133.167 1082 125.167 1082 L64.6667 1082 Q56.6667 1082 56.6667 1090 L56.6667 1112"/><circle cx="133.167" cy="1025" r="2.6"/><circle cx="56.6667" cy="1111" r="2.6"/><text x="138.167" y="1035">1</text><text x="61.6667" y="1108">N</text></g>
 <g class="fk" data-from="cab_ride.dropoff_address_id" data-to="address"><path class="rel" d="M113.333 196 L113.333 207.5 Q113.333 215.5 105.333 215.5 L54.75 215.5 Q46.75 215.5 46.75 223.5 L46.75 256"/><circle cx="113.333" cy="197" r="2.6"/><circle cx="46.75" cy="255" r="2.6"/><text x="118.333" y="207">1</text><text x="51.75" y="252">N</text></g>
-<g class="fk" data-from="guest_card.person_id" data-to="person"><path class="rel" d="M331.4 718 L331.4 757.5 Q331.4 765.5 323.4 765.5 L54.75 765.5 Q46.75 765.5 46.75 773.5 L46.75 806"/><circle cx="331.4" cy="719" r="2.6"/><circle cx="46.75" cy="805" r="2.6"/><text x="336.4" y="729">1</text><text x="51.75" y="802">1</text></g>
+<g class="fk" data-from="guest_card.person_id" data-to="person"><path class="rel" d="M105.4 718 L105.4 778.5 Q105.4 786.5 97.4 786.5 L54.75 786.5 Q46.75 786.5 46.75 794.5 L46.75 806"/><circle cx="105.4" cy="719" r="2.6"/><circle cx="46.75" cy="805" r="2.6"/><text x="110.4" y="729">1</text><text x="51.75" y="802">1</text></g>
 <g class="fk" data-from="hotel_register.suite" data-to="suite"><path class="rel" d="M367.1 182 L367.1 235.5 Q367.1 243.5 359.1 243.5 L279 243.5 Q272.75 243.5 272.75 249.75 L272.75 256"/><circle cx="367.1" cy="183" r="2.6"/><circle cx="272.75" cy="255" r="2.6"/><text x="372.1" y="193">1</text><text x="277.75" y="252">N</text></g>
-<g class="fk" data-from="interview.person_id" data-to="person"><path class="rel" d="M367.1 718 L367.1 778.5 Q367.1 786.5 359.1 786.5 L280.75 786.5 Q272.75 786.5 272.75 794.5 L272.75 806"/><circle cx="367.1" cy="719" r="2.6"/><circle cx="272.75" cy="805" r="2.6"/><text x="372.1" y="729">1</text><text x="277.75" y="802">N</text></g>
+<g class="fk" data-from="interview.person_id" data-to="person"><path class="rel" d="M141.1 718 L141.1 757.5 Q141.1 765.5 149.1 765.5 L264.75 765.5 Q272.75 765.5 272.75 773.5 L272.75 806"/><circle cx="141.1" cy="719" r="2.6"/><circle cx="272.75" cy="805" r="2.6"/><text x="146.1" y="729">1</text><text x="277.75" y="802">N</text></g>
 <g class="fk" data-from="lift_log.suite" data-to="suite"><path class="rel" d="M331.4 182 L331.4 214.5 Q331.4 222.5 323.4 222.5 L195 222.5 Q187 222.5 187 230.5 L187 423.5 Q187 431.5 179 431.5 L54.75 431.5 Q46.75 431.5 46.75 439.5 L46.75 458"/><circle cx="331.4" cy="183" r="2.6"/><circle cx="46.75" cy="457" r="2.6"/><text x="336.4" y="193">1</text><text x="51.75" y="454">N</text></g>
 <g class="fk" data-from="luggage.ticket_id" data-to="train_ticket"><path class="rel" d="M349.25 1052 L349.25 1081 Q349.25 1089 341.25 1089 L280.75 1089 Q272.75 1089 272.75 1097 L272.75 1112"/><circle cx="349.25" cy="1053" r="2.6"/><circle cx="272.75" cy="1111" r="2.6"/><text x="354.25" y="1063">1</text><text x="277.75" y="1108">N</text></g>
-<g class="fk" data-from="person.address_id" data-to="address"><path class="rel" d="M133.167 196 L133.167 202.25 Q133.167 208.5 139.417 208.5 L186.333 208.5 Q194.333 208.5 194.333 216.5 L194.333 576.5 Q194.333 584.5 202.333 584.5 L264.75 584.5 Q272.75 584.5 272.75 592.5 L272.75 618"/><circle cx="133.167" cy="197" r="2.6"/><circle cx="272.75" cy="617" r="2.6"/><text x="138.167" y="207">1</text><text x="277.75" y="614">N</text></g>
+<g class="fk" data-from="person.address_id" data-to="address"><path class="rel" d="M133.167 196 L133.167 202.25 Q133.167 208.5 139.417 208.5 L186.333 208.5 Q194.333 208.5 194.333 216.5 L194.333 583.5 Q194.333 591.5 186.333 591.5 L54.75 591.5 Q46.75 591.5 46.75 599.5 L46.75 618"/><circle cx="133.167" cy="197" r="2.6"/><circle cx="46.75" cy="617" r="2.6"/><text x="138.167" y="207">1</text><text x="51.75" y="614">N</text></g>
 <g class="fk" data-from="room_service.suite" data-to="suite"><path class="rel" d="M355.2 182 L355.2 228.5 Q355.2 236.5 347.2 236.5 L217 236.5 Q209 236.5 209 244.5 L209 416.5 Q209 424.5 217 424.5 L264.75 424.5 Q272.75 424.5 272.75 432.5 L272.75 458"/><circle cx="355.2" cy="183" r="2.6"/><circle cx="272.75" cy="457" r="2.6"/><text x="360.2" y="193">1</text><text x="277.75" y="454">N</text></g>
-<g class="fk" data-from="telegram.suite" data-to="suite"><path class="rel" d="M343.3 182 L343.3 221.5 Q343.3 229.5 335.3 229.5 L209.667 229.5 Q201.667 229.5 201.667 237.5 L201.667 583.5 Q201.667 591.5 193.667 591.5 L54.75 591.5 Q46.75 591.5 46.75 599.5 L46.75 618"/><circle cx="343.3" cy="183" r="2.6"/><circle cx="46.75" cy="617" r="2.6"/><text x="348.3" y="193">1</text><text x="51.75" y="614">N</text></g>
-<g class="fk" data-from="train_ticket.person_id" data-to="person"><path class="rel" d="M355.2 718 L355.2 771.5 Q355.2 779.5 347.2 779.5 L224.333 779.5 Q216.333 779.5 216.333 787.5 L216.333 924.5 Q216.333 932.5 224.333 932.5 L264.75 932.5 Q272.75 932.5 272.75 940.5 L272.75 966"/><circle cx="355.2" cy="719" r="2.6"/><circle cx="272.75" cy="965" r="2.6"/><text x="360.2" y="729">1</text><text x="277.75" y="962">N</text></g>
+<g class="fk" data-from="telegram.suite" data-to="suite"><path class="rel" d="M343.3 182 L343.3 221.5 Q343.3 229.5 335.3 229.5 L209.667 229.5 Q201.667 229.5 201.667 237.5 L201.667 576.5 Q201.667 584.5 209.667 584.5 L264.75 584.5 Q272.75 584.5 272.75 592.5 L272.75 618"/><circle cx="343.3" cy="183" r="2.6"/><circle cx="272.75" cy="617" r="2.6"/><text x="348.3" y="193">1</text><text x="277.75" y="614">N</text></g>
+<g class="fk" data-from="train_ticket.person_id" data-to="person"><path class="rel" d="M129.2 718 L129.2 764.5 Q129.2 772.5 137.2 772.5 L208.333 772.5 Q216.333 772.5 216.333 780.5 L216.333 924.5 Q216.333 932.5 224.333 932.5 L264.75 932.5 Q272.75 932.5 272.75 940.5 L272.75 966"/><circle cx="129.2" cy="719" r="2.6"/><circle cx="272.75" cy="965" r="2.6"/><text x="134.2" y="729">1</text><text x="277.75" y="962">N</text></g>
 <g class="table" data-table="address" transform="translate(0,124)">
 <rect width="170" height="72"/>
 <rect class="head" width="170" height="16"/>
@@ -118,7 +118,7 @@
 <text class="col" x="21" y="55">trunk_no</text>
 <text class="col" x="21" y="69">owner_name</text>
 <text class="col" x="21" y="83">weight_kg</text></g>
-<g class="table" data-table="person" transform="translate(226,618)">
+<g class="table" data-table="person" transform="translate(0,618)">
 <rect width="170" height="100"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">person</text>
@@ -161,7 +161,7 @@
 <text class="col" x="21" y="27">id</text>
 <text class="col" x="21" y="41">floor</text>
 <text class="col" x="21" y="55">view</text></g>
-<g class="table" data-table="telegram" transform="translate(0,618)">
+<g class="table" data-table="telegram" transform="translate(226,618)">
 <rect width="170" height="128"/>
 <rect class="head" width="170" height="16"/>
 <text class="tname" x="6" y="12">telegram</text>

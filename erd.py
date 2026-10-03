@@ -58,6 +58,8 @@ def layout(tables, fks, order=()):
         ordered = sorted(rows[L], key=bary)
         for k in range(0, len(ordered), PER_ROW):
             chunk = ordered[k:k + PER_ROW]
+            if L >= 0:   # within a row, each table on the side of its parents (person under address, left)
+                chunk.sort(key=lambda t: bary(t)[1])
             for i, t in enumerate(chunk):
                 pos[t] = (L, i * (W + GAP), y, W, HEAD + ROW * len(tables[t]))
             y += max(pos[t][4] for t in chunk) + (PLAIN_H if L < 0 else LAYER_H)
