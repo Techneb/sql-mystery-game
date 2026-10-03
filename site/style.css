@@ -95,7 +95,12 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 #history li { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ERD */
-.erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 80vh; position: relative; }
+.erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 55vh; position: relative; }
+/* The ad box under the schema: a <details>, its summary the toggle (open by default). */
+.ad-box { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); }
+.ad-box summary { cursor: pointer; padding: 6px 10px; list-style-position: inside; }
+.ad-box[open] summary { border-bottom: 1px solid var(--rule); }
+.ad-slot { min-height: 250px; display: grid; place-items: center; }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
 /* enlarged, its Close sits in the overlay's top-right corner (clear of the scrollbar), like the panels' Close */
 body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index: 16; background: var(--paper); }
