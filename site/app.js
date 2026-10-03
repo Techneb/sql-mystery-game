@@ -28,7 +28,7 @@ export function freshState() {
   return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, token: "" };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, token: "" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
@@ -158,13 +158,10 @@ function renderChapter() {
     $("objective").textContent = "Part I is closed. Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box...";
     $("btn-print").hidden = false;
   }
-  // The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
+  // The ending stays in the story column after the Part II extra edition (showExtra2, which also has the film) is closed.
   if (state.solved.includes(12)) {
-    $("story").innerHTML = filmHtml("part2", " inline") + '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + richText(data.endings.part2) +
-      '<figure class="ending-photo"><img src="blue-star.jpg" alt="The Blue Star, re-set as a ring, on dark velvet by a window over London">' +
-      "<figcaption>Enclosed with the telegram, a photograph. No message. The jeweller has been busy.</figcaption></figure>";
+    $("story").innerHTML = part2Ending();
     $("objective").textContent = "Case closed. Twice.";
-    wireFilm($("story"));
   }
   if (competeDone(state)) {
     $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
@@ -483,8 +480,8 @@ function renderBoard() {
 
 // A closing film (site/video/<name>.*) waits on its poster: browsers only allow sound after a click, so the student
 // starts it with Play; then the browser's own controls (play/pause, timeline, sound, full screen) take over.
-function filmHtml(name, cls = "") {
-  return '<div class="film-wrap' + cls + '"><video class="film" playsinline preload="metadata" poster="video/' + name + '.jpg">' +
+function filmHtml(name) {
+  return '<div class="film-wrap"><video class="film" playsinline preload="metadata" poster="video/' + name + '.jpg">' +
     '<source src="video/' + name + '.webm" type="video/webm"><source src="video/' + name + '.mp4" type="video/mp4"></video>' +
     '<button class="film-play">&#9654; Play</button></div>';
 }
@@ -512,6 +509,37 @@ function showExtra() {
   const film = wireFilm(el);
   // Continue closes the edition and announces Part II in a modal (#part2, a native <dialog>: Escape closes it too).
   $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); $("part2").showModal(); };
+}
+
+// The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
+const part2Ending = () => '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + richText(data.endings.part2) +
+  '<figure class="ending-photo"><img src="blue-star.jpg" alt="The Blue Star, re-set as a ring, on dark velvet by a window over London">' +
+  "<figcaption>Enclosed with the telegram, a photograph. No message. The jeweller has been busy.</figcaption></figure>";
+
+// Chapter XII solved (learn mode): the Part II extra edition, Part I's in the night palette: the film, the arrest,
+// the Ganimard badge, then an invitation to replay while badges are missing (the New investigation button's reset).
+// Shown once (state.extraSeen2), on the solve or, if the page was closed first, on the next visit.
+function showExtra2() {
+  const el = $("extra"), p2 = partStats(state, 9, 12);
+  const badge = BADGES.find(([name]) => name === "Ganimard");
+  const got = BADGES.filter(([name]) => state.badges.includes(name)).length, left = BADGES.length - got;
+  el.innerHTML = '<div class="extra-card">' +
+    '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">EXTRA EDITION &mdash; PARIS &mdash; JUNE 1912</div>' +
+    filmHtml("part2") +
+    "<h1>THE COMTESSE ARRESTED AT THE RITZ</h1>" +
+    '<div class="story">' + part2Ending() + "</div>" +
+    '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
+    '<div class="muted">Part II in ' + p2.queries + " queries.</div></div>" +
+    '<div class="extra-badge"><div class="label">BADGES</div>' + (left
+      ? "You found " + got + " of " + BADGES.length + " badges. " + left + (left > 1 ? " are" : " is") +
+        " still hidden in the archives: start a new investigation to hunt for the rest."
+      : "You found all " + BADGES.length + " badges. Ganimard has nothing left to teach you.") + "</div>" +
+    (left ? '<button id="btn-replay">New investigation</button> ' : "") + '<button id="btn-extra2">Close</button></div>';
+  el.hidden = false;
+  const film = wireFilm(el);
+  const close = () => { film.pause(); el.hidden = true; state.extraSeen2 = true; save(state); };
+  $("btn-extra2").onclick = close;
+  if (left) $("btn-replay").onclick = () => { close(); $("btn-reset").click(); };   // the same confirm, then the reset
 }
 
 // A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
@@ -680,7 +708,7 @@ function afterSolve(ch, event) {
       if (ch.n === 8) { state.finishedAt = Date.now(); queueEvent("finish", 8); renderChapter(); tickClock(); }
       else queueEvent("progress", ch.n);
     }
-    if (ch.n === 12) award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges));
+    if (ch.n === 12) { award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges)); showExtra2(); }
   } else if (event === "code") {
     award(detectBadges(ctx({ event: "code" }), state.badges));
   }
@@ -1070,6 +1098,7 @@ async function renderAdminPanel() {
 function enterGame() {
   $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel();
   if (awaitingCode(state) && !state.extraSeen) showExtra();   // solved chapter VIII, closed the page before the extra edition
+  if (state.mode !== "compete" && state.solved.includes(12) && !state.extraSeen2) showExtra2();   // the same for chapter XII
 }
 
 async function boot() {
