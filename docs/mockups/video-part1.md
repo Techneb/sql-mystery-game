@@ -11,7 +11,7 @@ what to save. Make a folder `~/Downloads/ritz-video/` and save everything there 
 
 **Done 2026-10-03:** all six clips made (Veo 3.1, 720p; shots 3 and 5 at 6 s), downloaded by the owner and
 assembled by `assemble-video.sh` into `site/video/part1.{mp4,webm,jpg}` (25.6 s, 5.2 MB / 4.0 MB), shown at
-the top of the extra edition (`showExtra`: waits on its poster with a "Play with sound" button, then the browser's player controls and a Replay button; breaks out of the card up to 1100px). Shots 2
+the top of the extra edition (`showExtra`: waits on its poster with a "Play" button, then the browser's player controls and a Replay button; breaks out of the card up to 1100px). Shots 2
 and 6 carried a painted "Sir John Lavery" signature in a corner (the "in the style of" prompt invites it):
 blurred with `delogo`; every still and video prompt now says "no signature". Shot 4 was redone the same day: the first still showed the case already open, spoiling shot 5, so the still was edited to a closed case (Nano Banana Pro, 38 credits) and re-animated (400), the prompt saying it stays shut. A 5 s Seedance test (a cafe
 scene) was not used. The history below is kept for Video 2.
