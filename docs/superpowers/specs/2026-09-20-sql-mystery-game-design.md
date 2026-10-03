@@ -392,6 +392,15 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
+- **Advertising** (course owner, 2026-10-03): ads may come later. GA4 is live with Google signals and ads
+  personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
+  denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
+  personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
+  grants the three ad fields; (2) the banner's "anonymous usage statistics" wording revised, as Google
+  signals ties visits to Google accounts; (3) an advertising section in `site/privacy.html` (what Google uses,
+  for what, how to withdraw); (4) in GA: Google signals and ads personalisation on, Google Ads linked under
+  Administration > Associations de produits. Also decide where ads would show (never inside the game panes)
+  and check the school is fine with ads shown to students.
 - **Big UI/UX pass** (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
