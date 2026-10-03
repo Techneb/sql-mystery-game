@@ -889,7 +889,7 @@ function toggleTheme() {
 // Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
 // Passphrase is asked for once per page load (adminUnlocked persists after); ask the course owner
 // for it, it is not committed in plaintext anywhere. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
-const ADMIN_PASS_SHA256 = "3de5a3e0e457fb7a7e3ce4297694fe5e4a18fccdbab443b251a2858d2483adc8";
+const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
 let adminUnlocked = false, adminPass = "";  // adminPass: memory only, sent as the key when saving settings
 function askPassphrase() {   // #passgate: a native <dialog> with a password field, so the letters are masked (Escape cancels)
   return new Promise(resolve => {
