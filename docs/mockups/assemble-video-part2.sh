@@ -41,8 +41,8 @@ add s7.mp4 0 6 33.0 1.0         # Your new desk, clerk. It has a window. Do not 
 add nar.mp4 0.00 4.95 0.3 1.0   # Forty thousand francs went through seven banks. They came home to the Comtesse.
 add nar.mp4 4.92 7.95 30.0 1.0  # Enclosed, a photograph. No message.
 MIX=""; for k in $(seq 0 $((n-1))); do MIX="$MIX[a$k]"; done
-ffmpeg -v error -y $IN -filter_complex "$A${MIX}amix=inputs=$n:normalize=0:duration=longest,apad,atrim=0:41,afade=t=out:st=40:d=1[a]" \
-  -map "[a]" -c:a pcm_s16le audio.wav
+ffmpeg -v error -y $IN -filter_complex "$A${MIX}amix=inputs=$n:normalize=0:duration=longest,apad=whole_dur=41,afade=t=out:st=40:d=1[a]" \
+  -map "[a]" -t 41 -c:a pcm_s16le audio.wav
 
 sub() {  # text start end
   printf '%s' "$1" > "sub$S.txt"

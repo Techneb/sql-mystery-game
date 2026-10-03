@@ -483,14 +483,16 @@ export function foundSuspects(cast, res, have) {
   const text = res.values.slice(0, ROW_CAP).map(r => r.join(" ")).join(" ").toLowerCase();   // only rows on screen
   return cast.map(s => s.name).filter(n => !have.includes(n) && text.includes(n.toLowerCase()));
 }
+function suspectCard(s, notes = []) {
+  const file = PORTRAIT_FILE[s.name];
+  const img = file ? '<img src="portraits/' + file + '.jpg" alt="">' : "";
+  return '<div class="suspect">' + img + '<b>' + esc(s.name) + '</b><span class="muted">' + esc(s.nationality) + '</span><p>' + esc(s.bio) + '</p>' +
+    notes.map(n => '<p class="note">' + esc(n) + '</p>').join("") + '</div>';
+}
 function renderSuspects() {
   const el = $("suspects"), met = metSuspects(data.cast, state, data.chapters);
-  el.innerHTML = '<button class="quiet suspects-close">Close</button>' + (met.length ? met.map(s => {
-    const file = PORTRAIT_FILE[s.name];
-    const img = file ? '<img src="portraits/' + file + '.jpg" alt="">' : "";
-    return '<div class="suspect">' + img + '<b>' + esc(s.name) + '</b><span class="muted">' + esc(s.nationality) + '</span><p>' + esc(s.bio) + '</p>' +
-      s.notes.map(n => '<p class="note">' + esc(n) + '</p>').join("") + '</div>';
-  }).join("") : '<p class="muted">Nobody yet. Ganimard suspects everyone, which is the same thing.</p>');
+  el.innerHTML = '<button class="quiet suspects-close">Close</button>' + (met.length ? met.map(s => suspectCard(s, s.notes)).join("")
+    : '<p class="muted">Nobody yet. Ganimard suspects everyone, which is the same thing.</p>');
   el.querySelector(".suspects-close").onclick = () => el.hidden = true;
   state.suspectsSeen = met.reduce((k, s) => k + 1 + s.notes.length, 0); save(state);
   markSuspects();
@@ -499,6 +501,20 @@ function renderSuspects() {
 function markSuspects() {
   const met = metSuspects(data.cast, state, data.chapters);
   $("btn-suspects").classList.toggle("new", met.reduce((k, s) => k + 1 + s.notes.length, 0) > (state.suspectsSeen || 0));
+  introduceSuspects(met.map(s => s.name));
+}
+// The first time a suspect is met, a pop-up (#newsuspects) shows their portrait and bio; suspects met together share
+// one. It waits while a solved chapter is still on screen (the next chapter's names stay unread) and while the extra
+// edition or the Part II pop-up is open. state.introduced: names already shown (a game saved before it starts full).
+function introduceSuspects(met) {
+  if (!state.introduced) { state.introduced = met; save(state); return; }
+  const fresh = data.cast.filter(s => met.includes(s.name) && !state.introduced.includes(s.name));
+  const dlg = $("newsuspects");
+  if (!fresh.length || reviewing != null || dlg.open || $("part2").open || !$("extra").hidden) return;
+  state.introduced.push(...fresh.map(s => s.name)); save(state);
+  dlg.querySelector(".label").textContent = fresh.length > 1 ? "NEW SUSPECTS" : "A NEW SUSPECT";
+  dlg.querySelector(".cards").innerHTML = fresh.map(s => suspectCard(s)).join("");
+  dlg.showModal();
 }
 
 // Every badge is listed; a locked one shows no name and no text at all, so the DOM gives nothing away.
