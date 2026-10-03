@@ -24,15 +24,43 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 30 September 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 3 October 2026</p>
 
-  <p>The Ritz Affair is a browser game for learning SQL. It has no accounts, sets no cookies, and runs no
-  analytics, advertising or trackers. The whole game, database included, runs in your browser.</p>
+  <p>The Ritz Affair is a browser game for learning SQL. It has no accounts and no advertising. The whole
+  game, database included, runs in your browser. It sets no cookies and loads nothing from Google Analytics
+  unless you allow usage statistics (below).</p>
 
   <h2>Investigate (learning mode)</h2>
-  <p>Nothing leaves your browser. Your progress, notes, queries, badges and day/night choice are saved in your
-  browser's local storage so you can pick up where you left off. Only you can see them; clearing this site's data
-  in your browser erases them.</p>
+  <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
+  (<code>ritz.learn</code>, <code>ritz.compete</code>, <code>ritz.theme</code>) so you can pick up where you
+  left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
+  anywhere.</p>
+
+  <h2>Usage statistics (only if you say Yes)</h2>
+  <p>The game page asks once: <i>Help improve the course: allow anonymous usage statistics?</i> Your answer
+  is kept in local storage (<code>ritz.consent</code>). Until you answer Yes, and whenever you answer No,
+  nothing is loaded from Google and no analytics cookie is set. You can change your mind at any time from the
+  <i>Statistics</i> link at the bottom of the game page; choosing No deletes the <code>_ga</code> cookies.</p>
+  <p>If you say Yes, the page uses <b>Google Analytics 4</b>:</p>
+  <ul>
+    <li>It sets the first-party cookies <code>_ga</code> and <code>_ga_&lt;id&gt;</code>, which Google keeps
+    for up to 13 months by default. The collected data itself is kept for 2 months, then deleted.</li>
+    <li>Google receives page views: the page address and referrer, and your browser, device and approximate
+    country as Google Analytics works them out. Google Analytics 4 does not log or store IP addresses.</li>
+    <li>And these game events, with only these fields:
+      <ul>
+        <li><code>chapter_open</code>: chapter number, mode (learn or compete);</li>
+        <li><code>chapter_solve</code>: chapter number, mode, seconds taken, number of queries, number of wrong answers;</li>
+        <li><code>game_finish</code>: part, mode;</li>
+        <li><code>badge</code>: badge name.</li>
+      </ul>
+    </li>
+  </ul>
+  <p>Never sent to Google: your team name or pseudo, your answers, your SQL queries, your notes.</p>
+  <p>Why: to improve the course &mdash; which chapters students drop out of, how long each takes, and to tune
+  the difficulty and the ranks. Google signals and ad personalisation are off, and the data is not used for
+  advertising. Google processes it on the course owner's behalf, and may do so in the United States under
+  the EU-US Data Privacy Framework.</p>
 
   <h2>Compete</h2>
   <p>When your teacher gives you a season link and you press <i>Start the clock</i>, the game sends the
@@ -45,13 +73,16 @@
   <p>The leaderboard adds the time it received each message. It never receives your queries, your
   answers or your notes. It is a Google Sheet belonging to the course teacher, reached through Google
   Apps Script, so Google processes it under its own terms. Anyone with the leaderboard link sees the
-  pseudos and times of that season. The rows stay until the teacher deletes them.</p>
+  pseudos and times of that season. The rows stay until the teacher deletes them. This is separate from
+  usage statistics and does not depend on your answer to the banner.</p>
   <p><b>Choose a pseudo that is not your full name.</b> A first name or a nom de guerre is enough.</p>
 
   <h2>What the page loads from elsewhere</h2>
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
     <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
+    <li>Only if you allow usage statistics: the Google Analytics script from googletagmanager.com, and its
+    measurements sent to google-analytics.com.</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>
