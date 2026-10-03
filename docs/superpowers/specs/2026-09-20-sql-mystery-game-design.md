@@ -71,22 +71,22 @@ necessary. "Tables revealed" lists what appears in the ERD when the chapter open
 | 3 | LIKE | Ashcombe's interview: valet saw a man in an English coat take a cab, "plate 75-2 something". Then the cab from Place Vendome after 02:00 | `75-2041` | `interview`, `cab_ride` | 40 plates start with 75-2; one from Vendome that night |
 | 4 | GROUP BY / HAVING | That cab's week: the drop-off address visited 3+ times | `27 rue des Martyrs` | none | 60 rides that week; two addresses twice, one three times |
 | 5 | JOIN (2 tables) | Who lives there: a boarding house; the tenant whose occupation is jeweller, Ernest Grimaud, known fence | `Ernest Grimaud` | `person`, `address` | 5 tenants; `occupation` is on `person`, the address on `address` |
-| 6 | JOIN (3 tables) + SUM | Grimaud's bank: person -> account -> transactions in May; the counterparty account he paid the most to in total | `88213` | `bank_account`, `bank_transaction` | many small payments elsewhere; the largest single payment goes to another account, so `SUM` not `MAX` |
+| 6 | JOIN (3 tables) + SUM | Grimaud's bank: person -> account -> transactions in May; the counterparty account he paid the most to in total | `3213` | `bank_account`, `bank_transaction` | many small payments elsewhere; the largest single payment goes to another account, so `SUM` not `MAX` |
 | 7 | CASE WHEN | Telegrams from the Ritz desk on 18 May classified night/morning/afternoon/evening; the single night one reads "PAYMENT TO 88213 RECEIVED STOP CLICQUOT 1904 AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP - R." | telegram id | `telegram` | times are `HHMM` integers; needs buckets; 80 telegrams that day |
 | 8 | WINDOW `RANK()` + subquery | `room_service` on 18 May: rank each suite's orders by time; the suite whose rank-1 order is Clicquot 1904 before 06:00; its guest | `Rupert Blakeney` | `room_service` | Ortega's suite: coffee 05:00 then Clicquot 05:30. Without `PARTITION BY suite` two suites match |
 
 Ending of Part I: the unmasking at the Gare du Nord. Blakeney bows and hands Ganimard an empty case.
 Last telegram: "The Blue Star sends regards from London, my dear Ganimard. Chapter IX, if you dare."
 
-**Part II — The Clerk's Own Investigation** (beyond the course; unlocked by a code hidden in a noise
-telegram; grows past 12 the same way)
+**Part II — The Clerk's Own Investigation** (LEFT JOIN and LAG are taught; only chapter 12, `WITH RECURSIVE`, is beyond
+the course; unlocked by a code hidden in a noise telegram; grows past 12 the same way)
 
 | # | Construct | Beat | Answer | Tables revealed | Trap |
 |---|---|---|---|---|---|
 | 9 | CTE + self-join / `NOT IN` | The Trunk: the sapphire left in Lord Ashcombe's own luggage on the boat train to London | trunk number | `train_ticket`, `luggage` | Ashcombe has several trunks; one was checked by someone else's ticket |
 | 10 | `NOT EXISTS` / self-join | Never Seen Together: Blakeney and "Mr. Grey" stayed at the Ritz in alternating weeks since January and never overlapped by one night | `Mr. Grey` | none | other pairs overlap by exactly one night |
 | 11 | `LAG()` / gaps-and-islands | The Silence: per suite, the longest gap between any two events (room service, telegram, lift log) in the night; one suite is silent exactly 02:05-03:10 | suite number | `lift_log` | a noise suite has a longer gap, but outside the theft window |
-| 12 | `WITH RECURSIVE` | Follow the Money: 88213 forwards the 40,000 F minus 2% per hop through seven shell accounts at four banks; the last account belongs to the Comtesse de Cagliostro, who staged her own theft for the insurance (as in Leblanc) | `Comtesse de Cagliostro` | none | one hop is split into two transfers (sum per hop); one shell account also receives unrelated money the same day (filter by amount within 1 F of 98%); the chain crosses into June |
+| 12 | `WITH RECURSIVE` | Follow the Money: the shell account (3213) forwards the 40,000 F minus 2% per hop through seven shell accounts at four banks; the last account belongs to the Comtesse de Cagliostro, who staged her own theft for the insurance (as in Leblanc) | `Comtesse de Cagliostro` | none | one hop is split into two transfers (sum per hop); one shell account also receives unrelated money the same day (filter by amount within 1 F of 98%); the chain crosses into June |
 
 Final telegram: "Insurance pays 300,000 for a stone worth 40,000, my dear Ganimard. Arithmetic is the
 greatest of crimes. - A.L."

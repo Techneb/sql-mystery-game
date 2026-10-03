@@ -30,8 +30,12 @@
 </table>
 <div class="empty" id="empty" hidden>No players yet for this season.</div>
 <script>
-// The deployment URL travels in the link (leaderboard.html?data=<your /exec URL>), never in this public repo.
-const SOURCE = new URLSearchParams(location.search).get("data") || "";
+// The deployment URL travels in the link (leaderboard.html?data=<your /exec URL>&season=N), never in this public repo.
+// With season=N the backend returns that season only; without it, every season (the teacher's view).
+const PARAMS = new URLSearchParams(location.search);
+const SOURCE = PARAMS.get("data") || "";
+const ONLY = Number(PARAMS.get("season")) || 0;
+const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase();   // same as teamKey in app.js
 
 function fmt(ms) {
   const s = Math.round(ms / 1000);
@@ -42,13 +46,14 @@ function fmt(ms) {
 const esc = s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 // One row per team+season: pairs its "start" row with its "finish" row (adjusted time, spec formula:
 // finish - start + penalty.wrong s per wrong answer, 10 unless the ?admin Settings say otherwise) or, absent a finish, its latest "progress" chapter.
-// Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win,
-// so a team that retries a POST after a dropped connection, or reloads the page, can never shorten its time.
+// Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win.
+// The server stamps arrival, not the event: a "start" that reached the sheet late would shorten the official
+// time, so the finish row's own elapsedMs (the browser's clock) is compared and a gap over a minute is flagged.
 let penalty = { wrong: 10 };  // default, same as PENALTY in app.js
 function summarize(rows) {
   const teams = new Map(); // key "team|season" -> {team, season, start, finish, chapter}
   for (const r of rows) {
-    const key = r.team + "|" + r.season;
+    const key = teamKey(r.team) + "|" + r.season;
     const t = teams.get(key) || { team: r.team, season: r.season, start: null, finish: null, chapter: 0 };
     if (r.event === "start" && t.start == null) t.start = r.timestamp;
     if (r.event === "progress") t.chapter = Math.max(t.chapter, Number(r.chapter) || 0);
@@ -57,8 +62,10 @@ function summarize(rows) {
   }
   return [...teams.values()].map(t => {
     if (t.finish && t.start != null) {
-      const adjusted = (t.finish.timestamp - t.start) + (t.finish.wrong || 0) * penalty.wrong * 1000;
-      return { ...t, done: true, adjusted, wrong: t.finish.wrong };
+      const official = t.finish.timestamp - t.start;
+      const adjusted = official + (t.finish.wrong || 0) * penalty.wrong * 1000;
+      const unverified = t.finish.elapsedMs != null && Math.abs(official - Number(t.finish.elapsedMs)) > 60000;
+      return { ...t, done: true, adjusted, wrong: t.finish.wrong, unverified };
     }
     return { ...t, done: false, adjusted: Infinity };
   });
@@ -72,7 +79,7 @@ async function load() {
     const p = await fetch(u).then(r => r.json()).then(c => c.penalty || {}).catch(() => ({}));
     if (Number.isFinite(p.wrong) && p.wrong >= 0) penalty.wrong = p.wrong;
   } catch {}
-  try { rows = await (await fetch(SOURCE)).json(); }
+  try { const u = new URL(SOURCE); if (ONLY) u.searchParams.set("season", ONLY); rows = await (await fetch(u)).json(); }
   catch (e) { document.getElementById("status").textContent = "Could not reach the leaderboard."; return; }
   const teams = summarize(rows);
   const seasons = [...new Set(teams.map(t => t.season))].sort((a, b) => a - b);
@@ -86,7 +93,7 @@ async function load() {
     <tr class="${t.done ? "done" : "progress"}">
       <td>${t.done ? i + 1 : "-"}</td>
       <td>${esc(t.team)}</td>
-      <td class="time">${t.done ? fmt(t.adjusted) : "chapter " + t.chapter + " of 8"}</td>
+      <td class="time"${t.unverified ? ' title="The browser\'s own clock disagrees with the server by more than a minute: a late or lost start."' : ""}>${t.done ? fmt(t.adjusted) + (t.unverified ? " ?" : "") : "chapter " + t.chapter + " of 8"}</td>
       <td>${t.done ? t.wrong : "-"}</td>
     </tr>`).join("");
   document.getElementById("empty").hidden = here.length > 0;

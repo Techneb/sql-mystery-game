@@ -67,7 +67,7 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
   shows the Blue Star itself (the tab icon's sapphire), Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
   ending. All generated from one prompt template (only the sitter changes, so no face reads guiltier
   than another), from a public, no-login image endpoint; the generator's corner mark was cropped off.
-- The case board is a cork board with a pin per solved chapter. A **Badges** button opens all 37 badges
+- The case board is a cork board with a pin per solved chapter. A **Badges** button opens all 38 badges
   (locked ones show only "???"); toasts clear a beat apart. Part II ends on Lupin's photograph of the Blue
   Star (`site/blue-star.jpg`).
 - Chapter stories use `**bold**` / `*italic*` markup in `plot.py`, rendered with a drop cap like the landing page.
@@ -92,7 +92,8 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
 | `docs/mockups/` | design boards: chapter props, case board and night palette (`illustrations.html`), portrait styles (`portrait-styles.html`) |
 
 The plot is public in `plot.py` and `solution.sql`; the site only ships SHA-256 hashes of the
-normalised answers in `chapters.json`.
+normalised answers in `chapters.json` (learning mode). Season files ship no hash at all: compete answers
+are checked by the Apps Script backend.
 
 ## Compete mode
 
@@ -113,6 +114,13 @@ itself), and deploy as a web app (see the comment at the top of the file, or Tas
 `/exec` URL is never committed: this repo is public and the URL is a live, unauthenticated write
 endpoint. It travels in links instead.
 
+Compete answers are checked by the backend, not the page, so a season link needs `board=` to be
+playable. `python3 generate_db.py --hashes` prints the answer hashes of seasons 1-20 as one JSON object:
+paste it into the admin panel's **Settings**, field **Season answers**, which stores it in the Script
+Property `HASHES`. Re-run and re-paste after any change to `plot.py` or `generate_db.py` that moves a
+compete value. Integrity is honour-based: the repo is public and a student can rebuild a season locally.
+A push to `main` during a timed session rebuilds the live seasons under the players: do not push mid-session.
+
 Playing a season: share one link with the class,
 
 ```
@@ -125,8 +133,9 @@ instead. Compete then asks for a pseudo (refused if already used in that season)
 Script (which stamps the server time), loads the season database, and runs Part I only with a clock in
 the masthead. Every solved chapter POSTs `progress`; chapter VIII POSTs `finish` with the player's
 wrong answers and queries, and the finish screen links to the leaderboard. Events that cannot be
-delivered (a dropped connection) wait in the saved state and are retried every 30 s; the leaderboard
-scores the first `start` and the first `finish` it sees, so a retry can never shorten a time. Without
+delivered (a dropped connection) wait in the saved state and are retried every 30 s; each carries the
+browser's own timestamp, which the backend stores next to its arrival time, and the leaderboard flags a
+team whose two clocks disagree. Without
 `board=` the clock still runs but nothing is recorded, and the masthead says NOT RECORDED. Reloading
 the page lands a team back in its running game. Compete progress lives under the `ritz.compete`
 localStorage key, learning-mode progress under `ritz.learn`; "New investigation" in a season game
