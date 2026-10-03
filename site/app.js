@@ -119,9 +119,11 @@ function backToInvestigation() {
   if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
 }
 const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
-  (ch && (ch.construct || (ch.tables || []).length) ? '<div class="muted chapter-tools">' +
+  // the chapter's SQL tool and new tables sit under a closed Hint toggle (a native <details>), so the
+  // student tries first and opens it when stuck
+  (ch && (ch.construct || (ch.tables || []).length) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
     (ch.construct ? "This chapter's tool: <b>" + esc(ch.construct) + "</b>" : "") +
-    (ch.construct && ch.tables.length ? " &middot; " : "") + (ch.tables.length ? "New evidence: " + esc(ch.tables.join(", ")) : "") + "</div>" : "");
+    (ch.construct && ch.tables.length ? " &middot; " : "") + (ch.tables.length ? "New evidence: " + esc(ch.tables.join(", ")) : "") + "</details>" : "");
 
 function renderChapter() {
   markSuspects();

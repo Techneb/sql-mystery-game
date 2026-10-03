@@ -251,6 +251,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 /* audit 2026-10-03: the current chapter's tables stay marked until it is solved (R2) */
 .erd .current rect:first-child { stroke: var(--accent); stroke-width: 2.5; }
 .chapter-tools { margin-top: 6px; }
+.chapter-tools summary { cursor: pointer; width: max-content; }
 .chapter-tools b { font-weight: 700; }
 /* night edition: a darker accent behind the Next chapter button keeps its text at AA (T8) */
 :root[data-mood="night"] .next-chapter { background: #2b5190; }
