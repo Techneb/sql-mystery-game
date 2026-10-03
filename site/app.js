@@ -143,10 +143,11 @@ function renderChapter() {
   }
   // The Blue Star is never recovered: Lupin's telegram from London comes with a photograph of it, re-set as a ring.
   if (state.solved.includes(12)) {
-    $("story").innerHTML = '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + richText(data.endings.part2) +
+    $("story").innerHTML = filmHtml("part2", " inline") + '<img class="portrait" src="portraits/comtesse.jpg" alt="">' + richText(data.endings.part2) +
       '<figure class="ending-photo"><img src="blue-star.jpg" alt="The Blue Star, re-set as a ring, on dark velvet by a window over London">' +
       "<figcaption>Enclosed with the telegram, a photograph. No message. The jeweller has been busy.</figcaption></figure>";
     $("objective").textContent = "Case closed. Twice.";
+    wireFilm($("story"));
   }
   if (competeDone(state)) {
     $("story").textContent = "Case closed. Lupin is in irons, Ganimard is taking the credit, and the clock has stopped. " +
@@ -157,8 +158,8 @@ function renderChapter() {
       : "No leaderboard is connected to this season, so the result stays on this screen.";
     $("btn-print").hidden = false;
   }
-  let box = document.getElementById("rank-box");
-  if (part1Done(state)) {
+  let box = document.getElementById("rank-box");   // the compete finish only: in learn mode the extra edition gives the rank
+  if (competeDone(state)) {
     if (!box) { box = document.createElement("div"); box.id = "rank-box"; box.className = "box"; $("objective").parentElement.after(box); }
     const p1 = partStats(state, 1, 8);
     box.innerHTML = '<div class="label">RANK</div>' + esc(rank(p1.queries)) + " - " + p1.queries + " queries";
@@ -437,6 +438,19 @@ function renderBoard() {
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
 }
 
+// A closing film (site/video/<name>.*) waits on its poster: browsers only allow sound after a click, so the student
+// starts it with Play; then the browser's own controls (play/pause, timeline, sound, full screen) take over.
+function filmHtml(name, cls = "") {
+  return '<div class="film-wrap' + cls + '"><video class="film" playsinline preload="metadata" poster="video/' + name + '.jpg">' +
+    '<source src="video/' + name + '.webm" type="video/webm"><source src="video/' + name + '.mp4" type="video/mp4"></video>' +
+    '<button class="film-play">&#9654; Play</button></div>';
+}
+function wireFilm(root) {
+  const film = root.querySelector(".film"), btn = root.querySelector(".film-play");
+  btn.onclick = () => { btn.hidden = true; film.controls = true; film.currentTime = 0; film.play(); };
+  return film;
+}
+
 // Chapter VIII solved (learn mode): a one-off extra edition, the capture, the badge and rank; Continue then opens
 // the Part II pop-up with the new objective.
 // Shown once (state.extraSeen), on the solve or, if the page was closed first, on the next visit.
@@ -445,20 +459,14 @@ function showExtra() {
   const badge = BADGES.find(([name]) => name === "Gare du Nord");
   el.innerHTML = '<div class="extra-card">' +
     '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">EXTRA EDITION &mdash; PARIS &mdash; 20 MAY 1912</div>' +
-    '<div class="film-wrap"><video class="film" playsinline preload="auto" poster="video/part1.jpg">' +
-    '<source src="video/part1.webm" type="video/webm"><source src="video/part1.mp4" type="video/mp4"></video>' +
-    '<button class="film-play" id="film-play">&#9654; Play</button></div>' +
+    filmHtml("part1") +
     "<h1>LUPIN TAKEN AT THE GARE DU NORD</h1>" +
     '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
     '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
     '<div class="muted">Part I in ' + p1.queries + " queries. Rank: " + esc(rank(p1.queries)) + "</div></div>" +
     '<button id="btn-extra">Continue</button></div>';
   el.hidden = false;
-  // The film waits on its poster: browsers only allow sound after a click, so the student starts it; then the
-  // browser's own controls (play/pause, timeline, sound, full screen) take over.
-  const film = el.querySelector(".film");
-  const play = () => { $("film-play").hidden = true; film.controls = true; film.currentTime = 0; film.play(); };
-  $("film-play").onclick = play;
+  const film = wireFilm(el);
   // Continue closes the edition and announces Part II in a modal (#part2, a native <dialog>: Escape closes it too).
   $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); $("part2").showModal(); };
 }
