@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -277,3 +277,28 @@ test("suspects appear when met, and their notes when their chapter is reached", 
   assert.equal(metSuspects(cast, st, data.chapters).length, 6, "chapter 12: all six met");
 });
 
+
+test("track sends nothing without consent and gtag", () => {
+  assert.equal(track("chapter_open", { chapter: 1, mode: "learn" }), false);   // node: no window
+  const calls = [], store = {};
+  globalThis.window = { gtag: (...a) => calls.push(a) };
+  const ls = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: { getItem: k => store[k] ?? null } });
+  try {
+    assert.equal(track("badge", { name: "x" }), false);   // not answered
+    store["ritz.consent"] = "no";
+    assert.equal(track("badge", { name: "x" }), false);
+    store["ritz.consent"] = "yes";
+    assert.equal(track("badge", { name: "x" }), true);
+    assert.deepEqual(calls, [["event", "badge", { name: "x" }]]);
+    delete window.gtag;
+    assert.equal(track("badge", { name: "x" }), false);   // consent but gtag.js never set up
+  } finally {
+    delete globalThis.window;
+    if (ls) Object.defineProperty(globalThis, "localStorage", ls); else delete globalThis.localStorage;
+  }
+});
+
+test("GA_ID is empty or a GA4 measurement ID", () => {
+  assert.match(GA_ID, /^(G-[A-Z0-9]+)?$/);
+});

@@ -32,7 +32,7 @@
       <p id="compete-note" class="muted"></p>
     </div>
     <p id="status" class="muted">Loading the archives...</p>
-    <p class="muted landing-foot">A game by <a href="https://alephb.uk">AlephB</a> for the Albert School SQL course &middot; <a href="privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></p>
+    <p class="muted landing-foot">A game by <a href="https://alephb.uk">AlephB</a> for the Albert School SQL course &middot; <a href="privacy.html">Privacy</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></p>
   </div>
 </div>
 
@@ -101,6 +101,10 @@
   <button autofocus>Noted</button>
 </form></dialog>
 <div id="toasts"></div>
+<div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
+  <span>Help improve the course: allow anonymous usage statistics?</span>
+  <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="privacy.html">Privacy</a></span>
+</div>
 <section id="certificate"></section>
 <script type="module" src="app.js"></script>
 </body>

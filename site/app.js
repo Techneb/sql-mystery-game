@@ -115,7 +115,7 @@ function renderChapter() {
   markSuspects();
   const total = state.part2 ? 12 : 8;
   // Speed Reader: when the current chapter was first put in front of the player
-  if (reviewing == null) { const n = currentChapter(state, data.chapters).n; if (!state.opened[n]) { state.opened[n] = Date.now(); save(state); } }
+  if (reviewing == null) { const n = currentChapter(state, data.chapters).n; if (!state.opened[n]) { state.opened[n] = Date.now(); save(state); track("chapter_open", { chapter: n, mode: state.mode }); } }
   document.querySelector(".answer-row").hidden = reviewing != null || competeDone(state);
   const pendingHere = nextPending && reviewing === nextPending;
   $("btn-back").hidden = reviewing == null || pendingHere;
@@ -362,7 +362,7 @@ export function detectBadges(ctx, have) {
 
 function award(list) {
   list.forEach((b, i) => {
-    state.badges.push(b.name);
+    state.badges.push(b.name); track("badge", { name: b.name });
     const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
     $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000 + i * 400);   // stagger so a badge burst doesn't vanish as one block
   });
@@ -541,6 +541,8 @@ async function submitAnswer() {
   }
   if (hash === ch.answer_sha256) {
     state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0;
+    track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
+                             queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
     $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
     typeTelegram(ch.telegram);
     afterSolve(ch, "solve");
@@ -614,6 +616,7 @@ function afterSolve(ch, event) {
   if (nextPending) $("btn-next").scrollIntoView({ block: "nearest" });
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
+    if (ch.n === 8 || ch.n === 12) track("game_finish", { part: ch.n === 8 ? 1 : 2, mode: state.mode });
     if (ch.n === 8) {
       award(detectBadges(ctx({ event: "part1", chapter: ch.n }), state.badges));
       const p1 = partStats(state, 1, 8);
@@ -732,6 +735,63 @@ function offerCompete() {
   };
   $("btn-start").onclick = startCompete;
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
+}
+
+// --- usage statistics: Google Analytics 4, opt-in only (spec section 8) ---------------------------
+// The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
+// no Statistics link, no request to Google. Nothing loads before the reader says Yes (CNIL opt-in).
+export const GA_ID = "";
+const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows
+function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
+// ?ga=G-... tries the banner before an ID is committed, on localhost only (a link elsewhere cannot redirect the stats).
+function gaId() {
+  return GA_ID || (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("ga")) || "";
+}
+// Every analytics call goes through here. Never pass the pseudo, answers, query text or the board URL.
+export function track(name, params) {
+  if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function" || consent() !== "yes") return false;
+  window.gtag("event", name, params);
+  return true;
+}
+function gaLoad(id) {
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" });
+  window.gtag("consent", "update", { analytics_storage: "granted" });
+  window.gtag("js", new Date());
+  window.gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
+  const s = document.createElement("script");
+  s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+  document.head.appendChild(s);
+}
+// GA's cookie may sit on any parent domain (auto cookie_domain): expire _ga* on each of them.
+function dropGaCookies() {
+  const parts = location.hostname.split(".");
+  for (const c of document.cookie.split(";")) {
+    const name = c.split("=")[0].trim();
+    if (!name.startsWith("_ga")) continue;
+    for (let i = 0; i < parts.length; i++)
+      document.cookie = name + "=; Max-Age=0; path=/; domain=" + parts.slice(i).join(".");
+    document.cookie = name + "=; Max-Age=0; path=/";
+  }
+}
+function setConsent(v) {
+  const id = gaId();
+  try { localStorage.setItem(CONSENT_KEY, v); } catch {}
+  $("consent").hidden = true;
+  window["ga-disable-" + id] = v !== "yes";   // honoured by gtag.js: no more hits, cookieless pings included
+  if (v === "yes") { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "granted" }); else gaLoad(id); }
+  else { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "denied" }); dropGaCookies(); }
+}
+function initConsent() {
+  const id = gaId();
+  if (!id) return;
+  $("stats-link").hidden = false;
+  $("btn-stats").onclick = e => { e.preventDefault(); $("consent").hidden = false; $("consent-yes").focus(); };
+  $("consent-yes").onclick = () => setConsent("yes");
+  $("consent-no").onclick = () => setConsent("no");
+  const c = consent();
+  if (c === "yes") gaLoad(id); else if (c !== "no") $("consent").hidden = false;
 }
 
 // Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is
@@ -892,6 +952,7 @@ function enterGame() {
 
 async function boot() {
   $("btn-theme").onclick = toggleTheme;
+  initConsent();
   applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
   season = Number(params.get("season")) || 0;

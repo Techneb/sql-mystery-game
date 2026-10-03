@@ -211,6 +211,10 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .admin-seasons th, .admin-seasons td { padding: 1px 8px 1px 0; text-align: left; }
 .admin-msg { word-break: break-all; margin-top: 4px; }
 
+/* usage-statistics consent banner: above the landing overlay (20) and the theme button (21) */
+.consent { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 22; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: center; background: var(--card); color: var(--ink); border: 1px solid var(--ink); box-shadow: 2px 2px 5px rgba(0,0,0,.25); padding: 8px 12px; text-align: center; }
+.consent[hidden] { display: none; }
+.consent a { color: inherit; margin-left: 6px; font-size: 13px; }
 #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
 .toast { background: var(--ink); color: var(--paper); padding: 8px 12px; border-left: 4px solid var(--gold); animation: slidein .4s ease-out both; max-width: 320px; }
 .toast b { color: var(--gold); }
