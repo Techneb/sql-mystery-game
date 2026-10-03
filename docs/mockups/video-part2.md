@@ -1,6 +1,6 @@
 # Video 2: "Case Closed, Twice" (closes Part II)
 
-Plays after chapter XII, above the ending text. About 28 s, 6 shots (4 s each, 6 s for the gestures). The forty thousand francs ended in the
+Plays after chapter XII, above the ending text. About 34 s, 7 clips (4 s, 6 s where someone speaks, 8 s for the tea scene's exchange). Unlike Video 1, **the characters speak**: Veo 3.1 generates the voices and the lip movement from the lines in the prompt. The forty thousand francs ended in the
 Comtesse's account and the stone was insured for three hundred thousand: she hired the thief. Ganimard knows
 it and cannot prove it. Lupin, in London, sends a telegram with a photograph. Night palette: dusk, then
 lamplight.
@@ -19,18 +19,30 @@ what to save. Use the same folder as Video 1: `~/Downloads/ritz-video/`.
 | What | Image steps (stills) | Video steps |
 |---|---|---|
 | Tool in OpenGen | Image | Video |
-| Model | **Nano Banana Pro** | **Veo 3.1**, **4 s** (6 s only where the shot says so); 8 s was too long and costs 800 credits a clip |
+| Model | **Nano Banana Pro** | **Veo 3.1**, the length each shot gives (4 s silent, 6 s for one or two short lines, 8 s only for the tea scene). Credits: 400 / 600 / 800; this film is about 3,800 plus the stills |
 | Mode | Image to Image / with reference images | **Image to Video** |
 | Aspect ratio | **16:9** | **16:9** |
 | Size / resolution | the largest 16:9 offered (1920x1080 or more) | **1080p** if offered, else 720p |
 | Number of results | 4, keep the best | 2, keep the best |
-| Audio | (none) | **On** (ambience only; the prompt says which) |
+| Audio | (none) | **On**: the spoken line and the ambience the prompt names |
 | Negative prompt | paste the **Avoid** line below if there is a field | same |
 
 **Avoid** line (paste in the negative field; if there is none, add `Avoid: ...` at the end of the prompt):
 ```
-text, letters, captions, signature, artist's signature in a corner, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, speech
+text, letters, captions, signature, artist's signature in a corner, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, subtitles
 ```
+
+## The voices (keep them identical in every prompt)
+
+- **Ganimard**: a gruff, gravelly, tired male voice, about 55, speaking English with a light French accent, slow and dry.
+- **The Comtesse**: a low, velvety, amused female voice, about 30, English with a faint Italian accent, unhurried.
+- **Lupin** (as the English gentleman): a light, warm, amused baritone, polished upper-class English accent.
+
+Rules that keep Veo on track: one short line per speaker, the line in double quotes after `says:`, the speaker
+named and described in the same sentence, and `no subtitles` (Veo otherwise sometimes writes the line on
+screen). If a voice comes out wrong, regenerate that clip: the voice is not consistent across clips unless
+the description is word for word the same. The film autoplays muted, so every spoken line is also burned in
+as a subtitle at assembly (Claude times it from the clip's audio).
 
 If Veo will not take a first frame and reference images together: keep the first frame, drop the references.
 If a face drifts in Veo, redo that shot with **Kling 2.6 Pro**, Image to Video, same first frame, same prompt,
@@ -67,13 +79,13 @@ The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls
 - Save as **`p2_s2.png`**.
 
 **2b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s2.png`. References (if allowed):
+- Video, Veo 3.1, Image to Video, 16:9, **8 s** (800 credits: two lines need the time), audio on. First frame: `p2_s2.png`. References (if allowed):
   `comtesse.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
-She finishes pouring and offers the cup with a faint, perfectly polite smile. Ganimard does not move, then gives the smallest shake of the head. She sets the cup down without hurry. Slow push-in towards her. Faces stay exactly as in the first frame, no morphing. Subtle realistic motion, painted texture visible. Sound: china on china, a clock ticking, the muffled square outside. No music, no speech, no text or signature on screen.
+She finishes pouring and offers the cup with a faint, perfectly polite smile. The Comtesse, in a low, velvety, amused female voice with a faint Italian accent, says: "Tea, Inspector? You look as if you have been reading all night." Ganimard does not move; in a gruff, gravelly, tired male voice with a light French accent, he says: "No, thank you, Madame." She sets the cup down without hurry. Slow push-in towards her. Faces stay exactly as in the first frame, no morphing; lips move only when that person speaks. Subtle realistic motion, painted texture visible. Sound: the two voices, china on china, a clock ticking. No music, no subtitles, no text or signature on screen.
 ```
-- Save as **`p2_s2.mp4`**. Caption: *She offered tea. Ganimard declined, which was a first.*
+- Save as **`p2_s2.mp4`**. Subtitles: the two spoken lines. Caption after them: *Ganimard declined, which was a first.*
 
 ## Shot 3: The insurance policy (4 s)
 
@@ -86,12 +98,12 @@ Close-up on a writing desk in the Comtesse's suite by candlelight: an insurance 
 - Save as **`p2_s3.png`**.
 
 **3b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s3.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s3.png`.
 - Paste:
 ```
-Her fingers tap the wax seal once, unhurried, then slide the policy an inch towards the empty jewel case. The candle flame flickers; the camera tilts slowly from the policy to the empty case. Subtle realistic motion, painted texture visible. Sound: paper on wood, a candle's soft flutter, the clock. No music, no speech, no text or signature on screen.
+Her fingers tap the wax seal once, unhurried, then slide the policy an inch towards the empty jewel case. Off screen, a gruff, gravelly, tired male voice with a light French accent says: "Three hundred thousand francs, Madame. For a stone worth forty." A low, velvety, amused female voice with a faint Italian accent answers: "One insures what one loves, Inspector." The candle flame flickers; the camera tilts slowly from the policy to the empty case. Subtle realistic motion, painted texture visible. Sound: the two voices, paper on wood, the clock. No music, no subtitles, no text or signature on screen.
 ```
-- Save as **`p2_s3.mp4`**. Caption: *Insured for three hundred thousand francs. Worth forty.*
+- Save as **`p2_s3.mp4`**. Subtitles: the two spoken lines (they replace the old caption).
 
 ## Shot 4: Ganimard leaves (4 s)
 
@@ -107,9 +119,9 @@ A long lamplit corridor of the Ritz at night, red carpet, gilt wall sconces: Ins
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s4.png`.
 - Paste:
 ```
-Ganimard walks slowly away down the corridor; the door beside the camera swings shut and the warm slice of light narrows to nothing. Subtle realistic motion, painted texture visible, steady camera. Sound: footsteps on carpet, the door's soft click. No music, no speech, no text or signature on screen.
+Ganimard walks slowly away down the corridor, then, without turning round, mutters in a gruff, gravelly, tired male voice with a light French accent: "Case closed. Twice." The door beside the camera swings shut and the warm slice of light narrows to nothing. Subtle realistic motion, painted texture visible, steady camera. Sound: the muttered line, footsteps on carpet, the door's soft click. No music, no subtitles, no text or signature on screen.
 ```
-- Save as **`p2_s4.mp4`**. Caption: *Case closed. Twice.*
+- Save as **`p2_s4.mp4`**. Subtitle: the spoken line.
 
 ## Shot 5: London (4 s)
 
@@ -122,13 +134,13 @@ A London telegraph office at night in gaslight, rain running down the window ont
 - Save as **`p2_s5.png`**.
 
 **5b. Video**
-- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s5.png`. Reference (if allowed):
+- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s5.png`. Reference (if allowed):
   `blakeney.jpg`.
 - Paste:
 ```
-The form slides across the counter; the clerk takes it and starts tapping the telegraph key; the man touches the brim of his hat and turns towards the door without showing his face. Rain streams down the glass. Subtle realistic motion, painted texture visible. Sound: rain, the tapping telegraph key, a small bell over the door. No music, no speech, no text or signature on screen.
+The form slides across the counter. The man in the top hat, face turned away, says in a light, warm, amused baritone with a polished upper-class English accent: "To the Prefecture of Police, Paris. For the curious clerk." The clerk answers "Very good, sir," and starts tapping the telegraph key; the man touches the brim of his hat and turns towards the door without showing his face. Rain streams down the glass. Subtle realistic motion, painted texture visible. Sound: the voices, rain, the tapping key, a small bell over the door. No music, no subtitles, no text or signature on screen.
 ```
-- Save as **`p2_s5.mp4`**. Caption: *LONDON. A TELEGRAM, AND A PHOTOGRAPH.*
+- Save as **`p2_s5.mp4`**. Caption first: *LONDON.* Then the subtitle of his line.
 
 ## Shot 6: The ring, then the clerk's desk (4 s + 4 s)
 
@@ -157,12 +169,12 @@ Morning at the Paris Prefecture: a small tidy desk by a tall window over the roo
 - Save as **`p2_s6b.png`**.
 
 **6d. Video: the desk**
-- Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s6b.png`.
+- Video, Veo 3.1, Image to Video, 16:9, **6 s**, audio on. First frame: `p2_s6b.png`.
 - Paste:
 ```
-The morning light slowly warms across the desk; a pigeon lands on the window sill; dust motes drift in the sun. Subtle realistic motion, painted texture visible, still camera. Sound: the city waking outside, a pigeon's wings. No music, no speech, no text or signature on screen.
+The morning light slowly warms across the desk; a pigeon lands on the window sill; dust motes drift in the sun. Off screen, a gruff, gravelly, tired male voice with a light French accent says: "Your new desk, clerk. It has a window. Do not get used to it." Subtle realistic motion, painted texture visible, still camera. Sound: the voice, the city waking outside, a pigeon's wings. No music, no subtitles, no text or signature on screen.
 ```
-- Save as **`p2_s6b.mp4`**. Caption: *You were promoted to a desk with a window.*
+- Save as **`p2_s6b.mp4`**. Subtitle: the spoken line, then on the held last frame: *Case closed. Twice. The stone was not.*
 
 ---
 
