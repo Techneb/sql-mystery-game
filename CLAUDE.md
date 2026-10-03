@@ -88,7 +88,7 @@ Chapter 7 needs its CASE: Lupin wired "at the desk's quietest", the one of Ganim
 
 ### Look
 
-- One inline-SVG prop per chapter in `PROPS` (`site/app.js`, inner markup only, `class="accent"` picks up `--accent`).
+- One painted icon per chapter beside its title: `site/icons/chNN.png` (96 px, background cut to transparency so both editions work; made on OpenGen from `docs/mockups/chapter-icon-prompts.md`, never with letters or numbers, which could hand out a clue).
 - Part II is a whole-page night edition set once as `data-mood="night"` on `<html>` (`applyMood`), driven purely by `style.css`'s `:root[data-mood="night"]` token overrides (the top-right Day/Night edition button overrides the palette per browser, `ritz.theme`; the masthead date still follows the story), so style new elements off the tokens and they follow for free.
 - Portraits are `site/portraits/*.jpg` (generated from `docs/mockups/portrait-prompts.md`, Lavery colour, 450x600: generate square, trim any white margin, then centre-crop 3:4; all seven redone 2026-10-02); `PORTRAIT_FILE` maps `data.cast` names to files for the Suspects panel, and a single `.portrait` rule floats Blakeney (Part I ending) and the Comtesse (Part II ending) into text. Portraits get their own gentler night filter, not the page filter (colour would cool to a flash photo). The portraits came from a public no-login image endpoint; there are no accounts or paid services to maintain.
 - The landing card shows, under the headline, the front-page photograph `site/landing-pillow.jpg` (Lupin's card on the Comtesse's pillow, generated, cropped 3:2 to 960x640).
