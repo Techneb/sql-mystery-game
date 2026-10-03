@@ -208,7 +208,7 @@ JOIN person AS p ON a.person_id = p.id
 WHERE p.name NOT IN ('Lord Ashcombe', 'Bertram Hobbs', 'Ada Pringle');
 -- Answer: A-7
 
--- 10. Never Seen Together (NOT EXISTS / self-join) -> the guest's name: Mr. Grey
+-- 10. Never Seen Together (LEFT JOIN / self-join) -> the guest's name: Mr. Grey
 -- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.
 -- The answer:
 WITH regulars AS (
@@ -220,17 +220,16 @@ WITH regulars AS (
   SELECT checkin, checkout
   FROM hotel_register
   WHERE guest_name = 'Rupert Blakeney'
-)
-SELECT r.guest_name
-FROM regulars AS r
-WHERE r.guest_name <> 'Rupert Blakeney'
-  AND NOT EXISTS (
-  SELECT 1
+), shared AS (
+  SELECT DISTINCT y.guest_name
   FROM hotel_register AS y
   JOIN blakeney AS x ON x.checkin < y.checkout
     AND y.checkin < x.checkout
-  WHERE y.guest_name = r.guest_name
-);
+)
+SELECT r.guest_name
+FROM regulars AS r
+LEFT JOIN shared AS s ON s.guest_name = r.guest_name
+WHERE s.guest_name IS NULL;
 -- Answer: Mr. Grey
 
 -- 11. The Silence (LAG() OVER) -> the suite number: 214

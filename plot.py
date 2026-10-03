@@ -150,8 +150,8 @@ CHAPTERS = [
          "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id WHERE l.owner_name = '{neighbour}' AND t.person_id IN (SELECT t2.person_id FROM luggage AS l2 JOIN train_ticket AS t2 ON l2.ticket_id = t2.id WHERE l2.owner_name = '{neighbour}' GROUP BY t2.person_id HAVING COUNT(*) = 1)",
          "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE l.owner_name = '{neighbour}' AND p.name <> '{neighbour}'"]),
  dict(n=10, board="Second alias", explain="Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine each share exactly one (11 January), so one name is left: the same man, under two names.",
-  part=2, construct="NOT EXISTS / self-join", tables=[], answer_key="double_alias",
-  solution="WITH regulars AS (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6), blakeney AS (SELECT checkin, checkout FROM hotel_register WHERE guest_name = '{lupin_alias}') SELECT r.guest_name FROM regulars AS r WHERE r.guest_name <> '{lupin_alias}' AND NOT EXISTS (SELECT 1 FROM hotel_register AS y JOIN blakeney AS x ON x.checkin < y.checkout AND y.checkin < x.checkout WHERE y.guest_name = r.guest_name)",
+  part=2, construct="LEFT JOIN / self-join", tables=[], answer_key="double_alias",
+  solution="WITH regulars AS (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6), blakeney AS (SELECT checkin, checkout FROM hotel_register WHERE guest_name = '{lupin_alias}'), shared AS (SELECT DISTINCT y.guest_name FROM hotel_register AS y JOIN blakeney AS x ON x.checkin < y.checkout AND y.checkin < x.checkout) SELECT r.guest_name FROM regulars AS r LEFT JOIN shared AS s ON s.guest_name = r.guest_name WHERE s.guest_name IS NULL",
   naive="SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6", naive_rows=None,
   traps=["SELECT DISTINCT guest_name FROM hotel_register WHERE suite = {lupin_suite} AND checkin < 19120501 AND guest_name <> '{lupin_alias}'",
          "SELECT DISTINCT guest_name FROM hotel_register WHERE price = 150 AND guest_name <> '{lupin_alias}'",
@@ -220,7 +220,7 @@ WRONG_DEFAULT = [
 ]
 ENDINGS = dict(
   part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n'Monsieur {lupin_alias}. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out: *the Blue Star has a train to catch.*",
-  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n'Arithmetic, Inspector.'\n\n'Comtesse de Cagliostro, you are under arrest.' She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
+  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n'Arithmetic, Inspector.'\n\n'Madame la Comtesse, you are under arrest.' She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
 )
 
 TEXT = {
