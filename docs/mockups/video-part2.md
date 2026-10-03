@@ -14,8 +14,9 @@ voice-only clips, assembled by a copy of `assemble-video.sh`.
   GREATEST OF CRIMES".
 - The stone itself crossed to London in Lord Ashcombe's trunk (ch. 9); Lupin's telegram from London encloses
   a photograph of it re-set as a ring (`site/blue-star.jpg`, already on the ending page).
-- The ending text: she receives Ganimard and offers tea; he declines, *which is a first*; the clerk (the
-  student) is promoted to a desk with a window; "Case closed. Twice." (Lupin's case, then hers.)
+- The ending text: she receives Ganimard and offers tea; he declines, *which is a first*, lays the bank's
+  ledger on her desk, and **arrests her** (decided with the owner 2026-10-03; she asks for her furs); the clerk
+  (the student) is promoted to a desk with a window; "Case closed. Twice." (Lupin's case, then hers.)
 - Never on screen: readable writing (Veo and Nano Banana invent letters), account numbers, the answer of any
   chapter spelled out. Papers stay illegible.
 
@@ -34,8 +35,8 @@ Never "like <a real person or broadcaster>": the content policy blocks it.
 |---|---|---|---|
 | 1 | The Ritz at dusk (4 s) | Place Vendome, lit second-floor windows | Narrator: "Forty thousand francs went through seven banks. They came home to the Comtesse." |
 | 2 | Tea (6 s) | Her suite in lamplight; she holds out a cup, Ganimard stands by the door, hat in hand | Comtesse: "Tea, Inspector?" Ganimard: "No, thank you, Madame." |
-| 3 | The ledger (6 s) | Ganimard lays a bank ledger page on her writing desk, beside the insurance policy and the empty jewel case | Ganimard: "Sold for forty thousand. Insured for three hundred." Comtesse, smiling: "Arithmetic, Inspector." |
-| 4 | The corridor (4 s) | Ganimard walks away down the lamplit corridor; her door closes | Ganimard, not turning round: "Case closed. Twice." |
+| 3 | The ledger (8 s) | Ganimard lays a bank ledger page on her writing desk, beside the insurance policy and the empty jewel case | Ganimard: "Sold for forty thousand. Insured for three hundred." Comtesse, smiling: "Arithmetic, Inspector." Ganimard: "Comtesse de Cagliostro, you are under arrest." |
+| 4 | The arrest (6 s) | The lamplit corridor: Ganimard leads her away, her furs on, chin high, a gendarme behind | Comtesse: "Then I shall need my furs." (as they go) Ganimard, not turning round: "Case closed. Twice." |
 | 5 | London (6 s) | Telegraph office in the rain; a man in a top hat, back turned, slides a form and an envelope across | Lupin: "To the Prefecture of Police, Paris. For the curious clerk." |
 | 6 | The photograph (4 s) | The ring photograph on a desk under a green lamp (start image: `site/blue-star.jpg`) | Narrator: "Enclosed, a photograph. No message." |
 | 7 | The desk with a window (6 s) | Morning, a small tidy desk by a tall window over Paris | Ganimard, off screen: "Your new desk, clerk. It has a window. Do not get used to it." |
@@ -52,7 +53,7 @@ After each still, zoom on all four corners (the Lavery signature) and on any pap
 1. **Ritz at dusk.** Refs: style frame. "The Place Vendome in Paris at dusk, May 1912, from across the square: the bronze Vendome column against a deep blue evening sky, the arcaded stone facade of the Ritz with warm golden light in the second-floor windows, gas lamps, one horse cab waiting."
 2. **Tea.** Refs: `comtesse.jpg`, Ganimard sheet, style frame. "The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls, a gilt mirror, tall windows on the dusk. The Comtesse, about 30, pale, dark hair in a loose chignon, red lips, exactly as in @image1, in a sapphire-blue silk gown with black lace, sits on a small sofa holding out a porcelain teacup on its saucer. Near the door stands Inspector Ganimard, exactly as in @image2, bowler hat held against his chest, grim, refusing to sit. Both faces clearly visible."
 3. **The ledger.** Refs: the tea still (once made), style frame. "Same suite, same two people: Ganimard stands at her writing desk and lays down an open bank ledger page; on the desk lie an insurance policy with a red wax seal and the open, empty midnight-blue velvet jewel case. The Comtesse sits beside the desk, composed, faintly smiling. All handwriting is illegible scribble."
-4. **Corridor.** Refs: Ganimard sheet, style frame. "A long lamplit corridor of the Ritz at night, red carpet, gilt sconces: Inspector Ganimard seen from behind walking away, bowler hat on, shoulders heavy; beside the camera a suite door stands half open on warm golden light."
+4. **The arrest.** Refs: `comtesse.jpg`, Ganimard sheet, style frame. "A long lamplit corridor of the Ritz at night, red carpet, gilt sconces: Inspector Ganimard, exactly as in @image2, leads the Comtesse, exactly as in @image1, away down the corridor towards the camera, his hand on her arm; she wears a dark fur stole over her sapphire-blue gown, chin high, faintly smiling, no handcuffs; a French gendarme of 1912 in a dark blue uniform and kepi follows a step behind. Both faces clearly visible."
 5. **London.** Refs: `blakeney.jpg`, style frame. "A London telegraph office at night in gaslight, rain on the window, a hansom cab outside. A man in a dark overcoat with a velvet collar and a top hat, as in @image1, seen from behind and three-quarter, face turned away, slides a telegram form and a small sealed envelope across the wooden counter to a clerk in sleeve garters."
 6. **The photograph.** No new still: upload `site/blue-star.jpg` as the start image.
 7. **The desk.** Refs: style frame. "Morning at the Paris Prefecture: a small tidy desk by a tall window over the rooftops of Paris, a neat stack of ledgers, a pen, a cup of coffee, a blank brass nameplate, sunlight across the desk."
@@ -97,12 +98,13 @@ music, no other voices. No subtitles, no text or signature on screen."
 | Item | Credits |
 |---|---|
 | 6 stills (Nano Banana Pro, 38 each) | 228 |
-| Clips: shots 1, 4, 6 at 4 s (400 each) | 1,200 |
-| Clips: shots 2, 3, 5, 7 at 6 s (600 each) | 2,400 |
+| Clips: shots 1, 6 at 4 s (400 each) | 800 |
+| Clips: shots 2, 4, 5, 7 at 6 s (600 each) | 2,400 |
+| Clip: shot 3 at 8 s (three lines) | 800 |
 | Narrator clip, 8 s | 800 |
-| **Planned** | **about 4,600** |
+| **Planned** | **about 5,000** |
 | Retries (Video 1 needed about one clip in three redone) | +1,200 to 1,800 |
-| **Likely total** | **about 6,000** |
+| **Likely total** | **about 6,500** |
 
-Cheaper version, about 3,800 planned (about 5,000 with retries): shots 1 and 6 as stills with a slow ffmpeg
+Cheaper version (not chosen), about 4,200 planned: shots 1 and 6 as stills with a slow ffmpeg
 zoom instead of Veo clips (the narrator carries them), saving 800.
