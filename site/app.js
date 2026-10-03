@@ -444,9 +444,10 @@ function showExtra() {
   const badge = BADGES.find(([name]) => name === "Gare du Nord");
   el.innerHTML = '<div class="extra-card">' +
     '<div class="mast-title">LE PETIT JOURNAL</div><div class="mast-sub">EXTRA EDITION &mdash; PARIS &mdash; 20 MAY 1912</div>' +
-    '<video class="film" autoplay muted playsinline preload="auto" poster="video/part1.jpg">' +
+    '<div class="film-wrap"><video class="film" playsinline preload="auto" poster="video/part1.jpg">' +
     '<source src="video/part1.webm" type="video/webm"><source src="video/part1.mp4" type="video/mp4"></video>' +
-    '<div class="film-controls"><button class="quiet" id="film-replay">Replay</button> <button class="quiet" id="film-sound">Sound on</button> <button class="quiet" id="film-full">Full screen</button></div>' +
+    '<button class="film-play" id="film-play">&#9654; Play with sound</button></div>' +
+    '<div class="film-controls"><button class="quiet" id="film-replay">Replay</button> <button class="quiet" id="film-full">Full screen</button></div>' +
     "<h1>LUPIN TAKEN AT THE GARE DU NORD</h1>" +
     '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
     '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
@@ -455,10 +456,11 @@ function showExtra() {
     "telegram is addressed to a curious clerk; its code, typed in the answer box, opens Part II.</div>" +
     '<button id="btn-extra">Continue</button></div>';
   el.hidden = false;
-  // The film plays once, muted (browsers only autoplay muted); Replay restarts it, Sound toggles the audio.
+  // The film waits on its poster: browsers only allow sound after a click, so the student starts it.
   const film = el.querySelector(".film");
-  $("film-replay").onclick = () => { film.currentTime = 0; film.play(); };
-  $("film-sound").onclick = e => { film.muted = !film.muted; e.target.textContent = film.muted ? "Sound on" : "Sound off"; if (film.paused) film.play(); };
+  const play = () => { $("film-play").hidden = true; film.currentTime = 0; film.play(); };
+  $("film-play").onclick = play;
+  $("film-replay").onclick = play;
   $("film-full").onclick = () => film.requestFullscreen?.();
   $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); };
 }
