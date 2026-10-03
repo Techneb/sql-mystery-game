@@ -42,16 +42,19 @@ reference panel's Creations tab (newest first; take a zoomed look before clickin
 send button stays grey until every reference has finished uploading. Each Nano Banana Pro image costs 38
 credits; a "CREDIT BALANCE TOO LOW" card means stop and ask the owner (never click Unlock).
 
-**Narrated version (in progress, 2026-10-03).** The owner asked for an arrest that looks like one, spoken
-lines and a narrator. Script: (1) "Paris. The Gare du Nord, the twentieth of May, nineteen twelve." (2) "Mr.
-Rupert Blakeney, of Bath, had a train to catch." (3) "Inspector Ganimard was early. Lupin had asked him not
-to be late." (4, no narrator) Ganimard: "Monsieur Blakeney. You are under arrest." Blakeney: "Delighted,
-Inspector." (5) "The case was empty." (6) "The Blue Star had a train to catch. Lupin was taken. The stone was
-not." The new shot 6 (handcuffs, a gendarme, Ganimard's grip) is live. Made: narration clip 1 (lines 1-2,
-8 s; the owner's downloads `opengen-927580f3...` and `opengen-583fc957...` are the same take). Still to make:
-shot 4 with the dialogue (6 s; still = creation "arrest, Ganimard grim"), narration of line 3 + 5 (6 s) and
-line 6 (6 s), about 1,800 credits. Narration clips start from the faceless still (gloved hands on the closed
-case) and ask for the narrator's voice only, no ambience, so only their audio is used, cut per line.
+**Narrated version (done 2026-10-03, live).** The owner asked for an arrest that looks like one, spoken
+lines and a narrator. `site/video/part1.*` (29.3 s, 5.9 MB / 4.6 MB) is built by `assemble-video.sh` from
+s1-s6 plus three narrator clips (nar1-nar3, audio only): (1) "Paris. The Gare du Nord, the twentieth of May,
+1912." (2) "Mr. Rupert Blakeney, of Bath, had a train to catch." (3) "Inspector Ganimard was early. Lupin had
+asked him not to be late." (4, the two men) "Monsieur Blakeney. You are under arrest." / "Delighted,
+Inspector." (5) "The case was empty." (6) "The Blue Star had a train to catch. Lupin was taken. The stone
+was not." Each spoken line is a subtitle; the clips' own sound is a quiet bed. Shot 4 is cropped to the two
+faces because Veo opened the case again; shot 6 is the handcuffed arrest. Narrator clips started from the
+faceless still (gloved hands on the closed case) and asked for the voice only, no ambience. Cut points come
+from whisper word timings and `silencedetect` (the first word, "Paris.", is quiet and precedes a pause: keep
+the cut at 0). Credits this day, beyond the first six clips: about 5,000, of which 800 went on a duplicate
+narration and 600 on an old refused request OpenGen re-ran by itself once credits were added (delete a
+"CREDIT BALANCE TOO LOW" card you do not want re-run before topping up).
 
 Lessons from these takes (read before generating):
 - **Check every send.** After clicking send, read the newest card's prompt in the library before preparing
