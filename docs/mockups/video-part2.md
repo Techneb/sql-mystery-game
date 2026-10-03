@@ -29,7 +29,7 @@ what to save. Use the same folder as Video 1: `~/Downloads/ritz-video/`.
 
 **Avoid** line (paste in the negative field; if there is none, add `Avoid: ...` at the end of the prompt):
 ```
-text, letters, captions, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, speech
+text, letters, captions, signature, artist's signature in a corner, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, speech
 ```
 
 If Veo will not take a first frame and reference images together: keep the first frame, drop the references.
@@ -44,7 +44,7 @@ If a face drifts in Veo, redo that shot with **Kling 2.6 Pro**, Image to Video, 
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
 - Paste:
 ```
-The Place Vendome in Paris at dusk, May 1912, seen from across the square: the bronze Vendome column against a deep blue evening sky, the arcaded stone facade of the Ritz with warm golden light in the second-floor windows, gas lamps, a single horse cab waiting, a lamplighter on a ladder. Oil on canvas in the style of Sir John Lavery, loose confident brushwork, rich colour, visible paint texture, soft evening light, period-accurate, no text anywhere.
+The Place Vendome in Paris at dusk, May 1912, seen from across the square: the bronze Vendome column against a deep blue evening sky, the arcaded stone facade of the Ritz with warm golden light in the second-floor windows, gas lamps, a single horse cab waiting, a lamplighter on a ladder. Oil on canvas in the style of Sir John Lavery, loose confident brushwork, rich colour, visible paint texture, soft evening light, period-accurate, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s1.png`**.
 
@@ -52,7 +52,7 @@ The Place Vendome in Paris at dusk, May 1912, seen from across the square: the b
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s1.png`.
 - Paste:
 ```
-Slow drift towards the lit second-floor windows of the Ritz; the lamplighter's flame catches and a gas lamp begins to glow; the cab horse shifts its weight; the sky deepens towards night. Subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: an evening square, hooves on cobbles, a far church bell. No music, no speech.
+Slow drift towards the lit second-floor windows of the Ritz; the lamplighter's flame catches and a gas lamp begins to glow; the cab horse shifts its weight; the sky deepens towards night. Subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: an evening square, hooves on cobbles, a far church bell. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s1.mp4`**. Caption: *THE RITZ, 23 MAY 1912, EVENING.*
 
@@ -62,7 +62,7 @@ Slow drift towards the lit second-floor windows of the Ritz; the lamplighter's f
 - Image, Nano Banana Pro, 16:9. References: `comtesse.jpg`, `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls, a gilt mirror, tall windows with the Vendome column outside in the dusk. The Comtesse, about 30, pale, dark hair in a loose chignon, red lips, exactly as in her reference portrait, in a sapphire-blue silk gown off the shoulders with black lace and a high black lace choker, sits poised on a small sofa pouring tea from a silver pot into a porcelain cup. Near the door stands Inspector Ganimard, as in his reference sheet, rumpled, his bowler hat held against his chest, refusing to sit. Oil on canvas in the style of Sir John Lavery, warm lamplight, highly detailed lifelike faces, shallow depth of field, no text anywhere.
+The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls, a gilt mirror, tall windows with the Vendome column outside in the dusk. The Comtesse, about 30, pale, dark hair in a loose chignon, red lips, exactly as in her reference portrait, in a sapphire-blue silk gown off the shoulders with black lace and a high black lace choker, sits poised on a small sofa pouring tea from a silver pot into a porcelain cup. Near the door stands Inspector Ganimard, as in his reference sheet, rumpled, his bowler hat held against his chest, refusing to sit. Oil on canvas in the style of Sir John Lavery, warm lamplight, highly detailed lifelike faces, shallow depth of field, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s2.png`**.
 
@@ -71,7 +71,7 @@ The Comtesse de Cagliostro's suite at the Ritz in lamplight: silk-panelled walls
   `comtesse.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
-She finishes pouring and offers the cup with a faint, perfectly polite smile. Ganimard does not move, then gives the smallest shake of the head. She sets the cup down without hurry. Slow push-in towards her. Faces stay exactly as in the first frame, no morphing. Subtle realistic motion, painted texture visible. Sound: china on china, a clock ticking, the muffled square outside. No music, no speech.
+She finishes pouring and offers the cup with a faint, perfectly polite smile. Ganimard does not move, then gives the smallest shake of the head. She sets the cup down without hurry. Slow push-in towards her. Faces stay exactly as in the first frame, no morphing. Subtle realistic motion, painted texture visible. Sound: china on china, a clock ticking, the muffled square outside. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s2.mp4`**. Caption: *She offered tea. Ganimard declined, which was a first.*
 
@@ -81,7 +81,7 @@ She finishes pouring and offers the cup with a faint, perfectly polite smile. Ga
 - Image, Nano Banana Pro, 16:9. References: `comtesse.jpg`, `style_ref.png`.
 - Paste:
 ```
-Close-up on a writing desk in the Comtesse's suite by candlelight: an insurance policy on thick cream paper with a red wax seal and an embossed lion stamp, its handwriting illegible; beside it an open, empty midnight-blue velvet jewel case and a fountain pen. The Comtesse's hand in a black lace glove rests on the policy, a sapphire-blue silk sleeve at the edge of the frame. Oil on canvas in the style of Sir John Lavery, warm candlelight, rich colour, detailed, no readable text anywhere.
+Close-up on a writing desk in the Comtesse's suite by candlelight: an insurance policy on thick cream paper with a red wax seal and an embossed lion stamp, its handwriting illegible; beside it an open, empty midnight-blue velvet jewel case and a fountain pen. The Comtesse's hand in a black lace glove rests on the policy, a sapphire-blue silk sleeve at the edge of the frame. Oil on canvas in the style of Sir John Lavery, warm candlelight, rich colour, detailed, no readable text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s3.png`**.
 
@@ -89,7 +89,7 @@ Close-up on a writing desk in the Comtesse's suite by candlelight: an insurance 
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s3.png`.
 - Paste:
 ```
-Her fingers tap the wax seal once, unhurried, then slide the policy an inch towards the empty jewel case. The candle flame flickers; the camera tilts slowly from the policy to the empty case. Subtle realistic motion, painted texture visible. Sound: paper on wood, a candle's soft flutter, the clock. No music, no speech.
+Her fingers tap the wax seal once, unhurried, then slide the policy an inch towards the empty jewel case. The candle flame flickers; the camera tilts slowly from the policy to the empty case. Subtle realistic motion, painted texture visible. Sound: paper on wood, a candle's soft flutter, the clock. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s3.mp4`**. Caption: *Insured for three hundred thousand francs. Worth forty.*
 
@@ -99,7 +99,7 @@ Her fingers tap the wax seal once, unhurried, then slide the policy an inch towa
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-A long lamplit corridor of the Ritz at night, red carpet, gilt wall sconces: Inspector Ganimard seen from behind walking away, bowler hat back on, shoulders heavy; beside the camera a suite door stands half open on warm golden light. Oil on canvas in the style of Sir John Lavery, warm lamplight, deep shadows, visible paint texture, no text anywhere.
+A long lamplit corridor of the Ritz at night, red carpet, gilt wall sconces: Inspector Ganimard seen from behind walking away, bowler hat back on, shoulders heavy; beside the camera a suite door stands half open on warm golden light. Oil on canvas in the style of Sir John Lavery, warm lamplight, deep shadows, visible paint texture, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s4.png`**.
 
@@ -107,7 +107,7 @@ A long lamplit corridor of the Ritz at night, red carpet, gilt wall sconces: Ins
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s4.png`.
 - Paste:
 ```
-Ganimard walks slowly away down the corridor; the door beside the camera swings shut and the warm slice of light narrows to nothing. Subtle realistic motion, painted texture visible, steady camera. Sound: footsteps on carpet, the door's soft click. No music, no speech.
+Ganimard walks slowly away down the corridor; the door beside the camera swings shut and the warm slice of light narrows to nothing. Subtle realistic motion, painted texture visible, steady camera. Sound: footsteps on carpet, the door's soft click. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s4.mp4`**. Caption: *Case closed. Twice.*
 
@@ -117,7 +117,7 @@ Ganimard walks slowly away down the corridor; the door beside the camera swings 
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `style_ref.png`.
 - Paste:
 ```
-A London telegraph office at night in gaslight, rain running down the window onto a wet street with a hansom cab outside. A man in a dark wool overcoat with a velvet collar and a top hat, as in the reference portrait, seen from behind and three-quarter with his face mostly turned away, slides a handwritten telegram form across the wooden counter to a clerk in sleeve garters. The form's writing is illegible. Oil on canvas in the style of Sir John Lavery, gaslight, rain, rich colour, no readable text anywhere.
+A London telegraph office at night in gaslight, rain running down the window onto a wet street with a hansom cab outside. A man in a dark wool overcoat with a velvet collar and a top hat, as in the reference portrait, seen from behind and three-quarter with his face mostly turned away, slides a handwritten telegram form across the wooden counter to a clerk in sleeve garters. The form's writing is illegible. Oil on canvas in the style of Sir John Lavery, gaslight, rain, rich colour, no readable text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s5.png`**.
 
@@ -126,7 +126,7 @@ A London telegraph office at night in gaslight, rain running down the window ont
   `blakeney.jpg`.
 - Paste:
 ```
-The form slides across the counter; the clerk takes it and starts tapping the telegraph key; the man touches the brim of his hat and turns towards the door without showing his face. Rain streams down the glass. Subtle realistic motion, painted texture visible. Sound: rain, the tapping telegraph key, a small bell over the door. No music, no speech.
+The form slides across the counter; the clerk takes it and starts tapping the telegraph key; the man touches the brim of his hat and turns towards the door without showing his face. Rain streams down the glass. Subtle realistic motion, painted texture visible. Sound: rain, the tapping telegraph key, a small bell over the door. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s5.mp4`**. Caption: *LONDON. A TELEGRAM, AND A PHOTOGRAPH.*
 
@@ -136,7 +136,7 @@ The form slides across the counter; the clerk takes it and starts tapping the te
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
 - Paste:
 ```
-A sepia photograph lying on a desk at the Paris Prefecture under a green banker's lamp, next to a torn-open telegram envelope; the photograph shows the Blue Star, a large cushion-cut cornflower-blue sapphire re-set as a ring, on dark velvet by a window over London rooftops. Oil on canvas in the style of Sir John Lavery, lamplight, rich colour, detailed, no readable text anywhere.
+A sepia photograph lying on a desk at the Paris Prefecture under a green banker's lamp, next to a torn-open telegram envelope; the photograph shows the Blue Star, a large cushion-cut cornflower-blue sapphire re-set as a ring, on dark velvet by a window over London rooftops. Oil on canvas in the style of Sir John Lavery, lamplight, rich colour, detailed, no readable text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s6a.png`**.
 
@@ -144,7 +144,7 @@ A sepia photograph lying on a desk at the Paris Prefecture under a green banker'
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s6a.png`.
 - Paste:
 ```
-Slow push-in on the photograph until the ring fills the frame; the lamp's light catches the sheen of the paper and the blue of the stone. Subtle realistic motion, painted texture visible. Sound: the hum of the lamp, a page turning somewhere. No music, no speech.
+Slow push-in on the photograph until the ring fills the frame; the lamp's light catches the sheen of the paper and the blue of the stone. Subtle realistic motion, painted texture visible. Sound: the hum of the lamp, a page turning somewhere. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s6a.mp4`**. Caption: *Enclosed, a photograph. No message.*
 
@@ -152,7 +152,7 @@ Slow push-in on the photograph until the ring fills the frame; the lamp's light 
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
 - Paste:
 ```
-Morning at the Paris Prefecture: a small tidy desk by a tall window over the rooftops of Paris, a neat stack of ledgers, a pen, a cup of coffee, a small blank brass nameplate, sunlight falling across the desk. Oil on canvas in the style of Sir John Lavery, morning light, rich warm colour, visible paint texture, no text anywhere.
+Morning at the Paris Prefecture: a small tidy desk by a tall window over the rooftops of Paris, a neat stack of ledgers, a pen, a cup of coffee, a small blank brass nameplate, sunlight falling across the desk. Oil on canvas in the style of Sir John Lavery, morning light, rich warm colour, visible paint texture, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p2_s6b.png`**.
 
@@ -160,7 +160,7 @@ Morning at the Paris Prefecture: a small tidy desk by a tall window over the roo
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p2_s6b.png`.
 - Paste:
 ```
-The morning light slowly warms across the desk; a pigeon lands on the window sill; dust motes drift in the sun. Subtle realistic motion, painted texture visible, still camera. Sound: the city waking outside, a pigeon's wings. No music, no speech.
+The morning light slowly warms across the desk; a pigeon lands on the window sill; dust motes drift in the sun. Subtle realistic motion, painted texture visible, still camera. Sound: the city waking outside, a pigeon's wings. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p2_s6b.mp4`**. Caption: *You were promoted to a desk with a window.*
 

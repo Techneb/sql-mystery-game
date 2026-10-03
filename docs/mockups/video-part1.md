@@ -9,6 +9,13 @@ what to save. Make a folder `~/Downloads/ritz-video/` and save everything there 
 
 ## Status (2026-10-02, made by Claude driving OpenGen in Chrome)
 
+**Done 2026-10-03:** all six clips made (Veo 3.1, 720p; shots 3 and 5 at 6 s), downloaded by the owner and
+assembled by `assemble-video.sh` into `site/video/part1.{mp4,webm,jpg}` (25.6 s, 5.2 MB / 4.0 MB), shown at
+the top of the extra edition (`showExtra`: autoplay muted, plays once, Replay and Sound buttons). Shots 2
+and 6 carried a painted "Sir John Lavery" signature in a corner (the "in the style of" prompt invites it):
+blurred with `delogo`; every still and video prompt now says "no signature". A 5 s Seedance test (a cafe
+scene) was not used. The history below is kept for Video 2.
+
 All in the owner's OpenGen **Creations** (Image library), Nano Banana Pro, 16:9:
 - Step A Ganimard sheet, step B style frame: done.
 - Stills: shot 1, shot 2, shot 3 end (hand on the shoulder) and shot 3 start (the same picture with the
@@ -55,7 +62,7 @@ From the project folder, `site/portraits/`: `blakeney.jpg`, `ashcombe.jpg`. Copy
 
 **Avoid** line (paste in the negative field; if there is none, add `Avoid: ...` at the end of the prompt):
 ```
-text, letters, captions, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, speech
+text, letters, captions, signature, artist's signature in a corner, subtitles, signs with writing, watermark, logo, picture frame, modern clothing, cars, electric lights, plastic, cartoon, anime, 3D render, oversaturated colour, extra fingers, distorted or changing faces, duplicated people, music, speech
 ```
 
 If Veo will not take a first frame and reference images together: keep the first frame, drop the references
@@ -92,7 +99,7 @@ A wide painted establishing image that sets the look of a short film: Paris, May
 - Image, Nano Banana Pro, 16:9. References: `style_ref.png`.
 - Paste:
 ```
-The Gare du Nord in Paris at nine in the morning, May 1912, seen from high at the end of the platform: the great iron and glass roof, shafts of morning sun cutting through drifting steam, a long dark green boat train with polished brass fittings at the platform, porters pushing wooden luggage trolleys, travellers in long coats and hats, a large station clock with Roman numerals. Oil on canvas in the style of Sir John Lavery, loose confident brushwork, rich warm colour, visible paint texture, soft natural light, shallow depth of field, period-accurate, no text anywhere.
+The Gare du Nord in Paris at nine in the morning, May 1912, seen from high at the end of the platform: the great iron and glass roof, shafts of morning sun cutting through drifting steam, a long dark green boat train with polished brass fittings at the platform, porters pushing wooden luggage trolleys, travellers in long coats and hats, a large station clock with Roman numerals. Oil on canvas in the style of Sir John Lavery, loose confident brushwork, rich warm colour, visible paint texture, soft natural light, shallow depth of field, period-accurate, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s1.png`**.
 
@@ -100,7 +107,7 @@ The Gare du Nord in Paris at nine in the morning, May 1912, seen from high at th
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s1.png`.
 - Paste:
 ```
-Slow push-in towards the boat train along the platform. Steam rises and drifts through the shafts of sunlight, a porter crosses the frame from left to right with a trolley, pigeons flutter under the roof girders, travellers walk at an unhurried morning pace. The painting comes alive with subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: the echo of a large station, a distant whistle, footsteps, steam hissing. No music, no speech.
+Slow push-in towards the boat train along the platform. Steam rises and drifts through the shafts of sunlight, a porter crosses the frame from left to right with a trolley, pigeons flutter under the roof girders, travellers walk at an unhurried morning pace. The painting comes alive with subtle realistic motion, the painted texture stays visible, steady cinematic camera. Sound: the echo of a large station, a distant whistle, footsteps, steam hissing. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p1_s1.mp4`**. Caption (added later): *GARE DU NORD, 20 MAY 1912, 09:10.*
 
@@ -110,7 +117,7 @@ Slow push-in towards the boat train along the platform. Steam rises and drifts t
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-Medium tracking view along the platform beside the boat train: Rupert Blakeney, about 30, slim, handsome, clean-shaven, dark hair combed back, exactly as in his reference portrait, walks towards a first-class carriage, unhurried and elegant, a slim leather document case in one gloved hand, dark wool overcoat with a velvet collar, white silk scarf, top hat, a faint smile. Several steps behind him, slightly out of focus, Inspector Ganimard as in his reference sheet follows in his bowler hat and dark overcoat, eyes fixed on him. Steam and morning light around them. Oil on canvas in the style of Sir John Lavery, loose brushwork, rich warm colour, highly detailed lifelike faces, shallow depth of field, no text anywhere.
+Medium tracking view along the platform beside the boat train: Rupert Blakeney, about 30, slim, handsome, clean-shaven, dark hair combed back, exactly as in his reference portrait, walks towards a first-class carriage, unhurried and elegant, a slim leather document case in one gloved hand, dark wool overcoat with a velvet collar, white silk scarf, top hat, a faint smile. Several steps behind him, slightly out of focus, Inspector Ganimard as in his reference sheet follows in his bowler hat and dark overcoat, eyes fixed on him. Steam and morning light around them. Oil on canvas in the style of Sir John Lavery, loose brushwork, rich warm colour, highly detailed lifelike faces, shallow depth of field, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s2.png`**.
 
@@ -119,7 +126,7 @@ Medium tracking view along the platform beside the boat train: Rupert Blakeney, 
   allowed with a first frame): `blakeney.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
-The camera tracks alongside Blakeney at walking pace as he strolls beside the carriages. Behind him Ganimard quickens his step and slowly comes into focus, closing the distance. Blakeney does not look back. Faces stay exactly as in the first frame, no morphing. Subtle realistic motion, painted texture visible, steady cinematic camera. Sound: footsteps on stone, the train's idling engine, a porter calling indistinctly far away. No music, no speech.
+The camera tracks alongside Blakeney at walking pace as he strolls beside the carriages. Behind him Ganimard quickens his step and slowly comes into focus, closing the distance. Blakeney does not look back. Faces stay exactly as in the first frame, no morphing. Subtle realistic motion, painted texture visible, steady cinematic camera. Sound: footsteps on stone, the train's idling engine, a porter calling indistinctly far away. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p1_s2.mp4`**. Caption: *Mr. Blakeney had a train to catch.*
 
@@ -129,7 +136,7 @@ The camera tracks alongside Blakeney at walking pace as he strolls beside the ca
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-Close shot from behind and slightly above Rupert Blakeney's right shoulder: the dark wool of his overcoat and its velvet collar fill the lower frame, the edge of his top hat at the top. Inspector Ganimard's broad hand in a worn brown leather glove is raised, about to land on the shoulder; Ganimard's grey walrus moustache and bowler hat at the edge of the frame. Steam behind. Oil on canvas in the style of Sir John Lavery, rich warm colour, detailed, no text anywhere.
+Close shot from behind and slightly above Rupert Blakeney's right shoulder: the dark wool of his overcoat and its velvet collar fill the lower frame, the edge of his top hat at the top. Inspector Ganimard's broad hand in a worn brown leather glove is raised, about to land on the shoulder; Ganimard's grey walrus moustache and bowler hat at the edge of the frame. Steam behind. Oil on canvas in the style of Sir John Lavery, rich warm colour, detailed, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s3_start.png`**.
 
@@ -146,7 +153,7 @@ The same close shot as the reference image, a moment later, same framing, same l
   First frame: `p1_s3_start.png`. Last frame: `p1_s3_end.png`.
 - Paste:
 ```
-The gloved hand comes down and settles on the shoulder, the grip tightens on the wool; the man under it stops and slowly begins to turn his head. Steam drifts past. Subtle realistic motion, painted texture visible, steady camera. Sound: the train's engine, one long hiss of steam, then a hush. No music, no speech.
+The gloved hand comes down and settles on the shoulder, the grip tightens on the wool; the man under it stops and slowly begins to turn his head. Steam drifts past. Subtle realistic motion, painted texture visible, steady camera. Sound: the train's engine, one long hiss of steam, then a hush. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p1_s3.mp4`**. Caption: *Inspector Ganimard had not slept in three days.*
 
@@ -156,7 +163,7 @@ The gloved hand comes down and settles on the shoulder, the grip tightens on the
 - Image, Nano Banana Pro, 16:9. References: `blakeney.jpg`, `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-Two-shot at the carriage door, faces in profile to each other and very close: Rupert Blakeney, exactly as in his portrait, has turned and smiles, perfectly calm and amused; Inspector Ganimard, red-faced and grim, glares at him from under his bowler hat. Blakeney holds up between them a small closed midnight-blue velvet jewel case. Morning light from the glass roof falls between their faces. Oil on canvas in the style of Sir John Lavery, rich warm colour, highly detailed lifelike faces, shallow depth of field, no text anywhere.
+Two-shot at the carriage door, faces in profile to each other and very close: Rupert Blakeney, exactly as in his portrait, has turned and smiles, perfectly calm and amused; Inspector Ganimard, red-faced and grim, glares at him from under his bowler hat. Blakeney holds up between them a small closed midnight-blue velvet jewel case. Morning light from the glass roof falls between their faces. Oil on canvas in the style of Sir John Lavery, rich warm colour, highly detailed lifelike faces, shallow depth of field, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s4.png`**.
 
@@ -165,7 +172,7 @@ Two-shot at the carriage door, faces in profile to each other and very close: Ru
   allowed): `blakeney.jpg`, `ganimard_ref.png`.
 - Paste:
 ```
-Blakeney's smile widens slightly; with exaggerated courtesy he offers the small velvet case to the inspector. Ganimard hesitates, then takes it with his gloved hand without taking his eyes off Blakeney. Slow push-in. Faces stay exactly as in the first frame. Subtle realistic motion, painted texture visible. Sound: the low murmur of the platform, the engine, a distant whistle. No music, no speech.
+Blakeney's smile widens slightly; with exaggerated courtesy he offers the small velvet case to the inspector. Ganimard hesitates, then takes it with his gloved hand without taking his eyes off Blakeney. Slow push-in. Faces stay exactly as in the first frame. Subtle realistic motion, painted texture visible. Sound: the low murmur of the platform, the engine, a distant whistle. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p1_s4.mp4`**. Caption: *'You have my name, Inspector.'*
 
@@ -175,7 +182,7 @@ Blakeney's smile widens slightly; with exaggerated courtesy he offers the small 
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `style_ref.png`.
 - Paste:
 ```
-Extreme close-up, seen from above: Inspector Ganimard's hands in worn brown leather gloves holding a small closed midnight-blue velvet jewel case, a small gilt clasp catching the light; the dark wool of his overcoat behind. Oil on canvas in the style of Sir John Lavery, rich warm colour, detailed, no text anywhere.
+Extreme close-up, seen from above: Inspector Ganimard's hands in worn brown leather gloves holding a small closed midnight-blue velvet jewel case, a small gilt clasp catching the light; the dark wool of his overcoat behind. Oil on canvas in the style of Sir John Lavery, rich warm colour, detailed, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s5_start.png`**.
 
@@ -192,7 +199,7 @@ The same close-up as the reference image, same framing and light: the jewel case
   First frame: `p1_s5_start.png`. Last frame: `p1_s5_end.png`.
 - Paste:
 ```
-A gloved thumb lifts the clasp and the lid opens slowly on the empty satin hollow; the hands hold still for a beat. Subtle realistic motion, painted texture visible, steady camera. Sound: the small click of the clasp, then the distant echo of the station. No music, no speech.
+A gloved thumb lifts the clasp and the lid opens slowly on the empty satin hollow; the hands hold still for a beat. Subtle realistic motion, painted texture visible, steady camera. Sound: the small click of the clasp, then the distant echo of the station. No music, no speech, no text or signature on screen.
 ```
 - Save as **`p1_s5.mp4`**. Caption: *The case was empty.*
 
@@ -202,7 +209,7 @@ A gloved thumb lifts the clasp and the lid opens slowly on the empty satin hollo
 - Image, Nano Banana Pro, 16:9. References: `ganimard_ref.png`, `blakeney.jpg`, `ashcombe.jpg`, `style_ref.png`.
 - Paste:
 ```
-Wide shot along the platform: the boat train beginning to pull out towards the bright opening at the end of the station, steam rolling. Through the open door of the luggage van, a stack of leather steamer trunks with brass corners. At a first-class window, far away and small, an elderly gentleman with white mutton-chop whiskers and a monocle, as in his portrait, reads a newspaper. In the foreground Inspector Ganimard holds Rupert Blakeney by the arm with one hand and the open empty jewel case in the other; Blakeney watches the train with quiet satisfaction. Oil on canvas in the style of Sir John Lavery, rich warm colour, visible paint texture, no text anywhere.
+Wide shot along the platform: the boat train beginning to pull out towards the bright opening at the end of the station, steam rolling. Through the open door of the luggage van, a stack of leather steamer trunks with brass corners. At a first-class window, far away and small, an elderly gentleman with white mutton-chop whiskers and a monocle, as in his portrait, reads a newspaper. In the foreground Inspector Ganimard holds Rupert Blakeney by the arm with one hand and the open empty jewel case in the other; Blakeney watches the train with quiet satisfaction. Oil on canvas in the style of Sir John Lavery, rich warm colour, visible paint texture, no text anywhere, no signature or artist's name in any corner.
 ```
 - Save as **`p1_s6.png`**.
 
@@ -210,7 +217,7 @@ Wide shot along the platform: the boat train beginning to pull out towards the b
 - Video, Veo 3.1, Image to Video, 16:9, **4 s**, audio on. First frame: `p1_s6.png`.
 - Paste:
 ```
-The train accelerates away towards the light, the luggage van and its trunks receding, steam filling the platform. In the foreground the two men stand still; Blakeney's smile does not change. As the steam clears the camera pulls slowly back and up; pigeons lift off the roof girders. Subtle realistic motion, painted texture visible. Sound: the train's whistle, the rhythm of wheels fading, then the quiet station. No music, no speech.
+The train accelerates away towards the light, the luggage van and its trunks receding, steam filling the platform. In the foreground the two men stand still; Blakeney's smile does not change. As the steam clears the camera pulls slowly back and up; pigeons lift off the roof girders. Subtle realistic motion, painted texture visible. Sound: the train's whistle, the rhythm of wheels fading, then the quiet station. No music, no speech, no text or signature on screen.
 ```
 - - Save as **`p1_s6.mp4`**. Captions: *'The Blue Star has a train to catch.'*, then on the last seconds:
   *Part I closed. The stone was not.*
