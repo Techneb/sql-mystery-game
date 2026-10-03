@@ -740,7 +740,7 @@ function offerCompete() {
 // --- usage statistics: Google Analytics 4, opt-in only (spec section 8) ---------------------------
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
 // no Statistics link, no request to Google. Nothing loads before the reader says Yes (CNIL opt-in).
-export const GA_ID = "";
+export const GA_ID = "G-QG0K0D1NQZ";
 const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
 // ?ga=G-... tries the banner before an ID is committed, on localhost only (a link elsewhere cannot redirect the stats).
