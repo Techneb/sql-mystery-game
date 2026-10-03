@@ -42,6 +42,39 @@ reference panel's Creations tab (newest first; take a zoomed look before clickin
 send button stays grey until every reference has finished uploading. Each Nano Banana Pro image costs 38
 credits; a "CREDIT BALANCE TOO LOW" card means stop and ask the owner (never click Unlock).
 
+**Narrated version (in progress, 2026-10-03).** The owner asked for an arrest that looks like one, spoken
+lines and a narrator. Script: (1) "Paris. The Gare du Nord, the twentieth of May, nineteen twelve." (2) "Mr.
+Rupert Blakeney, of Bath, had a train to catch." (3) "Inspector Ganimard was early. Lupin had asked him not
+to be late." (4, no narrator) Ganimard: "Monsieur Blakeney. You are under arrest." Blakeney: "Delighted,
+Inspector." (5) "The case was empty." (6) "The Blue Star had a train to catch. Lupin was taken. The stone was
+not." The new shot 6 (handcuffs, a gendarme, Ganimard's grip) is live. Made: narration clip 1 (lines 1-2,
+8 s; the owner's downloads `opengen-927580f3...` and `opengen-583fc957...` are the same take). Still to make:
+shot 4 with the dialogue (6 s; still = creation "arrest, Ganimard grim"), narration of line 3 + 5 (6 s) and
+line 6 (6 s), about 1,800 credits. Narration clips start from the faceless still (gloved hands on the closed
+case) and ask for the narrator's voice only, no ambience, so only their audio is used, cut per line.
+
+Lessons from these takes (read before generating):
+- **Check every send.** After clicking send, read the newest card's prompt in the library before preparing
+  the next one: once the page re-sent the previous prompt even though the textarea held the new one (800
+  credits for a duplicate). Wait for the toast, then reload the Video page before the next clip.
+- **Transcribe narration before using it**, offline with the owner's whisper:
+  `whisper-cli -m ~/.cache/whisper-models/ggml-small.bin -l en -f clip.wav -np` (wav from
+  `ffmpeg -i clip.mp4 -vn -ac 1 -ar 16000 clip.wav`). Never download another model.
+- **Content policy:** "like a BBC radio narrator" was blocked (imitating a real broadcaster); describe the
+  voice instead ("old-fashioned radio style"). Blocked requests are refunded.
+- **Veo opens a jewel case it is asked to offer or hand over**, whatever the prompt says about keeping it
+  shut: leave the case out of the action (it stays in his hand) and let the cut do the handover.
+- **"In the style of Sir John Lavery" makes Nano Banana paint his signature** in a bottom corner of most
+  stills: check the corners and blur with `delogo` in `assemble-video.sh` (the box must stay strictly inside
+  the frame).
+- An edit that replaces a person needs that person as a second reference (`@image2`) and "NOT a gendarme":
+  the first try turned Ganimard into a second gendarme.
+- The Video page resets the model to Seedance 2.0 on every load: pick Veo 3.1 again and check the bar (model,
+  16:9 720P, duration) in a zoom before sending. The picker grid needs a few seconds to load before a click
+  selects anything; confirm on the preview. Downloads of a clip already downloaded arrive as `... (1).mp4`.
+- ffmpeg: `-ss` needs a leading zero (0.8, not .8); xfade output needs `-pix_fmt yuv420p` for the High
+  profile.
+
 ## Before you start: files to have at hand
 
 From the project folder, `site/portraits/`: `blakeney.jpg`, `ashcombe.jpg`. Copy them into
