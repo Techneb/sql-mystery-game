@@ -628,15 +628,18 @@ def plant_part2(conn, V, r):
     # --- the Part II code, hidden in a noise telegram (Egg Hunter)
     c.execute("INSERT INTO telegram VALUES (9001,'Central',19120519,1512,'A. L.','TO THE CURIOUS CLERK',NULL,?)",
               ("%s STOP THE CODE IS THE FIRST FOUR WORDS STOP" % V["part2_code"],))
-    # --- ch9: Ashcombe's trunks. Seven under his three tickets; one under a ticket bought for cash by an
-    #     unnamed regular (so chapter 10 has to deduce Mr. Grey from the register, not read him here).
+    # --- ch9: Ashcombe's trunks. Seven under his household's three tickets (his own, his valet's, his maid's, each in
+    #     the holder's name, so an odd person_id is no tell); one under a ticket bought for cash by an unnamed regular
+    #     (so chapter 10 has to deduce Mr. Grey from the register, not read him here).
     c.execute("INSERT INTO train_ticket VALUES (1,1,19120519,'Boat Train 9:15','London')")
     c.execute("INSERT INTO person VALUES (17,'Unknown gentleman (paid cash)','English',NULL,NULL,NULL)")
     c.execute("INSERT INTO train_ticket VALUES (2,17,19120519,'Boat Train 9:15','London')")
-    c.execute("INSERT INTO train_ticket VALUES (3,1,19120519,'Boat Train 9:15','London')")   # his valet's, bought in his name
-    c.execute("INSERT INTO train_ticket VALUES (4,1,19120519,'Boat Train 9:15','London')")   # his maid's, the same
+    for pid, name, born, occ in ((23, "Bertram Hobbs", 1866, "valet"), (24, "Ada Pringle", 1884, "maid")):
+        c.execute("INSERT INTO person VALUES (?,?,'English',?,?,?)", (pid, name, born, occ, r.randint(100, 1299)))
+    c.execute("INSERT INTO train_ticket VALUES (3,23,19120519,'Boat Train 9:15','London')")   # his valet's
+    c.execute("INSERT INTO train_ticket VALUES (4,24,19120519,'Boat Train 9:15','London')")   # his maid's
     labels = ["A-%d" % k for k in range(1, 9) if "A-%d" % k != V["trunk_no"]][:7]   # no gap in the numbering, no odd weight
-    for i, trunk in enumerate(labels):   # split 3 / 3 / 1 over his three tickets: a trunk alone on its ticket is no tell
+    for i, trunk in enumerate(labels):   # split 3 / 3 / 1 over the three tickets: a trunk alone on its ticket is no tell
         c.execute("INSERT INTO luggage VALUES (?,?,?,'Lord Ashcombe',?)", (1 + i, (1, 1, 1, 3, 3, 3, 4)[i], trunk, r.randint(24, 38)))
     c.execute("INSERT INTO luggage VALUES (9,2,?,'Lord Ashcombe',?)", (V["trunk_no"], r.randint(24, 38)))
     # --- ch10: Blakeney and Mr. Grey alternate weeks Jan-Apr in the same suite, never overlapping.

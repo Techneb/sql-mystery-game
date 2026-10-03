@@ -289,8 +289,8 @@
   },
   {
    "title": "The Trunk",
-   "story": "**Ganimard** has gone home to his cat. *You have not.*\n\nThe Blue Star *'sends regards from London'*. The boat train left the Gare du Nord on the 19th, and **Lord Ashcombe** was on it with his trunks. The *Compagnie du Nord* enters every trunk under an owner's name and a ticket number, and nobody checks that the two agree.",
-   "objective": "Find the trunk labelled for the neighbour that travelled on somebody else's ticket.",
+   "story": "**Ganimard** has gone home to his cat. *You have not.*\n\nThe Blue Star *'sends regards from London'*. The boat train left the Gare du Nord on the 19th, and **Lord Ashcombe** was on it with his valet, **Bertram Hobbs**, his maid, **Ada Pringle**, and his trunks. Each of the three held a ticket. The *Compagnie du Nord* enters every trunk under an owner's name and a ticket number, and nobody checks that the two agree.",
+   "objective": "Find the trunk labelled for the neighbour that travelled on the ticket of someone outside his household.",
    "answer_form": "the trunk number",
    "telegram": "MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L",
    "board": "The trunk",
@@ -303,7 +303,7 @@
   },
   {
    "title": "Never Seen Together",
-   "story": "The ticket that does not belong to His Lordship was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
+   "story": "The ticket held by nobody of His Lordship's household was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and **Mr. Blakeney**. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
    "objective": "Find the regular (six stays or more) who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
    "answer_form": "the guest's name",
    "telegram": "MY DEAR CLERK STOP GREY IN THE ODD WEEKS BLAKENEY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L",
@@ -338,7 +338,7 @@
   }
  ],
  "decoys": {
-  "1": 2037
+  "1": 2199
  },
  "endings": {
   "part1": "Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **Rupert Blakeney, Esq.**\n\n'Monsieur Rupert Blakeney. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out: *the Blue Star has a train to catch.*",

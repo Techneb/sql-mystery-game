@@ -194,7 +194,7 @@ WHERE recipient LIKE '%CURIOUS%';
 -- Answer: STOP READING THE NOISE
 
 -- 09. The Trunk (CTE + JOIN) -> the trunk number: A-7
--- Put each of Ashcombe's trunks next to the ticket it travelled on, then keep the one whose ticket belongs to somebody else: the unknown gentleman who paid cash.
+-- Put each of Ashcombe's trunks next to the ticket it travelled on and the name of the ticket's holder, then keep the one whose holder is neither His Lordship nor his valet nor his maid: the unknown gentleman who paid cash.
 -- The answer:
 WITH ashcombe_trunks AS (
   SELECT l.trunk_no, t.person_id
@@ -205,7 +205,7 @@ WITH ashcombe_trunks AS (
 SELECT trunk_no
 FROM ashcombe_trunks AS a
 JOIN person AS p ON a.person_id = p.id
-WHERE p.name <> 'Lord Ashcombe';
+WHERE p.name NOT IN ('Lord Ashcombe', 'Bertram Hobbs', 'Ada Pringle');
 -- Answer: A-7
 
 -- 10. Never Seen Together (NOT EXISTS / self-join) -> the guest's name: Mr. Grey
