@@ -383,7 +383,7 @@ framework, no bundler.
     default, and a one-line banner on the landing card ("Help improve the course: allow anonymous
     usage statistics? Yes / No"), remembered in localStorage; only a Yes loads full measurement. GA4
     already drops IP addresses; turn off Google signals and ad personalisation in the property,
-    and set data retention to the minimum (2 months) in the GA admin.
+    and set data retention in the GA admin (owner's choice 2026-10-03: 14 months, granular location and device data kept; privacy.html says so).
   - **Privacy page.** `site/privacy.html` currently says "no analytics, sets no cookies"; rewrite it in
     the same change: Google Analytics, the events and their fields, the cookie, consent and how to
     withdraw it, retention, Google as processor. Ask the school whether its policy allows GA for
