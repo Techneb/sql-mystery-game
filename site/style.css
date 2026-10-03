@@ -156,9 +156,14 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .film { display: block; width: 100%; aspect-ratio: 16/9; background: #000; border: 1px solid var(--ink); }
 .film-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 12px 26px; font: 700 20px "Playfair Display", serif; box-shadow: 0 4px 18px rgba(0,0,0,.45); }
 .film-play[hidden] { display: none; }
-.extra-badge, .extra-next { clear: both; text-align: left; border: 1px solid var(--rule); padding: 10px 12px; margin: 12px 0; }
+.extra-badge { clear: both; text-align: left; border: 1px solid var(--rule); padding: 10px 12px; margin: 12px 0; }
 .extra-badge b { font: 700 20px "Playfair Display", serif; display: inline-block; margin-right: 6px; }
-.extra-next { font-size: 17px; }
+/* Part II pop-up (#part2, opened by the extra edition's Continue): a native <dialog>, the extra card's look */
+.part2 { max-width: min(480px, calc(100vw - 32px)); box-sizing: border-box; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 24px; text-align: center; font-size: 17px; }
+.part2::backdrop { background: rgba(0,0,0,.6); }
+.part2 h2 { font: 900 30px/1.15 "Playfair Display", serif; margin: 10px 0 14px; padding-top: 10px; border-top: 3px double var(--ink); }
+.part2 p { text-align: left; margin: 0 0 16px; }
+.part2 button { padding: 8px 22px; }
 #btn-extra { margin-top: 8px; padding: 8px 22px; }
 .suspects-close { position: fixed; top: 16px; right: 16px; }
 /* the Day/Night button shares that corner: step aside while a panel with its own Close is open */

@@ -437,7 +437,8 @@ function renderBoard() {
   $("board").querySelectorAll(".card").forEach(el => el.onclick = () => reviewChapter(Number(el.dataset.n)));
 }
 
-// Chapter VIII solved (learn mode): a one-off extra edition, the capture, the badge and rank, then the new objective.
+// Chapter VIII solved (learn mode): a one-off extra edition, the capture, the badge and rank; Continue then opens
+// the Part II pop-up with the new objective.
 // Shown once (state.extraSeen), on the solve or, if the page was closed first, on the next visit.
 function showExtra() {
   const el = $("extra"), p1 = partStats(state, 1, 8);
@@ -451,8 +452,6 @@ function showExtra() {
     '<img class="portrait" src="portraits/blakeney.jpg" alt="">' + '<div class="story">' + richText(data.endings.part1) + "</div>" +
     '<div class="extra-badge"><div class="label">BADGE</div><b>' + esc(badge[0]) + "</b> " + esc(badge[1]) +
     '<div class="muted">Part I in ' + p1.queries + " queries. Rank: " + esc(rank(p1.queries)) + "</div></div>" +
-    '<div class="extra-next"><div class="label">A NEW OBJECTIVE</div>Lupin mentioned a Chapter IX. Somewhere in the archives a ' +
-    "telegram is addressed to a curious clerk; its code, typed in the answer box...</div>" +
     '<button id="btn-extra">Continue</button></div>';
   el.hidden = false;
   // The film waits on its poster: browsers only allow sound after a click, so the student starts it; then the
@@ -460,7 +459,8 @@ function showExtra() {
   const film = el.querySelector(".film");
   const play = () => { $("film-play").hidden = true; film.controls = true; film.currentTime = 0; film.play(); };
   $("film-play").onclick = play;
-  $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); };
+  // Continue closes the edition and announces Part II in a modal (#part2, a native <dialog>: Escape closes it too).
+  $("btn-extra").onclick = () => { film.pause(); el.hidden = true; state.extraSeen = true; save(state); $("part2").showModal(); };
 }
 
 // A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
