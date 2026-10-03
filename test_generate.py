@@ -292,7 +292,8 @@ class Compete(unittest.TestCase):
         j = g.chapters_json(self.V, mode="compete")
         self.assertEqual(len(j["chapters"]), 8)
         self.assertNotIn("endings", j)
-        self.assertFalse([k for ch in j["chapters"] for k in ch if "sha256" in k] + [k for k in j if "sha256" in k])   # the backend checks
+        # the backend checks answers: no answer hash ships, only the fingerprint the admin panel compares
+        self.assertFalse([k for ch in j["chapters"] for k in ch if "sha256" in k] + [k for k in j if "sha256" in k and k != "hashes_sha256"])
         self.assertNotIn("CHAPTER IX", j["chapters"][7]["telegram"])   # compete has no chapter IX
         self.assertIn("CHAPTER IX", g.chapters_json(self.V)["chapters"][7]["telegram"])
         self.assertEqual(j["chapters"][3]["construct"], "GROUP BY / HAVING")
