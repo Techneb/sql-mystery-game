@@ -1,20 +1,21 @@
 :root { --rel: #8a2b2b; --paper: #f3ead7; --ink: #1c1a17; --red: #8a2b2b; --term: #0f0d0a; --term-text: #d9c89a; --gold: #c9a35a; --card: #fffdf5; --rule: #c9b98f; --shade: #e9dfc6; --accent: var(--red);
-  --sql-kw: #e8a652; --sql-fn: #8fc1dc; --sql-str: #a6cf8c; --sql-num: #df9bbd; --sql-com: #9a9080; }
+  --sql-kw: #e8a652; --sql-fn: #8fc1dc; --sql-str: #a6cf8c; --sql-num: #df9bbd; --sql-com: #9a9080;
+  --r-box: 6px; --r-panel: 8px; --r-card: 10px; }   /* corner radii, option C 'Rounded' (2026-10-09) */
 /* Part II mood, set once as data-mood="night" on <html> when the code is accepted (see app.js).
    Same tokens, dark values: everything already styled off these variables shifts for free. */
 :root[data-mood="night"] { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
   --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.4 "Cormorant Garamond", Georgia, serif; transition: background .8s, color .8s; }
-button { font: inherit; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); padding: 4px 12px; cursor: pointer; letter-spacing: 1px; }
+button { font: inherit; background: var(--ink); color: var(--paper); border: 1px solid var(--ink); padding: 4px 12px; cursor: pointer; letter-spacing: 1px; border-radius: var(--r-box); }
 button.quiet { background: transparent; color: var(--ink); }
 button:disabled { opacity: .4; cursor: default; }
-input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; }
-.label { font-weight: 700; letter-spacing: 1px; font-size: 13px; }
+input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; border-radius: var(--r-box); }
+.label { font: 700 13px/1.2 "Playfair Display", serif; letter-spacing: 1px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
 .muted { opacity: .75; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
-.box { border: 1px solid var(--ink); padding: 6px 8px; margin: 10px 0; }
+.box { border: 1px solid var(--ink); border-radius: var(--r-box); padding: 6px 8px; margin: 10px 0; }
 .answer-form { margin-top: 6px; padding-top: 5px; border-top: 1px dotted var(--rule); }
 
 /* masthead */
@@ -22,9 +23,9 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .back-small { margin-left: 10px; padding: 0 6px; font-size: 11px; letter-spacing: 0; vertical-align: 1px; }
 .back-small[hidden] { display: none; }
 .chapter-menu-toggle { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-.chapter-menu { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px; max-width: 90vw; background: var(--card); border: 1px solid var(--ink); box-shadow: 2px 2px 5px rgba(0,0,0,.25); padding: 8px; z-index: 21; }
+.chapter-menu { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); display: flex; flex-wrap: wrap; gap: 6px; max-width: 90vw; background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); box-shadow: 0 3px 8px rgba(0,0,0,.22); padding: 8px; z-index: 21; }
 .chapter-menu[hidden] { display: none; }
-.chapter-menu-item { cursor: pointer; padding: 4px 10px; border: 1px solid var(--rule); background: var(--paper); font-size: 13px; }
+.chapter-menu-item { cursor: pointer; padding: 4px 10px; border: 1px solid var(--rule); border-radius: var(--r-box); background: var(--paper); font-size: 13px; }
 .chapter-menu-item:hover { background: var(--shade); }
 .mast-title { font: 900 32px/1 "Playfair Display", serif; letter-spacing: 1px; }
 .reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
@@ -38,10 +39,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
    (flex centring would push the overflow above the top, out of reach) */
 #landing { position: fixed; inset: 0; background: var(--paper); z-index: 20; display: flex; overflow: auto; padding: 16px; }
 #landing[hidden] { display: none; }
-.landing-card { max-width: 640px; margin: auto; text-align: center; border: 2px solid var(--ink); padding: 24px; }
+.landing-card { max-width: 640px; margin: auto; text-align: center; border: 2px solid var(--ink); border-radius: var(--r-card); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0 0; padding-top: 12px; border-top: 3px double var(--ink); }
 .landing-photo { margin: 14px 0 16px; }
-.landing-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.landing-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); border-radius: var(--r-panel); }
 .landing-photo figcaption { font: italic 400 15px/1.3 "Cormorant Garamond", Georgia, serif; margin-top: 4px; text-align: left; }
 .landing-story { text-align: justify; hyphens: none; font-size: 18px; line-height: 1.5; margin: 0 auto; max-width: 34em; }
 .landing-story::first-letter { float: left; font: 900 48px/.85 "Playfair Display", serif; margin: 4px 8px 0 0; }
@@ -72,7 +73,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .story td { border-bottom: 1px solid var(--rule); padding: 3px 8px 3px 0; vertical-align: top; }
 
 /* terminal */
-.editor { position: relative; background: var(--term); border: 1px solid #6b5a33; }
+.editor { position: relative; background: var(--term); border: 1px solid #6b5a33; border-radius: var(--r-panel); overflow: hidden; }
 #sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
   tab-size: 4; white-space: pre-wrap; overflow-wrap: anywhere; letter-spacing: normal; }
 #sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
@@ -81,7 +82,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .sql-hl { position: absolute; inset: 0; color: var(--term-text); pointer-events: none; overflow: hidden; }
 .sql-kw { color: var(--sql-kw); } .sql-fn { color: var(--sql-fn); } .sql-str { color: var(--sql-str); }
 .sql-num { color: var(--sql-num); } .sql-com { color: var(--sql-com); font-style: italic; }
-.results { background: var(--card); border: 1px solid var(--rule); font: 13px "Special Elite", monospace; overflow: auto; max-height: 36vh; margin-top: 6px; }
+.results { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-panel); font: 13px "Special Elite", monospace; overflow: auto; max-height: 36vh; margin-top: 6px; }
 .results table { border-collapse: collapse; width: 100%; }
 .results th { text-align: left; border-bottom: 1px solid var(--ink); padding: 2px 6px; font-weight: normal; letter-spacing: 1px; font-size: 11px; position: sticky; top: 0; background: var(--card); }
 .results td { padding: 2px 6px; border-bottom: 1px dotted var(--rule); white-space: nowrap; }
@@ -90,7 +91,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .answer-row[hidden] { display: none; }
 .answer-row input { flex: 1; font-family: "Special Elite", monospace; }
 .reply { min-height: 1.4em; font-style: italic; }
-.next-chapter { display: block; width: 100%; margin: 4px 0 10px; padding: 12px 16px; font: 700 20px "Playfair Display", serif;
+.next-chapter { border-radius: var(--r-card); display: block; width: 100%; margin: 4px 0 10px; padding: 12px 16px; font: 700 20px "Playfair Display", serif;
   background: var(--accent); border-color: var(--accent); color: var(--card); animation: pulse 1.8s ease-in-out infinite; }
 .next-chapter[hidden] { display: none; }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 transparent } 50% { box-shadow: 0 0 0 6px var(--shade) } }
@@ -98,7 +99,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 #history li { cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ERD */
-.erd { background: var(--card); border: 1px solid var(--ink); overflow: auto; max-height: 55vh; position: relative; }
+.erd { background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); overflow: auto; max-height: 55vh; position: relative; }
 /* The ad box under the schema: a <details>, its summary the toggle (open by default). */
 .ad-box { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); }
 .ad-box summary { cursor: pointer; padding: 6px 10px; list-style-position: inside; }
@@ -138,13 +139,13 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 @keyframes stamp { 0% { transform: scale(3) rotate(-12deg); opacity: 0 } 60% { transform: scale(1) rotate(-12deg); opacity: 1 } 100% { transform: scale(1) rotate(-12deg); opacity: 1 } }
 
 /* story column */
-.board { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; min-height: 40px; padding: 10px 8px 4px;
+.board { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; min-height: 40px; padding: 10px 8px 4px; border-radius: var(--r-panel);
   background-color: #cda876; background-image: radial-gradient(rgba(0,0,0,.12) 1px, transparent 1px); background-size: 6px 6px; }
-.card { position: relative; background: var(--card); box-shadow: 2px 2px 5px rgba(0,0,0,.3); padding: 8px 8px 6px; font-size: 13px; animation: drop .6s ease-out both; transform: rotate(-2deg); cursor: pointer; }
+.card { position: relative; background: var(--card); border-radius: var(--r-card); box-shadow: 0 3px 8px rgba(0,0,0,.25); padding: 8px 8px 6px; font-size: 13px; animation: drop .6s ease-out both; transform: rotate(-2deg); cursor: pointer; }
 .card::before { content: ""; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff 0, var(--accent) 35%, #3a0d0d 100%); transform: translateX(-50%); box-shadow: 1px 2px 2px rgba(0,0,0,.4); }
 .card .card-label { font: italic 400 12px/1.2 "Cormorant Garamond", Georgia, serif; text-transform: none; }
-.card:hover { box-shadow: 2px 2px 8px rgba(0,0,0,.4); }
+.card:hover { box-shadow: 0 4px 10px rgba(0,0,0,.32); }
 .card:nth-child(even) { transform: rotate(1.5deg); }
 
 /* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
@@ -156,19 +157,19 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 /* Chapter VIII: the extra edition (showExtra in app.js), a full page over the game, styled off the tokens */
 .extra { position: fixed; inset: 0; z-index: 22; background: var(--paper); overflow: auto; overflow-x: hidden; padding: 24px 16px 48px; }
 .extra[hidden] { display: none; }
-.extra-card { max-width: 640px; margin: 0 auto; border: 2px solid var(--ink); padding: 24px; text-align: center; animation: fadein .8s ease-out both; }
+.extra-card { max-width: 640px; margin: 0 auto; border: 2px solid var(--ink); border-radius: var(--r-card); padding: 24px; text-align: center; animation: fadein .8s ease-out both; }
 .extra-card h1 { font: 900 34px/1.1 "Playfair Display", serif; margin: 12px 0 16px; padding-top: 12px; border-top: 3px double var(--ink); letter-spacing: .5px; }
 .extra-card .story { text-align: justify; margin-bottom: 12px; }
 .extra-card .portrait { width: 180px; }
 /* the film breaks out of the 640px card: up to 1100px, centred on the page */
-.film-wrap { position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, calc(100vw - 32px)); margin: 14px 0 4px; }
-.film { display: block; width: 100%; aspect-ratio: 16/9; background: #000; border: 1px solid var(--ink); }
+.film-wrap { position: relative; left: 50%; transform: translateX(-50%); width: min(1100px, calc(100vw - 32px)); margin: 14px 0 4px; border-radius: var(--r-panel); }
+.film { display: block; width: 100%; aspect-ratio: 16/9; background: #000; border: 1px solid var(--ink); border-radius: var(--r-panel); }
 .film-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 12px 26px; font: 700 20px "Playfair Display", serif; box-shadow: 0 4px 18px rgba(0,0,0,.45); }
 .film-play[hidden] { display: none; }
-.extra-badge { clear: both; text-align: left; border: 1px solid var(--rule); padding: 10px 12px; margin: 12px 0; }
+.extra-badge { clear: both; text-align: left; border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 10px 12px; margin: 12px 0; }
 .extra-badge b { font: 700 20px "Playfair Display", serif; display: inline-block; margin-right: 6px; }
 /* Part II pop-up (#part2, opened by the extra edition's Continue): a native <dialog>, the extra card's look */
-.part2 { max-width: min(480px, calc(100vw - 32px)); box-sizing: border-box; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 24px; text-align: center; font-size: 17px; }
+.part2 { max-width: min(480px, calc(100vw - 32px)); box-sizing: border-box; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: var(--r-card); padding: 24px; text-align: center; font-size: 17px; }
 .part2::backdrop { background: rgba(0,0,0,.6); }
 .part2 h2 { font: 900 30px/1.15 "Playfair Display", serif; margin: 10px 0 14px; padding-top: 10px; border-top: 3px double var(--ink); }
 .part2 p { text-align: left; margin: 0 0 16px; }
@@ -190,7 +191,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .suspect b { display: block; font: 700 15px "Playfair Display", serif; margin-top: 8px; }
 .suspect p { font-size: 13px; margin: 2px 0 0; }
 .badges-title { flex-basis: 100%; text-align: center; font: 700 22px "Playfair Display", serif; margin: 8px 0 0; }
-.badge { width: 200px; background: var(--card); border: 1px solid var(--ink); padding: 8px 10px; box-shadow: 2px 2px 5px rgba(0,0,0,.2); }
+.badge { width: 200px; background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-card); padding: 8px 10px; box-shadow: 0 3px 8px rgba(0,0,0,.18); }
 .badge b { font: 700 15px "Playfair Display", serif; }
 .badge p { font-size: 14px; margin: 4px 0 0; }
 .badge.locked { opacity: .45; border-style: dashed; box-shadow: none; }
@@ -199,15 +200,15 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); }
 :root[data-mood="night"] .suspect img, :root[data-mood="night"] .portrait { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 20px rgba(63,111,181,.35)); }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
-.telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; color: #1c1a17;   /* a paper slip in both editions: its own ink, never --ink */ border: 1px solid var(--rule); padding: 8px; min-height: 3em; cursor: pointer; }
+.telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; color: #1c1a17;   /* a paper slip in both editions: its own ink, never --ink */ border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }
-#notes { width: 100%; min-height: 120px; resize: vertical; font: 13px/1.4 "Special Elite", monospace; }
+#notes { border-radius: var(--r-panel); width: 100%; min-height: 120px; resize: vertical; font: 13px/1.4 "Special Elite", monospace; }
 
 /* toasts */
 /* ?admin in the URL only; not linked from anywhere a student would find */
-.admin-panel { position: fixed; left: 16px; bottom: 16px; background: var(--card); border: 2px dashed var(--accent);
+.admin-panel { position: fixed; left: 16px; bottom: 16px; background: var(--card); border: 2px dashed var(--accent); border-radius: var(--r-panel);
   padding: 6px 8px; z-index: 20; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: min(420px, calc(100vw - 32px)); }
-.admin-panel button { padding: 2px 8px; font-size: 12px; }
+.admin-panel button { padding: 2px 8px; font-size: 12px; border-radius: var(--r-box); }
 .admin-seasons { flex-basis: 100%; font-size: 12px; }
 .admin-seasons input { font-size: 12px; }
 .admin-board { flex-basis: 100%; box-sizing: border-box; font-size: 12px; }
@@ -219,11 +220,11 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .admin-msg { word-break: break-all; margin-top: 4px; }
 
 /* usage-statistics consent banner: above the landing overlay (20) and the theme button (21) */
-.consent { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 22; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: center; background: var(--card); color: var(--ink); border: 1px solid var(--ink); box-shadow: 2px 2px 5px rgba(0,0,0,.25); padding: 8px 12px; text-align: center; }
+.consent { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 22; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: center; background: var(--card); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--r-panel); box-shadow: 0 3px 8px rgba(0,0,0,.22); padding: 8px 12px; text-align: center; }
 .consent[hidden] { display: none; }
 .consent a { color: inherit; margin-left: 6px; font-size: 13px; }
 #toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
-.toast { background: var(--ink); color: var(--paper); padding: 8px 12px; border-left: 4px solid var(--gold); animation: slidein .4s ease-out both; max-width: 320px; }
+.toast { background: var(--ink); color: var(--paper); padding: 8px 12px; border-left: 4px solid var(--gold); border-radius: var(--r-panel); animation: slidein .4s ease-out both; max-width: 320px; }
 .toast b { color: var(--gold); }
 
 /* certificate and print */
@@ -254,7 +255,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .landing-story b, .landing-kicker b { font-weight: 700; }
 /* Part II ending: Lupin's photograph of the Blue Star (site/blue-star.jpg), set below the text like a news photo */
 .ending-photo { clear: both; margin: 16px auto 0; max-width: 420px; }
-.ending-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
+.ending-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); border-radius: var(--r-panel); }
 .ending-photo figcaption { font-style: italic; font-size: 14px; margin-top: 6px; text-align: center; }
 :root[data-mood="night"] .ending-photo img { filter: brightness(.9) contrast(1.05); }
 
