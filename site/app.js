@@ -952,6 +952,16 @@ export function themeButtonHtml(mood) {
     : `<svg class="icon moon" ${ICON_ATTRS}><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg>`;
   return `${svg}<span class="btn-text">${mood === "night" ? "Day edition" : "Night edition"}</span>`;
 }
+// The schema's Enlarge/Close button is icon-only: two arrows out to the corners, or an X once enlarged.
+export function erdButtonHtml(large) {
+  return large
+    ? { label: "Close the schema", html: `<svg class="icon close" ${ICON_ATTRS}><path d="M3.5 3.5L12.5 12.5M12.5 3.5L3.5 12.5"/></svg>` }
+    : { label: "Enlarge the schema", html: `<svg class="icon enlarge" ${ICON_ATTRS}><path d="M9.5 2.5H13.5V6.5M13.5 2.5L9 7M6.5 13.5H2.5V9.5M2.5 13.5L7 9"/></svg>` };
+}
+function setErdButton(large) {
+  const btn = $("btn-erd"), { html, label } = erdButtonHtml(large);
+  btn.innerHTML = html; btn.title = label; btn.setAttribute("aria-label", label);
+}
 function applyMood() {
   const mood = chosenTheme() || (state && state.part2 ? "night" : "day");
   document.documentElement.dataset.mood = mood;
@@ -1241,9 +1251,10 @@ async function boot() {
   $("btn-answer").onclick = submitAnswer;
   $("answer").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
   renderBoard();
+  setErdButton(false);
   $("btn-erd").onclick = () => {
     const large = $("erd").classList.toggle("large");
-    $("btn-erd").textContent = large ? "Close" : "Enlarge";
+    setErdButton(large);
     fitErd();
   };
   $("btn-suspects").onclick = () => { renderSuspects(); $("suspects").hidden = false; award(detectBadges(ctx({ event: "suspects" }), state.badges)); };

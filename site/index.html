@@ -47,7 +47,7 @@
 
 <main class="columns">
   <aside class="col-erd">
-    <div class="label-row"><span class="label">SCHEMA</span><button id="btn-erd" class="quiet">Enlarge</button></div>
+    <div class="label-row"><span class="label">SCHEMA</span><button id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><svg class="icon enlarge" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5H13.5V6.5M13.5 2.5L9 7M6.5 13.5H2.5V9.5M2.5 13.5L7 9"/></svg></button></div>
     <div id="erd" class="erd" role="img" aria-label="Database schema: the tables revealed so far and their relationships"></div>
     <p class="erd-legend muted">
       <span data-legend="pk"><svg width="16" height="10" viewBox="0 0 16 10" class="key pk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>primary key</span>
@@ -64,7 +64,7 @@
   <section class="col-terminal">
     <div class="label-row"><span class="label">TERMINAL</span><span class="muted">Ctrl+Enter to run, Ctrl+F to format, Shift+Tab to leave the box</span></div>
     <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" aria-label="SQL query" placeholder="SELECT * FROM police_report WHERE ..."></textarea></div>
-    <div class="row"><button id="btn-run">Run</button><span id="run-info" class="muted" aria-live="polite"></span></div>
+    <div class="row"><button id="btn-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="run-info" class="muted" aria-live="polite"></span></div>
     <div id="results" class="results" aria-live="polite"></div>
     <div class="answer-row">
       <span class="label">ANSWER</span>
@@ -85,7 +85,7 @@
     </div>
     <div id="story" class="story"></div>
     <div class="box"><div class="label">OBJECTIVE</div><div id="objective"></div></div>
-    <div class="label-row"><span class="label">CASE BOARD</span><span><button id="btn-badges" class="quiet">Badges</button> <button id="btn-suspects" class="quiet">Suspects</button></span></div>
+    <div class="label-row"><span class="label">CASE BOARD</span><span><button id="btn-badges" class="quiet"><svg class="icon rosette" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="6" r="4"/><path d="M6 9.5L5 14.5L7 13.5M10 9.5L11 14.5L9 13.5"/></svg><span class="btn-text">Badges</span></button> <button id="btn-suspects" class="quiet"><svg class="icon person" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="5" r="2.75"/><path d="M2.5 14.5C2.5 11 5 9.5 8 9.5S13.5 11 13.5 14.5"/></svg><span class="btn-text">Suspects</span></button></span></div>
     <div id="board" class="board"></div>
     <pre id="telegram" class="telegram" aria-label="Telegram"></pre>
     <pre id="taunt" class="telegram" aria-label="Telegram" aria-live="polite"></pre>
