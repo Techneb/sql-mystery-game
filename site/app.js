@@ -687,12 +687,16 @@ function renderLegend() {
 }
 
 // The current chapter's tables may sit below the schema box's fold (chapter 7's telegram): scroll the box,
-// not the page (scrollIntoView would move the page too), so the first one is in view.
+// not the page (scrollIntoView would move the page too). When they all fit, leave it; otherwise bring the
+// topmost one (smallest translate y, not DOM order: chapter 1's interview comes first but sits under police_report).
 function showCurrentTables() {
-  const box = $("erd"), g = box.querySelector("g.table.current:not(.hidden)");
-  if (!g) return;
-  const b = box.getBoundingClientRect(), r = g.getBoundingClientRect();
-  if (r.top < b.top || r.bottom > b.bottom) box.scrollTop += r.top - b.top - 8;
+  const box = $("erd"), cur = [...box.querySelectorAll("g.table.current:not(.hidden)")];
+  if (!cur.length) return;
+  const b = box.getBoundingClientRect();
+  if (cur.every(g => { const r = g.getBoundingClientRect(); return r.top >= b.top && r.bottom <= b.bottom; })) return;
+  const y = g => Number((g.getAttribute("transform").match(/-?[\d.]+/g) || [0, 0])[1]);
+  const top = cur.reduce((a, g) => y(g) < y(a) ? g : a);
+  box.scrollTop += top.getBoundingClientRect().top - b.top - 8;
 }
 
 // Crop the viewBox to the tables revealed so far and fit that to the column (never upscaled past
