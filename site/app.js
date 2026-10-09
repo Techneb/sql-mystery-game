@@ -122,8 +122,8 @@ const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answe
   // the chapter's SQL tool and new tables sit under a closed Hint toggle (a native <details>), so the
   // student tries first and opens it when stuck
   (ch && (ch.construct || (ch.tables || []).length) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
-    (ch.construct ? "This chapter's tool: <b>" + esc(ch.construct) + "</b>" : "") +
-    (ch.construct && ch.tables.length ? " &middot; " : "") + (ch.tables.length ? "New evidence: " + esc(ch.tables.join(", ")) : "") + "</details>" : "");
+    (ch.construct ? "<div><b>This chapter's tool:</b> " + esc(ch.construct) + "</div>" : "") +
+    (ch.tables.length ? "<div><b>New evidence:</b> " + esc(ch.tables.join(", ")) + "</div>" : "") + "</details>" : "");
 
 function renderChapter() {
   markSuspects();
@@ -474,7 +474,7 @@ function ctx(extra) {
 function renderBoard() {
   const label = n => (data.chapters.find(c => c.n === n) || {}).board || "";
   $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + '</b> <span class="card-label">' +
-    esc(label(n)) + "</span><br>" + esc(state.answers[n]) + "</div>").join("");
+    esc(label(n)) + "</span>" + (state.answers[n] ? "<br>" + esc(state.answers[n]) : "") + "</div>").join("");   // older saves have no answers: no "NULL" card
   $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => reviewChapter(Number(el.dataset.n))));
 }
 
