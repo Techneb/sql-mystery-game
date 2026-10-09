@@ -283,8 +283,8 @@ framework, no bundler.
    removed the dormant hints code. 2026-09-30 to 10-02: the student-eye playtest went on through chapter 8
    (noise names, HH:MM times, cab currency, ch6 three-payment decoys, ch7 GROUP BY CASE with the letter in
    Ortega's suspect card, suspects met progressively, a guessing audit pinned as `traps`, schema redrawn).
-   Chapters 9-12 have not been played as a student yet; open question there: ch11's answer is Lupin's own
-   suite, already known from ch8.
+   Chapters 9-12 were played as a student by the owner on 2026-10-09 (no interface complaint); known and accepted:
+   ch11's answer is Lupin's own suite, already known from ch8.
    2026-10-03: a pre-class audit of the whole game (report kept out of the public repo, `docs/audits/`) and its
    fixes the same day: compete answers checked by the backend from hashes the deploy posts, validated rows and a
    start token, client timestamps on every event, planted ids scattered among the noise and the noise given the
@@ -425,11 +425,22 @@ framework, no bundler.
   340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.ad-slot`; (c) `ADS_ON = true`;
   (d) privacy.html: an advertising section (AdSense cookies, personalised vs non-personalised ads, the
   consent message, how to withdraw); (e) check day, night and phone width in Chrome, then push.
-- **Big UI/UX pass** (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
+- ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
   fixes keep landing during the review (section labels 11px -> 13px on 2026-10-02). Include the schema's gutter, where up to four
   relationship lines run close together since the 2026-10-02 links (suite hub, interview, cab dropoff, guest_card).
+  **Done 2026-10-09** (the owner had played chapters 9-12 as a student the same day; audit in Chrome at 1440x723,
+  student laptops being the target): the landing overlay scrolls when the card is taller than the window (the
+  masthead was clipped and unreachable at 723 px); the schema rows follow reveal order (`erd.py`: each chapter
+  appends its tables, lines may run upward, zero crossings), so chapter 1 shows two adjacent tables instead of a
+  900 px frame; the legend adapts to the visible schema and gained one-to-one; the schema box scrolls itself to
+  the chapter's new tables; results capped at 36vh so the reply and Next button stay on screen; chapter icons
+  56 px; phone column order story, terminal, schema; the Hint toggle reads two labelled rows; case board cards
+  from saves older than the answers field no longer print NULL. Checked and left as is: night tokens, story
+  tables, telegram slip, Suspects and Badges panels. Not verified visually: the phone order (Chrome refused to
+  shrink below ~750 px that day). Open decision (owner): chapters 4, 10 and 12 reveal no new table, so nothing is
+  outlined or scrolled to there; outlining the tables their solutions use would be a hint, sharpest in chapter 10.
 - **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
   video (or a sequence of still images, cross-faded) in the portraits' Lavery style, one to close each part.
   Part I: the boat train at the Gare du Nord, 20 May 1912, Ganimard's hand on Blakeney's shoulder, the empty
