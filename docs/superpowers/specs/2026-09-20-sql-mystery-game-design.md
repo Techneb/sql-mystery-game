@@ -426,8 +426,13 @@ framework, no bundler.
   to 583 crawler words, and privacy.html's Advertising section with Google's required wording (ads not loaded yet, said
   so). The supermain rewrote alephb.uk (about 200 words at the owner's request, bullets per project, no link to the
   unreleased project) and added alephb.uk/privacy.html with the advertising and consent wording and a footer nav.
-  Owner to do: point the AdSense consent message at https://alephb.uk/privacy.html; do not remove or re-add the site
-  in AdSense while the review runs. Not built: static pages per SQL construct (the medium lever from the report).
+  The owner pointed the AdSense consent message at https://alephb.uk/privacy.html the same day. Do not remove or
+  re-add the site in AdSense while the review runs. **2026-10-10:** the medium lever shipped too: "The Clerk's
+  Handbook" (`site/learn/`, rules in CLAUDE.md), a short index, the bakery example database and one page per
+  construct (ten numbered chapters, a numbered menu band under the masthead, previous/next links, each page naming
+  the game chapters it serves by numeral), linked from the landing footer and privacy.html, with `robots.txt` and
+  `sitemap.xml`. Owner decisions on the way (2026-10-10): no How-to-play or For-teachers pages; chapter X's construct
+  is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page does not link the handbook yet.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
