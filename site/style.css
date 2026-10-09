@@ -242,7 +242,12 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
   .col-story { order: 1; } .col-terminal { order: 2; } .col-erd { order: 3; }
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
-  .reset-corner { position: static; display: block; margin: 0 0 6px; }
+  /* icon-only 32px squares in the top corners: the 24px title (~262px at 430px) clears both */
+  .reset-corner, .theme-corner { width: 32px; height: 32px; padding: 0; top: 8px; display: flex; align-items: center; justify-content: center; }
+  .reset-corner { left: 8px; } .theme-corner { right: 8px; }
+  .theme-corner svg, .reset-corner svg { margin: 0; }
+  .btn-text { display: none; }
+  .mast-sub { letter-spacing: 1px; }
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
 }
