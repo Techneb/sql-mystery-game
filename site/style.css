@@ -31,6 +31,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* fixed, above the landing overlay (z-index 20), so it works on the landing page and in the game */
 .theme-corner { position: absolute; right: 16px; top: 12px; z-index: 21; font-size: 13px; padding: 2px 10px; background: var(--paper); }
 .mast-sub { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
+.theme-corner svg, .reset-corner svg { vertical-align: -3px; margin-right: 6px; }
 
 /* landing */
 /* scrolls when the card is taller than the window; the card's auto margins centre it only when it fits

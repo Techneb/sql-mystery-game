@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -350,4 +350,11 @@ test("a comma join with nothing to match is refused before it can hang the page"
   assert.ok(!cartesian("SELECT * FROM a JOIN b ON a.id = b.a_id"));
   assert.ok(!cartesian("SELECT * FROM a -- , b\nWHERE 1"), "a comment is not a join");
   assert.ok(!cartesian("SELECT 'a, b' FROM t"), "a string is not a join");
+});
+
+test("themeButtonHtml: a sun offers the day edition, a moon the night edition, pure ASCII", () => {
+  const night = themeButtonHtml("night"), day = themeButtonHtml("day");
+  assert.match(night, /class="icon sun"/); assert.match(night, />Day edition</); assert.doesNotMatch(night, /moon/);
+  assert.match(day, /class="icon moon"/); assert.match(day, />Night edition</); assert.doesNotMatch(day, /sun/);
+  for (const s of [night, day]) assert.match(s, /^[ -~]*$/);
 });

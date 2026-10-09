@@ -944,10 +944,20 @@ function initAds() {
 // it follows the story. The masthead date always follows the story.
 const THEME_KEY = "ritz.theme";
 function chosenTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
+// The Day/Night button: a sun offers the day edition, a crescent moon the night edition (icon-only under 900px).
+const ICON_ATTRS = 'width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+export function themeButtonHtml(mood) {
+  const svg = mood === "night"
+    ? `<svg class="icon sun" ${ICON_ATTRS}><circle cx="8" cy="8" r="3"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M3.4 12.6L4.5 11.5M11.5 4.5L12.6 3.4"/></svg>`
+    : `<svg class="icon moon" ${ICON_ATTRS}><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg>`;
+  return `${svg}<span class="btn-text">${mood === "night" ? "Day edition" : "Night edition"}</span>`;
+}
 function applyMood() {
   const mood = chosenTheme() || (state && state.part2 ? "night" : "day");
   document.documentElement.dataset.mood = mood;
-  $("btn-theme").textContent = mood === "night" ? "Day edition" : "Night edition";
+  const btn = $("btn-theme"), label = mood === "night" ? "Day edition" : "Night edition";
+  btn.innerHTML = themeButtonHtml(mood);
+  btn.title = label; btn.setAttribute("aria-label", label);   // named when the phone shows the icon alone
   if (state) $("masthead-date").textContent = state.part2 ? "21 MAY 1912" : "18 MAY 1912";
 }
 function toggleTheme() {
