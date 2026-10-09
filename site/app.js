@@ -137,7 +137,7 @@ function renderChapter() {
   if (pendingHere) $("btn-next").textContent = "Next chapter: " + ROMAN[currentChapter(state, data.chapters).n] + " \u2192";
   if (reviewing != null) {
     const ch = data.chapters.find(c => c.n === reviewing);
-    $("masthead-chapter").textContent = "REVIEWING CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
+    $("masthead-chapter").innerHTML = mastheadChapterHtml(ch.n, total, true);
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
@@ -146,7 +146,7 @@ function renderChapter() {
     return;
   }
   const ch = currentChapter(state, data.chapters);
-  $("masthead-chapter").textContent = "CHAPTER " + ROMAN[ch.n] + " OF " + ROMAN[total];
+  $("masthead-chapter").innerHTML = mastheadChapterHtml(ch.n, total, false);
   $("chapter-icon").src = iconSrc(ch.n);
   $("chapter-title").textContent = ch.title;
   $("story").innerHTML = richText(ch.story);
@@ -951,6 +951,10 @@ export function themeButtonHtml(mood) {
     ? `<svg class="icon sun" ${ICON_ATTRS}><circle cx="8" cy="8" r="3"/><path d="M8 1.5V3M8 13V14.5M1.5 8H3M13 8H14.5M3.4 3.4L4.5 4.5M11.5 11.5L12.6 12.6M3.4 12.6L4.5 11.5M11.5 4.5L12.6 3.4"/></svg>`
     : `<svg class="icon moon" ${ICON_ATTRS}><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg>`;
   return `${svg}<span class="btn-text">${mood === "night" ? "Day edition" : "Night edition"}</span>`;
+}
+// Masthead "CHAPTER I OF VIII": the current chapter's numeral in bold, the rest plain.
+export function mastheadChapterHtml(n, total, reviewing) {
+  return (reviewing ? "REVIEWING " : "") + "CHAPTER <b>" + ROMAN[n] + "</b> OF " + ROMAN[total];
 }
 // The schema's Enlarge/Close button is icon-only: two arrows out to the corners, or an X once enlarged.
 export function erdButtonHtml(large) {
