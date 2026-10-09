@@ -432,7 +432,8 @@ framework, no bundler.
   construct (ten numbered chapters, a numbered menu band under the masthead, previous/next links, each page naming
   the game chapters it serves by numeral), linked from the landing footer and privacy.html, with `robots.txt` and
   `sitemap.xml`. Owner decisions on the way (2026-10-10): no How-to-play or For-teachers pages; chapter X's construct
-  is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page does not link the handbook yet.
+  is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page links it from the game's "Twelve
+  chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10).
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
