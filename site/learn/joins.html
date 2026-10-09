@@ -15,14 +15,14 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>JOIN, LEFT JOIN and self-joins</h1>
 <p class="lede">A good database keeps each fact in one place, so most real questions need two or more tables at once. Joins put them back together.</p>
 
 <h2>Keys: how tables point at each other</h2>
-<p>In the bakery database (see the <a href="index.html">handbook index</a>), an order does not repeat the customer's name and town. It stores <code>customer_id</code>, the id of a row in <code>customer</code>. A column like <code>customer.id</code>, which identifies each row, is a primary key; a column like <code>orders.customer_id</code>, which holds the primary key of another table, is a foreign key. A join follows that pointer.</p>
+<p>In the bakery database (see the <a href="database.html">bakery database page</a>), an order does not repeat the customer's name and town. It stores <code>customer_id</code>, the id of a row in <code>customer</code>. A column like <code>customer.id</code>, which identifies each row, is a primary key; a column like <code>orders.customer_id</code>, which holds the primary key of another table, is a foreign key. A join follows that pointer.</p>
 
 <h2>The inner JOIN</h2>
 <p><code>FROM a JOIN b ON condition</code> pairs every row of <code>a</code> with every row of <code>b</code> for which the condition is true. The condition is almost always "this foreign key equals that primary key". Give each table a short alias (<code>o</code>, <code>c</code>) and prefix the columns with it, so that both you and the database know which <code>id</code> you mean.</p>

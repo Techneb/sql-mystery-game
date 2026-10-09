@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>LIKE and text patterns</h1>
@@ -23,7 +23,7 @@
 
 <h2>Two wildcards</h2>
 <p><code>column LIKE 'pattern'</code> is true when the text in the column fits the pattern. A pattern is ordinary text with two special characters. The percent sign, <code>%</code>, stands for any run of characters, including none at all. The underscore, <code>_</code>, stands for exactly one character. Everything else in the pattern must match as written.</p>
-<p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="index.html">handbook index</a>.</p>
+<p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code>SELECT name, price
 FROM product
 WHERE name LIKE '%croissant%';</code></pre>

@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>CTEs and WITH RECURSIVE</h1>
@@ -23,7 +23,7 @@
 
 <h2>WITH: naming a result</h2>
 <p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. Its value is in the reading. Instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
-<p>The examples use the bakery database from the <a href="index.html">handbook index</a>. Here the first step computes the value of each order line, and the main query adds those values up per order and keeps the larger orders.</p>
+<p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, and the main query adds those values up per order and keeps the larger orders.</p>
 <pre><code>WITH line AS (
   SELECT oi.order_id, oi.quantity * p.price AS amount
   FROM order_item AS oi

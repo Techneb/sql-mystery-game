@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>Window functions: RANK and LAG</h1>
@@ -23,7 +23,7 @@
 
 <h2>The idea of a window</h2>
 <p>Suppose you want each customer's orders numbered first, second, third, in date order. <code>GROUP BY</code> cannot do it, because it collapses each customer into a single row. A window function computes a value for every row using a set of related rows, its window, and leaves the rows as they are.</p>
-<p>The window is described by <code>OVER (...)</code> right after the function. Inside the parentheses, <code>PARTITION BY</code> splits the rows into independent groups (one per customer, say), and <code>ORDER BY</code> sets the order inside each group. Both parts are optional: an empty <code>OVER ()</code> means "all rows, in no particular order". Window functions need SQLite 3.25 or later, which every current browser and Python ships. The examples use the bakery database from the <a href="index.html">handbook index</a>.</p>
+<p>The window is described by <code>OVER (...)</code> right after the function. Inside the parentheses, <code>PARTITION BY</code> splits the rows into independent groups (one per customer, say), and <code>ORDER BY</code> sets the order inside each group. Both parts are optional: an empty <code>OVER ()</code> means "all rows, in no particular order". Window functions need SQLite 3.25 or later, which every current browser and Python ships. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2>Numbering and ranking</h2>
 <p>Three functions give positions. <code>ROW_NUMBER()</code> numbers the rows 1, 2, 3 without gaps or ties. <code>RANK()</code> gives tied rows the same rank and then skips: 1, 1, 3. <code>DENSE_RANK()</code> gives ties the same rank without skipping: 1, 1, 2. They differ only when the <code>ORDER BY</code> value ties, and here two breads cost the same. Which of the two tied rows <code>ROW_NUMBER</code> puts first is not defined unless you add a second sort key.</p>

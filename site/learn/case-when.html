@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>CASE WHEN</h1>
@@ -28,7 +28,7 @@
   WHEN condition_2 THEN value_2
   ELSE other_value
 END</code></pre>
-<p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="index.html">handbook index</a>.</p>
+<p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2>Labelling rows</h2>
 <p>The simplest use turns a number into a word. Here every product receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>

@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>SELECT and WHERE</h1>
@@ -23,7 +23,7 @@
 
 <h2>Reading a table</h2>
 <p>A relational database stores its data in tables. A table has named columns, and each row is one record: one customer, one product, one order. To read a table you write a <code>SELECT</code> statement. The words after <code>SELECT</code> name the columns you want back, and the word <code>FROM</code> names the table they come from. The star, <code>*</code>, means every column, in the order the table defines them.</p>
-<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="index.html">handbook index</a>. Its <code>product</code> table lists ten things the bakery sells.</p>
+<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>product</code> table lists ten things the bakery sells.</p>
 <pre><code>SELECT name, price
 FROM product;</code></pre>
 <table class="result">

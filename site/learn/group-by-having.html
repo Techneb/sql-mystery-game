@@ -15,14 +15,14 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
 </header>
 <main class="learn">
 <h1>GROUP BY, aggregates and HAVING</h1>
 <p class="lede">So far every query returned rows of the table. Aggregates return facts about many rows at once: how many, how much, the largest, the average.</p>
 
 <h2>Aggregate functions</h2>
-<p>Five functions do most of the work: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code>. Used without grouping, each one collapses the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="index.html">handbook index</a>.</p>
+<p>Five functions do most of the work: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code>. Used without grouping, each one collapses the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code>SELECT COUNT(*) AS products,
        MIN(price) AS cheapest,
        MAX(price) AS dearest,
