@@ -89,6 +89,8 @@ Chapter 7 needs its CASE: Lupin wired "at the desk's quietest", the one of Ganim
 
 ## Site (`site/app.js`, `site/style.css`, `index.html`)
 
+- Handbook (`site/learn/`): static, crawlable reference pages (an index, one page per construct the chapters practise, How to play, For teachers) written for AdSense review and for students. Every example runs on one invented bakery database (`customer`, `product`, `orders`, `order_item`; its SQLite script is on `learn/index.html`), never the game's tables, cast, places or values; after editing an example, rerun it with `python3 -c "import sqlite3"` against that script and paste the real result. No JavaScript: the night palette follows `prefers-color-scheme` in `learn/learn.css` (same values as `data-mood="night"`). No clues: the Shortcut check applies, and "In the game" lines name chapter numbers and titles only. The pages link `../style.css` without `?v=` (the deploy's cache-busting sed only rewrites index.html and privacy.html). `site/sitemap.xml` (with `robots.txt`) lists the landing page, privacy.html and every learn page: add any new page there.
+
 ### Look
 
 - One painted icon per chapter beside its title, shown at 56 px (`.chapter-icon`; at 44 px chapter 1's read as a smudge): `site/icons/chNN.png` (96 px, background cut to transparency so both editions work; made on OpenGen from `docs/mockups/chapter-icon-prompts.md`, never with letters or numbers, which could hand out a clue).
