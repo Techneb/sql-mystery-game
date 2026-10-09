@@ -5,6 +5,7 @@
 <meta name="google-adsense-account" content="ca-pub-9765732642926043">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Ritz Affair</title>
+<meta name="description" content="The Ritz Affair: a free browser detective game that teaches SQL. Paris, 1912, twelve chapters, a stolen sapphire, no install and no account.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -33,6 +34,30 @@
       <p id="compete-note" class="muted"></p>
     </div>
     <p id="status" class="muted">Loading the archives...</p>
+    <details class="landing-about">
+      <summary class="label">ABOUT THIS GAME</summary>
+      <p>The Ritz Affair is a detective story you play by writing SQL. Paris, May 1912: the Blue Star, a famous sapphire, has vanished from the Hotel Ritz, and Inspector Ganimard needs a clerk who can read his archives. The archives are a SQLite database that runs entirely in your browser. There is nothing to install and no account to create, and in learning mode nothing you type is sent to a server.</p>
+      <p>It is written for students of a first SQL course, and for teachers who want a graded or timed class session built on real queries rather than multiple-choice questions. Each chapter practises one construct, from a plain SELECT to a recursive query.</p>
+      <p>A chapter works the same way every time. You read the story and the objective, then query the archives: police reports, the hotel register, cab rides, telegrams, bank transfers. When you think you have it, you type the answer. A correct answer opens the next chapter and reveals its tables in the schema beside the terminal. A wrong one costs nothing but pride.</p>
+      <table class="landing-chapters">
+        <tr><th>Chapter</th><th>SQL practised</th></tr>
+        <tr><td>I. The Night of the 17th</td><td>SELECT / WHERE</td></tr>
+        <tr><td>II. The Neighbouring Suite</td><td>ORDER BY / LIMIT</td></tr>
+        <tr><td>III. A Plate in the Dark</td><td>LIKE</td></tr>
+        <tr><td>IV. The Cab's Week</td><td>GROUP BY / HAVING</td></tr>
+        <tr><td>V. The Boarding House</td><td>JOIN</td></tr>
+        <tr><td>VI. Follow the Francs</td><td>three JOINs, SUM and HAVING</td></tr>
+        <tr><td>VII. The Quietest Hour</td><td>CASE WHEN with GROUP BY</td></tr>
+        <tr><td>VIII. The First Order Before Dawn</td><td>RANK() OVER and a CTE</td></tr>
+        <tr><td>IX. The Trunk</td><td>CTE and JOIN</td></tr>
+        <tr><td>X. Never Seen Together</td><td>LEFT JOIN and self-join</td></tr>
+        <tr><td>XI. The Silence</td><td>LAG() OVER</td></tr>
+        <tr><td>XII. Follow the Money</td><td>WITH RECURSIVE</td></tr>
+      </table>
+      <p>After chapter VIII the paper switches to its night edition: Part II follows the case after dark through four more chapters and new tables.</p>
+      <p>In compete mode a teacher hands out a season link; each player picks a pseudo, starts the clock, and a class leaderboard ranks everyone by time.</p>
+      <p>The story borrows Arsene Lupin and Ganimard from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate.</p>
+    </details>
     <p class="muted landing-foot">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="privacy.html">Privacy</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></p>
   </div>
 </div>
