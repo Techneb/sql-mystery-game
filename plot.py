@@ -158,7 +158,7 @@ CHAPTERS = [
          "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE l.owner_name = '{neighbour}' AND p.name <> '{neighbour}'",
          "SELECT l.trunk_no FROM luggage AS l JOIN train_ticket AS t ON l.ticket_id = t.id JOIN person AS p ON t.person_id = p.id WHERE p.address_id IS NULL"]),
  dict(n=10, board="Second alias", explain="Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine share a night with him (11 January, and the week of the theft), so one name is left: the same man, under two names.",
-  part=2, construct="LEFT JOIN / self-join", tables=[], answer_key="double_alias",
+  part=2, construct="Self-join", tables=[], answer_key="double_alias",
   solution="WITH regulars AS (SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6), blakeney AS (SELECT checkin, checkout FROM hotel_register WHERE guest_name = '{lupin_alias}'), shared AS (SELECT DISTINCT y.guest_name FROM hotel_register AS y JOIN blakeney AS x ON x.checkin < y.checkout AND y.checkin < x.checkout) SELECT r.guest_name FROM regulars AS r LEFT JOIN shared AS s ON s.guest_name = r.guest_name WHERE s.guest_name IS NULL",
   naive="SELECT guest_name FROM hotel_register GROUP BY guest_name HAVING COUNT(*) >= 6", naive_rows=None,
   traps=["SELECT DISTINCT guest_name FROM hotel_register WHERE suite = {lupin_suite} AND checkin < 19120501 AND guest_name <> '{lupin_alias}'",

@@ -223,7 +223,7 @@ JOIN person AS p ON a.person_id = p.id
 WHERE p.name NOT IN ('Lord Ashcombe', 'Bertram Hobbs', 'Ada Pringle');
 -- Answer: A-7
 
--- 10. Never Seen Together (LEFT JOIN / self-join) -> the guest's name: Mr. Grey
+-- 10. Never Seen Together (Self-join) -> the guest's name: Mr. Grey
 -- Regulars have six stays or more. Two stays share a night when each checks in before the other checks out; keep the regular who never shares one with Blakeney. Almagro and Sernine share a night with him (11 January, and the week of the theft), so one name is left: the same man, under two names.
 -- The answer:
 WITH regulars AS (
