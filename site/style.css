@@ -79,7 +79,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .sql-hl { position: absolute; inset: 0; color: var(--term-text); pointer-events: none; overflow: hidden; }
 .sql-kw { color: var(--sql-kw); } .sql-fn { color: var(--sql-fn); } .sql-str { color: var(--sql-str); }
 .sql-num { color: var(--sql-num); } .sql-com { color: var(--sql-com); font-style: italic; }
-.results { background: var(--card); border: 1px solid var(--rule); font: 13px "Special Elite", monospace; overflow: auto; max-height: 50vh; margin-top: 6px; }
+.results { background: var(--card); border: 1px solid var(--rule); font: 13px "Special Elite", monospace; overflow: auto; max-height: 36vh; margin-top: 6px; }
 .results table { border-collapse: collapse; width: 100%; }
 .results th { text-align: left; border-bottom: 1px solid var(--ink); padding: 2px 6px; font-weight: normal; letter-spacing: 1px; font-size: 11px; position: sticky; top: 0; background: var(--card); }
 .results td { padding: 2px 6px; border-bottom: 1px dotted var(--rule); white-space: nowrap; }
