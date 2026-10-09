@@ -338,16 +338,26 @@ class Compete(unittest.TestCase):
 
 
 class Erd(unittest.TestCase):
-    def test_layers_follow_fk_depth(self):
+    def test_rows_follow_reveal_order(self):
+        import erd
+        conn, V = g.build_db(1912)
+        tables, fks = erd.read_schema(conn)
+        pos = erd.layout(tables, fks, [ch["tables"] for ch in plot.CHAPTERS])
+        seen = []
+        for k, ch in enumerate(plot.CHAPTERS):   # chapter N's tables are the top rows: later ones only ever go below
+            seen += ch["tables"]
+            later = [t for c in plot.CHAPTERS[k + 1:] for t in c["tables"]]
+            if seen and later:
+                self.assertLessEqual(max(pos[t][2] for t in seen), min(pos[t][2] for t in later), ch["n"])
+        a, b = plot.CHAPTERS[0]["tables"]
+        self.assertEqual(pos[a][2], pos[b][2])   # chapter 1's two tables share a row
+        for t, _, ref in fks:   # never a line between two tables of one row
+            self.assertNotEqual(pos[t][2], pos[ref][2], t)
+        conn.close()
+
+    def test_svg_draws_every_table_and_key(self):
         import erd
         conn = g.empty_db()
-        tables, fks = erd.read_schema(conn)
-        pos = erd.layout(tables, fks)
-        self.assertEqual(pos["address"][0], 0)
-        self.assertEqual(pos["person"][0], 1)
-        self.assertEqual(pos["bank_account"][0], 2)
-        self.assertEqual(pos["bank_transaction"][0], 3)
-        self.assertEqual(pos["luggage"][0], 3)
         s = erd.svg(conn)
         self.assertEqual(s.count('class="table"'), 14)   # 13 + suite; guest_card is added later, by link_tables
         self.assertEqual(s.count('class="fk"'), 10)
@@ -363,7 +373,7 @@ class Erd(unittest.TestCase):
         import erd
         conn, V = g.build_db(1912)
         tables, fks = erd.read_schema(conn)
-        pos = erd.layout(tables, fks, [t for ch in plot.CHAPTERS for t in ch["tables"]])
+        pos = erd.layout(tables, fks, [ch["tables"] for ch in plot.CHAPTERS])
         for e in erd.fk_paths(tables, fks, pos):
             for name, (_, x, y, w, h) in pos.items():
                 for px, py in e["points"]:
