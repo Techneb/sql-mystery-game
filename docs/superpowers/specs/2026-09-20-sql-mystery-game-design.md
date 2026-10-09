@@ -438,8 +438,10 @@ framework, no bundler.
   the chapter's new tables; results capped at 36vh so the reply and Next button stay on screen; chapter icons
   56 px; phone column order story, terminal, schema; the Hint toggle reads two labelled rows; case board cards
   from saves older than the answers field no longer print NULL. Checked and left as is: night tokens, story
-  tables, telegram slip, Suspects and Badges panels. Not verified visually: the phone order (Chrome refused to
-  shrink below ~750 px that day). Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
+  tables, telegram slip, Suspects and Badges panels. The phone order was then checked on the owner's phone (2026-10-09): story first. The same screenshot showed the
+  Day/Night button overlapping the title on a 430 px screen, so both masthead buttons gained inline SVG icons
+  (moon/sun swapping with the label, a magnifying glass with a plus for New investigation) and are icon-only
+  32 px squares in the corners under 900 px. Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
   outlined or scrolled to there, and it stays that way: the schema never points at the tables a solution uses,
   finding the right table is part of the work.
 - **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
