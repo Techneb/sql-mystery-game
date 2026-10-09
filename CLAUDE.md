@@ -138,7 +138,7 @@ Chapter 7 needs its CASE: Lupin wired "at the desk's quietest", the one of Ganim
 ## Status sources
 
 - Repos: this one only (`origin` = github.com/Techneb/sql-mystery-game, trunk `main`; work lands by direct push, the owner approves each one since a push is a live deploy). The alephb.uk home page and DNS live in the owner's Compromise project.
-- CI: `.github/workflows/pages.yml` (Deploy GitHub Pages) on every push to `main`; `gh run list --limit 5` shows the last deploys.
+- CI: `.github/workflows/pages.yml` (Deploy GitHub Pages) on every push to `main`; `gh run list --limit 5` shows the last deploys. The deploy step sometimes fails right after a successful upload ("Fetching artifact metadata failed", a GitHub-side race, 3 of 7 deploys on 2026-10-09): delete the run's `github-pages` artifacts (`gh api -X DELETE repos/Techneb/sql-mystery-game/actions/artifacts/<id>` for each) and `gh run rerun <id> --failed`; a rerun without the deletion fails on "multiple artifacts". A push whose head commit says `[skip ci]` deploys nothing, so never put it on a branch head meant for main.
 - Sessions: one Mac CLI main per the global fleet rule; cloud sessions can run both suites but not the browser checks, the images or `../SQL` (see Local-only work).
 - Docs to keep current: this file, `README.md` (public: says little about how the game works), the spec `docs/superpowers/specs/2026-09-20-sql-mystery-game-design.md` (section 7 Phases is the status, section 8 the backlog with owner decisions dated inline), `docs/badges.md`, the OpenGen how-tos in `docs/mockups/*.md`, and the uncommitted `docs/audits/` (cheat paths: never commit). Project memory under `~/.claude/projects/<encoded cwd>/memory/` holds the Apps Script URL and the audit's resume point.
 
