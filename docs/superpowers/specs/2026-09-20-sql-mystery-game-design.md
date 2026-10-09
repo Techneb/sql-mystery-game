@@ -439,8 +439,9 @@ framework, no bundler.
   56 px; phone column order story, terminal, schema; the Hint toggle reads two labelled rows; case board cards
   from saves older than the answers field no longer print NULL. Checked and left as is: night tokens, story
   tables, telegram slip, Suspects and Badges panels. Not verified visually: the phone order (Chrome refused to
-  shrink below ~750 px that day). Open decision (owner): chapters 4, 10 and 12 reveal no new table, so nothing is
-  outlined or scrolled to there; outlining the tables their solutions use would be a hint, sharpest in chapter 10.
+  shrink below ~750 px that day). Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
+  outlined or scrolled to there, and it stays that way: the schema never points at the tables a solution uses,
+  finding the right table is part of the work.
 - **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
   video (or a sequence of still images, cross-faded) in the portraits' Lavery style, one to close each part.
   Part I: the boat train at the Gare du Nord, 20 May 1912, Ganimard's hand on Blakeney's shoulder, the empty
