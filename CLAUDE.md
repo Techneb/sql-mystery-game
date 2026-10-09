@@ -96,6 +96,7 @@ Chapter 7 needs its CASE: Lupin wired "at the desk's quietest", the one of Ganim
 - Portraits are `site/portraits/*.jpg` (generated from `docs/mockups/portrait-prompts.md`, Lavery colour, 450x600: generate square, trim any white margin, then centre-crop 3:4; all seven redone 2026-10-02); `PORTRAIT_FILE` maps `data.cast` names to files for the Suspects panel, and a single `.portrait` rule floats Blakeney (Part I ending) and the Comtesse (Part II ending) into text. Portraits get their own gentler night filter, not the page filter (colour would cool to a flash photo). The portraits came from a public no-login image endpoint; there are no accounts or paid services to maintain.
 - The landing card shows, under the headline, the front-page photograph `site/landing-pillow.jpg` (Lupin's card on the Comtesse's pillow, generated, cropped 3:2 to 960x640).
 - The landing overlay (`#landing`) scrolls when the card is taller than the window (`overflow: auto`) and centres the card with `margin: auto` only when it fits; never flex-centre it again (the masthead would be clipped off the top, out of reach). The Day/Night button (`.theme-corner`, z-index 21) stays above it.
+- Under 900 px the three columns stack story, terminal, schema (CSS `order` on `.col-story`, `.col-terminal`, `.col-erd`; the markup keeps the schema first for the desktop grid).
 
 ### Terminal and chapter flow
 

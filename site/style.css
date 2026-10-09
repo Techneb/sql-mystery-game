@@ -236,6 +236,8 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 
 @media (max-width: 900px) {
   .columns { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  /* a phone reads the story first, then the terminal, the schema last (the markup order is schema first) */
+  .col-story { order: 1; } .col-terminal { order: 2; } .col-erd { order: 3; }
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
   .reset-corner { position: static; display: block; margin: 0 0 6px; }
