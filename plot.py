@@ -275,13 +275,13 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="The Quietest Hour",
-  story="**Lupin** wrote that he confirmed the payment by wire from the Ritz desk, at its quietest. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n*'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, which is one more than he needs. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'*",
+  story="Lupin wrote that he confirmed the payment by wire from the Ritz desk, at its quietest. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n*'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, which is one more than he needs. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'*",
   objective="Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
   answer_form="the telegram id",
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
  8: dict(
   title="The First Order Before Dawn",
-  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n*'A man of habit is **a man with a room number**, clerk. And before dawn, at my age, means before six.'*",
+  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n*'A man of habit is a man with a room number, clerk. And before dawn, at my age, means before six.'*",
   objective="The wire from chapter 7 describes a habit. Whose was it, on the 18th?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
