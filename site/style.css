@@ -33,9 +33,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .mast-sub { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
 
 /* landing */
-#landing { position: fixed; inset: 0; background: var(--paper); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px; }
+/* scrolls when the card is taller than the window; the card's auto margins centre it only when it fits
+   (flex centring would push the overflow above the top, out of reach) */
+#landing { position: fixed; inset: 0; background: var(--paper); z-index: 20; display: flex; overflow: auto; padding: 16px; }
 #landing[hidden] { display: none; }
-.landing-card { max-width: 640px; text-align: center; border: 2px solid var(--ink); padding: 24px; }
+.landing-card { max-width: 640px; margin: auto; text-align: center; border: 2px solid var(--ink); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0 0; padding-top: 12px; border-top: 3px double var(--ink); }
 .landing-photo { margin: 14px 0 16px; }
 .landing-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); }
