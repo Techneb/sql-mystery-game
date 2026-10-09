@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORDER BY and LIMIT -- The Ritz Affair</title>
+<meta name="description" content="How to sort query results with ORDER BY (ascending, descending, several keys) and keep the first rows with LIMIT and OFFSET, explained for SQL beginners with runnable SQLite examples.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>ORDER BY and LIMIT</h1>
+<p class="lede">A table has no natural order. If the order of the rows matters to you, you must ask for it.</p>
+
+<h2>Why rows need sorting</h2>
+<p>A beginner often assumes that rows come back in the order they were inserted. Sometimes they do, by accident, but the SQL standard makes no such promise, and a database is free to return rows in whatever order is fastest for it. The moment a question contains a word like "cheapest", "latest", "first" or "top three", the query needs an <code>ORDER BY</code> clause.</p>
+<p><code>ORDER BY</code> comes after <code>WHERE</code> and names one or more columns. Each column sorts ascending by default (<code>ASC</code>: smallest number, earliest date, A before Z); add <code>DESC</code> after a column to reverse it. The examples use the bakery database from the <a href="index.html">handbook index</a>.</p>
+<pre><code>SELECT name, price
+FROM product
+WHERE category = 'cake'
+ORDER BY price DESC;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td></tr>
+<tr><td>Chocolate eclair</td><td>2.8</td></tr>
+</table>
+
+<h2>Several sort keys</h2>
+<p>When two rows tie on the first column, the second column decides, then the third, and so on. Each column carries its own direction, so you can sort by category alphabetically and, inside each category, by price from the most to the least expensive. The database never looks at the second key unless the first one ties.</p>
+<pre><code>SELECT category, name, price
+FROM product
+ORDER BY category, price DESC;</code></pre>
+<table class="result">
+<tr><th>category</th><th>name</th><th>price</th></tr>
+<tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td></tr>
+<tr><td>bread</td><td>Rye loaf</td><td>3.8</td></tr>
+<tr><td>bread</td><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>bread</td><td>Baguette</td><td>1.2</td></tr>
+<tr><td>cake</td><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>cake</td><td>Carrot cake slice</td><td>3.2</td></tr>
+<tr><td>cake</td><td>Chocolate eclair</td><td>2.8</td></tr>
+<tr><td>pastry</td><td>Almond croissant</td><td>2.2</td></tr>
+<tr><td>pastry</td><td>Pain au chocolat</td><td>1.6</td></tr>
+<tr><td>pastry</td><td>Croissant</td><td>1.4</td></tr>
+</table>
+<p>You can sort by a column that you do not display, and by a computed expression or an alias defined in <code>SELECT</code>. Sorting happens after the rows have been chosen, which is why aliases work here while they do not in <code>WHERE</code>.</p>
+
+<h2>Keeping the first rows: LIMIT</h2>
+<p><code>LIMIT n</code>, written at the very end of the query, keeps only the first n rows of the result. On its own it keeps an arbitrary n rows, which is rarely useful; combined with <code>ORDER BY</code> it answers questions such as "the three most recent orders" or "the cheapest pastry". <code>OFFSET k</code> skips the first k rows before counting, which is how a website shows page two of a list.</p>
+<pre><code>SELECT id, customer_id, day, time
+FROM orders
+ORDER BY day DESC, time DESC
+LIMIT 3;</code></pre>
+<table class="result">
+<tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
+<tr><td>14</td><td>1</td><td>2026-03-08</td><td>18:20</td></tr>
+<tr><td>13</td><td>5</td><td>2026-03-08</td><td>11:40</td></tr>
+<tr><td>12</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
+</table>
+<p>Here the second key matters: three orders were placed on the last day, and only the time tells them apart. Without <code>time DESC</code>, the database would be free to pick any of them in any order.</p>
+<pre><code>SELECT name, price
+FROM product
+ORDER BY price
+LIMIT 2 OFFSET 2;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Pain au chocolat</td><td>1.6</td></tr>
+<tr><td>Almond croissant</td><td>2.2</td></tr>
+</table>
+<p>This is the third and fourth cheapest products: the two cheapest are skipped, the next two are kept.</p>
+
+<h2>Ties and LIMIT</h2>
+<p>Be careful when the value you sort by can tie at the edge of the limit. If two products both cost the same and you ask for <code>LIMIT 1</code>, you get one of them, and which one is not defined. When the question is "which product is the cheapest", it is worth checking whether the second row has the same price as the first: drop the limit, or raise it to five, and read the top of the list with your own eyes. Adding a second sort key, such as the name or the id, at least makes the answer the same every time you run it.</p>
+<p>NULL values also need a thought: in SQLite they sort before every other value in ascending order, and after them in descending order. If a column can be missing, the top of a sorted list may be full of NULLs rather than of the smallest real values; filter them out with <code>WHERE ... IS NOT NULL</code> when they do not belong in the answer.</p>
+
+<h2>Order of clauses</h2>
+<p>The clauses always come in the same order: <code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Putting <code>LIMIT</code> before <code>ORDER BY</code> is a syntax error, and writing <code>ORDER BY</code> before <code>WHERE</code> is too. Later pages add <code>GROUP BY</code> and <code>HAVING</code>, which sit between <code>WHERE</code> and <code>ORDER BY</code>.</p>
+
+<h2>Common mistakes</h2>
+<p>Relying on the insertion order or on the id as a stand-in for time: the row with the highest id is not always the latest event, so sort by the date itself. Forgetting <code>DESC</code> and reading the bottom of a list as if it were the top. Sorting dates stored in a form that does not sort as text, such as day/month/year. Using <code>LIMIT 1</code> without checking for ties. Sorting by a number stored as text, where <code>'10'</code> comes before <code>'9'</code>.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter II, <i>The Neighbouring Suite</i>, practises ORDER BY and LIMIT.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

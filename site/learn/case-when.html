@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CASE WHEN -- The Ritz Affair</title>
+<meta name="description" content="Conditional expressions in SQL with CASE WHEN: labelling rows, sorting values into buckets, grouping and counting by bucket, and conditional sums. A beginner&#x27;s guide with SQLite examples and results.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>CASE WHEN</h1>
+<p class="lede">SQL's if-then-else. <code>CASE</code> computes a value row by row, and once you can compute a label, you can group by it.</p>
+
+<h2>The shape of a CASE expression</h2>
+<p>A <code>CASE</code> expression lists conditions in order and returns the value of the first one that is true:</p>
+<pre><code>CASE
+  WHEN condition_1 THEN value_1
+  WHEN condition_2 THEN value_2
+  ELSE other_value
+END</code></pre>
+<p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="index.html">handbook index</a>.</p>
+
+<h2>Labelling rows</h2>
+<p>The simplest use turns a number into a word. Here every product receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
+<pre><code>SELECT name, price,
+       CASE
+         WHEN price &lt; 2 THEN 'small'
+         WHEN price &lt; 3.5 THEN 'medium'
+         ELSE 'large'
+       END AS band
+FROM product
+ORDER BY price;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th><th>band</th></tr>
+<tr><td>Baguette</td><td>1.2</td><td>small</td></tr>
+<tr><td>Croissant</td><td>1.4</td><td>small</td></tr>
+<tr><td>Pain au chocolat</td><td>1.6</td><td>small</td></tr>
+<tr><td>Almond croissant</td><td>2.2</td><td>medium</td></tr>
+<tr><td>Chocolate eclair</td><td>2.8</td><td>medium</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td><td>medium</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td><td>large</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td><td>large</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td><td>large</td></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td><td>large</td></tr>
+</table>
+
+<h2>Buckets and GROUP BY</h2>
+<p>The real power appears when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per bucket. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
+<pre><code>SELECT CASE
+         WHEN time &lt; '09:00' THEN 'early'
+         WHEN time &lt; '12:00' THEN 'morning'
+         WHEN time &lt; '17:00' THEN 'afternoon'
+         ELSE 'evening'
+       END AS part_of_day,
+       COUNT(*) AS orders
+FROM orders
+GROUP BY part_of_day
+ORDER BY orders DESC;</code></pre>
+<table class="result">
+<tr><th>part_of_day</th><th>orders</th></tr>
+<tr><td>early</td><td>6</td></tr>
+<tr><td>morning</td><td>3</td></tr>
+<tr><td>afternoon</td><td>3</td></tr>
+<tr><td>evening</td><td>2</td></tr>
+</table>
+<p>SQLite lets you group by the alias, as here. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
+<p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
+
+<h2>Conditional counts and sums</h2>
+<p>A <code>CASE</code> inside an aggregate counts or adds only some rows, which lets one query produce several figures side by side. <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> counts the rows that meet the condition. The same idea with a quantity in the <code>THEN</code> branch adds up only part of a column.</p>
+<pre><code>SELECT day,
+       COUNT(*) AS orders,
+       SUM(CASE WHEN time &lt; '12:00' THEN 1 ELSE 0 END) AS before_noon,
+       SUM(CASE WHEN time &gt;= '12:00' THEN 1 ELSE 0 END) AS after_noon
+FROM orders
+GROUP BY day
+ORDER BY day;</code></pre>
+<table class="result">
+<tr><th>day</th><th>orders</th><th>before_noon</th><th>after_noon</th></tr>
+<tr><td>2026-03-02</td><td>3</td><td>2</td><td>1</td></tr>
+<tr><td>2026-03-03</td><td>1</td><td>1</td><td>0</td></tr>
+<tr><td>2026-03-04</td><td>2</td><td>1</td><td>1</td></tr>
+<tr><td>2026-03-05</td><td>2</td><td>1</td><td>1</td></tr>
+<tr><td>2026-03-07</td><td>3</td><td>2</td><td>1</td></tr>
+<tr><td>2026-03-08</td><td>3</td><td>2</td><td>1</td></tr>
+</table>
+<p>This is often called pivoting: values that were rows (morning, afternoon) become columns. It is a compact way to compare categories without running one query per category.</p>
+
+<h2>CASE in ORDER BY</h2>
+<p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
+<pre><code>SELECT DISTINCT category
+FROM product
+ORDER BY CASE category WHEN 'pastry' THEN 1 WHEN 'bread' THEN 2 ELSE 3 END;</code></pre>
+<table class="result">
+<tr><th>category</th></tr>
+<tr><td>pastry</td></tr>
+<tr><td>bread</td></tr>
+<tr><td>cake</td></tr>
+</table>
+<p>This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
+
+<h2>Common mistakes</h2>
+<p>Forgetting <code>END</code>, which produces a confusing syntax error further down the query. Writing overlapping conditions in the wrong order, so that a broad condition placed first catches rows meant for a narrower one below it. Leaving out <code>ELSE</code> and getting NULL labels for the rows nobody thought of. Testing for NULL in the short form, where <code>WHEN NULL</code> never matches. Comparing times stored without a leading zero, where <code>'9:30'</code> sorts after <code>'12:00'</code>.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, practises CASE WHEN with GROUP BY.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

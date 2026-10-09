@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LIKE and text patterns -- The Ritz Affair</title>
+<meta name="description" content="Searching text in SQL with LIKE: the percent and underscore wildcards, case rules in SQLite, NOT LIKE, and how to combine a pattern with other filters. Beginner examples with real results.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>LIKE and text patterns</h1>
+<p class="lede">When you know part of a value but not all of it, <code>=</code> is too strict. <code>LIKE</code> matches a pattern.</p>
+
+<h2>Two wildcards</h2>
+<p><code>column LIKE 'pattern'</code> is true when the text in the column fits the pattern. A pattern is ordinary text with two special characters. The percent sign, <code>%</code>, stands for any run of characters, including none at all. The underscore, <code>_</code>, stands for exactly one character. Everything else in the pattern must match as written.</p>
+<p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="index.html">handbook index</a>.</p>
+<pre><code>SELECT name, price
+FROM product
+WHERE name LIKE '%croissant%';</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Croissant</td><td>1.4</td></tr>
+<tr><td>Almond croissant</td><td>2.2</td></tr>
+</table>
+<p>Both the plain croissant and the almond croissant match, even though the word sits at the start of one name and at the end of the other, and even though one is written with a capital letter. That last point deserves its own section.</p>
+
+<h2>Case and LIKE in SQLite</h2>
+<p>In SQLite, <code>LIKE</code> ignores the difference between upper and lower case for the letters A to Z. That is convenient when people type names inconsistently, but it differs from <code>=</code>, which is case-sensitive, and from some other databases: in PostgreSQL, <code>LIKE</code> is case-sensitive and <code>ILIKE</code> is the case-insensitive version. If you need a case-sensitive pattern in SQLite, <code>GLOB</code> does that, with <code>*</code> and <code>?</code> as its wildcards.</p>
+
+<h2>The underscore: a fixed length</h2>
+<p>The underscore is handy for codes and dates whose shape you know. The pattern <code>'2026-03-0_'</code> matches any of the first nine days of March 2026 and nothing else, because exactly one character must follow the zero. Two underscores require two characters, and so on.</p>
+<pre><code>SELECT name, joined
+FROM customer
+WHERE joined LIKE '2024-0_-0_';</code></pre>
+<table class="result">
+<tr><th>name</th><th>joined</th></tr>
+<tr><td>Ben Okafor</td><td>2024-02-03</td></tr>
+<tr><td>Emma Novak</td><td>2024-04-02</td></tr>
+<tr><td>Grace Lee</td><td>2024-06-07</td></tr>
+</table>
+<p>That keeps the customers who joined in the first nine days of any month from January to September 2024. Every value in the column has the same length, so the pattern reads like a template.</p>
+
+<h2>Combining a pattern with other conditions</h2>
+<p><code>LIKE</code> is a condition like any other, so it combines with <code>AND</code>, <code>OR</code> and <code>NOT</code>. <code>NOT LIKE</code> keeps the rows that do not match. A common pattern is to search broadly with <code>LIKE</code>, then narrow down with an exact filter on another column.</p>
+<pre><code>SELECT name, category
+FROM product
+WHERE name LIKE '%o%'
+  AND name NOT LIKE '%loaf%'
+  AND category &lt;&gt; 'cake';</code></pre>
+<table class="result">
+<tr><th>name</th><th>category</th></tr>
+<tr><td>Croissant</td><td>pastry</td></tr>
+<tr><td>Pain au chocolat</td><td>pastry</td></tr>
+<tr><td>Almond croissant</td><td>pastry</td></tr>
+<tr><td>Seeded rolls</td><td>bread</td></tr>
+</table>
+<p>Read it step by step: names that contain an "o" somewhere, minus the loaves, minus the cakes.</p>
+
+<h2>Searching more than one word</h2>
+<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches "chocolate", "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
+<pre><code>SELECT name
+FROM product
+WHERE name LIKE '%choc%' OR name LIKE '%tart%';</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Pain au chocolat</td></tr>
+<tr><td>Lemon tart</td></tr>
+<tr><td>Chocolate eclair</td></tr>
+</table>
+<p>A pattern search answers the question "which rows mention this?", but a mention is not proof. A row that contains a word may be about something else entirely, so read the matching rows rather than counting them blindly.</p>
+
+<h2>Performance, briefly</h2>
+<p>A pattern that starts with <code>%</code> forces the database to read every row, because no index can help it find text that may begin anywhere. On a small table that does not matter. On millions of rows it does, and a pattern that begins with fixed text, such as <code>'Choc%'</code>, is much cheaper.</p>
+
+<h2>Common mistakes</h2>
+<p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> is case-insensitive in every database. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter III, <i>A Plate in the Dark</i>, practises LIKE.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

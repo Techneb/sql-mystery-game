@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTEs and WITH RECURSIVE -- The Ritz Affair</title>
+<meta name="description" content="Common table expressions in SQL: naming a step with WITH, chaining several steps, joining a CTE, and following chains or generating rows with WITH RECURSIVE. A beginner&#x27;s guide with SQLite examples.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>CTEs and WITH RECURSIVE</h1>
+<p class="lede">Long queries are easier to write, read and check when they are built in named steps. A CTE is a named step.</p>
+
+<h2>WITH: naming a result</h2>
+<p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. Its value is in the reading. Instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
+<p>The examples use the bakery database from the <a href="index.html">handbook index</a>. Here the first step computes the value of each order line, and the main query adds those values up per order and keeps the larger orders.</p>
+<pre><code>WITH line AS (
+  SELECT oi.order_id, oi.quantity * p.price AS amount
+  FROM order_item AS oi
+  JOIN product AS p ON p.id = oi.product_id
+)
+SELECT order_id, ROUND(SUM(amount), 2) AS total
+FROM line
+GROUP BY order_id
+HAVING SUM(amount) &gt;= 7
+ORDER BY total DESC;</code></pre>
+<table class="result">
+<tr><th>order_id</th><th>total</th></tr>
+<tr><td>3</td><td>9.5</td></tr>
+<tr><td>10</td><td>8.4</td></tr>
+<tr><td>6</td><td>8.3</td></tr>
+<tr><td>13</td><td>7.8</td></tr>
+<tr><td>2</td><td>7.7</td></tr>
+<tr><td>7</td><td>7.6</td></tr>
+</table>
+
+<h2>Several steps, and joining a CTE</h2>
+<p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine.</p>
+<pre><code>WITH order_total AS (
+  SELECT oi.order_id, SUM(oi.quantity * p.price) AS total
+  FROM order_item AS oi
+  JOIN product AS p ON p.id = oi.product_id
+  GROUP BY oi.order_id
+),
+customer_total AS (
+  SELECT o.customer_id, COUNT(*) AS orders, SUM(t.total) AS spent
+  FROM orders AS o
+  JOIN order_total AS t ON t.order_id = o.id
+  GROUP BY o.customer_id
+)
+SELECT c.name, ct.orders, ROUND(ct.spent / ct.orders, 2) AS average_order
+FROM customer_total AS ct
+JOIN customer AS c ON c.id = ct.customer_id
+ORDER BY average_order DESC
+LIMIT 3;</code></pre>
+<table class="result">
+<tr><th>name</th><th>orders</th><th>average_order</th></tr>
+<tr><td>Grace Lee</td><td>1</td><td>8.4</td></tr>
+<tr><td>David Chen</td><td>2</td><td>8.1</td></tr>
+<tr><td>Emma Novak</td><td>2</td><td>8.05</td></tr>
+</table>
+<p>To debug such a query, replace the final <code>SELECT</code> with <code>SELECT * FROM order_total</code> and look at the intermediate result. Then do the same with the next step. A mistake usually shows up at the first step whose rows look wrong.</p>
+<p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code>.</p>
+
+<h2>WITH RECURSIVE: following a chain</h2>
+<p>Some questions have no fixed number of steps. "Who referred the person who referred this customer, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
+<p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Starting from the customers who came on their own, each round adds the people they referred, one generation further down.</p>
+<pre><code>WITH RECURSIVE tree(id, name, generation) AS (
+  SELECT id, name, 0 FROM customer WHERE referred_by IS NULL
+  UNION ALL
+  SELECT c.id, c.name, t.generation + 1
+  FROM customer AS c
+  JOIN tree AS t ON c.referred_by = t.id
+)
+SELECT name, generation FROM tree ORDER BY generation, id;</code></pre>
+<table class="result">
+<tr><th>name</th><th>generation</th></tr>
+<tr><td>Alice Turner</td><td>0</td></tr>
+<tr><td>David Chen</td><td>0</td></tr>
+<tr><td>Hugo Silva</td><td>0</td></tr>
+<tr><td>Ben Okafor</td><td>1</td></tr>
+<tr><td>Chloe Martin</td><td>1</td></tr>
+<tr><td>Emma Novak</td><td>2</td></tr>
+<tr><td>Grace Lee</td><td>2</td></tr>
+<tr><td>Farid Haddad</td><td>3</td></tr>
+</table>
+<p>Carrying extra columns through the recursion is a useful trick. A counter such as <code>generation</code> tells you how far each row is from the start, and a text column built up with <code>||</code> can record the whole path, which is often the answer you actually want.</p>
+
+<h2>WITH RECURSIVE: generating rows</h2>
+<p>A recursive CTE does not need a table at all. It can count, or produce every date of a period, which is handy for finding days that are missing from the data. The anchor gives the first date, the recursive part adds one day, and a condition in its <code>WHERE</code> stops the recursion.</p>
+<pre><code>WITH RECURSIVE calendar(day) AS (
+  SELECT '2026-03-02'
+  UNION ALL
+  SELECT date(day, '+1 day') FROM calendar WHERE day &lt; '2026-03-08'
+)
+SELECT cal.day, COUNT(o.id) AS orders
+FROM calendar AS cal
+LEFT JOIN orders AS o ON o.day = cal.day
+GROUP BY cal.day;</code></pre>
+<table class="result">
+<tr><th>day</th><th>orders</th></tr>
+<tr><td>2026-03-02</td><td>3</td></tr>
+<tr><td>2026-03-03</td><td>1</td></tr>
+<tr><td>2026-03-04</td><td>2</td></tr>
+<tr><td>2026-03-05</td><td>2</td></tr>
+<tr><td>2026-03-06</td><td>0</td></tr>
+<tr><td>2026-03-07</td><td>3</td></tr>
+<tr><td>2026-03-08</td><td>3</td></tr>
+</table>
+<p>The left join keeps the day on which nobody ordered, with a count of zero; grouping the <code>orders</code> table alone would simply have skipped it.</p>
+
+<h2>Common mistakes</h2>
+<p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE generation &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates. Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

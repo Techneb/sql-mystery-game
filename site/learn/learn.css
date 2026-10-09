@@ -1,0 +1,26 @@
+/* The clerk's handbook (site/learn/): article layout over ../style.css. No JavaScript on these pages, so the
+   night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
+@media (prefers-color-scheme: dark) {
+  :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5; }
+}
+.learn-nav { font-size: 13px; letter-spacing: 1px; margin-top: 6px; }
+.learn-nav a, .learn-foot a, .learn a { color: inherit; }
+.learn { max-width: 720px; margin: 0 auto; padding: 8px 16px 32px; font-size: 18px; line-height: 1.5; }
+.learn h1 { font: 900 32px/1.15 "Playfair Display", serif; text-align: center; margin: 24px 0 6px; }
+.learn h2 { font: 700 20px/1.2 "Playfair Display", serif; margin: 28px 0 6px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.learn .lede { font-style: italic; text-align: center; margin-bottom: 20px; }
+.learn code { font: 15px "Special Elite", monospace; }
+.learn pre { background: var(--term); color: var(--term-text); border-radius: var(--r-panel); padding: 10px 12px; overflow-x: auto; margin: 12px 0 6px; }
+.learn pre code { font: 14px/1.45 "Special Elite", monospace; white-space: pre; }
+.learn table.result { border-collapse: collapse; margin: 4px 0 16px; font-size: 15px; text-align: left; }
+.learn .result th { font: 700 11px "Cormorant Garamond", Georgia, serif; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--ink); padding: 2px 12px 2px 0; }
+.learn .result td { border-bottom: 1px solid var(--rule); padding: 3px 12px 3px 0; vertical-align: top; }
+.learn .in-game { border-top: 2px solid var(--ink); margin-top: 28px; padding-top: 8px; }
+.learn details.script summary { cursor: pointer; font-weight: 700; }
+.learn .toc li { margin: 4px 0; }
+.learn-foot { text-align: center; border-top: 1px solid var(--rule); padding: 12px 16px 24px; }
+@media (max-width: 600px) {
+  .learn { font-size: 17px; }
+  .learn h1 { font-size: 26px; }
+  .learn table.result { display: block; overflow-x: auto; }
+}

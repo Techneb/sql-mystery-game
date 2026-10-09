@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to play -- The Ritz Affair</title>
+<meta name="description" content="How to play The Ritz Affair, the browser detective game that teaches SQL: chapters, the terminal, Ctrl+Enter, the answer box, the schema, the case board, the night edition, badges and compete mode.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>How to play</h1>
+<p class="lede">You are the clerk Inspector Ganimard has hired. Your only weapon is SQL, and the police archives are a database that runs in your browser.</p>
+
+<h2>Starting</h2>
+<p>Open <a href="../">the game</a> and press <b>Investigate</b>. There is nothing to install and no account to create. The game keeps your progress in your own browser, so you can close the tab and come back later on the same device; a <b>New investigation</b> button in the corner starts again from the beginning. In learning mode, nothing you type leaves your computer.</p>
+
+<h2>How a chapter works</h2>
+<p>The page is laid out like a newspaper in three columns. On the right, the story of the chapter and its objective: a short, plain statement of what Ganimard wants to know. On the left, the schema of the archives. In the middle, the terminal where you write queries and the box where you give your answer.</p>
+<p>Read the story, then the objective. Each chapter practises one SQL construct; if you are stuck, the objective has a closed <b>Hint</b> toggle that names the chapter's tool and the tables it has just opened. The <a href="index.html">handbook pages</a> explain each construct on a separate example database.</p>
+
+<h2>The terminal</h2>
+<p>Type a query in the terminal and press <b>Ctrl+Enter</b> (or Cmd+Enter on a Mac), or the Run button, to run it. The result appears underneath as a table; an error appears in red, with SQLite's own message. Keywords, strings and numbers are coloured as you type. <b>Ctrl+F</b> tidies the query's layout and capital letters without changing its meaning, Tab indents, and Shift+Tab leaves the box. The archives are read-only: a query that tries to change or delete data fails harmlessly. A query that lists two tables with nothing to match them is refused before it runs, because it would pair every row with every other row and freeze the page. The History section under the terminal keeps the queries you have run.</p>
+
+<h2>The answer box</h2>
+<p>When you think you know the answer, type it in the <b>Answer</b> box and press Submit. Answers are forgiving about form: capital letters, punctuation, extra spaces and small words such as titles do not matter, so type the name, number or word the objective asks for, the way it appears in the data. A correct answer keeps the solved chapter on screen with a <b>Next chapter</b> button. In learning mode a wrong answer costs nothing, though after a few of them you may receive a telegram from someone who is enjoying your trouble.</p>
+
+<h2>The schema</h2>
+<p>The schema shows the tables you may use so far, with their columns. A gold key marks a primary key and a silver key a foreign key, and a red line joins the tables that point at each other, marked 1 and N at its ends. The tables of the current chapter stay outlined until you solve it, and each new chapter reveals its tables with a short glow. You can enlarge the schema from the icon beside its title. The handbook page <a href="schema.html">Tables, keys and the schema</a> explains how to read such a diagram.</p>
+
+<h2>The case board, suspects and notepad</h2>
+<p>Under the objective, the <b>case board</b> pins each answer you have found, with a label saying what it is. As the story introduces people, the <b>Suspects</b> panel shows their portraits and what is known about them; a dot on its button means there is something you have not read. The <b>notepad</b> is yours: write down anything you want to remember, and it stays in your browser.</p>
+
+<h2>The night edition</h2>
+<p>The case has two parts. After chapter VIII, the paper switches to its night edition for Part II: darker colours, four more chapters and new tables. A Day/Night button in the top corner lets you choose either palette whenever you like.</p>
+
+<h2>Badges</h2>
+<p>Badges reward particular ways of playing and a few things hidden in the archives; the badge panel next to the case board shows which ones you hold.</p>
+
+<h2>Compete mode</h2>
+<p>Compete mode is for class sessions. Your teacher gives you a season link; open it, press <b>Compete</b>, choose a pseudo and press <b>Start the clock</b>. A season covers Part I, the first eight chapters, on its own copy of the archives, so its answers differ from learning mode and from other seasons. The clock runs from the start until you solve the last chapter. Your progress is sent to your teacher's leaderboard, which ranks players by time, and each wrong answer adds a penalty to your time (ten seconds unless your teacher sets another value). Choose a pseudo that is not your full name. Compete progress is kept separately from learning mode, so a class session does not disturb your own investigation.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tables, keys and the schema -- The Ritz Affair</title>
+<meta name="description" content="How to read a database schema before querying it: tables and columns, primary keys, foreign keys, one-to-many relationships, NULL, and how to explore an unknown SQLite database with sqlite_master and PRAGMA.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>Tables, keys and the schema</h1>
+<p class="lede">Before the first query comes a question every analyst asks: what is in this database, and how do its tables fit together?</p>
+
+<h2>Tables, rows and columns</h2>
+<p>A relational database is a set of tables. Each table describes one kind of thing, and each row is one of those things. Each column has a name and holds one kind of value: a number, a piece of text, a date written as text. In the bakery database used across this handbook (described on the <a href="index.html">index</a>), <code>customer</code> holds people, <code>product</code> holds what is on sale, <code>orders</code> holds visits to the counter, and <code>order_item</code> holds the lines of each order.</p>
+<p>Notice what is not there. An order does not repeat the customer's name, and an order line does not repeat the product's price. Each fact is stored once, in the table it belongs to, and the other tables point to it. That is what makes the data consistent (change a price in one place and it is changed everywhere) and what makes joins necessary.</p>
+
+<h2>Primary keys</h2>
+<p>A primary key is a column whose value identifies one row and only one. In the bakery, every table but <code>order_item</code> has an <code>id</code> column for that purpose. An id is a label, not a measure: id 7 is not "later" or "bigger" than id 6 in any meaningful sense, even if it often happens to have been inserted later. Never read meaning into an id that the data does not promise.</p>
+
+<h2>Foreign keys and relationships</h2>
+<p>A foreign key is a column that holds the primary key of another table: <code>orders.customer_id</code> holds a <code>customer.id</code>. It expresses a relationship, and most relationships are one-to-many: one customer, many orders; one order, many lines. Schema diagrams draw this as a line between the two tables, often marked 1 at the parent end and N (or a crow's foot) at the child end. When you read a diagram, follow the lines: they are the joins you will write.</p>
+<p>A foreign key may point back into its own table. <code>customer.referred_by</code> holds the id of another customer, which is how the handbook's <a href="joins.html">self-join</a> and <a href="ctes.html">recursive</a> examples work.</p>
+
+<h2>Exploring an unknown database</h2>
+<p>SQLite describes itself in a built-in table called <code>sqlite_master</code>. Querying it lists every table, together with the statement that created it.</p>
+<pre><code>SELECT name
+FROM sqlite_master
+WHERE type = 'table'
+ORDER BY name;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>customer</td></tr>
+<tr><td>order_item</td></tr>
+<tr><td>orders</td></tr>
+<tr><td>product</td></tr>
+</table>
+<p>For the columns of one table, <code>PRAGMA table_info</code> gives their names, types, and whether each is part of the primary key. The table-valued form below can be used in a normal <code>SELECT</code>, so you can choose the columns you want to see.</p>
+<pre><code>SELECT name, type, pk
+FROM pragma_table_info('orders');</code></pre>
+<table class="result">
+<tr><th>name</th><th>type</th><th>pk</th></tr>
+<tr><td>id</td><td>INTEGER</td><td>1</td></tr>
+<tr><td>customer_id</td><td>INTEGER</td><td>0</td></tr>
+<tr><td>day</td><td>TEXT</td><td>0</td></tr>
+<tr><td>time</td><td>TEXT</td><td>0</td></tr>
+</table>
+<p>And <code>pragma_foreign_key_list</code> lists the foreign keys of a table: which column points to which table and column.</p>
+<pre><code>SELECT "from", "table", "to"
+FROM pragma_foreign_key_list('order_item');</code></pre>
+<table class="result">
+<tr><th>from</th><th>table</th><th>to</th></tr>
+<tr><td>product_id</td><td>product</td><td>id</td></tr>
+<tr><td>order_id</td><td>orders</td><td>id</td></tr>
+</table>
+
+<h2>Looking at the data itself</h2>
+<p>A schema tells you what can be stored, not what is stored. The next step is always to look at a few rows and count them. <code>LIMIT 5</code> shows the shape of the values (is a date written <code>2026-03-02</code> or <code>02/03/2026</code>? are times <code>07:15</code> or <code>715</code>?), and a <code>COUNT</code> per column shows where values are missing.</p>
+<pre><code>SELECT COUNT(*) AS customers,
+       COUNT(referred_by) AS with_referrer,
+       COUNT(DISTINCT town) AS towns
+FROM customer;</code></pre>
+<table class="result">
+<tr><th>customers</th><th>with_referrer</th><th>towns</th></tr>
+<tr><td>8</td><td>5</td><td>3</td></tr>
+</table>
+<p>Five minutes spent this way save an hour later. Knowing that a column can be NULL tells you to use <code>IS NULL</code>; knowing that times are text with a leading zero tells you that you can compare them as text; knowing how many rows a table holds tells you whether a result of fifty rows is a lot or a little.</p>
+
+<h2>NULL is not a value</h2>
+<p>A missing value is stored as NULL. It is not zero and not the empty string: it means "unknown". Any comparison with NULL is itself unknown, so <code>WHERE referred_by = 3</code> silently skips the rows where <code>referred_by</code> is NULL, and so does <code>WHERE referred_by &lt;&gt; 3</code>. Aggregates other than <code>COUNT(*)</code> ignore NULLs. Keep this in mind whenever a count looks too small.</p>
+
+<h2>Common mistakes</h2>
+<p>Starting to write a long query before looking at the tables. Treating an id as a date or a ranking. Joining two tables on columns that merely share a name rather than on an actual foreign key. Assuming a column is never empty. Assuming every value is spelled the same way: a quick <code>SELECT DISTINCT</code> on a text column shows whether "Old Town" is also written "old town" somewhere.</p>
+
+<p class="in-game"><b>In the game:</b> the schema beside the terminal grows as chapters reveal new tables, with keys and relationship lines drawn as described here; every chapter starts by reading it.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

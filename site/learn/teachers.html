@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For teachers -- The Ritz Affair</title>
+<meta name="description" content="Using The Ritz Affair in an SQL course: learning mode for practice, compete mode for a timed class session with a leaderboard, opening a season, and what to keep in mind before grading.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>For teachers</h1>
+<p class="lede">The Ritz Affair was written for a first SQL course. It replaces a worksheet with a story in which every answer has to be queried out of a real database.</p>
+
+<h2>What students practise</h2>
+<p>Twelve chapters, each built around one construct: SELECT and WHERE, ORDER BY and LIMIT, LIKE, GROUP BY and HAVING, JOIN, several joins with SUM, CASE WHEN, a window function with a CTE, a CTE with a join, LEFT JOIN and the self-join, LAG, and a recursive CTE. The puzzles are built so that the construct is needed: the obvious shortcut (a keyword search, the first row of a sorted list, a plausible guess) is planted with a decoy that gives a wrong answer. The game runs entirely in the browser, on SQLite, with no installation and no account. The <a href="index.html">handbook</a> covers each construct on a separate example database and can be given to students as reading.</p>
+
+<h2>Learning mode</h2>
+<p>Learning mode (the <b>Investigate</b> button) is for practice, in class or at home. There is no clock, and a wrong answer costs nothing. Progress is kept in each student's own browser and nothing is sent anywhere, so you cannot see learning-mode progress from your side; ask students to show their screen, or to report the chapter they reached. Part I is eight chapters; Part II adds four harder ones and suits the end of a course or the stronger students.</p>
+
+<h2>Compete mode</h2>
+<p>Compete mode turns Part I into a timed session with a class leaderboard. Each session uses a season: a separate copy of the archives with its own answers, numbered from 1 to 20. Using a new season for each group means that answers passed on from an earlier group, or found in learning mode, do not help.</p>
+<p>To open a season, add <code>?admin</code> to the game's address and enter the course passphrase, which you obtain from whoever deployed the game for your course. The admin panel's <b>Seasons</b> section shows which seasons already have results, lets you choose an unused one, and copies two links: the compete link for students and the leaderboard link for you. Students open their link, press <b>Compete</b>, choose a pseudo and start the clock. The <b>Settings</b> section sets the penalty added for each wrong answer (ten seconds by default), the query counts behind the end-of-game ranks, and the telegrams students receive after repeated wrong answers.</p>
+<p>The leaderboard ranks finished players by time, penalties included, and shows players still in progress by the chapter they have reached. Results are stored in a Google Sheet that belongs to whoever runs the game's backend for your course; nobody else can read it, apart from the public leaderboard page. Ask students to use a pseudo rather than their full name.</p>
+
+<h2>Before you grade</h2>
+<p>The game is open source, and its repository contains the whole plot, the queries that solve each chapter and the code that generates every season. A determined student can find answers there. Compete mode is also honour-based in other ways: it records the times reported by the browser, cross-checked against the server's own clock, but it cannot stop a student from sharing a screen or a neighbour's answers. Use the leaderboard for motivation and discussion rather than for marks, or grade something the game cannot hand out: the queries themselves, explained in the student's own words, on the handbook's example database or on one of your own.</p>
+
+<h2>A few practical notes</h2>
+<p>Compete mode suits a class that has already met joins and grouping; try Part I yourself first to judge how long your group will need. A debrief that compares two or three different correct queries for the same chapter works well. The stories are fiction: Arsene Lupin and Inspector Ganimard come from Maurice Leblanc's novels, and every other name, place in the data, sum and timetable is invented.</p>
+<p>For questions about the game, or to have a player's leaderboard rows removed, write to <a href="mailto:contact@alephb.uk">contact@alephb.uk</a>. What the game sends and stores is described in the <a href="../privacy.html">privacy notice</a>.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>

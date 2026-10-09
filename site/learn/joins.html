@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOIN, LEFT JOIN and self-joins -- The Ritz Affair</title>
+<meta name="description" content="Combining tables in SQL: inner JOIN on a foreign key, chaining several joins, LEFT JOIN to keep unmatched rows and find what is missing, and joining a table to itself. Beginner examples on SQLite.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="how-to-play.html">How to play</a> &middot; <a href="teachers.html">For teachers</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+</header>
+<main class="learn">
+<h1>JOIN, LEFT JOIN and self-joins</h1>
+<p class="lede">A good database keeps each fact in one place, so most real questions need two or more tables at once. Joins put them back together.</p>
+
+<h2>Keys: how tables point at each other</h2>
+<p>In the bakery database (see the <a href="index.html">handbook index</a>), an order does not repeat the customer's name and town. It stores <code>customer_id</code>, the id of a row in <code>customer</code>. A column like <code>customer.id</code>, which identifies each row, is a primary key; a column like <code>orders.customer_id</code>, which holds the primary key of another table, is a foreign key. A join follows that pointer.</p>
+
+<h2>The inner JOIN</h2>
+<p><code>FROM a JOIN b ON condition</code> pairs every row of <code>a</code> with every row of <code>b</code> for which the condition is true. The condition is almost always "this foreign key equals that primary key". Give each table a short alias (<code>o</code>, <code>c</code>) and prefix the columns with it, so that both you and the database know which <code>id</code> you mean.</p>
+<pre><code>SELECT o.id, o.day, c.name, c.town
+FROM orders AS o
+JOIN customer AS c ON c.id = o.customer_id
+WHERE o.day = '2026-03-02';</code></pre>
+<table class="result">
+<tr><th>id</th><th>day</th><th>name</th><th>town</th></tr>
+<tr><td>1</td><td>2026-03-02</td><td>Alice Turner</td><td>Riverside</td></tr>
+<tr><td>2</td><td>2026-03-02</td><td>Ben Okafor</td><td>Hillcrest</td></tr>
+<tr><td>3</td><td>2026-03-02</td><td>David Chen</td><td>Old Town</td></tr>
+</table>
+<p>An inner join keeps only the pairs that match. An order whose customer is missing would vanish from the result, and so does a customer who never ordered.</p>
+
+<h2>Several joins in a row</h2>
+<p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products and their prices: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code>. This finishes the example started on the GROUP BY page.</p>
+<pre><code>SELECT c.name, ROUND(SUM(oi.quantity * p.price), 2) AS spent
+FROM customer AS c
+JOIN orders AS o      ON o.customer_id = c.id
+JOIN order_item AS oi ON oi.order_id = o.id
+JOIN product AS p     ON p.id = oi.product_id
+GROUP BY c.id, c.name
+HAVING SUM(oi.quantity * p.price) &gt; 7
+ORDER BY spent DESC;</code></pre>
+<table class="result">
+<tr><th>name</th><th>spent</th></tr>
+<tr><td>David Chen</td><td>16.2</td></tr>
+<tr><td>Emma Novak</td><td>16.1</td></tr>
+<tr><td>Alice Turner</td><td>14.0</td></tr>
+<tr><td>Ben Okafor</td><td>12.2</td></tr>
+<tr><td>Chloe Martin</td><td>10.2</td></tr>
+<tr><td>Grace Lee</td><td>8.4</td></tr>
+<tr><td>Farid Haddad</td><td>7.6</td></tr>
+</table>
+<p>When you build a query like this, add one join at a time and look at the rows before you group them. If the count of rows jumps unexpectedly, a condition is missing or wrong, and every sum after it will be inflated.</p>
+
+<h2>Keeping the unmatched rows: LEFT JOIN</h2>
+<p><code>LEFT JOIN</code> keeps every row of the table on its left, even when nothing on the right matches. For those rows, the columns of the right-hand table are filled with NULL. That makes it the tool for questions about absence: which customers have never ordered, which products nobody bought. Join, then keep the rows where the right-hand side is NULL.</p>
+<pre><code>SELECT p.name, p.category
+FROM product AS p
+LEFT JOIN order_item AS oi ON oi.product_id = p.id
+WHERE oi.product_id IS NULL;</code></pre>
+<table class="result">
+<tr><th>name</th><th>category</th></tr>
+<tr><td>Carrot cake slice</td><td>cake</td></tr>
+</table>
+<p>Where you write a condition matters with a left join. A condition on the right-hand table placed in <code>ON</code> limits what may match, and still keeps every left row. The same condition placed in <code>WHERE</code> runs after the join and throws away the rows whose right side is NULL, which turns the left join back into an inner join.</p>
+
+<h2>A table joined to itself</h2>
+<p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the person who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own.</p>
+<pre><code>SELECT newcomer.name AS customer, referrer.name AS referred_by
+FROM customer AS newcomer
+LEFT JOIN customer AS referrer ON referrer.id = newcomer.referred_by
+ORDER BY newcomer.id;</code></pre>
+<table class="result">
+<tr><th>customer</th><th>referred_by</th></tr>
+<tr><td>Alice Turner</td><td>NULL</td></tr>
+<tr><td>Ben Okafor</td><td>Alice Turner</td></tr>
+<tr><td>Chloe Martin</td><td>Alice Turner</td></tr>
+<tr><td>David Chen</td><td>NULL</td></tr>
+<tr><td>Emma Novak</td><td>Chloe Martin</td></tr>
+<tr><td>Farid Haddad</td><td>Emma Novak</td></tr>
+<tr><td>Grace Lee</td><td>Ben Okafor</td></tr>
+<tr><td>Hugo Silva</td><td>NULL</td></tr>
+</table>
+<p>Self-joins also compare rows of the same table with each other: two orders by the same customer on the same day, or two customers from the same town. In that case add a condition such as <code>a.id &lt; b.id</code>, so that a row is not paired with itself and each pair appears once rather than twice.</p>
+<pre><code>SELECT a.name, b.name AS neighbour, a.town
+FROM customer AS a
+JOIN customer AS b ON b.town = a.town AND a.id &lt; b.id
+WHERE a.town = 'Riverside';</code></pre>
+<table class="result">
+<tr><th>name</th><th>neighbour</th><th>town</th></tr>
+<tr><td>Alice Turner</td><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>Alice Turner</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Chloe Martin</td><td>Grace Lee</td><td>Riverside</td></tr>
+</table>
+
+<h2>Common mistakes</h2>
+<p>Forgetting the <code>ON</code> condition, or listing two tables separated by a comma with no condition: every row is paired with every other row, and a few thousand rows become millions. Joining on the wrong columns, such as <code>o.id = c.id</code>, which runs without error and returns nonsense. Leaving a column name unprefixed when both tables have it. Summing after a join that has duplicated rows. Filtering a left join's right-hand table in <code>WHERE</code> and losing the unmatched rows you wanted to keep.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter V, <i>The Boarding House</i>, introduces JOIN; Chapter VI, <i>Follow the Francs</i>, chains three; Chapter IX, <i>The Trunk</i>, joins inside a CTE; Chapter X, <i>Never Seen Together</i>, practises LEFT JOIN and the self-join.</p>
+</main>
+<footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
+</body>
+</html>
