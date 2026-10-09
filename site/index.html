@@ -50,9 +50,10 @@
     <div class="label-row"><span class="label">SCHEMA</span><button id="btn-erd" class="quiet">Enlarge</button></div>
     <div id="erd" class="erd" role="img" aria-label="Database schema: the tables revealed so far and their relationships"></div>
     <p class="erd-legend muted">
-      <span><svg width="16" height="10" viewBox="0 0 16 10" class="key pk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>primary key</span>
-      <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
-      <span><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">N</text></svg>one-to-many</span>
+      <span data-legend="pk"><svg width="16" height="10" viewBox="0 0 16 10" class="key pk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>primary key</span>
+      <span data-legend="fk" hidden><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
+      <span data-legend="many" hidden><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">N</text></svg>one-to-many</span>
+      <span data-legend="one" hidden><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">1</text></svg>one-to-one</span>
     </p>
     <details id="ad-box" class="ad-box" open hidden>
       <summary class="label">ADVERTISEMENT</summary>

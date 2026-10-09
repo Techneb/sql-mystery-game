@@ -657,11 +657,32 @@ async function renderErd(newTables = []) {
     p.classList.toggle("hidden", !(vis.has(from) && vis.has(to)));
   }
   fitErd();
+  renderLegend();
   if (newTables.length) {
     $("erd").querySelectorAll(".stamp").forEach(s => s.remove());   // two reveals within 2.5 s must not overlap
     const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
     $("erd").appendChild(s); setTimeout(() => s.remove(), 2500);
   }
+}
+
+// The legend under the schema names only what the visible schema shows. visible = { fk: any visible table has a
+// foreign key, cards: [[end, end], ...] the "1"/"N" labels of each visible line }.
+export function legendEntries(visible) {
+  const show = new Set(["pk"]);
+  if (visible.fk) show.add("fk");
+  if (visible.cards.some(c => c.includes("N"))) show.add("many");
+  if (visible.cards.some(c => c[0] === "1" && c[1] === "1")) show.add("one");
+  return show;
+}
+
+function renderLegend() {
+  const svg = $("erd").querySelector("svg");
+  if (!svg) return;
+  const show = legendEntries({
+    fk: !!svg.querySelector("g.table:not(.hidden) .key.fk"),
+    cards: [...svg.querySelectorAll("g.fk:not(.hidden)")].map(g => [...g.querySelectorAll("text")].map(t => t.textContent.trim())),
+  });
+  for (const s of document.querySelectorAll("[data-legend]")) s.hidden = !show.has(s.dataset.legend);
 }
 
 // Crop the viewBox to the tables revealed so far and fit that to the column (never upscaled past

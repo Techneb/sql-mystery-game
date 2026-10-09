@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -84,6 +84,14 @@ test("tables are revealed chapter by chapter", () => {
   assert.ok(!visibleTables(data.chapters, s).has("train_ticket"));
   s.part2 = true;
   assert.ok(visibleTables(data.chapters, s).has("train_ticket"));
+});
+
+test("the schema legend lists only what the visible schema shows", () => {
+  const sorted = v => [...legendEntries(v)].sort();
+  assert.deepEqual(sorted({ fk: false, cards: [] }), ["pk"]);   // chapter 1: two tables, no link
+  assert.deepEqual(sorted({ fk: true, cards: [["1", "N"]] }), ["fk", "many", "pk"]);
+  assert.deepEqual(sorted({ fk: true, cards: [["1", "1"]] }), ["fk", "one", "pk"]);
+  assert.deepEqual(sorted({ fk: true, cards: [["N", "1"], ["1", "1"]] }), ["fk", "many", "one", "pk"]);
 });
 
 const base = () => ({ event: "query", sql: "", rows: 0, error: false, chapter: 1, state: freshState(),
