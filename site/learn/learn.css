@@ -3,7 +3,8 @@
 @media (prefers-color-scheme: dark) {
   :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5; }
 }
-.learn-nav { font-size: 13px; letter-spacing: 1px; margin-top: 6px; }
+/* the same line as the landing's .landing-foot (.muted: 13px Cormorant, middle dots, underlined links) */
+.learn-nav { margin-top: 6px; }
 .learn-nav a, .learn-foot a, .learn a { color: inherit; }
 .learn { max-width: 720px; margin: 0 auto; padding: 8px 16px 32px; font-size: 18px; line-height: 1.5; }
 .learn h1 { font: 900 32px/1.15 "Playfair Display", serif; text-align: center; margin: 24px 0 6px; }
