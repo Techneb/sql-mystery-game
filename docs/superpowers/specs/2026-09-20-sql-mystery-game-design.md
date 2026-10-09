@@ -419,6 +419,15 @@ framework, no bundler.
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
   messages. The ad box exists: a `<details id="ad-box">` under the schema, open by default, closed state
   remembered per browser (`ritz.ads`), hidden until `ADS_ON` in `site/app.js` (preview: `localhost:8000/?ads=1`).
+  **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
+  local) found the reviewed URL alephb.uk showing a crawler 48 words and the game about 70 words of prose. Shipped the same
+  day: the game's `<meta name="description">`, a closed "About this game" `<details>` on the landing card (347 words:
+  chapter titles and constructs, how to play, Part II, compete, fiction notice; no clue values) taking the landing page
+  to 583 crawler words, and privacy.html's Advertising section with Google's required wording (ads not loaded yet, said
+  so). The supermain rewrote alephb.uk (about 200 words at the owner's request, bullets per project, no link to the
+  unreleased project) and added alephb.uk/privacy.html with the advertising and consent wording and a footer nav.
+  Owner to do: point the AdSense consent message at https://alephb.uk/privacy.html; do not remove or re-add the site
+  in AdSense while the review runs. Not built: static pages per SQL construct (the medium lever from the report).
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
