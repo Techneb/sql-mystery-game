@@ -441,7 +441,13 @@ framework, no bundler.
   tables, telegram slip, Suspects and Badges panels. The phone order was then checked on the owner's phone (2026-10-09): story first. The same screenshot showed the
   Day/Night button overlapping the title on a 430 px screen, so both masthead buttons gained inline SVG icons
   (moon/sun swapping with the label, a magnifying glass with a plus for New investigation) and are icon-only
-  32 px squares in the corners under 900 px. Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
+  32 px squares in the corners under 900 px.
+  Later the same day the owner asked for less aggressive edges: four radius scales were mocked up on a design
+  canvas (A square, B 3 px, C 6/8/10 px, D 10-14 px with pill buttons) over the real components in both editions,
+  and the owner chose **C**: 6 px boxes, buttons and inputs, 8 px terminal, results, panels and slips, 10 px cards,
+  badges, dialogs and the landing card, softer card shadows, rounded ERD table boxes; the masthead rule, portraits,
+  drop caps and the stamp stay as they are. Also decided then: section labels (OBJECTIVE, SCHEMA...) in bold
+  Playfair; the Enlarge button icon-only; Badges and Suspects buttons with icons beside their text. Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
   outlined or scrolled to there, and it stays that way: the schema never points at the tables a solution uses,
   finding the right table is part of the work.
 - **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
