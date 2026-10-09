@@ -19,7 +19,8 @@
 .learn details.script summary { cursor: pointer; font-weight: 700; }
 .learn .toc li { margin: 4px 0; }
 /* page menu in reading order and previous/next links: both generated from one list, so they agree */
-.learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; margin-top: 6px; }
+.learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
+.learn .game-label { font: 700 13px/1.2 "Playfair Display", serif; font-variant: small-caps; letter-spacing: 1px; text-align: center; margin: 0 0 6px; }
 .learn-menu a { color: inherit; }
 .learn-menu .current { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .learn-pager { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--rule); margin-top: 28px; padding-top: 10px; font-size: 16px; }
