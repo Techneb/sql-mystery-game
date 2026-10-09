@@ -16,6 +16,17 @@
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
   <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">Database</a>
+    <a href="schema.html">Schema</a>
+    <a href="select-where.html">SELECT</a>
+    <a href="order-by-limit.html">ORDER BY</a>
+    <span class="current" aria-current="page">LIKE</span>
+    <a href="group-by-having.html">GROUP BY</a>
+    <a href="joins.html">JOIN</a>
+    <a href="case-when.html">CASE</a>
+    <a href="window-functions.html">Windows</a>
+    <a href="ctes.html">CTEs</a></nav>
 </header>
 <main class="learn">
 <h1>LIKE and text patterns</h1>
@@ -86,6 +97,7 @@ WHERE name LIKE '%choc%' OR name LIKE '%tart%';</code></pre>
 <p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> is case-insensitive in every database. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter III, <i>A Plate in the Dark</i>, practises LIKE.</p>
+<nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
 </main>
 <footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
 </body>

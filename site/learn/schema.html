@@ -16,6 +16,17 @@
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
   <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">Database</a>
+    <span class="current" aria-current="page">Schema</span>
+    <a href="select-where.html">SELECT</a>
+    <a href="order-by-limit.html">ORDER BY</a>
+    <a href="like.html">LIKE</a>
+    <a href="group-by-having.html">GROUP BY</a>
+    <a href="joins.html">JOIN</a>
+    <a href="case-when.html">CASE</a>
+    <a href="window-functions.html">Windows</a>
+    <a href="ctes.html">CTEs</a></nav>
 </header>
 <main class="learn">
 <h1>Tables, keys and the schema</h1>
@@ -83,6 +94,7 @@ FROM customer;</code></pre>
 <p>Starting to write a long query before looking at the tables. Treating an id as a date or a ranking. Joining two tables on columns that merely share a name rather than on an actual foreign key. Assuming a column is never empty. Assuming every value is spelled the same way: a quick <code>SELECT DISTINCT</code> on a text column shows whether "Old Town" is also written "old town" somewhere.</p>
 
 <p class="in-game"><b>In the game:</b> the schema beside the terminal grows as chapters reveal new tables, with keys and relationship lines drawn as described here; every chapter starts by reading it.</p>
+<nav class="learn-pager"><a class="prev" href="database.html">Previous: The bakery database</a><a class="next" href="select-where.html">Next: SELECT and WHERE</a></nav>
 </main>
 <footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
 </body>

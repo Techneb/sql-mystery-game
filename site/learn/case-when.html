@@ -16,6 +16,17 @@
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
   <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">Database</a>
+    <a href="schema.html">Schema</a>
+    <a href="select-where.html">SELECT</a>
+    <a href="order-by-limit.html">ORDER BY</a>
+    <a href="like.html">LIKE</a>
+    <a href="group-by-having.html">GROUP BY</a>
+    <a href="joins.html">JOIN</a>
+    <span class="current" aria-current="page">CASE</span>
+    <a href="window-functions.html">Windows</a>
+    <a href="ctes.html">CTEs</a></nav>
 </header>
 <main class="learn">
 <h1>CASE WHEN</h1>
@@ -113,6 +124,7 @@ ORDER BY CASE category WHEN 'pastry' THEN 1 WHEN 'bread' THEN 2 ELSE 3 END;</cod
 <p>Forgetting <code>END</code>, which produces a confusing syntax error further down the query. Writing overlapping conditions in the wrong order, so that a broad condition placed first catches rows meant for a narrower one below it. Leaving out <code>ELSE</code> and getting NULL labels for the rows nobody thought of. Testing for NULL in the short form, where <code>WHEN NULL</code> never matches. Comparing times stored without a leading zero, where <code>'9:30'</code> sorts after <code>'12:00'</code>.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, practises CASE WHEN with GROUP BY.</p>
+<nav class="learn-pager"><a class="prev" href="joins.html">Previous: JOIN, LEFT JOIN and self-joins</a><a class="next" href="window-functions.html">Next: Window functions: RANK and LAG</a></nav>
 </main>
 <footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
 </body>

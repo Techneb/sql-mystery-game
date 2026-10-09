@@ -16,6 +16,17 @@
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
   <nav class="learn-nav"><a href="../">Game</a> &middot; <a href="index.html">Handbook index</a> &middot; <a href="../privacy.html">Privacy</a></nav>
+  <nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">Database</a>
+    <a href="schema.html">Schema</a>
+    <a href="select-where.html">SELECT</a>
+    <a href="order-by-limit.html">ORDER BY</a>
+    <a href="like.html">LIKE</a>
+    <a href="group-by-having.html">GROUP BY</a>
+    <a href="joins.html">JOIN</a>
+    <a href="case-when.html">CASE</a>
+    <span class="current" aria-current="page">Windows</span>
+    <a href="ctes.html">CTEs</a></nav>
 </header>
 <main class="learn">
 <h1>Window functions: RANK and LAG</h1>
@@ -104,6 +115,7 @@ LIMIT 3;</code></pre>
 <p>Using a window function in <code>WHERE</code> or <code>HAVING</code> instead of filtering in an outer query. Omitting <code>PARTITION BY</code>, so that the window runs across groups. Omitting the <code>ORDER BY</code> inside <code>OVER</code>, which makes <code>LAG</code> and <code>ROW_NUMBER</code> depend on an arbitrary order. Confusing the <code>ORDER BY</code> inside the window, which drives the computation, with the one at the end of the query, which only sorts the output. Choosing <code>ROW_NUMBER</code> when ties should share a place, or <code>RANK</code> when exactly one row per group is wanted.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, practises RANK() OVER with a CTE; Chapter XI, <i>The Silence</i>, practises LAG() OVER.</p>
+<nav class="learn-pager"><a class="prev" href="case-when.html">Previous: CASE WHEN</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
 </main>
 <footer class="learn-foot muted">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="../">Play The Ritz Affair</a> &middot; <a href="index.html">The clerk's handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="mailto:contact@alephb.uk">contact@alephb.uk</a></footer>
 </body>
