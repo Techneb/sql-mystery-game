@@ -13,6 +13,8 @@ button:disabled { opacity: .4; cursor: default; }
 input, textarea { font: inherit; background: var(--card); color: var(--ink); border: 1px solid var(--ink); padding: 4px 6px; border-radius: var(--r-box); }
 .label { font: 700 13px/1.2 "Playfair Display", serif; letter-spacing: 1px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+/* the schema's Enlarge icon sits right after its title, centred on it (course owner, 2026-10-09) */
+.col-erd .label-row { justify-content: flex-start; gap: 8px; align-items: center; }
 .muted { opacity: .75; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); border-radius: var(--r-box); padding: 6px 8px; margin: 10px 0; }
@@ -204,7 +206,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
 .telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; color: #1c1a17;   /* a paper slip in both editions: its own ink, never --ink */ border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }
-#notes { border-radius: var(--r-panel); width: 100%; min-height: 120px; resize: vertical; font: 13px/1.4 "Special Elite", monospace; }
+#notes { border-radius: var(--r-panel); width: 100%; min-height: 120px; margin-top: 6px; resize: vertical; font: 13px/1.4 "Special Elite", monospace; }
 
 /* toasts */
 /* ?admin in the URL only; not linked from anywhere a student would find */
