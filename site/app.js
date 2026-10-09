@@ -1007,7 +1007,7 @@ async function jumpToChapter(n) {
   if (!(await unlockAdmin())) return false;
   noPersist = true;
   state = freshState();
-  for (let i = 1; i < n; i++) { state.solved.push(i); state.answers[i] = "(debug)"; }
+  for (let i = 1; i < n; i++) state.solved.push(i);   // no answer recorded: the board card shows its label alone
   if (n > 8) state.part2 = true;
   enterGame();
   return true;
@@ -1194,7 +1194,7 @@ async function boot() {
     if (debugOk) {
       noPersist = true;
       state = freshState();
-      for (let n = 1; n < debugChapter; n++) { state.solved.push(n); state.answers[n] = "(debug)"; }
+      for (let n = 1; n < debugChapter; n++) state.solved.push(n);   // no answer recorded: the board card shows its label alone
       if (debugChapter > 8) state.part2 = true;
     } else {
       state = loadFrom(key);
