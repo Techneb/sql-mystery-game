@@ -116,7 +116,7 @@ WHERE a.town = 'Riverside';</code></pre>
 <h2>Common mistakes</h2>
 <p>Forgetting the <code>ON</code> condition, or listing two tables separated by a comma with no condition: every row is paired with every other row, and a few thousand rows become millions. Joining on the wrong columns, such as <code>o.id = c.id</code>, which runs without error and returns nonsense. Leaving a column name unprefixed when both tables have it. Summing after a join that has duplicated rows. Filtering a left join's right-hand table in <code>WHERE</code> and losing the unmatched rows you wanted to keep.</p>
 
-<p class="in-game"><b>In the game:</b> Chapter V, <i>The Boarding House</i>, introduces JOIN; Chapter VI, <i>Follow the Francs</i>, chains three; Chapter IX, <i>The Trunk</i>, joins inside a CTE; Chapter X, <i>Never Seen Together</i>, practises LEFT JOIN and the self-join.</p>
+<p class="in-game"><b>In the game:</b> Chapter V, <i>The Boarding House</i>, introduces JOIN; Chapter VI, <i>Follow the Francs</i>, chains three; Chapter IX, <i>The Trunk</i>, joins inside a CTE; Chapter X, <i>Never Seen Together</i>, practises the self-join.</p>
 <nav class="learn-pager"><a class="prev" href="group-by-having.html">Previous: GROUP BY, aggregates and HAVING</a><a class="next" href="case-when.html">Next: CASE WHEN</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
