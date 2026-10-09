@@ -658,6 +658,7 @@ async function renderErd(newTables = []) {
   }
   fitErd();
   renderLegend();
+  showCurrentTables();
   if (newTables.length) {
     $("erd").querySelectorAll(".stamp").forEach(s => s.remove());   // two reveals within 2.5 s must not overlap
     const s = document.createElement("div"); s.className = "stamp"; s.textContent = "NEW EVIDENCE";
@@ -683,6 +684,15 @@ function renderLegend() {
     cards: [...svg.querySelectorAll("g.fk:not(.hidden)")].map(g => [...g.querySelectorAll("text")].map(t => t.textContent.trim())),
   });
   for (const s of document.querySelectorAll("[data-legend]")) s.hidden = !show.has(s.dataset.legend);
+}
+
+// The current chapter's tables may sit below the schema box's fold (chapter 7's telegram): scroll the box,
+// not the page (scrollIntoView would move the page too), so the first one is in view.
+function showCurrentTables() {
+  const box = $("erd"), g = box.querySelector("g.table.current:not(.hidden)");
+  if (!g) return;
+  const b = box.getBoundingClientRect(), r = g.getBoundingClientRect();
+  if (r.top < b.top || r.bottom > b.bottom) box.scrollTop += r.top - b.top - 8;
 }
 
 // Crop the viewBox to the tables revealed so far and fit that to the column (never upscaled past
