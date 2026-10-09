@@ -232,56 +232,56 @@ WRONG_DEFAULT = [
   "Not that, mon petit. Look at the data again.",
 ]
 ENDINGS = dict(
-  part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n'Monsieur {lupin_alias}. You are under arrest.'\n\nThe gentleman smiles. 'Delighted, Inspector.' He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out, a day behind the Blue Star: *it crossed yesterday, in a trunk.*",
-  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n'Arithmetic, Inspector.'\n\n'Madame la Comtesse, you are under arrest.' The jeweller bought nothing: the forty thousand were hers, sent round seven doors to come home as a sale. She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
+  part1="Gare du Nord, 20 May, 09:10. **Ganimard** is early: *Lupin had asked him not to be late.* His hand falls on the shoulder of **{lupin_alias}, Esq.**\n\n*'Monsieur {lupin_alias}. You are under arrest.'*\n\nThe gentleman smiles. *'Delighted, Inspector.'* He lets the inspector take the small velvet case from his hand. Ganimard opens it. *It is empty.*\n\nA gendarme leads the prisoner away in handcuffs, still smiling. Behind them, the boat train pulls out, a day behind the Blue Star: *it crossed yesterday, in a trunk.*",
+  part2="The **Comtesse** receives **Ganimard** in her suite, now insured for three hundred thousand francs. She offers tea. Ganimard declines, *which is a first*, and lays the bank's ledger on her desk: sold for forty thousand, insured for three hundred.\n\n*'Arithmetic, Inspector.'*\n\n*'Madame la Comtesse, you are under arrest.'* The jeweller bought nothing: the forty thousand were hers, sent round seven doors to come home as a sale. She asks for her furs. You are promoted to a desk with a window. **Lupin**, in London, sends a telegram.",
 )
 
 TEXT = {
  1: dict(
   title="The Night of the 17th",
-  story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n'One of these is ours, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'",
+  story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is ours**, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'*",
   objective="Mr Duroc knows which night.",
   answer_form="the report id",
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L"),
  2: dict(
   title="The Neighbouring Suite",
-  story="**Ganimard** drops the report you found back on your desk. 'It is all in here, clerk, if you read it properly. *I am not paid to read twice.*'\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January.",
+  story="**Ganimard** drops the report you found back on your desk. *'It is all in here, clerk, if you read it properly. I am not paid to read twice.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January.",
   objective="The report says where the thief came from. Who slept there?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L"),
  3: dict(
   title="A Plate in the Dark",
-  story="**His Lordship**, woken at dawn, is displeased but useful. 'My valet saw the man,' he says, 'and his account is with your inspector already. Read it, if you doubt *a peer's memory*.'\n\nThe cab company keeps a book of every fare. **Ganimard** wants the cab that took our man.",
+  story="**His Lordship**, woken at dawn, is displeased but useful. *'My valet saw the man,'* he says, *'and his account is with your inspector already. Read it, if you doubt a peer's memory.'*\n\nThe cab company keeps a book of every fare. **Ganimard** wants **the cab that took our man**.",
   objective="Read what the neighbour told Ganimard, then find the cab.",
   answer_form="the plate",
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
-  story="**Ganimard** snorts at the plate. 'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'\n\nThe book holds some sixty fares for that cab in the week before the theft, from the 13th to the 19th of May. 'A thief with a plan visits his fence before the job. Find me the address this cab kept going back to. *I do not want the list. I want the address.*'",
+  story="**Ganimard** snorts at the plate. *'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'*\n\nThe book holds some sixty fares for that cab in the week before the theft, from the 13th to the 19th of May. *'A thief with a plan visits his fence before the job. Find me **the address this cab kept going back to**. I do not want the list. I want the address.'*",
   objective="Where did the cab from chapter 3 keep going the week before the theft?",
   answer_form="the address",
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(
   title="The Boarding House",
-  story="The address is a boarding house: five tenants, and a landlady who has *seen nothing since 1889*.\n\n**Ganimard** wants the jeweller among them. *Every fence in Paris calls himself a jeweller.*",
+  story="The address is a boarding house: five tenants, and a landlady who has *seen nothing since 1889*.\n\n**Ganimard** wants the jeweller among them. Every fence in Paris calls himself a jeweller.",
   objective="Who is the jeweller at the address from chapter 4?",
   answer_form="the person's name",
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP A L"),
  6: dict(
   title="Follow the Francs",
-  story="The jeweller banks at the *Credit Lyonnais*, and **Ganimard** has a warrant, so the bank hides nothing. Its ledger has one line per transfer: the account that paid, the account that was paid, the sum and the day.\n\n'A fence pays a thief in three pieces, clerk: one for the job, one for the silence, one for the road. *The bank does not blink at small sums.* And of all the men he paid that way in May, ours was paid best.'",
+  story="The jeweller banks at the *Credit Lyonnais*, and **Ganimard** has a warrant, so the bank hides nothing. Its ledger has one line per transfer: the account that paid, the account that was paid, the sum and the day.\n\n*'A fence pays a thief in three pieces, clerk: one for the job, one for the silence, one for the road. The bank does not blink at small sums. And of all the men he paid that way in May, **ours was paid best**.'*",
   objective="Of the accounts the jeweller from chapter 5 paid in three pieces in May, which received the most?",
   answer_form="the account number",
   telegram="MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="The Quietest Hour",
-  story="Lupin wrote that he confirmed the payment by wire from the Ritz desk, *at its quietest*. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, *which is one more than he needs*. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'",
+  story="**Lupin** wrote that he confirmed the payment by wire from the Ritz desk, at its quietest. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n*'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, which is one more than he needs. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'*",
   objective="Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
   answer_form="the telegram id",
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
  8: dict(
   title="The First Order Before Dawn",
-  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n'A man of habit is a man with a room number, clerk. And before dawn, at my age, means before six.'",
+  story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n*'A man of habit is **a man with a room number**, clerk. And before dawn, at my age, means before six.'*",
   objective="The wire from chapter 7 describes a habit. Whose was it, on the 18th?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
@@ -293,19 +293,19 @@ TEXT = {
   telegram="MY DEAR CLERK STOP HIS LORDSHIP CARRIED THE STONE THROUGH CUSTOMS WITH A CLEAR CONSCIENCE STOP THE TICKET WAS BOUGHT BY A REGULAR STOP YOU HAVE NEVER SEEN US TOGETHER STOP A L"),
  10: dict(
   title="Never Seen Together",
-  story="The ticket held by nobody of His Lordship's household was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and the gentleman from chapter 8. You have *a suspicion of the theatrical kind*: two names, one man. And one man cannot sleep in two suites on the same night.",
+  story="The ticket held by nobody of His Lordship's household was bought for cash. The booking clerk remembers only *'a regular, monsieur, English, excellent coat'*, which describes half the Ritz's second floor.\n\nThe regulars include the **Senora de Almagro**, **M. Sernine** and the gentleman from chapter 8. You have *a suspicion of the theatrical kind*: **two names, one man**. And one man cannot sleep in two suites on the same night.",
   objective="Find the regular (six stays or more) who has never slept at the Ritz on the same night as the gentleman from chapter 8.",
   answer_form="the guest's name",
   telegram="MY DEAR CLERK STOP BLAKENEY IN THE ODD WEEKS GREY IN THE EVEN STOP THE CONCIERGE NEVER NOTICED STOP ON THE NIGHT OF THE 17TH MY SUITE WAS VERY QUIET FOR ONE HOUR STOP A L"),
  11: dict(
   title="The Silence",
-  story="**Ganimard** wants to know who was out of his suite when the sapphire went. A Ritz suite is never quite silent at night: the lift boy notes every ring, room service every order, and the telegraph desk every wire charged to a suite.\n\nLaid side by side, the three ledgers show one suite on the second floor going quiet for an hour, around the time the porter heard the lift at 02:10. It is not the only quiet suite. **M. Velmont** paints at night, in his studio, and often comes back to the Ritz only at dawn.",
+  story="**Ganimard** wants to know **who was out of his suite when the sapphire went**. A Ritz suite is never quite silent at night: the lift boy notes every ring, room service every order, and the telegraph desk every wire charged to a suite.\n\nLaid side by side, the three ledgers show one suite on the second floor going quiet for an hour, around the time the porter heard the lift at 02:10. It is not the only quiet suite. **M. Velmont** paints at night, in his studio, and often comes back to the Ritz only at dawn.",
   objective="Which suite fell silent on the night of the theft?",
   answer_form="the suite number",
   telegram="MY DEAR CLERK STOP ONE HOUR AND FIVE MINUTES STOP THE BALCONY THE STONE THE CAB THE JEWELLER AND BACK FOR CHAMPAGNE STOP AND THE FORTY THOUSAND FRANCS STOP WHERE DO YOU THINK THEY WENT STOP A L"),
  12: dict(
   title="Follow the Money",
-  story="The forty thousand francs did not stay in the shell account of chapter 6. They moved on, through shell accounts at four banks, into June. What **Ganimard** knows:\n\n| The road | |\n| Starts | at the shell account of chapter 6, forty thousand francs |\n| First move | the 20th of May, then every three days or so |\n| At every door | two percent stays behind: the next account gets ninety-eight |\n| One door | was paid in two halves, the same day |\n| Doors | seven |\n\nFollow the ninety-eight percent, and only the ninety-eight percent, and read the name on the last account. Ganimard will not like it.",
+  story="The forty thousand francs did not stay in the shell account of chapter 6. They moved on, through shell accounts at four banks, into June. What **Ganimard** knows:\n\n| The road | |\n| Starts | at the shell account of chapter 6, forty thousand francs |\n| First move | the 20th of May, then every three days or so |\n| At every door | two percent stays behind: the next account gets ninety-eight |\n| One door | was paid in two halves, the same day |\n| Doors | seven |\n\nFollow the ninety-eight percent, and only the ninety-eight percent, and **read the name on the last account**. Ganimard will not like it.",
   objective="Follow the ninety-eight percent from the account of chapter 6, seven doors down. Whose is the last account?",
   answer_form="the person's name",
   telegram="MY DEAR GANIMARD STOP INSURANCE PAYS THREE HUNDRED THOUSAND FOR A STONE WORTH FORTY THOUSAND STOP ARITHMETIC IS THE GREATEST OF CRIMES STOP A L"),
