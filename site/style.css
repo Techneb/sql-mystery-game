@@ -111,7 +111,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 /* fitErd() (app.js) crops the viewBox to the revealed tables and sets the width: the column's, capped at natural size. */
 .erd svg { display: block; height: auto; margin: 0 auto; font: 11px "Special Elite", monospace; }
 .erd .table rect { fill: var(--paper); stroke: var(--ink); }
-.erd .table rect.head { fill: var(--ink); }
+.erd .table .head { fill: var(--ink); stroke: var(--ink); }
 .erd .table .tname { fill: var(--paper); }
 .erd .table .col { fill: var(--ink); font-size: 10px; }
 /* Relationship lines: one soft red S-curve each (erd.py), round ends, a dot and 1 / N at each end. */

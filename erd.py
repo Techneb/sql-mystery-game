@@ -249,7 +249,8 @@ def svg(conn, chapters=()):
     for t, cols in tables.items():
         _, x, y, w, h = pos[t]
         g = ['<g class="table" data-table="%s" transform="translate(%d,%d)">' % (t, x, y),
-             '<rect width="%d" height="%d"/>' % (w, h), '<rect class="head" width="%d" height="%d"/>' % (w, HEAD),
+             '<rect width="%d" height="%d" rx="4"/>' % (w, h),   # the header follows the frame's rounded top corners
+             '<path class="head" d="M0 %d V4 A4 4 0 0 1 4 0 H%d A4 4 0 0 1 %d 4 V%d Z"/>' % (HEAD, w - 4, w, HEAD),
              '<text class="tname" x="6" y="12">%s</text>' % t]
         for i, (c, typ, pk, ref) in enumerate(cols):
             base = HEAD + ROW * (i + 1)
