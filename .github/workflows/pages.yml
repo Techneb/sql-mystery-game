@@ -19,11 +19,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Build compete seasons 1-20
@@ -49,5 +46,25 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  deploy:
+    # A separate job (GitHub's own Pages starter layout): rerunning a failed deploy reruns only this job, so it
+    # never uploads a second github-pages artifact ("Multiple artifacts named github-pages were found").
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.retry.outputs.page_url || steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
+        # deploy-pages sometimes looks the artifact up a second after the upload finalised and finds none
+        # ("Fetching artifact metadata failed ... No artifacts named github-pages", a GitHub-side race, 3 of 7
+        # deploys on 2026-10-09). It fails before any polling, so error_count/timeout do not cover it: try once
+        # more after a pause.
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+      - id: retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
