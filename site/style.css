@@ -250,7 +250,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
   .reset-corner { left: 8px; } .theme-corner { right: 8px; }
   .theme-corner svg, .reset-corner svg { margin: 0; }
   .reset-corner .btn-text, .theme-corner .btn-text { display: none; }   /* Run, Badges and Suspects keep their text */
-  .mast-sub { letter-spacing: 1px; }
+  .mast-sub { letter-spacing: 1px; font-size: 10px; }   /* the bold numeral widened the line: keep it on one line at 430 px */
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
 }
