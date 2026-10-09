@@ -285,6 +285,15 @@ framework, no bundler.
    Ortega's suspect card, suspects met progressively, a guessing audit pinned as `traps`, schema redrawn).
    Chapters 9-12 have not been played as a student yet; open question there: ch11's answer is Lupin's own
    suite, already known from ch8.
+   2026-10-03: a pre-class audit of the whole game (report kept out of the public repo, `docs/audits/`) and its
+   fixes the same day: compete answers checked by the backend from hashes the deploy posts, validated rows and a
+   start token, client timestamps on every event, planted ids scattered among the noise and the noise given the
+   plot's NULLs, the chapter's construct under a Hint toggle, a Part II extra edition with the film and the
+   ending; also the two closing films and the painted chapter icons (section 8). Declined by the owner:
+   a help route after N wrong answers (would undo the 2026-09-30 hint removal) and sql.js in a Worker (the
+   comma-join guard is enough). Compete stays honour-based against a student who posts a rival's start first.
+   2026-10-09: the OpenGen source clips and uncropped originals moved from `~/Downloads` to the gitignored
+   `assets-source/` in the repo (Mac only). Still open: a class trial, then `RANKS` from real query counts.
 
 ## 8. Backlog (not scheduled)
 

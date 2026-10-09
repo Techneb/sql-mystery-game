@@ -56,15 +56,15 @@ Property `ADMIN_KEY` set to the admin passphrase. The values below are the defau
 
 ## Look
 
-- Twelve chapter props (engraved-line inline SVG, one accent colour) sit next to the chapter title:
-  `PROPS` in `site/app.js`. Pure ASCII, no asset files.
+- Twelve painted chapter icons (`site/icons/chNN.png`, generated, no letters or numbers so none hands out
+  a clue) sit next to the chapter title.
 - Part II is a night edition: the whole page switches once the Part II code is accepted
   (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
   to 19 May, and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
   the palette instead; the choice is kept per browser.
 - Portraits: `site/portraits/*.jpg`, six suspects plus the Comtesse, painted in colour
   after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; the landing card
-  shows the Blue Star itself (the tab icon's sapphire), Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
+  shows the front-page photograph of Lupin's card on the Comtesse's pillow (`site/landing-pillow.jpg`), Blakeney appears only at the Part I unmasking, the Comtesse at the Part II
   ending. All generated from one prompt template (only the sitter changes, so no face reads guiltier
   than another), from a public, no-login image endpoint; the generator's corner mark was cropped off.
 - The case board is a cork board with a pin per solved chapter. A **Badges** button opens all 38 badges

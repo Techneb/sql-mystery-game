@@ -8,7 +8,7 @@ edition. Made by the owner on OpenGen; Claude then cuts out the background, size
 - OpenGen > **Image**, model **Nano Banana Pro** (38 credits each), aspect ratio **1:1**, largest size offered.
 - **Reference:** the style frame from Video 1 (Creations: the sunny Place Vendome painting) as `@image1`.
   For icon 12 add `site/blue-star.jpg` (upload it) as `@image2`.
-- Generate one at a time; keep the best of each; download to `~/Downloads/ritz-video/icons/` named
+- Generate one at a time; keep the best of each; download to `assets-source/icons/` named
   `ch01.png` ... `ch12.png`.
 - Check before keeping: one object only, centred, nothing cut off at the edges, **no letters or numbers
   anywhere** (they would hand out clues: chapter 3's answer is a plate number), no signature in a corner,

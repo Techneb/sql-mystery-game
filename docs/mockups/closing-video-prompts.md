@@ -8,5 +8,5 @@ to save:
   the two reference images both films use (Ganimard's sheet, the style frame).
 - `video-part2.md`: **"Case Closed, Twice"**, closes Part II (after chapter XII).
 
-Clips go to `~/Downloads/ritz-video/`; the assembly (cuts, cross-fades, captions, MP4/WebM, poster) is done on
+Clips go to `assets-source/`; the assembly (cuts, cross-fades, captions, MP4/WebM, poster) is done on
 the Mac with ffmpeg, then the films are wired into the page.

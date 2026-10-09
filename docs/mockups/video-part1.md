@@ -5,7 +5,7 @@ Ganimard arrests Rupert Blakeney (Lupin), but the stone has already left on the 
 stone: only the empty case.
 
 Work top to bottom. Each step says where to go in OpenGen, what to set, what to upload, what to paste, and
-what to save. Make a folder `~/Downloads/ritz-video/` and save everything there under the names given.
+what to save. Make a folder `assets-source/` and save everything there under the names given.
 
 ## Status (2026-10-02, made by Claude driving OpenGen in Chrome)
 
@@ -81,7 +81,7 @@ Lessons from these takes (read before generating):
 ## Before you start: files to have at hand
 
 From the project folder, `site/portraits/`: `blakeney.jpg`, `ashcombe.jpg`. Copy them into
-`~/Downloads/ritz-video/`.
+`assets-source/`.
 
 ## Settings used everywhere
 
@@ -262,7 +262,7 @@ The train accelerates away towards the light, the luggage van and its trunks rec
 
 ## When the six clips are done
 
-You should have in `~/Downloads/ritz-video/`: `p1_s1.mp4` to `p1_s6.mp4` (and the stills). Tell Claude which
+You should have in `assets-source/`: `p1_s1.mp4` to `p1_s6.mp4` (and the stills). Tell Claude which
 seconds to keep in each (or "all"). Claude assembles them on the Mac with ffmpeg: cuts, 0.8 s cross-fades,
 the captions above in the paper's typefaces, a poster image, MP4 and WebM under 6 MB, and puts the film at
 the top of the Chapter VIII extra edition (a "Play" button, then the browser's player controls).
