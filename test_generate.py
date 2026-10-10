@@ -109,7 +109,7 @@ class Noise(unittest.TestCase):
             self.assertFalse([f for f in films if f in name.lower()], name)
 
     def test_census_surnames_stay_unambiguous(self):
-        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle"]
+        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle", "Hippolyte Morand", "Firmin Lagarde"]
         for name in planted:
             self.assertFalse([l for l in g.LAST if name.endswith(" " + l)], name)
 
@@ -310,6 +310,21 @@ class Compete(unittest.TestCase):
         self.assertEqual(j["normalise_fixture"], g.FIXTURE)   # ?selftest still checks the normaliser
         self.assertEqual(g.SEASONS, 5)
         conn.close()
+
+    def test_compete_stories_ship_and_give_nothing_away(self):
+        j = g.chapters_json(self.V, mode="compete")
+        for ch, out in zip(plot.CHAPTERS[:8], j["chapters"]):
+            self.assertEqual(out["story"], ch["story_compete"].format(**self.V), ch["n"])   # the season file carries it
+            ch["story_compete"].encode("ascii")
+        self.assertIn("Hippolyte Morand", j["chapters"][0]["story"])   # a named witness, not a role
+        for seed in range(1, 21):
+            V = g.plant_values(seed)
+            planted = [v for k, v in V.items() if (k.startswith("compete_") or k == "ortega_suite")
+                       and k != "compete_fence_number"]   # a bare 12 is ch7's clock; compete_fence_address covers it
+            for ch in plot.CHAPTERS[:8]:
+                text = " %s " % g.normalise(ch["story_compete"].format(**V))
+                for v in planted + [V[ch["answer_key_compete"]]]:
+                    self.assertNotIn(" %s " % g.normalise(str(v)), text, (seed, ch["n"], v))
 
     def test_compete_values_vary_by_season(self):
         v7, v8 = g.plant_values(7), g.plant_values(8)

@@ -324,6 +324,9 @@ test("story markup: bold and italic only, everything else escaped", () => {
   assert.ok(!richText("| <i> | x |").includes("<i>"), "table cells are escaped too");
   for (const c of data.chapters) assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in chapter " + c.n);
   for (const e of Object.values(data.endings)) assert.ok(!/\*/.test(richText(e)), "unbalanced markup in an ending");
+  if (fs.existsSync("site/season-1.json"))   // compete has its own Part I stories (story_compete), same markup rules
+    for (const c of JSON.parse(fs.readFileSync("site/season-1.json", "utf8")).chapters)
+      assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in compete chapter " + c.n);
 });
 
 test("formatSql changes only whitespace and keyword case, and is stable", () => {
