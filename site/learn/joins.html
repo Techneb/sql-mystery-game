@@ -41,14 +41,15 @@
 <pre><code>SELECT o.id, o.day, c.name, c.town
 FROM orders AS o
 JOIN customer AS c ON c.id = o.customer_id
-WHERE o.day = '2026-03-02';</code></pre>
+WHERE o.day = '2026-03-02'
+ORDER BY o.id;</code></pre>
 <table class="result">
 <tr><th>id</th><th>day</th><th>name</th><th>town</th></tr>
 <tr><td>1</td><td>2026-03-02</td><td>Alice Turner</td><td>Riverside</td></tr>
 <tr><td>2</td><td>2026-03-02</td><td>Ben Okafor</td><td>Hillcrest</td></tr>
 <tr><td>3</td><td>2026-03-02</td><td>David Chen</td><td>Old Town</td></tr>
 </table>
-<p>An inner join keeps only the pairs that match. An order whose customer is missing would vanish from the result, and so does a customer who never ordered.</p>
+<p>An inner join keeps only the pairs that match. An order whose customer is missing would vanish from the result, and so would a customer who never ordered.</p>
 
 <h2>Several joins in a row</h2>
 <p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products and their prices: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code>. This finishes the example started on the GROUP BY page.</p>
@@ -85,7 +86,7 @@ WHERE oi.product_id IS NULL;</code></pre>
 <p>Where you write a condition matters with a left join. A condition on the right-hand table placed in <code>ON</code> limits what may match, and still keeps every left row. The same condition placed in <code>WHERE</code> runs after the join and throws away the rows whose right side is NULL, which turns the left join back into an inner join.</p>
 
 <h2>A table joined to itself</h2>
-<p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the person who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own.</p>
+<p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the customer who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own.</p>
 <pre><code>SELECT newcomer.name AS customer, referrer.name AS referred_by
 FROM customer AS newcomer
 LEFT JOIN customer AS referrer ON referrer.id = newcomer.referred_by
@@ -105,7 +106,8 @@ ORDER BY newcomer.id;</code></pre>
 <pre><code>SELECT a.name, b.name AS neighbour, a.town
 FROM customer AS a
 JOIN customer AS b ON b.town = a.town AND a.id &lt; b.id
-WHERE a.town = 'Riverside';</code></pre>
+WHERE a.town = 'Riverside'
+ORDER BY a.id, b.id;</code></pre>
 <table class="result">
 <tr><th>name</th><th>neighbour</th><th>town</th></tr>
 <tr><td>Alice Turner</td><td>Chloe Martin</td><td>Riverside</td></tr>

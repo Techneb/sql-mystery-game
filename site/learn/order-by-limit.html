@@ -48,10 +48,10 @@ ORDER BY price DESC;</code></pre>
 </table>
 
 <h2>Several sort keys</h2>
-<p>When two rows tie on the first column, the second column decides, then the third, and so on. Each column carries its own direction, so you can sort by category alphabetically and, inside each category, by price from the most to the least expensive. The database never looks at the second key unless the first one ties.</p>
+<p>When two rows tie on the first column, the second column decides, then the third, and so on. Each column carries its own direction, so you can sort by category alphabetically and, inside each category, by price from the most to the least expensive, with the name as a third key for the two breads that cost the same. The database never looks at the second key unless the first one ties.</p>
 <pre><code>SELECT category, name, price
 FROM product
-ORDER BY category, price DESC;</code></pre>
+ORDER BY category, price DESC, name;</code></pre>
 <table class="result">
 <tr><th>category</th><th>name</th><th>price</th></tr>
 <tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td></tr>

@@ -85,7 +85,7 @@ LIMIT 3;</code></pre>
 <p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code>.</p>
 
 <h2>WITH RECURSIVE: following a chain</h2>
-<p>Some questions have no fixed number of steps. "Who referred the person who referred this customer, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
+<p>Some questions have no fixed number of steps. "Who referred this customer's referrer, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
 <p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Starting from the customers who came on their own, each round adds the people they referred, one generation further down.</p>
 <pre><code>WITH RECURSIVE tree(id, name, generation) AS (
   SELECT id, name, 0 FROM customer WHERE referred_by IS NULL
@@ -118,7 +118,8 @@ SELECT name, generation FROM tree ORDER BY generation, id;</code></pre>
 SELECT cal.day, COUNT(o.id) AS orders
 FROM calendar AS cal
 LEFT JOIN orders AS o ON o.day = cal.day
-GROUP BY cal.day;</code></pre>
+GROUP BY cal.day
+ORDER BY cal.day;</code></pre>
 <table class="result">
 <tr><th>day</th><th>orders</th></tr>
 <tr><td>2026-03-02</td><td>3</td></tr>

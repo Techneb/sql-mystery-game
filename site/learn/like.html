@@ -38,7 +38,8 @@
 <p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code>SELECT name, price
 FROM product
-WHERE name LIKE '%croissant%';</code></pre>
+WHERE name LIKE '%croissant%'
+ORDER BY id;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Croissant</td><td>1.4</td></tr>
@@ -53,7 +54,8 @@ WHERE name LIKE '%croissant%';</code></pre>
 <p>The underscore is handy for codes and dates whose shape you know. The pattern <code>'2026-03-0_'</code> matches any of the first nine days of March 2026 and nothing else, because exactly one character must follow the zero. Two underscores require two characters, and so on.</p>
 <pre><code>SELECT name, joined
 FROM customer
-WHERE joined LIKE '2024-0_-0_';</code></pre>
+WHERE joined LIKE '2024-0_-0_'
+ORDER BY id;</code></pre>
 <table class="result">
 <tr><th>name</th><th>joined</th></tr>
 <tr><td>Ben Okafor</td><td>2024-02-03</td></tr>
@@ -68,7 +70,8 @@ WHERE joined LIKE '2024-0_-0_';</code></pre>
 FROM product
 WHERE name LIKE '%o%'
   AND name NOT LIKE '%loaf%'
-  AND category &lt;&gt; 'cake';</code></pre>
+  AND category &lt;&gt; 'cake'
+ORDER BY id;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th></tr>
 <tr><td>Croissant</td><td>pastry</td></tr>
@@ -79,10 +82,11 @@ WHERE name LIKE '%o%'
 <p>Read it step by step: names that contain an "o" somewhere, minus the loaves, minus the cakes.</p>
 
 <h2>Searching more than one word</h2>
-<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches "chocolate", "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
+<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
 <pre><code>SELECT name
 FROM product
-WHERE name LIKE '%choc%' OR name LIKE '%tart%';</code></pre>
+WHERE name LIKE '%choc%' OR name LIKE '%tart%'
+ORDER BY id;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Pain au chocolat</td></tr>

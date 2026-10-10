@@ -1,4 +1,4 @@
-/* The clerk's handbook (site/learn/): article layout over ../style.css. No JavaScript on these pages, so the
+/* The Clerk's Handbook (site/learn/): article layout over ../style.css. No JavaScript on these pages, so the
    night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
 @media (prefers-color-scheme: dark) {
   :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5; }
@@ -19,7 +19,7 @@
 .learn .in-game { border-top: 2px solid var(--ink); margin-top: 28px; padding-top: 8px; }
 .learn details.script summary { cursor: pointer; font-weight: 700; }
 .learn .toc li { margin: 4px 0; }
-/* page menu in reading order and previous/next links: both generated from one list, so they agree */
+/* page menu in reading order and previous/next links: copied by hand on every page, test_site.mjs checks they agree */
 .learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
 .learn .game-label { font: 700 13px/1.2 "Playfair Display", serif; font-variant: small-caps; letter-spacing: 1px; text-align: center; margin: 0 0 6px; }
 .learn-menu a { color: inherit; }

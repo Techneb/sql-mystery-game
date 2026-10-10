@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The bakery database -- The Ritz Affair</title>
-<meta name="description" content="The small bakery database (customers, products, orders and order lines) that every example of the clerk&#x27;s handbook runs on, with sample rows and a SQLite script to recreate it.">
+<meta name="description" content="The small bakery database (customers, products, orders and order lines) that every example of The Clerk&#x27;s Handbook runs on, with sample rows and a SQLite script to recreate it.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -39,29 +39,29 @@
 <tr><td>orders</td><td>id, customer_id, day, time</td><td>one visit to the counter; <code>day</code> is <code>YYYY-MM-DD</code>, <code>time</code> is <code>HH:MM</code></td></tr>
 <tr><td>order_item</td><td>order_id, product_id, quantity</td><td>one line of an order: how many of one product</td></tr>
 </table>
-<p>The arrows run from the lines to the orders and products, from the orders to the customers, and from a customer to the customer who referred them. A few rows of each table:</p>
-<pre><code>SELECT * FROM customer LIMIT 3;</code></pre>
+<p>The ids link the tables: each order line points to its order and its product, each order to its customer, and a customer to the customer who referred them. A few rows of each table:</p>
+<pre><code>SELECT * FROM customer ORDER BY id LIMIT 3;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>town</th><th>joined</th><th>referred_by</th></tr>
 <tr><td>1</td><td>Alice Turner</td><td>Riverside</td><td>2024-01-15</td><td>NULL</td></tr>
 <tr><td>2</td><td>Ben Okafor</td><td>Hillcrest</td><td>2024-02-03</td><td>1</td></tr>
 <tr><td>3</td><td>Chloe Martin</td><td>Riverside</td><td>2024-02-20</td><td>1</td></tr>
 </table>
-<pre><code>SELECT * FROM product LIMIT 3;</code></pre>
+<pre><code>SELECT * FROM product ORDER BY id LIMIT 3;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>category</th><th>price</th></tr>
 <tr><td>1</td><td>Baguette</td><td>bread</td><td>1.2</td></tr>
 <tr><td>2</td><td>Sourdough loaf</td><td>bread</td><td>4.5</td></tr>
 <tr><td>3</td><td>Rye loaf</td><td>bread</td><td>3.8</td></tr>
 </table>
-<pre><code>SELECT * FROM orders LIMIT 3;</code></pre>
+<pre><code>SELECT * FROM orders ORDER BY id LIMIT 3;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
 <tr><td>1</td><td>1</td><td>2026-03-02</td><td>07:15</td></tr>
 <tr><td>2</td><td>2</td><td>2026-03-02</td><td>08:40</td></tr>
 <tr><td>3</td><td>4</td><td>2026-03-02</td><td>12:30</td></tr>
 </table>
-<pre><code>SELECT * FROM order_item LIMIT 3;</code></pre>
+<pre><code>SELECT * FROM order_item ORDER BY order_id, product_id LIMIT 3;</code></pre>
 <table class="result">
 <tr><th>order_id</th><th>product_id</th><th>quantity</th></tr>
 <tr><td>1</td><td>1</td><td>2</td></tr>
@@ -105,7 +105,7 @@ INSERT INTO order_item VALUES
  (7,3,1),(7,10,1),(8,2,1),(9,1,2),(9,5,1),(10,8,3),(11,2,1),(11,6,1),(12,4,2),(12,5,2),
  (13,7,2),(14,1,1),(14,10,1);</code></pre>
 </details>
-<nav class="learn-pager"><a class="prev" href="index.html">Previous: The clerk's handbook</a><a class="next" href="schema.html">Next: Tables, keys and the schema</a></nav>
+<nav class="learn-pager"><a class="prev" href="index.html">Previous: The Clerk's Handbook</a><a class="next" href="schema.html">Next: Tables, keys and the schema</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

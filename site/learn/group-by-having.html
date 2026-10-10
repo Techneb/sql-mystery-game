@@ -30,7 +30,7 @@
     <a href="ctes.html">10. CTEs</a></nav>
 <main class="learn">
 <h1>GROUP BY, aggregates and HAVING</h1>
-<p class="game-label">Game: chapters <a href="../">IV</a> and <a href="../">VI</a></p>
+<p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
 <p class="lede">So far every query returned rows of the table. Aggregates return facts about many rows at once: how many, how much, the largest, the average.</p>
 
 <h2>Aggregate functions</h2>
@@ -49,7 +49,8 @@ FROM product;</code></pre>
 <p><code>GROUP BY</code> splits the rows into groups that share the same value in one or more columns, then computes each aggregate once per group. The result has one row per group. Picture the database sorting the rows into piles, one pile per category, and then counting or adding up each pile separately.</p>
 <pre><code>SELECT category, COUNT(*) AS products, ROUND(AVG(price), 2) AS average_price
 FROM product
-GROUP BY category;</code></pre>
+GROUP BY category
+ORDER BY category;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th><th>average_price</th></tr>
 <tr><td>bread</td><td>4</td><td>3.32</td></tr>
@@ -81,7 +82,8 @@ ORDER BY orders DESC, customer_id;</code></pre>
 FROM orders
 WHERE time &lt; '12:00'
 GROUP BY day
-HAVING COUNT(*) &gt; 1;</code></pre>
+HAVING COUNT(*) &gt; 1
+ORDER BY day;</code></pre>
 <table class="result">
 <tr><th>day</th><th>morning_orders</th></tr>
 <tr><td>2026-03-02</td><td>2</td></tr>
@@ -111,7 +113,7 @@ ORDER BY pieces DESC, product_id;</code></pre>
 <h2>Common mistakes</h2>
 <p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which SQLite allows and fills with an arbitrary value. Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
 
-<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables.</p>
+<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="joins.html">Next: JOIN, LEFT JOIN and self-joins</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
