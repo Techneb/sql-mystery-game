@@ -157,3 +157,49 @@ headline), `?data=<exec url>&season=<id>`, polling rows and meta every 10 s:
 4. Rehearsal on the live site (2026-10-12): the owner as two or three students, the main session on the admin
    page and the board. Fixes 2026-10-13; freeze.
 5. After the trial: tune `RANKS` from the summary table (phase 4), delete the unused Script Properties.
+
+## 8. Structural variants (owner, 2026-10-10)
+
+After the rehearsal the owner found that compete could be solved by reusing the learn queries with new WHERE
+values. Every Part I chapter now has a structural variant: one notch harder than learn, solvable in about five
+minutes by a student who finished Part I, within the chapter's construct. Built on branch
+`claude/compete-variants` (`plot.py` `*_compete` fields, the compete planting in `generate_db.plant_part1`;
+values per season seed). The shapes:
+
+1. SELECT / WHERE: the night manager, Hippolyte Morand, gives a night with a day either side and says it was no
+   disturbance: `place = 'Hotel Meurice' AND date BETWEEN <d-1> AND <d+1> AND type <> 'disturbance'`. Every
+   Meurice report of those three days is planted: the burglary at one edge (filed by the constable as vandalism,
+   nothing being taken, so `type = 'burglary'` misses it), a disturbance on that day and one on the night itself,
+   nothing on the other edge; the ground-floor window burglary falls a day outside the window. The window alone
+   gives three rows, the exclusion alone dozens, the old single date nothing.
+2. ORDER BY / LIMIT: the room just below the royal pair, third floor (the floor is in the chapter 1 report), the
+   night of the 17th: two suites share the top price, so the answer is `ORDER BY price DESC LIMIT 1 OFFSET 2`
+   (the owner wrote OFFSET 1, which with the tie returns the other royal suite; OFFSET 1 is a trap). A March gala
+   on that floor and a dearer first-floor suite that night keep the floor and the date necessary.
+3. LIKE: the rival despatcher, Firmin Lagarde, is sure of the start of the plate (`75-9`; every plate begins
+   `75-`, so the prefix before the dash says nothing) and of the figure before the last: `plate LIKE '75-9_7_'`
+   with the date. That night a plate fits the start alone (dropping at Gare Saint-Lazare, so the old drop-off
+   query finds it) and one the figure alone; a plate fitting both rides on other days.
+4. GROUP BY / HAVING: the address visited on three different days of the week before the theft,
+   `HAVING COUNT(DISTINCT date) >= 3`; a wedding brings the cab to one door four times on one day (so
+   `COUNT(*) >= 3` returns two addresses and `ORDER BY COUNT(*)` the wedding); Gare de Lyon on two days of the
+   week and one before it.
+5. JOIN: the fence is the tenant who gave an interview, `person JOIN address JOIN interview ON interview.person_id
+   = person.id`; his occupation is NULL, a second tenant's too, and the jeweller at the same address was never
+   interviewed.
+6. JOIN x3 + SUM + HAVING: the account paid in two equal halves in May, `HAVING COUNT(*) = 2 AND MIN(amount) =
+   MAX(amount)`; decoys: three pieces (the learn shape), two unequal pieces (a bigger total), the biggest single
+   cheque, the biggest total (four equal payments), two equal halves in April, single payments.
+7. CASE + GROUP BY: the Bourse's own boxes in the compete story's table (before the bell, before 10:00; the
+   session, 10:00 to 15:00; the call, 15:00 to 17:00; after hours, from 17:00) and the BUSIEST box: the call, 27
+   wires (bell 24, session 22, after hours 12). The broker, Anatole Brissac, wired in three boxes, the three
+   reading alike: before the bell (in learn's busiest box, the morning, 36 against 35), the call, after hours (the
+   quietest Bourse box).
+8. RANK + CTE: the broker's LAST order before dawn, `RANK() OVER (PARTITION BY suite ORDER BY time DESC)` with
+   `time < '06:00'` inside the CTE; the item (cognac) is named by his wire. Decoys: a suite whose last order of the
+   day is the cognac, after six; two whose first order before dawn is the cognac (the earliest and the latest
+   cognac); his suite orders coffee after six, so the filter outside the ranking finds nothing.
+
+Each chapter's naive query, the learn shape with the season's values, the old compete query and the shortcuts
+found by the shortcut check are in its `traps_compete`, so the build keeps them closed; a test checks that no
+compete solution reads like its learn solution once every literal is blanked out.
