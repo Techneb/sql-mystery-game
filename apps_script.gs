@@ -10,7 +10,8 @@
 //   SEASONS       written by this script (the season records), never by hand
 //
 // A season is a record {id, name, date, db, penalty, state, createdAt, openedAt, closedAt}; state goes
-// created -> open -> closed, never back. Players "join" a season (one join per pseudo), then post "progress"
+// created -> open -> closed (or created -> closed, for a season created by mistake), never back. Players "join"
+// a season (one join per pseudo), then post "progress"
 // and "finish" with the token "join" returned, only while the season is open; a "finish" needs its seven
 // "progress" rows first. Answers are checked in the browser (the season files carry their hashes), so the
 // game stays honour-based and off the marks.
@@ -18,37 +19,67 @@
 var DBS = 5;   // generate_db.SEASONS: the pre-built databases site/season-1..5.*
 var ID_RE = /^[a-z0-9-]{1,40}$/;
 
+// Our own exceptions come back as JSON too, never as Google's HTML error page.
 function doPost(e) {
-  var data;
-  try { data = JSON.parse(e.postData.contents); } catch (err) { return json_({ok: false, error: "not JSON"}); }
-  if (data.admin) return json_(locked_(function () { return admin_(data); }));
-  var team = String(data.team || "").trim(), id = String(data.season || "");
-  // a leading = + - @ would make the Sheet read the pseudo as a formula
-  if (!team || team.length > 40 || /^[=+\-@]/.test(team) || !ID_RE.test(id)) return json_({ok: false, error: "bad team or season"});
-  var ev = String(data.event || "");
-  if (ev === "join") return json_(locked_(function () { return join_(team, id, data); }));
-  if (ev !== "progress" && ev !== "finish") return json_({ok: false, error: "bad fields"});
-  var chapter = int_(data.chapter, 0, 8), wrong = int_(data.wrong, 0, 2000), queries = int_(data.queries, 0, 20000);
-  if (chapter === null || wrong === null || queries === null) return json_({ok: false, error: "bad fields"});
-  var season = find_(seasons_(), id);
-  if (!season) return json_({ok: false, error: "no such season"});
-  if (season.state !== "open") return json_({ok: false, error: season.state === "closed" ? "session closed" : "session not open"});
-  if (String(data.token || "") !== token_(team, id)) return json_({ok: false, error: "no token: join first"});
-  var sheet = getLogSheet_();
-  if (ev === "finish" && countRows_(sheet, "progress", team, id) < 7) return json_({ok: false, error: "finish before the seven progress rows"});
-  sheet.appendRow([new Date(), ev, team, id, chapter || "", 0, wrong, queries,
-                   Number(data.clientAt) || "", Number(data.elapsedMs) || ""]);
-  return json_({ok: true});
+  try { return json_(post_(e)); } catch (err) { return json_({ok: false, error: String(err)}); }
+}
+function doGet(e) {
+  try { return json_(get_(e)); } catch (err) { return json_({ok: false, error: String(err)}); }
 }
 
-function join_(team, id, data) {
+function post_(e) {
+  var data;
+  try { data = JSON.parse(e.postData.contents); } catch (err) { return {ok: false, error: "not JSON"}; }
+  if (!data || typeof data !== "object") return {ok: false, error: "not an object"};
+  if (data.admin) return locked_(function () { return admin_(data); });
+  var team = String(data.team || "").trim(), id = String(data.season || "");
+  if (!team || team.length > 40 || !ID_RE.test(id)) return {ok: false, error: "bad team or season"};
+  var ev = String(data.event || "");
+  if (ev === "join") {
+    var log = getLogSheet_();   // opened before the lock: only the duplicate check and the append need it
+    return locked_(function () { return join_(log, team, id, data); });
+  }
+  if (ev !== "progress" && ev !== "finish") return {ok: false, error: "bad fields"};
+  var chapter = int_(data.chapter, 0, 8), wrong = int_(data.wrong, 0, 2000), queries = int_(data.queries, 0, 20000);
+  if (chapter === null || wrong === null || queries === null) return {ok: false, error: "bad fields"};
+  var season = find_(seasons_(), id);
+  if (!season) return {ok: false, error: "no such season"};
+  if (season.state !== "open") return {ok: false, error: season.state === "closed" ? "session closed" : "session not open"};
+  if (String(data.token || "") !== token_(team, id)) return {ok: false, error: "no token: join first"};
+  var sheet = getLogSheet_();
+  if (ev === "finish" && countRows_(sheet, "progress", team, id) < 7) return {ok: false, error: "finish before the seven progress rows"};
+  sheet.appendRow(row_(ev, team, id, chapter || "", wrong, queries, data.clientAt, data.elapsedMs));
+  return {ok: true};
+}
+
+function join_(sheet, team, id, data) {
   var season = find_(seasons_(), id);
   if (!season) return {ok: false, error: "no such season"};
   if (season.state === "closed") return {ok: false, error: "session closed"};
-  var sheet = getLogSheet_();
   if (countRows_(sheet, "join", team, id) > 0) return {ok: false, error: "pseudo taken"};
-  sheet.appendRow([new Date(), "join", team, id, "", 0, 0, 0, Number(data.clientAt) || "", ""]);
-  return {ok: true, token: token_(team, id), meta: season};
+  sheet.appendRow(row_("join", team, id, "", 0, 0, data.clientAt, ""));
+  SpreadsheetApp.flush();   // the next join, once it holds the lock, must read this row
+  return {ok: true, token: token_(team, id), meta: withNow_(season)};
+}
+
+// One log row, columns unchanged. The pseudo and the season id go in as text (a leading apostrophe): the Sheet would
+// otherwise read "007" as 7, "1/2" as a date or "=x" as a formula, and the pseudo would no longer match its teamKey.
+function row_(ev, team, id, chapter, wrong, queries, clientAt, elapsedMs) {
+  return [new Date(), ev, "'" + team, "'" + id, chapter, 0, wrong, queries,
+          count_(clientAt, 9007199254740991), count_(elapsedMs, 86399999)];
+}
+// A non-negative integer up to hi, else an empty cell.
+function count_(v, hi) {
+  if (v === undefined || v === null || v === "") return "";
+  var n = Number(v);
+  return Number.isInteger(n) && n >= 0 && n <= hi ? n : "";
+}
+
+// The season record with the server's clock: the game cancels its own clock's offset with it.
+function withNow_(s) {
+  var o = JSON.parse(JSON.stringify(s));
+  o.now = Date.now();
+  return o;
 }
 
 function admin_(data) {
@@ -57,6 +88,7 @@ function admin_(data) {
   if (act === "create") {
     var f = fields_(data);
     if (f.error) return f;
+    getLogSheet_();   // creates the log tab now, under the lock, so joins never race to create it
     s = {id: "s" + now + "-" + Math.random().toString(36).slice(2, 6), name: f.name, date: f.date, db: pickDb_(list),
          penalty: f.penalty, state: "created", createdAt: now, openedAt: null, closedAt: null};
     list.push(s);
@@ -79,8 +111,7 @@ function admin_(data) {
   }
   if (act === "close") {
     if (s.state === "closed") return {ok: true, season: s};
-    if (s.state !== "open") return {ok: false, error: "open the season before closing it"};
-    s.state = "closed"; s.closedAt = now;
+    s.state = "closed"; s.closedAt = now;   // from open, or from created (a season created by mistake frees its database)
     return save_(list, s);
   }
   return {ok: false, error: "unknown admin action"};
@@ -113,7 +144,7 @@ function pickDb_(list) {
 // ponytail: one Script Property holds 9 kB, about 40 season records; move them to a "seasons" Sheet tab past that.
 function save_(list, s) {
   var txt = JSON.stringify(list);
-  if (txt.length > 9000) return {ok: false, error: "too many seasons for the SEASONS property"};
+  if (Utilities.newBlob(txt).getBytes().length > 9000) return {ok: false, error: "too many seasons for the SEASONS property"};
   PropertiesService.getScriptProperties().setProperty("SEASONS", txt);
   return {ok: true, season: s};
 }
@@ -129,18 +160,22 @@ function find_(list, id) {
 }
 
 // Two joins with the same pseudo in the same second, or two admin writes, must not both read the old state.
+// The game retries a "busy, try again" join once by itself.
 function locked_(fn) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return {ok: false, error: "busy, try again"};
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-// ?seasons=1 -> every season record; ?meta=<id> -> one record; ?season=<id> -> that season's rows;
-// nothing -> every row (the admin page's export).
-function doGet(e) {
+// ?seasons=1 -> every season record; ?meta=<id> -> one record plus the server's `now`; ?season=<id> -> that
+// season's rows; nothing -> every row (the admin page's export).
+function get_(e) {
   var p = (e && e.parameter) || {};
-  if (p.seasons) return json_(seasons_());
-  if (p.meta) return json_(find_(seasons_(), String(p.meta)) || {ok: false, error: "no such season"});
+  if (p.seasons) return seasons_();
+  if (p.meta) {
+    var m = find_(seasons_(), String(p.meta));
+    return m ? withNow_(m) : {ok: false, error: "no such season"};
+  }
   var sheet = getLogSheet_();
   var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues() : [];
   var id = p.season ? String(p.season) : null;
@@ -150,8 +185,9 @@ function doGet(e) {
     out.push({timestamp: r[0].getTime ? r[0].getTime() : r[0], event: r[1], team: r[2], season: r[3],
               chapter: r[4], hints: r[5], wrong: r[6], queries: r[7], clientAt: r[8] || null, elapsedMs: r[9] || null});
   });
-  return json_(out);
+  return out;
 }
+
 
 function int_(v, lo, hi) {
   if (v === undefined || v === null || v === "") return lo === 0 ? 0 : null;
