@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
 </header>
 <nav class="learn-menu"><a href="index.html">Index</a>
     <a href="database.html">1. Database</a>
@@ -35,9 +35,10 @@
 
 <h2>Reading a table</h2>
 <p>A relational database stores its data in tables. A table has named columns, and each row is one record: one customer, one product, one order. To read a table you write a <code>SELECT</code> statement. The words after <code>SELECT</code> name the columns you want back, and the word <code>FROM</code> names the table they come from. The star, <code>*</code>, means every column, in the order the table defines them.</p>
-<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>product</code> table lists ten things the bakery sells.</p>
-<pre><code>SELECT name, price
-FROM product;</code></pre>
+<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>product</code> table lists ten things the bakery sells. Each example ends with <code>ORDER BY id</code>, which lists the rows in id order; without it the database may return them in any order, as the <a href="order-by-limit.html">ORDER BY page</a> explains.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Baguette</td><td>1.2</td></tr>
@@ -55,9 +56,10 @@ FROM product;</code></pre>
 
 <h2>Keeping only some rows: WHERE</h2>
 <p>Most of the time you do not want the whole table. The <code>WHERE</code> clause sets a condition, and the database keeps only the rows for which the condition is true. A condition compares a column with a value or with another column, using <code>=</code>, <code>&lt;&gt;</code> (not equal; <code>!=</code> also works in SQLite), <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code>. Text values go between single quotes; numbers do not.</p>
-<pre><code>SELECT name, price, price * 2 AS two_of_them
-FROM product
-WHERE category = 'pastry';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">two_of_them</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'pastry'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th><th>two_of_them</th></tr>
 <tr><td>Croissant</td><td>1.4</td><td>2.8</td></tr>
@@ -68,10 +70,11 @@ WHERE category = 'pastry';</code></pre>
 
 <h2>Combining conditions</h2>
 <p>Conditions combine with <code>AND</code> (both must be true) and <code>OR</code> (at least one must be true), and <code>NOT</code> turns a condition around. <code>AND</code> binds more tightly than <code>OR</code>, exactly as multiplication binds more tightly than addition, so when you mix them, add parentheses to say what you mean. Two shortcuts save typing: <code>IN (...)</code> tests against a list of values, and <code>BETWEEN a AND b</code> tests a range that includes both ends.</p>
-<pre><code>SELECT name, category, price
-FROM product
-WHERE (category = 'bread' OR category = 'cake')
-  AND price BETWEEN 3 AND 4;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">category</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> (<span class="sql-id">category</span> = <span class="sql-str">'bread'</span> <span class="sql-kw">OR</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>)
+  <span class="sql-kw">AND</span> <span class="sql-id">price</span> <span class="sql-kw">BETWEEN</span> <span class="sql-num">3</span> <span class="sql-kw">AND</span> <span class="sql-num">4</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th><th>price</th></tr>
 <tr><td>Rye loaf</td><td>bread</td><td>3.8</td></tr>
@@ -80,10 +83,11 @@ WHERE (category = 'bread' OR category = 'cake')
 <tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
 </table>
 <p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero.</p>
-<pre><code>SELECT id, customer_id, day, time
-FROM orders
-WHERE day IN ('2026-03-07', '2026-03-08')
-  AND time &lt; '12:00';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">IN</span> (<span class="sql-str">'2026-03-07'</span>, <span class="sql-str">'2026-03-08'</span>)
+  <span class="sql-kw">AND</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
 <tr><td>9</td><td>1</td><td>2026-03-07</td><td>07:10</td></tr>
@@ -94,9 +98,10 @@ WHERE day IN ('2026-03-07', '2026-03-08')
 
 <h2>Missing values: IS NULL</h2>
 <p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>.</p>
-<pre><code>SELECT name, town
-FROM customer
-WHERE referred_by IS NULL;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>town</th></tr>
 <tr><td>Alice Turner</td><td>Riverside</td></tr>
@@ -108,11 +113,11 @@ WHERE referred_by IS NULL;</code></pre>
 <p>Start wide and narrow down. Look at a few rows of the table first, then add one condition at a time and check that each one removes what you expected. When a result is empty, remove the last condition and look at what was there before it. Reading the result after every step is faster than writing a long query and wondering why it returns nothing.</p>
 
 <h2>Common mistakes</h2>
-<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, and SQLite only falls back to treating it as text when no such column exists, which hides the error until the day it does not. Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
+<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, and SQLite only falls back to treating it as text when no such column exists, which hides the mistake until the day a column of that name appears. Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter I, <i>The Night of the 17th</i>, practises SELECT and WHERE.</p>
 <nav class="learn-pager"><a class="prev" href="schema.html">Previous: Tables, keys and the schema</a><a class="next" href="order-by-limit.html">Next: ORDER BY and LIMIT</a></nav>
 </main>
-<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
 </html>

@@ -1,7 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { colourBlock } from "./colour_learn.mjs";
+import * as shared from "./site/shared.js";
+import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -148,16 +151,14 @@ test("compete mode runs Part I only and never asks for the Part II code", () => 
 });
 
 test("compete events carry the Part I totals the leaderboard scores", () => {
-  const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha", solved: [1, 2, 3],
+  const s = { ...freshState(), mode: "compete", season: "s7", team: "Alpha", solved: [1, 2, 3], startedAt: 400,
               queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, wrong: { 1: 2, 3: 1, 11: 9 } };
   assert.deepEqual(competeStats(s), { queries: 15, wrong: 3 });
   assert.deepEqual(eventPayload(s, "progress", 3, 1000),
-    { event: "progress", team: "Alpha", season: 7, chapter: 3, wrong: 3, queries: 15, clientAt: 1000 });
+    { event: "progress", team: "Alpha", season: "s7", chapter: 3, wrong: 3, queries: 15, clientAt: 1000, elapsedMs: 600 });
   const f = { ...s, solved: [1, 2, 3, 4, 5, 6, 7, 8], startedAt: 5000, finishedAt: 65000 };
   assert.equal(eventPayload(f, "finish", 8, 70000).elapsedMs, 60000, "the finish carries the browser's own elapsed time");
-  assert.equal(eventPayload(s, "progress", 3, 1000).elapsedMs, undefined);
-  assert.equal(eventPayload(s, "start", 0).chapter, 3, "chapter defaults to the number solved");
-  assert.equal(eventPayload({ ...freshState(), team: "B", season: 1 }, "start", 0).chapter, 0);
+  assert.equal(eventPayload(s, "progress", 0).chapter, 3, "chapter defaults to the number solved");
   assert.equal(fmtTime(0), "00:00");
   assert.equal(fmtTime(4000), "00:04");
   assert.equal(fmtTime(124000), "02:04");
@@ -165,50 +166,90 @@ test("compete events carry the Part I totals the leaderboard scores", () => {
   assert.equal(fmtTime(-500), "00:00");
 });
 
-test("admin seasons: usage per season, next free number, share links", () => {
-  const rows = [
-    { timestamp: 100, event: "start", team: "A", season: 1 }, { timestamp: 300, event: "finish", team: "A", season: 1 },
-    { timestamp: 200, event: "start", team: "B", season: 1 }, { timestamp: 50, event: "start", team: "C", season: 3 },
-    { timestamp: 9, event: "start", team: "test", season: "" },
-  ];
-  const usage = seasonUsage(rows);
-  assert.deepEqual(usage, [{ season: 1, teams: 2, last: 300 }, { season: 3, teams: 1, last: 50 }]);
-  assert.equal(nextFreeSeason(usage), 2);
-  assert.equal(nextFreeSeason([]), 1);
-  const l = seasonLinks("https://x.uk/g/", 2, "https://s.g/exec?a=1");
-  assert.equal(l.student, "https://x.uk/g/?season=2&board=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
-  assert.equal(l.leaderboard, "https://x.uk/g/leaderboard.html?data=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1&season=2");
-  assert.equal(seasonLinks("b/", 4, "").student, "b/?season=4");
+test("pseudos fold to one key per player, whatever the case or width", () => {
+  assert.equal(teamKey(" Alice "), "alice");
+  assert.equal(teamKey("\uFF21lice"), "alice", "look-alikes fold to the same key");
+  assert.equal(PENALTY.wrong, 10, "the default until a season record sets it");
 });
 
-test("compete refuses a name already used in the same season, whatever the case", () => {
-  const rows = [{ team: "Alice", season: 2 }, { team: "Bob ", season: "3" }];
-  assert.ok(nameTaken(rows, 2, " alice"));
-  assert.ok(nameTaken(rows, 3, "BOB"));
-  assert.ok(!nameTaken(rows, 3, "Alice"), "same name in another season is fine");
-  assert.ok(nameTaken(rows, 2, "Al\u0131ce".replace("\u0131", "i")) && teamKey("\uFF21lice") === "alice", "look-alikes fold to the same key");
-  assert.ok(!nameTaken([], 2, "Alice"));
+test("shared.js is what app.js re-exports", () => {
+  assert.equal(normalise, shared.normalise);
+  assert.equal(sha256, shared.sha256);
+  assert.equal(teamKey, shared.teamKey);
+  assert.match(shared.ADMIN_PASS_SHA256, /^[0-9a-f]{64}$/);
 });
 
-test("admin settings: valid fields apply, invalid ones are refused and keep the default", () => {
-  const before = currentConfig();
-  try {
-    assert.deepEqual(applyConfig([{ team: "x" }]), [], "an old backend answers rows: ignored");
-    assert.deepEqual(applyConfig({ ranks: [10, 20, 30], penalty: { wrong: 5 }, taunts: [" A L ", "B"] }), []);
-    assert.equal(rank(10), "Ganimard himself");
-    assert.equal(rank(31), "Constable");
-    assert.deepEqual(TAUNTS, ["A L", "B"]);
-    assert.deepEqual(PENALTY, { wrong: 5 });
-    assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { wrong: -1 } }), ["ranks", "taunts", "penalty.wrong"]);
-    assert.deepEqual(applyConfig({ penalty: { wrong: 1e12 } }), ["penalty.wrong"], "an hour is the most a wrong answer may cost");
-    assert.deepEqual(applyConfig({ penalty: { wrong: 0.5 } }), ["penalty.wrong"]);
-    assert.deepEqual(applyConfig({ taunts: ["x".repeat(301)] }), ["taunts"], "a telegram is short");
-    assert.deepEqual(currentConfig().ranks, [10, 20, 30], "refused ranks change nothing");
-    assert.equal(configUrl("https://s.g/exec"), "https://s.g/exec?config=1");
-  } finally {
-    applyConfig(before);
-  }
-  assert.deepEqual(currentConfig(), before);
+// A season's rows as doGet ?season=<id> returns them; progress/finish carry Part I running totals.
+const T0 = 1_000_000;
+const row = (event, team, chapter, min, wrong = 0, queries = 0, elapsedMs = null) =>
+  ({ timestamp: T0 + min * 60000, event, team, season: "s1", chapter, hints: 0, wrong, queries, clientAt: null, elapsedMs });
+const fixture = () => {
+  const r = [row("join", "Alice", "", -5), row("join", "bob", "", -4), row("join", "Carol", "", -3), row("join", "Dan", "", 2)];
+  for (let n = 1; n <= 7; n++) r.push(row("progress", n === 3 ? "ALICE" : "Alice", n, n * 2, n === 2 ? 1 : 0, n * 3));
+  r.push(row("finish", "Alice", 8, 20, 1, 30, 20 * 60000 + 5000));          // 20:00 + 1 wrong x 30 s, clocks agree
+  for (let n = 1; n <= 7; n++) r.push(row("progress", "bob", n, n * 2 + 1, 0, n * 2));
+  r.push(row("finish", "bob", 8, 19, 0, 20, 17 * 60000));                    // 19:00, browser says 17:00: flagged
+  r.push(row("progress", "Carol", 1, 4, 3, 10), row("progress", "Carol", 2, 9, 3, 16));
+  return r;
+};
+
+test("officialTime ranks finishers by server time plus penalty, then the others by progress", () => {
+  const out = shared.officialTime(fixture(), { openedAt: T0, penalty: 30 });
+  assert.deepEqual(out.map(p => [p.rank, p.team, p.finished, p.solved, p.chapter]),
+    [[1, "bob", true, 8, 8], [2, "Alice", true, 8, 8], [3, "Carol", false, 2, 3], [4, "Dan", false, 0, 1]]);
+  assert.equal(out[0].ms, 19 * 60000);
+  assert.equal(out[1].ms, 20 * 60000 + 30000, "one wrong answer at 30 s");
+  assert.deepEqual(out.map(p => p.flagged), [true, false, false, false]);
+  assert.equal(out[2].queries, 16);
+  const harsh = shared.officialTime(fixture(), { openedAt: T0, penalty: 0 });
+  assert.equal(harsh[1].ms, 20 * 60000, "no penalty, the server interval alone");
+  assert.deepEqual(shared.officialTime([], { openedAt: T0, penalty: 10 }), []);
+});
+
+test("officialTime and chapterSummary: a negative interval (an old Date row) is flagged, elapsedMs stands in", () => {
+  const rows = [row("join", "Gus", "", -500), row("progress", "Gus", 1, -480, 0, 3, 120000), row("finish", "Gus", 8, -400, 1, 9, 600000)];
+  const [g] = shared.officialTime(rows, { openedAt: T0, penalty: 30 });
+  assert.equal(g.ms, 600000 + 30000, "elapsedMs plus the penalty, never a negative time");
+  assert.equal(g.flagged, true);
+  const s = shared.chapterSummary(rows, { openedAt: T0 });
+  assert.deepEqual([s[0].solvers, s[0].minutes, s[7].minutes], [1, 2, 10]);
+  const [h] = shared.officialTime([row("finish", "Hal", 8, -400, 0, 9, null)], { openedAt: T0 });
+  assert.ok(h.flagged, "no elapsedMs: still flagged");
+});
+
+test("clockStart cancels the browser clock's offset with the server's now", () => {
+  const meta = { openedAt: 1_000_000, now: 1_600_000 };          // the server says: opened 10 minutes ago
+  assert.equal(clockStart(meta, 1_600_000), 1_000_000, "clocks agree");
+  assert.equal(clockStart(meta, 1_900_000), 1_300_000, "a browser 5 minutes fast still reads 10 minutes elapsed");
+  assert.equal(1_900_000 - clockStart(meta, 1_900_000), 600_000);
+  assert.equal(clockStart({ openedAt: 1_000_000 }, 5), 1_000_000, "no now (an older backend): openedAt as is");
+});
+
+test("officialTime: unfinished players tie on the row that solved their highest chapter, retries harmless", () => {
+  // Carol and Dan both solved chapter 2; Carol first. Carol then sends a late duplicate of chapter 1 (a retry).
+  const rows = [row("join", "Carol", "", -3), row("join", "Dan", "", -2),
+    row("progress", "Carol", 1, 1), row("progress", "Dan", 1, 2), row("progress", "Carol", 2, 3), row("progress", "Dan", 2, 4),
+    row("progress", "Carol", 1, 9)];
+  assert.deepEqual(shared.officialTime(rows, { openedAt: T0 }).map(p => p.team), ["Carol", "Dan"]);
+  // Nobody solved anything: the join row decides.
+  assert.deepEqual(shared.officialTime([row("join", "Eve", "", 1), row("join", "Fay", "", 0)], { openedAt: T0 }).map(p => p.team), ["Fay", "Eve"]);
+});
+
+test("chapterSummary: solvers and medians per chapter, per-chapter queries and wrong from running totals", () => {
+  const s = shared.chapterSummary(fixture(), { openedAt: T0, penalty: 30 });
+  assert.equal(s.length, 8);
+  assert.deepEqual(s[0], { chapter: 1, solvers: 3, minutes: 3, queries: 3, wrong: 0 });   // 2/3/4 min; 3/2/10 q; 0/0/3 wrong
+  assert.deepEqual(s[1], { chapter: 2, solvers: 3, minutes: 5, queries: 3, wrong: 0 });   // 4/5/9; 3/2/6; 1/0/0
+  assert.deepEqual(s[7], { chapter: 8, solvers: 2, minutes: 19.5, queries: 7.5, wrong: 0.5 });   // 9 and 6 queries
+  assert.deepEqual(shared.chapterSummary([], { openedAt: T0 })[3], { chapter: 4, solvers: 0, minutes: null, queries: null, wrong: null });
+});
+
+test("built season files carry an answer hash list per chapter and the normaliser fixture", { skip: !fs.existsSync("site/season-1.json") }, () => {
+  const season = JSON.parse(fs.readFileSync("site/season-1.json", "utf8"));
+  assert.equal(season.chapters.length, 8);
+  for (const ch of season.chapters) assert.ok(ch.answer_sha256.length >= 1 && ch.answer_sha256.every(h => /^[0-9a-f]{64}$/.test(h)), "chapter " + ch.n);
+  assert.deepEqual(season.normalise_fixture, data.normalise_fixture);
+  assert.equal(season.hashes_sha256, undefined);
 });
 
 test("penalty durations read naturally in the compete note", () => {
@@ -384,4 +425,244 @@ test("mastheadChapterHtml: only the current chapter's numeral is bold", () => {
   assert.equal(mastheadChapterHtml(3, 8, true), "REVIEWING CHAPTER <b>III</b> OF VIII");
   assert.equal(mastheadChapterHtml(12, 12, false), "CHAPTER <b>XII</b> OF XII");
   for (const h of [mastheadChapterHtml(9, 12, true), mastheadChapterHtml(8, 8, false)]) assert.equal(h.match(/<b>/g).length, 1);
+});
+
+// The Clerk's Handbook (site/learn/): every page repeats its chrome by hand, so these pin it.
+const LEARN = "site/learn/";
+const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
+const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
+const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1].matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1])];
+const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
+const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+test("handbook: every page carries the same masthead nav, footer and chapter menu, only the current item differs", () => {
+  assert.deepEqual([...readingOrder].sort(), learnPages, "the index's table of contents lists every page once");
+  const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
+  const linked = (f) => {
+    const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
+    assert.equal((menu.match(/class="current"/g) || []).length, 1, f + ": one current item");
+    return menu.replace(/<span class="current" aria-current="page">([^<]*)<\/span>/, `<a href="${f}">$1</a>`);
+  };
+  const ref = linked("index.html");
+  const items = [...ref.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)];
+  assert.deepEqual(items.map((m) => m[1]), readingOrder, "menu in table of contents order");
+  items.slice(1).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "menu numbered 1 to 10: " + m[2]));
+  for (const f of learnPages) {
+    assert.equal(one(learnHtml[f], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, f + " nav"), nav, f + " nav");
+    assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), nav, f + " footer");
+    assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
+  }
+});
+
+test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
+  readingOrder.forEach((f, i) => {
+    const pager = one(learnHtml[f], /<nav class="learn-pager">([\s\S]*?)<\/nav>/, f + " pager");
+    for (const [cls, want, word] of [["prev", readingOrder[i - 1], "Previous"], ["next", readingOrder[i + 1], "Next"]]) {
+      const m = pager.match(new RegExp(`<a class="${cls}" href="([^"]+)">([^<]*)</a>`));
+      if (!want) { assert.equal(m, null, `${f} has no ${cls}`); continue; }
+      assert.ok(m, `${f} ${cls}`);
+      assert.equal(m[1], want, `${f} ${cls} (so A's next is B exactly when B's previous is A)`);
+      assert.ok(fs.existsSync(LEARN + m[1]), m[1]);
+      assert.equal(m[2], `${word}: ${one(learnHtml[want], /<h1>([^<]*)<\/h1>/, want + " h1")}`, `${f} ${cls} label`);
+    }
+  });
+});
+
+test("handbook: sitemap lists the landing page, privacy and every learn page, and nothing missing", () => {
+  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
+  const files = [...xml.matchAll(/<loc>https:\/\/mystery\.alephb\.uk\/([^<]*)<\/loc>/g)]
+    .map((m) => (m[1] === "" || m[1].endsWith("/") ? m[1] + "index.html" : m[1]));
+  assert.equal(files.length, (xml.match(/<loc>/g) || []).length, "every loc is on mystery.alephb.uk");
+  for (const f of files) assert.ok(fs.existsSync("site/" + f), "sitemap entry exists: " + f);
+  assert.deepEqual([...new Set(files)].sort(), ["index.html", "privacy.html", ...learnPages.map((f) => "learn/" + f)].sort());
+});
+
+test("handbook: no page names a game table or a cast member", () => {
+  const tables = [...new Set(data.chapters.flatMap((c) => c.tables))];
+  const cast = data.cast.flatMap((c) => [c.name, c.name.split(" ").pop()]);
+  assert.ok(tables.length >= 13 && cast.length >= 12);
+  for (const f of learnPages) {
+    let text = unentity(learnHtml[f]);
+    for (const c of data.chapters) text = text.split(c.title).join(" "); // chapter titles are allowed ("The Neighbouring Suite")
+    for (const w of [...tables, ...cast]) assert.doesNotMatch(text, new RegExp(`\\b${w}\\b`, "i"), `${f} mentions ${w}`);
+  }
+});
+
+test("handbook: every code block is already coloured by colour_learn.mjs", () => {
+  let n = 0;
+  for (const f of learnPages)
+    for (const [, inner] of learnHtml[f].matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)) {
+      n++;
+      assert.equal(colourBlock(inner), inner, `${f}: a code block is not coloured, run node colour_learn.mjs`);
+    }
+  assert.ok(n >= 40, "the handbook's code blocks were found");
+});
+
+const qrRows = (m) => m.map((r) => r.map((d) => (d ? "1" : "0")).join(""));
+
+test("qrMatrix: HELLO WORLD at M is a version 1 code (21 x 21) with a finder in three corners", () => {
+  const m = qrMatrix("HELLO WORLD", "M"), rows = qrRows(m);
+  assert.equal(m.length, 21);
+  for (const r of m) assert.equal(r.length, 21);
+  const finder = ["1111111", "1000001", "1011101", "1011101", "1011101", "1000001", "1111111"];
+  for (const [r0, c0] of [[0, 0], [0, 14], [14, 0]])
+    finder.forEach((line, i) => assert.equal(rows[r0 + i].slice(c0, c0 + 7), line, `finder at ${r0},${c0} row ${i}`));
+  assert.equal(qrMatrix("x".repeat(150), "M").length, 8 * 4 + 17, "a 150-byte link takes version 8 at M");
+  assert.equal(qrMatrix("x".repeat(300), "M").length, 13 * 4 + 17, "versions above 10 work (13-M holds 331 bytes)");
+  assert.throws(() => qrMatrix("x", "X"));
+});
+
+// Reference obtained independently with the Python library `qrcode` 8.x (Lincoln Loop), a separate
+// implementation: QRCode(error_correction=ERROR_CORRECT_M, border=0) fed QRData(b"mystery.alephb.uk",
+// mode=MODE_8BIT_BYTE), make(fit=True), get_matrix(). Version 2 (one alignment pattern), its own mask choice.
+// The same comparison was run offline over 54 strings, versions 2 to 37, all four levels, masks forced,
+// and every automatic choice decoded back with zxing-cpp.
+test("qrMatrix matches an independent encoder's matrix for a fixed input", () => {
+  const ref = [
+    "1111111010100101001111111", "1000001010010100101000001", "1011101001001001101011101",
+    "1011101011110010001011101", "1011101000010011101011101", "1000001001100100001000001",
+    "1111111010101010101111111", "0000000010101000100000000", "1011011101111100001001011",
+    "0000110111101110100101010", "0001001011010100001111100", "0110100001111001000101110",
+    "1111001100001010011010100", "0000010111111011011111001", "0101111100010100110110110",
+    "1000110110110010011110011", "0001111011001010111110101", "0000000010000010100011101",
+    "1111111011100110101010011", "1000001011110111100011000", "1011101001000110111111000",
+    "1011101011000001011011011", "1011101010100010101010110", "1000001001011110000001100",
+    "1111111010010000001010111",
+  ];
+  assert.deepEqual(qrRows(qrMatrix("mystery.alephb.uk", "M")), ref);
+});
+
+test("qrMatrix invariants: format bits decode, Reed-Solomon syndromes vanish, data re-reads to the text", () => {
+  const text = "HELLO WORLD", m = qrMatrix(text, "M");
+  // Format information, first copy: column 8 rows 0-5, 7, 8, then row 8 columns 7, 5..0 (bit 0 first).
+  const cells = [[0, 8], [1, 8], [2, 8], [3, 8], [4, 8], [5, 8], [7, 8], [8, 8], [8, 7], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0]];
+  const fmt = cells.reduce((v, [r, c], i) => v | (m[r][c] ? 1 << i : 0), 0);
+  const second = [...Array(8)].map((_, i) => [8, 20 - i]).concat([...Array(7)].map((_, i) => [14 + i, 8]));
+  assert.equal(second.reduce((v, [r, c], i) => v | (m[r][c] ? 1 << i : 0), 0), fmt, "both copies agree");
+  // Unmasked by 0x5412, the 15 bits are a BCH codeword: divisible by 0x537 (polynomials over GF(2)).
+  const raw = fmt ^ 0x5412;
+  let rem = raw;
+  for (let i = 14; i >= 10; i--) if ((rem >> i) & 1) rem ^= 0x537 << (i - 10);
+  assert.equal(rem, 0, "format BCH remainder");
+  assert.equal(raw >> 13, 0, "level bits 00 = M");
+  const mask = (raw >> 10) & 7;
+  // Unmask and read the 26 codewords back in placement order.
+  const bits = dataPositions(1).map(([r, c]) => (m[r][c] !== MASKS[mask](r, c) ? 1 : 0));
+  const cw = [...Array(26)].map((_, i) => bits.slice(i * 8, i * 8 + 8).reduce((v, b) => (v << 1) | b, 0));
+  // 1-M is one block: 16 data + 10 EC codewords; c(x) evaluated at a^0..a^9 must be 0.
+  for (let i = 0; i < 10; i++) assert.equal(cw.reduce((acc, b) => gfMul(acc, gfExp(i)) ^ b, 0), 0, `syndrome ${i}`);
+  // Mode 0100, 8-bit count, the bytes, then the 0000 terminator and 0xEC/0x11 padding.
+  const s = cw.slice(0, 16).map((b) => b.toString(2).padStart(8, "0")).join("");
+  assert.equal(s.slice(0, 4), "0100");
+  const n = parseInt(s.slice(4, 12), 2);
+  const bytes = [...Array(n)].map((_, i) => parseInt(s.slice(12 + 8 * i, 20 + 8 * i), 2));
+  assert.equal(String.fromCharCode(...bytes), text);
+  assert.equal(s.slice(12 + 8 * n, 16 + 8 * n), "0000");
+  assert.deepEqual(cw.slice(13, 16), [0xec, 0x11, 0xec]);
+});
+
+test("qrSvg is one well-formed svg with a crisp path and the quiet zone", () => {
+  const svg = qrSvg("https://mystery.alephb.uk/?season=3", { size: 300 });
+  const n = qrMatrix("https://mystery.alephb.uk/?season=3").length + 8;
+  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" [^>]*><rect [^>]*\/><path [^>]*\/><\/svg>$/);
+  assert.ok(svg.includes(`width="300" height="300" viewBox="0 0 ${n} ${n}"`));
+  assert.ok(svg.includes('shape-rendering="crispEdges"'));
+  assert.equal((svg.match(/<path/g) || []).length, 1);
+  const xs = [...svg.matchAll(/M(\d+) (\d+)/g)].flatMap((x) => [+x[1], +x[2]]);
+  assert.equal(Math.min(...xs), 4, "dark modules start after a four-module quiet zone");
+  assert.equal(Math.max(...xs), n - 5, "and end four modules before the edge");
+  assert.ok(qrSvg("a", { quiet: 2, dark: "#123", light: "none" }).includes('fill="#123"'));
+});
+
+// --- admin page and board: pure helpers (the DOM wiring only runs in a browser) ---
+const admin = await import("./site/admin.js");
+const lb = await import("./site/leaderboard.js");
+const BOARD = "https://example.invalid/macros/s/PLACEHOLDER/exec";
+
+test("admin CSV: the Sheet's columns, RFC 4180 quoting of commas, quotes and line breaks", () => {
+  const csv = admin.csvText([
+    { timestamp: 1, event: "join", team: 'Le "Chat", noir', season: "s1-ab", chapter: "", wrong: 0, queries: 0, clientAt: null, elapsedMs: null },
+    { timestamp: 2, event: "progress", team: "two\nlines", season: "s1-ab", chapter: 1, wrong: 2, queries: 9, clientAt: 5, elapsedMs: 60000 },
+  ]);
+  assert.equal(csv, "timestamp,event,team,season,chapter,wrong,queries,clientAt,elapsedMs\r\n" +
+    '1,join,"Le ""Chat"", noir",s1-ab,,0,0,,\r\n' + '2,progress,"two\nlines",s1-ab,1,2,9,5,60000\r\n');
+  assert.equal(admin.csvText([]), admin.CSV_COLUMNS.join(",") + "\r\n");
+  assert.equal(admin.csvFilename('Group A: "Tue"/2'), "Group A- -Tue-2.csv", "file-name characters become dashes, a run becomes one");
+});
+
+test("admin student link: the game URL, the season id and a readable board URL", () => {
+  assert.equal(admin.studentLink("https://mystery.example/", "s123-ab", BOARD),
+    "https://mystery.example/?season=s123-ab&board=https://example.invalid/macros/s/PLACEHOLDER/exec");
+  const odd = admin.studentLink("http://localhost:8000/", "s1", "https://x.invalid/exec?a=1&b=2");
+  assert.ok(odd.endsWith("board=https://x.invalid/exec%3Fa%3D1%26b%3D2"));
+  assert.equal(new URL(odd).searchParams.get("board"), "https://x.invalid/exec?a=1&b=2", "the game reads the board URL back intact");
+  assert.equal(admin.boardLink("s1", BOARD), "leaderboard.html?data=" + encodeURIComponent(BOARD) + "&season=s1");
+});
+
+test("admin seasons table: newest first, counts per season, actions by state, values escaped", () => {
+  const seasons = admin.newestFirst([
+    { id: "s1", name: "<b>old</b>", date: "2026-10-01", db: 1, state: "closed", createdAt: 1 },
+    { id: "s2", name: "new", date: "2026-10-14", db: 2, state: "created", createdAt: 2 }]);
+  assert.deepEqual(seasons.map(s => s.id), ["s2", "s1"]);
+  const counts = admin.seasonCounts(fixture().map(r => ({ ...r, season: "s1" })));
+  assert.deepEqual(counts, { s1: { joined: 4, finished: 2 } });
+  const html = admin.seasonsTableHtml(seasons, counts, "s1");
+  assert.ok(!html.includes("<b>old") && html.includes("&#60;b&#62;old"), "a name is escaped");
+  const [created, closed] = html.split('<tr data-id="').slice(1);
+  assert.ok(created.includes('data-act="open"') && created.includes('data-act="close"'), "a season created by mistake can be closed");
+  assert.ok(!closed.includes('data-act="open"') && !closed.includes('data-act="close"') && closed.includes('data-act="csv"'));
+  assert.ok(closed.startsWith('s1" class="selected"'));
+  const detail = admin.detailHtml({ id: "s1", name: "x", date: "d", state: "open", penalty: 30, openedAt: T0 },
+    [...fixture(), row("join", "<img src=x onerror=alert(1)>", "", 1)]);
+  assert.ok(!detail.includes("<img"), "a pseudo is escaped in the detail");
+  assert.ok(detail.includes("PLAYERS (5)") && detail.includes("19:00 <abbr"));
+});
+
+test("admin seasons table: action buttons are icons named by title and aria-label, no visible text", () => {
+  const html = admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state: "created", createdAt: 1 }], {}, "");
+  const names = { open: "Open", close: "Close", copy: "Copy link", qr: "QR", board: "Board", csv: "Export CSV" };
+  const btns = [...html.matchAll(/<button ([^>]*)>([\s\S]*?)<\/button>/g)];
+  assert.deepEqual(btns.map(b => b[1].match(/data-act="(\w+)"/)[1]), Object.keys(names));
+  for (const [, attrs, inner] of btns) {
+    const name = names[attrs.match(/data-act="(\w+)"/)[1]];
+    assert.ok(attrs.includes('title="' + name + '"') && attrs.includes('aria-label="' + name + '"'), name);
+    assert.match(inner, /^<svg [^>]*aria-hidden="true"/, name + ": an svg");
+    assert.equal(inner.replace(/<[^>]*>/g, "").trim(), "", name + ": no visible text");
+  }
+});
+
+test("board: eight-cell strip, three states, every pseudo escaped", () => {
+  assert.equal((lb.stripHtml(3).match(/<i class="on">/g) || []).length, 3);
+  assert.equal((lb.stripHtml(3).match(/<i /g) || []).length, 8);
+  assert.equal((lb.stripHtml(8).match(/<i class="on">/g) || []).length, 8);
+  const rows = [...fixture(), row("join", "<b>Eve</b>", "", 3)];
+  const meta = state => ({ id: "s1", name: "Group <A>", date: "2026-10-14", state, penalty: 30, openedAt: T0 });
+  for (const st of ["created", "open", "closed"]) {
+    const b = lb.boardHtml(meta(st), rows);
+    assert.ok(!b.body.includes("<b>Eve") && b.body.includes("&#60;b&#62;Eve&#60;/b&#62;"), st + ": pseudo escaped");
+    assert.equal(b.head, "Group &#60;A&#62;", st + ": name escaped");
+  }
+  const waiting = lb.boardHtml(meta("created"), rows);
+  assert.ok(waiting.body.includes("Waiting for the teacher") && waiting.body.includes("5 detectives joined"));
+  const open = lb.boardHtml(meta("open"), rows);
+  assert.equal((open.body.match(/<tr /g) || []).length, 5);
+  assert.ok(open.body.indexOf("bob") < open.body.indexOf("Alice") && open.body.indexOf("Alice") < open.body.indexOf("Carol"), "finished first, by time");
+  assert.ok(open.body.includes("19:00 <abbr title=") && open.body.includes("20:30") && open.body.includes("chapter 3"));
+  assert.ok(!open.body.includes("podium") && !open.dateline.includes("closed"));
+  const closed = lb.boardHtml(meta("closed"), rows);
+  assert.ok(closed.dateline.includes("Session closed") && closed.body.indexOf("podium") < closed.body.indexOf("ranking"));
+  assert.ok(closed.body.includes('class="place-1"') && closed.body.includes('class="place-2"') && !closed.body.includes('class="place-3"'), "two finishers, two steps");
+  assert.ok(lb.boardHtml(meta("open"), []).body.includes("No detective yet"));
+  const nobodyDone = lb.boardHtml(meta("closed"), fixture().filter(r => r.event !== "finish"));
+  assert.ok(!nobodyDone.body.includes("podium") && nobodyDone.body.includes("ranking"), "the podium shows finished players only");
+
+});
+
+test("admin and board pages: not in the sitemap, admin kept out of robots, the deploy versions their scripts, pure ASCII", () => {
+  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html/);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
+  const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
+  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js"]) assert.ok(yml.includes(f), f);
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
+    assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });

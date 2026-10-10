@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
 </header>
 <nav class="learn-menu"><a href="index.html">Index</a>
     <a href="database.html">1. Database</a>
@@ -30,16 +30,16 @@
     <a href="ctes.html">10. CTEs</a></nav>
 <main class="learn">
 <h1>GROUP BY, aggregates and HAVING</h1>
-<p class="game-label">Game: chapters <a href="../">IV</a> and <a href="../">VI</a></p>
+<p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
 <p class="lede">So far every query returned rows of the table. Aggregates return facts about many rows at once: how many, how much, the largest, the average.</p>
 
 <h2>Aggregate functions</h2>
 <p>Five functions do most of the work: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code>. Used without grouping, each one collapses the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
-<pre><code>SELECT COUNT(*) AS products,
-       MIN(price) AS cheapest,
-       MAX(price) AS dearest,
-       ROUND(AVG(price), 2) AS average
-FROM product;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>,
+       <span class="sql-fn">MIN</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">cheapest</span>,
+       <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">dearest</span>,
+       <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
 <table class="result">
 <tr><th>products</th><th>cheapest</th><th>dearest</th><th>average</th></tr>
 <tr><td>10</td><td>1.2</td><td>4.5</td><td>2.84</td></tr>
@@ -47,9 +47,10 @@ FROM product;</code></pre>
 
 <h2>One row per group: GROUP BY</h2>
 <p><code>GROUP BY</code> splits the rows into groups that share the same value in one or more columns, then computes each aggregate once per group. The result has one row per group. Picture the database sorting the rows into piles, one pile per category, and then counting or adding up each pile separately.</p>
-<pre><code>SELECT category, COUNT(*) AS products, ROUND(AVG(price), 2) AS average_price
-FROM product
-GROUP BY category;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th><th>average_price</th></tr>
 <tr><td>bread</td><td>4</td><td>3.32</td></tr>
@@ -63,11 +64,11 @@ GROUP BY category;</code></pre>
 
 <h2>Filtering groups: HAVING</h2>
 <p><code>WHERE</code> filters rows before they are grouped. <code>HAVING</code> filters groups after they are counted, so it is the place for conditions on an aggregate, such as "customers with at least two orders". You cannot write <code>WHERE COUNT(*) &gt;= 2</code>, because when <code>WHERE</code> runs, the counting has not happened yet.</p>
-<pre><code>SELECT customer_id, COUNT(*) AS orders
-FROM orders
-GROUP BY customer_id
-HAVING COUNT(*) &gt;= 2
-ORDER BY orders DESC, customer_id;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt;= <span class="sql-num">2</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>orders</th></tr>
 <tr><td>1</td><td>4</td></tr>
@@ -77,11 +78,12 @@ ORDER BY orders DESC, customer_id;</code></pre>
 <tr><td>5</td><td>2</td></tr>
 </table>
 <p>Both clauses can appear in the same query, each doing its own job. The next example keeps only the morning orders (a row filter, so <code>WHERE</code>), groups them by day, and keeps the days with more than one morning order (a group filter, so <code>HAVING</code>).</p>
-<pre><code>SELECT day, COUNT(*) AS morning_orders
-FROM orders
-WHERE time &lt; '12:00'
-GROUP BY day
-HAVING COUNT(*) &gt; 1;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">morning_orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">1</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>morning_orders</th></tr>
 <tr><td>2026-03-02</td><td>2</td></tr>
@@ -91,11 +93,11 @@ HAVING COUNT(*) &gt; 1;</code></pre>
 
 <h2>Adding up quantities</h2>
 <p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold during the week. Sorting by the sum shows the best sellers first. To turn quantities into money you need the price, which lives in another table: that is the job of a <a href="joins.html">JOIN</a>, and the JOIN page finishes this example.</p>
-<pre><code>SELECT product_id, SUM(quantity) AS pieces, COUNT(*) AS lines
-FROM order_item
-GROUP BY product_id
-HAVING SUM(quantity) &gt;= 4
-ORDER BY pieces DESC, product_id;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">product_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">product_id</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) &gt;= <span class="sql-num">4</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">pieces</span> <span class="sql-kw">DESC</span>, <span class="sql-id">product_id</span>;</code></pre>
 <table class="result">
 <tr><th>product_id</th><th>pieces</th><th>lines</th></tr>
 <tr><td>1</td><td>6</td><td>4</td></tr>
@@ -111,9 +113,9 @@ ORDER BY pieces DESC, product_id;</code></pre>
 <h2>Common mistakes</h2>
 <p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which SQLite allows and fills with an arbitrary value. Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
 
-<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables.</p>
+<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="joins.html">Next: JOIN, LEFT JOIN and self-joins</a></nav>
 </main>
-<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
 </html>

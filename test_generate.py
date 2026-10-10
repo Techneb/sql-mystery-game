@@ -292,25 +292,23 @@ class Compete(unittest.TestCase):
         j = g.chapters_json(self.V, mode="compete")
         self.assertEqual(len(j["chapters"]), 8)
         self.assertNotIn("endings", j)
-        # the backend checks answers: no answer hash ships, only the fingerprint the admin panel compares
-        self.assertFalse([k for ch in j["chapters"] for k in ch if "sha256" in k] + [k for k in j if "sha256" in k and k != "hashes_sha256"])
+        # answers are checked in the browser, like learning mode: one hash list per chapter, no other hash
+        self.assertEqual([k for k in j if "sha256" in k], [])
+        self.assertTrue(all(ch["answer_sha256"] for ch in j["chapters"]))
         self.assertNotIn("CHAPTER IX", j["chapters"][7]["telegram"])   # compete has no chapter IX
         self.assertIn("CHAPTER IX", g.chapters_json(self.V)["chapters"][7]["telegram"])
         self.assertEqual(j["chapters"][3]["construct"], "GROUP BY / HAVING")
 
-    def test_season_hashes_match_the_compete_solutions(self):
+    def test_season_files_carry_hashes_the_compete_solutions_match(self):
         conn, V = g.build_db(1)
-        got = g.season_hashes([1])
-        self.assertEqual(list(got), ["1"])
-        for ch, hs in zip(plot.CHAPTERS[:8], got["1"]):
-            (val,) = conn.execute(ch["solution_compete"].format(**V)).fetchone()
-            self.assertEqual(hs[0], g.sha(val), ch["n"])
-            self.assertEqual(len(hs), 2 if ch["n"] == 5 else 1)   # the jeweller's surname alone is accepted too
-        self.assertEqual(got, g.season_hashes([1]))   # deterministic
-        self.assertEqual(len(g.season_hashes()), 20)
         j = g.chapters_json(V, mode="compete")
-        self.assertEqual(j["hashes_sha256"], g.fingerprint(got["1"]), "the season JSON carries the fingerprint of its hashes")
-        self.assertNotIn(j["hashes_sha256"], sum(got["1"], []), "a fingerprint is not a hash")
+        for ch, d in zip(plot.CHAPTERS[:8], j["chapters"]):
+            (val,) = conn.execute(ch["solution_compete"].format(**V)).fetchone()
+            self.assertEqual(d["answer_sha256"][0], g.sha(val), ch["n"])
+            self.assertEqual(len(d["answer_sha256"]), 2 if ch["n"] == 5 else 1)   # the jeweller's surname alone too
+            self.assertNotIn(g.normalise(str(val)), json.dumps(j["chapters"][ch["n"] - 1]).lower(), ch["n"])
+        self.assertEqual(j["normalise_fixture"], g.FIXTURE)   # ?selftest still checks the normaliser
+        self.assertEqual(g.SEASONS, 5)
         conn.close()
 
     def test_compete_values_vary_by_season(self):

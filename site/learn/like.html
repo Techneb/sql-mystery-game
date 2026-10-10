@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
 </header>
 <nav class="learn-menu"><a href="index.html">Index</a>
     <a href="database.html">1. Database</a>
@@ -36,9 +36,10 @@
 <h2>Two wildcards</h2>
 <p><code>column LIKE 'pattern'</code> is true when the text in the column fits the pattern. A pattern is ordinary text with two special characters. The percent sign, <code>%</code>, stands for any run of characters, including none at all. The underscore, <code>_</code>, stands for exactly one character. Everything else in the pattern must match as written.</p>
 <p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
-<pre><code>SELECT name, price
-FROM product
-WHERE name LIKE '%croissant%';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%croissant%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Croissant</td><td>1.4</td></tr>
@@ -51,9 +52,10 @@ WHERE name LIKE '%croissant%';</code></pre>
 
 <h2>The underscore: a fixed length</h2>
 <p>The underscore is handy for codes and dates whose shape you know. The pattern <code>'2026-03-0_'</code> matches any of the first nine days of March 2026 and nothing else, because exactly one character must follow the zero. Two underscores require two characters, and so on.</p>
-<pre><code>SELECT name, joined
-FROM customer
-WHERE joined LIKE '2024-0_-0_';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">joined</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">joined</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'2024-0_-0_'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>joined</th></tr>
 <tr><td>Ben Okafor</td><td>2024-02-03</td></tr>
@@ -64,11 +66,12 @@ WHERE joined LIKE '2024-0_-0_';</code></pre>
 
 <h2>Combining a pattern with other conditions</h2>
 <p><code>LIKE</code> is a condition like any other, so it combines with <code>AND</code>, <code>OR</code> and <code>NOT</code>. <code>NOT LIKE</code> keeps the rows that do not match. A common pattern is to search broadly with <code>LIKE</code>, then narrow down with an exact filter on another column.</p>
-<pre><code>SELECT name, category
-FROM product
-WHERE name LIKE '%o%'
-  AND name NOT LIKE '%loaf%'
-  AND category &lt;&gt; 'cake';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">category</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%o%'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">name</span> <span class="sql-kw">NOT</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%loaf%'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">category</span> &lt;&gt; <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th></tr>
 <tr><td>Croissant</td><td>pastry</td></tr>
@@ -79,10 +82,11 @@ WHERE name LIKE '%o%'
 <p>Read it step by step: names that contain an "o" somewhere, minus the loaves, minus the cakes.</p>
 
 <h2>Searching more than one word</h2>
-<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches "chocolate", "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
-<pre><code>SELECT name
-FROM product
-WHERE name LIKE '%choc%' OR name LIKE '%tart%';</code></pre>
+<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%choc%'</span> <span class="sql-kw">OR</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%tart%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Pain au chocolat</td></tr>
@@ -100,6 +104,6 @@ WHERE name LIKE '%choc%' OR name LIKE '%tart%';</code></pre>
 <p class="in-game"><b>In the game:</b> Chapter III, <i>A Plate in the Dark</i>, practises LIKE.</p>
 <nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
 </main>
-<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
 </html>

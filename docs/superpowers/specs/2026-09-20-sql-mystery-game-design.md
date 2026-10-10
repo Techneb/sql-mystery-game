@@ -163,6 +163,9 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 
 ## 4. Compete mode
 
+*2026-10-10: superseded where they differ by `2026-10-10-compete-admin-design.md` (seasons as named records opened
+and closed by the teacher, answers checked in the browser, a public projector board, an admin page).*
+
 - **Content**: a *season* database built by `python3 generate_db.py --season N`: same plot, cast and
   constructs, but every planted value (plates, addresses, accounts, names of non-suspects, amounts,
   ids) is re-drawn from the season seed, and each chapter uses its **compete objective**, a different
@@ -293,7 +296,9 @@ framework, no bundler.
    a help route after N wrong answers (would undo the 2026-09-30 hint removal) and sql.js in a Worker (the
    comma-join guard is enough). Compete stays honour-based against a student who posts a rival's start first.
    2026-10-09: the OpenGen source clips and uncropped originals moved from `~/Downloads` to the gitignored
-   `assets-source/` in the repo (Mac only). Still open: a class trial, then `RANKS` from real query counts.
+   `assets-source/` in the repo (Mac only). 2026-10-10: a regression playthrough of chapters 1-12 on the live site
+  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial set for 2026-10-14; the
+  compete and admin design for it is `2026-10-10-compete-admin-design.md`. Still open: `RANKS` from real query counts.
 
 ## 8. Backlog (not scheduled)
 
@@ -433,7 +438,11 @@ framework, no bundler.
   the game chapters it serves by numeral), linked from the landing footer and privacy.html, with `robots.txt` and
   `sitemap.xml`. Owner decisions on the way (2026-10-10): no How-to-play or For-teachers pages; chapter X's construct
   is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page links it from the game's "Twelve
-  chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10).
+  chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10). A quality pass the same day (44c4d32) re-ran all 43 examples
+  against the bakery script (all matched; multi-row queries gained an ORDER BY), proofread the pages, and added four
+  node tests pinning the page chrome, the pagers, the sitemap and the absence of game table and cast names.
+  The code blocks are coloured at build time with the game's highlighter (`node colour_learn.mjs`, 72da87c, owner's
+  request 2026-10-10), a test keeps them coloured, and the pages stay free of JavaScript.
   **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged): `ADS_CLIENT`, `AD_SLOT`
   and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.ad-slot` with a
   responsive unit, keeps Consent Mode all denied by default and hands consent to Google's message (GA4 loads only once
@@ -490,3 +499,13 @@ framework, no bundler.
   paper colour, legible at the chapter header's size and in the night edition. **Done 2026-10-03:** made by
   the owner from `docs/mockups/chapter-icon-prompts.md`, background cut to transparency, `site/icons/chNN.png`;
   `PROPS` removed.
+- **Compete mode simplification** (course owner, 2026-10-10): brainstorm before the class trial how to simplify
+  compete mode (today: a teacher's `?season=N&board=<Apps Script URL>` link, the Apps Script backend with its
+  Script Properties and posted hashes, the admin panel's Seasons and Settings, the leaderboard page, the start
+  token and the honour-based start). Designed 2026-10-10 with the owner: `2026-10-10-compete-admin-design.md`
+  (that document supersedes section 4 where they differ). In progress for the 2026-10-14 trial.
+- **Admin space** (course owner, 2026-10-10): one teacher-facing place to manage seasons (create, share, close),
+  read the compete data from the Google Sheet behind the Apps Script, and show a live leaderboard on the classroom
+  screen during a session. Today these are spread over the `?admin` panel (Seasons, Settings, passphrase-gated),
+  the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Designed 2026-10-10 with the owner:
+  `2026-10-10-compete-admin-design.md`. In progress for the 2026-10-14 trial.

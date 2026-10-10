@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
 </header>
 <nav class="learn-menu"><a href="index.html">Index</a>
     <a href="database.html">1. Database</a>
@@ -45,10 +45,10 @@
 
 <h2>Exploring an unknown database</h2>
 <p>SQLite describes itself in a built-in table called <code>sqlite_master</code>. Querying it lists every table, together with the statement that created it.</p>
-<pre><code>SELECT name
-FROM sqlite_master
-WHERE type = 'table'
-ORDER BY name;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">sqlite_master</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">type</span> = <span class="sql-str">'table'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>customer</td></tr>
@@ -57,8 +57,8 @@ ORDER BY name;</code></pre>
 <tr><td>product</td></tr>
 </table>
 <p>For the columns of one table, <code>PRAGMA table_info</code> gives their names, types, and whether each is part of the primary key. The table-valued form below can be used in a normal <code>SELECT</code>, so you can choose the columns you want to see.</p>
-<pre><code>SELECT name, type, pk
-FROM pragma_table_info('orders');</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">type</span>, <span class="sql-id">pk</span>
+<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_table_info</span>(<span class="sql-str">'orders'</span>);</code></pre>
 <table class="result">
 <tr><th>name</th><th>type</th><th>pk</th></tr>
 <tr><td>id</td><td>INTEGER</td><td>1</td></tr>
@@ -67,8 +67,8 @@ FROM pragma_table_info('orders');</code></pre>
 <tr><td>time</td><td>TEXT</td><td>0</td></tr>
 </table>
 <p>And <code>pragma_foreign_key_list</code> lists the foreign keys of a table: which column points to which table and column.</p>
-<pre><code>SELECT "from", "table", "to"
-FROM pragma_foreign_key_list('order_item');</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-str">"from"</span>, <span class="sql-str">"table"</span>, <span class="sql-str">"to"</span>
+<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_foreign_key_list</span>(<span class="sql-str">'order_item'</span>);</code></pre>
 <table class="result">
 <tr><th>from</th><th>table</th><th>to</th></tr>
 <tr><td>product_id</td><td>product</td><td>id</td></tr>
@@ -77,10 +77,10 @@ FROM pragma_foreign_key_list('order_item');</code></pre>
 
 <h2>Looking at the data itself</h2>
 <p>A schema tells you what can be stored, not what is stored. The next step is always to look at a few rows and count them. <code>LIMIT 5</code> shows the shape of the values (is a date written <code>2026-03-02</code> or <code>02/03/2026</code>? are times <code>07:15</code> or <code>715</code>?), and a <code>COUNT</code> per column shows where values are missing.</p>
-<pre><code>SELECT COUNT(*) AS customers,
-       COUNT(referred_by) AS with_referrer,
-       COUNT(DISTINCT town) AS towns
-FROM customer;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>,
+       <span class="sql-fn">COUNT</span>(<span class="sql-id">referred_by</span>) <span class="sql-kw">AS</span> <span class="sql-id">with_referrer</span>,
+       <span class="sql-fn">COUNT</span>(<span class="sql-kw">DISTINCT</span> <span class="sql-id">town</span>) <span class="sql-kw">AS</span> <span class="sql-id">towns</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
 <table class="result">
 <tr><th>customers</th><th>with_referrer</th><th>towns</th></tr>
 <tr><td>8</td><td>5</td><td>3</td></tr>
@@ -96,6 +96,6 @@ FROM customer;</code></pre>
 <p class="in-game"><b>In the game:</b> the schema beside the terminal grows as chapters reveal new tables, with keys and relationship lines drawn as described here; every chapter starts by reading it.</p>
 <nav class="learn-pager"><a class="prev" href="database.html">Previous: The bakery database</a><a class="next" href="select-where.html">Next: SELECT and WHERE</a></nav>
 </main>
-<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
 </html>

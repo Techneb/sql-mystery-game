@@ -15,7 +15,7 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
 </header>
 <nav class="learn-menu"><a href="index.html">Index</a>
     <a href="database.html">1. Database</a>
@@ -35,17 +35,17 @@
 
 <h2>The idea of a window</h2>
 <p>Suppose you want each customer's orders numbered first, second, third, in date order. <code>GROUP BY</code> cannot do it, because it collapses each customer into a single row. A window function computes a value for every row using a set of related rows, its window, and leaves the rows as they are.</p>
-<p>The window is described by <code>OVER (...)</code> right after the function. Inside the parentheses, <code>PARTITION BY</code> splits the rows into independent groups (one per customer, say), and <code>ORDER BY</code> sets the order inside each group. Both parts are optional: an empty <code>OVER ()</code> means "all rows, in no particular order". Window functions need SQLite 3.25 or later, which every current browser and Python ships. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
+<p>The window is described by <code>OVER (...)</code> right after the function. Inside the parentheses, <code>PARTITION BY</code> splits the rows into independent groups (one per customer, say), and <code>ORDER BY</code> sets the order inside each group. Both parts are optional: an empty <code>OVER ()</code> means "all rows, in no particular order". Window functions need SQLite 3.25 (2018) or later, which every current SQLite tool and Python include. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2>Numbering and ranking</h2>
 <p>Three functions give positions. <code>ROW_NUMBER()</code> numbers the rows 1, 2, 3 without gaps or ties. <code>RANK()</code> gives tied rows the same rank and then skips: 1, 1, 3. <code>DENSE_RANK()</code> gives ties the same rank without skipping: 1, 1, 2. They differ only when the <code>ORDER BY</code> value ties, and here two breads cost the same. Which of the two tied rows <code>ROW_NUMBER</code> puts first is not defined unless you add a second sort key.</p>
 <p>The example keeps only the breads with <code>WHERE</code>, so one window covers them all. To rank every category separately in one query, write <code>OVER (PARTITION BY category ORDER BY price DESC)</code>: the numbering then starts again at 1 in each category.</p>
-<pre><code>SELECT category, name, price,
-       ROW_NUMBER() OVER (ORDER BY price DESC) AS row_number,
-       RANK()       OVER (ORDER BY price DESC) AS rank,
-       DENSE_RANK() OVER (ORDER BY price DESC) AS dense_rank
-FROM product
-WHERE category = 'bread';</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>,
+       <span class="sql-fn">ROW_NUMBER</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">row_number</span>,
+       <span class="sql-fn">RANK</span>()       <span class="sql-kw">OVER</span> (<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">rank</span>,
+       <span class="sql-fn">DENSE_RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">dense_rank</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'bread'</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>name</th><th>price</th><th>row_number</th><th>rank</th><th>dense_rank</th></tr>
 <tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td><td>1</td><td>1</td><td>1</td></tr>
@@ -54,15 +54,15 @@ WHERE category = 'bread';</code></pre>
 <tr><td>bread</td><td>Baguette</td><td>1.2</td><td>4</td><td>4</td><td>3</td></tr>
 </table>
 <p>A window function cannot appear in <code>WHERE</code>, because windows are computed after the rows have been filtered. To keep, say, only the first order of each customer, compute the number in a <a href="ctes.html">CTE</a> or a subquery, then filter on it in the outer query. This "number, then filter" pattern answers every question of the form "the first", "the latest" or "the top two" per group.</p>
-<pre><code>WITH numbered AS (
-  SELECT customer_id, day, time,
-         ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY day, time) AS n
-  FROM orders
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">numbered</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>,
+         <span class="sql-fn">ROW_NUMBER</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">n</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 )
-SELECT customer_id, day, time
-FROM numbered
-WHERE n = 1
-ORDER BY customer_id;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">numbered</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">n</span> = <span class="sql-num">1</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>day</th><th>time</th></tr>
 <tr><td>1</td><td>2026-03-02</td><td>07:15</td></tr>
@@ -76,10 +76,11 @@ ORDER BY customer_id;</code></pre>
 
 <h2>Looking at the previous row: LAG</h2>
 <p><code>LAG(column)</code> returns the value of that column in the previous row of the window; <code>LEAD(column)</code> returns the next one. Put them side by side with the current value and you can measure the change between consecutive rows: the gap between two visits, the growth from one month to the next. The first row of each partition has no previous row, so <code>LAG</code> returns NULL there. An optional second argument looks further back, and a third gives a default instead of NULL.</p>
-<pre><code>SELECT customer_id, day,
-       LAG(day) OVER (PARTITION BY customer_id ORDER BY day, time) AS previous_visit
-FROM orders
-WHERE customer_id IN (1, 3);</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>,
+       <span class="sql-fn">LAG</span>(<span class="sql-id">day</span>) <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">previous_visit</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">customer_id</span> <span class="sql-kw">IN</span> (<span class="sql-num">1</span>, <span class="sql-num">3</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>day</th><th>previous_visit</th></tr>
 <tr><td>1</td><td>2026-03-02</td><td>NULL</td></tr>
@@ -90,17 +91,17 @@ WHERE customer_id IN (1, 3);</code></pre>
 <tr><td>3</td><td>2026-03-08</td><td>2026-03-03</td></tr>
 </table>
 <p>Dates written as text cannot be subtracted directly, but SQLite's <code>julianday()</code> turns a date into a number of days, so the difference between two of them is a gap in days. Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
-<pre><code>WITH visits AS (
-  SELECT customer_id, day,
-         LAG(day) OVER (PARTITION BY customer_id ORDER BY day, time) AS previous_visit
-  FROM orders
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">visits</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>,
+         <span class="sql-fn">LAG</span>(<span class="sql-id">day</span>) <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">previous_visit</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 )
-SELECT customer_id, previous_visit, day,
-       julianday(day) - julianday(previous_visit) AS gap_days
-FROM visits
-WHERE previous_visit IS NOT NULL
-ORDER BY gap_days DESC, customer_id
-LIMIT 3;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">previous_visit</span>, <span class="sql-id">day</span>,
+       <span class="sql-fn">julianday</span>(<span class="sql-id">day</span>) - <span class="sql-fn">julianday</span>(<span class="sql-id">previous_visit</span>) <span class="sql-kw">AS</span> <span class="sql-id">gap_days</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">visits</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">previous_visit</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">gap_days</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>previous_visit</th><th>day</th><th>gap_days</th></tr>
 <tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5.0</td></tr>
@@ -118,6 +119,6 @@ LIMIT 3;</code></pre>
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, practises RANK() OVER with a CTE; Chapter XI, <i>The Silence</i>, practises LAG() OVER.</p>
 <nav class="learn-pager"><a class="prev" href="case-when.html">Previous: CASE WHEN</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
 </main>
-<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
 </html>
