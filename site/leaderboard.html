@@ -3,106 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Ritz Affair -- Leaderboard</title>
+<meta name="robots" content="noindex">
+<title>Leaderboard -- The Ritz Affair</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="learn/learn.css">
 <style>
-  :root { --paper: #f3ead7; --ink: #1c1a17; --red: #8a2b2b; --rule: #c9b98f; --card: #fffdf5; }
-  * { box-sizing: border-box; }
-  body { margin: 0; padding: 16px; background: var(--paper); color: var(--ink); font: 16px/1.4 Georgia, serif; }
-  h1 { font-size: 22px; text-align: center; margin: 0 0 4px; }
-  .sub { text-align: center; font-size: 12px; letter-spacing: 1px; opacity: .7; margin-bottom: 16px; }
-  select { font: inherit; margin: 0 auto 16px; display: block; padding: 4px 8px; }
-  table { border-collapse: collapse; width: 100%; max-width: 720px; margin: 0 auto 24px; background: var(--card); }
-  th, td { border-bottom: 1px solid var(--rule); padding: 6px 10px; text-align: left; font-size: 14px; }
-  th { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
-  tr.done td.time { font-weight: 700; }
-  tr.progress td.time { color: var(--red); font-style: italic; }
-  .empty { text-align: center; opacity: .6; margin: 24px; }
+  /* Sized for a projector at the back of a classroom: every row at least 28 px of text. */
+  .lb { max-width: 1200px; margin: 0 auto; padding: 8px 24px 40px; text-align: center; }
+  .lb h1 { font: 900 clamp(36px, 6vw, 72px)/1.1 "Playfair Display", serif; margin: 24px 0 4px; }
+  .dateline { font: italic 400 clamp(22px, 2.6vw, 32px)/1.2 "Cormorant Garamond", Georgia, serif; border-bottom: 3px double var(--ink); padding-bottom: 12px; margin: 0 0 20px; }
+  .waiting { font: 700 clamp(30px, 4vw, 48px)/1.2 "Playfair Display", serif; margin: 28px 0 8px; }
+  .count { font-size: 30px; margin: 0 0 20px; }
+  .joined { list-style: none; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 36px; font: 34px/1.3 "Special Elite", monospace; }
+  .ranking { width: 100%; border-collapse: collapse; font-size: 34px; text-align: left; }
+  .ranking td { padding: 8px 12px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .ranking .rank { width: 2.2em; font: 900 34px "Playfair Display", serif; text-align: right; }
+  .ranking .team { font-family: "Special Elite", monospace; overflow-wrap: anywhere; }
+  .ranking .time { text-align: right; white-space: nowrap; font-family: "Special Elite", monospace; }
+  .ranking tr.playing .time { font: italic 30px "Cormorant Garamond", Georgia, serif; color: var(--rel); }
+  .strip { display: inline-flex; gap: 4px; vertical-align: middle; }
+  .strip i { display: block; width: 22px; height: 28px; border: 2px solid var(--ink); border-radius: 3px; }
+  .strip i.on { background: var(--ink); }
+  abbr { text-decoration: none; cursor: help; color: var(--rel); }
+  .podium { list-style: none; padding: 0; margin: 12px 0 32px; display: flex; justify-content: center; align-items: flex-end; gap: 16px; }
+  .podium li { flex: 0 1 300px; border: 2px solid var(--ink); border-radius: var(--r-card); background: var(--card); padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .podium .place { font: 900 64px/1 "Playfair Display", serif; }
+  .podium .team { font: 36px/1.2 "Special Elite", monospace; overflow-wrap: anywhere; }
+  .podium .time { font-size: 30px; }
+  .podium .place-1 { padding: 36px 12px; border-width: 4px; }
+  .podium .place-1 .place { font-size: 96px; color: var(--gold); }
+  .podium .place-1 .team { font-size: 46px; }
+  #updated { margin-top: 24px; }
+  @media (max-width: 700px) {
+    .ranking, .ranking .rank, .joined, .podium .team { font-size: 22px; }
+    .strip i { width: 12px; height: 18px; }
+    .podium { flex-direction: column; align-items: stretch; }
+  }
 </style>
 </head>
 <body>
-<h1>THE RITZ AFFAIR -- LEADERBOARD</h1>
-<div class="sub" id="status">Loading...</div>
-<select id="season"></select>
-<table id="board">
-  <thead><tr><th>#</th><th>Pseudo</th><th>Time</th><th>Wrong</th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
-<div class="empty" id="empty" hidden>No players yet for this season.</div>
-<script>
-// The deployment URL travels in the link (leaderboard.html?data=<your /exec URL>&season=N), never in this public repo.
-// With season=N the backend returns that season only; without it, every season (the teacher's view).
-const PARAMS = new URLSearchParams(location.search);
-const SOURCE = PARAMS.get("data") || "";
-const ONLY = Number(PARAMS.get("season")) || 0;
-const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase();   // same as teamKey in app.js
-
-function fmt(ms) {
-  const s = Math.round(ms / 1000);
-  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
-}
-
-// Everything below comes from the Sheet, which anyone can POST to: escape it before it reaches innerHTML.
-const esc = s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
-// One row per team+season: pairs its "start" row with its "finish" row (adjusted time, spec formula:
-// finish - start + penalty.wrong s per wrong answer, 10 unless the ?admin Settings say otherwise) or, absent a finish, its latest "progress" chapter.
-// Rows arrive in sheet order (server-stamped, chronological); the FIRST start and the FIRST finish win.
-// The server stamps arrival, not the event: a "start" that reached the sheet late would shorten the official
-// time, so the finish row's own elapsedMs (the browser's clock) is compared and a gap over a minute is flagged.
-let penalty = { wrong: 10 };  // default, same as PENALTY in app.js
-function summarize(rows) {
-  const teams = new Map(); // key "team|season" -> {team, season, start, finish, chapter}
-  for (const r of rows) {
-    const key = teamKey(r.team) + "|" + r.season;
-    const t = teams.get(key) || { team: r.team, season: r.season, start: null, finish: null, chapter: 0 };
-    if (r.event === "start" && t.start == null) t.start = r.timestamp;
-    if (r.event === "progress") t.chapter = Math.max(t.chapter, Number(r.chapter) || 0);
-    if (r.event === "finish" && !t.finish) t.finish = r;
-    teams.set(key, t);
-  }
-  return [...teams.values()].map(t => {
-    if (t.finish && t.start != null) {
-      const official = t.finish.timestamp - t.start;
-      const adjusted = official + (t.finish.wrong || 0) * penalty.wrong * 1000;
-      const unverified = t.finish.elapsedMs != null && Math.abs(official - Number(t.finish.elapsedMs)) > 60000;
-      return { ...t, done: true, adjusted, wrong: t.finish.wrong, unverified };
-    }
-    return { ...t, done: false, adjusted: Infinity };
-  });
-}
-
-async function load() {
-  if (!SOURCE) { document.getElementById("status").textContent = "No leaderboard configured yet."; return; }
-  let rows;
-  try {
-    const u = new URL(SOURCE); u.searchParams.set("config", "1");
-    const p = await fetch(u).then(r => r.json()).then(c => c.penalty || {}).catch(() => ({}));
-    if (Number.isFinite(p.wrong) && p.wrong >= 0) penalty.wrong = p.wrong;
-  } catch {}
-  try { const u = new URL(SOURCE); if (ONLY) u.searchParams.set("season", ONLY); rows = await (await fetch(u)).json(); }
-  catch (e) { document.getElementById("status").textContent = "Could not reach the leaderboard."; return; }
-  const teams = summarize(rows);
-  const seasons = [...new Set(teams.map(t => t.season))].sort((a, b) => a - b);
-  const sel = document.getElementById("season");
-  const prev = sel.value;
-  sel.innerHTML = seasons.map(s => `<option value="${esc(s)}">Season ${esc(s)}</option>`).join("");
-  if (seasons.includes(Number(prev))) sel.value = prev;
-  const season = Number(sel.value || seasons[0]);
-  const here = teams.filter(t => t.season === season).sort((a, b) => a.adjusted - b.adjusted);
-  document.getElementById("rows").innerHTML = here.map((t, i) => `
-    <tr class="${t.done ? "done" : "progress"}">
-      <td>${t.done ? i + 1 : "-"}</td>
-      <td>${esc(t.team)}</td>
-      <td class="time"${t.unverified ? ' title="The browser\'s own clock disagrees with the server by more than a minute: a late or lost start."' : ""}>${t.done ? fmt(t.adjusted) + (t.unverified ? " ?" : "") : "chapter " + t.chapter + " of 8"}</td>
-      <td>${t.done ? t.wrong : "-"}</td>
-    </tr>`).join("");
-  document.getElementById("empty").hidden = here.length > 0;
-  document.getElementById("status").textContent = "Updated " + new Date().toLocaleTimeString();
-}
-
-load();
-setInterval(load, 30000);
-document.getElementById("season").addEventListener("change", load);
-</script>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE RITZ AFFAIR &middot; LEADERBOARD</div>
+</header>
+<main class="lb">
+  <h1 id="headline">The Ritz Affair</h1>
+  <p class="dateline" id="dateline">&nbsp;</p>
+  <div id="board"><p class="waiting">Loading...</p></div>
+  <p class="muted" id="updated"></p>
+</main>
+<script type="module" src="leaderboard.js"></script>
 </body>
 </html>

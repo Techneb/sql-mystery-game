@@ -531,3 +531,80 @@ test("qrSvg is one well-formed svg with a crisp path and the quiet zone", () => 
   assert.equal(Math.max(...xs), n - 5, "and end four modules before the edge");
   assert.ok(qrSvg("a", { quiet: 2, dark: "#123", light: "none" }).includes('fill="#123"'));
 });
+
+// --- admin page and board: pure helpers (the DOM wiring only runs in a browser) ---
+const admin = await import("./site/admin.js");
+const lb = await import("./site/leaderboard.js");
+const BOARD = "https://example.invalid/macros/s/PLACEHOLDER/exec";
+
+test("admin CSV: the Sheet's columns, RFC 4180 quoting of commas, quotes and line breaks", () => {
+  const csv = admin.csvText([
+    { timestamp: 1, event: "join", team: 'Le "Chat", noir', season: "s1-ab", chapter: "", wrong: 0, queries: 0, clientAt: null, elapsedMs: null },
+    { timestamp: 2, event: "progress", team: "two\nlines", season: "s1-ab", chapter: 1, wrong: 2, queries: 9, clientAt: 5, elapsedMs: 60000 },
+  ]);
+  assert.equal(csv, "timestamp,event,team,season,chapter,wrong,queries,clientAt,elapsedMs\r\n" +
+    '1,join,"Le ""Chat"", noir",s1-ab,,0,0,,\r\n' + '2,progress,"two\nlines",s1-ab,1,2,9,5,60000\r\n');
+  assert.equal(admin.csvText([]), admin.CSV_COLUMNS.join(",") + "\r\n");
+  assert.equal(admin.csvFilename('Group A: "Tue"/2'), "Group A- -Tue-2.csv", "file-name characters become dashes, a run becomes one");
+});
+
+test("admin student link: the game URL, the season id and a readable board URL", () => {
+  assert.equal(admin.studentLink("https://mystery.example/", "s123-ab", BOARD),
+    "https://mystery.example/?season=s123-ab&board=https://example.invalid/macros/s/PLACEHOLDER/exec");
+  const odd = admin.studentLink("http://localhost:8000/", "s1", "https://x.invalid/exec?a=1&b=2");
+  assert.ok(odd.endsWith("board=https://x.invalid/exec%3Fa%3D1%26b%3D2"));
+  assert.equal(new URL(odd).searchParams.get("board"), "https://x.invalid/exec?a=1&b=2", "the game reads the board URL back intact");
+  assert.equal(admin.boardLink("s1", BOARD), "leaderboard.html?data=" + encodeURIComponent(BOARD) + "&season=s1");
+});
+
+test("admin seasons table: newest first, counts per season, actions by state, values escaped", () => {
+  const seasons = admin.newestFirst([
+    { id: "s1", name: "<b>old</b>", date: "2026-10-01", db: 1, state: "closed", createdAt: 1 },
+    { id: "s2", name: "new", date: "2026-10-14", db: 2, state: "created", createdAt: 2 }]);
+  assert.deepEqual(seasons.map(s => s.id), ["s2", "s1"]);
+  const counts = admin.seasonCounts(fixture().map(r => ({ ...r, season: "s1" })));
+  assert.deepEqual(counts, { s1: { joined: 4, finished: 2 } });
+  const html = admin.seasonsTableHtml(seasons, counts, "s1");
+  assert.ok(!html.includes("<b>old") && html.includes("&#60;b&#62;old"), "a name is escaped");
+  const [created, closed] = html.split('<tr data-id="').slice(1);
+  assert.ok(created.includes('data-act="open"') && !created.includes('data-act="close"'));
+  assert.ok(!closed.includes('data-act="open"') && !closed.includes('data-act="close"') && closed.includes('data-act="csv"'));
+  assert.ok(closed.startsWith('s1" class="selected"'));
+  const detail = admin.detailHtml({ id: "s1", name: "x", date: "d", state: "open", penalty: 30, openedAt: T0 },
+    [...fixture(), row("join", "<img src=x onerror=alert(1)>", "", 1)]);
+  assert.ok(!detail.includes("<img"), "a pseudo is escaped in the detail");
+  assert.ok(detail.includes("PLAYERS (5)") && detail.includes("19:00 <abbr"));
+});
+
+test("board: eight-cell strip, three states, every pseudo escaped", () => {
+  assert.equal((lb.stripHtml(3).match(/<i class="on">/g) || []).length, 3);
+  assert.equal((lb.stripHtml(3).match(/<i /g) || []).length, 8);
+  assert.equal((lb.stripHtml(8).match(/<i class="on">/g) || []).length, 8);
+  const rows = [...fixture(), row("join", "<b>Eve</b>", "", 3)];
+  const meta = state => ({ id: "s1", name: "Group <A>", date: "2026-10-14", state, penalty: 30, openedAt: T0 });
+  for (const st of ["created", "open", "closed"]) {
+    const b = lb.boardHtml(meta(st), rows);
+    assert.ok(!b.body.includes("<b>Eve") && b.body.includes("&#60;b&#62;Eve&#60;/b&#62;"), st + ": pseudo escaped");
+    assert.equal(b.head, "Group &#60;A&#62;", st + ": name escaped");
+  }
+  const waiting = lb.boardHtml(meta("created"), rows);
+  assert.ok(waiting.body.includes("Waiting for the teacher") && waiting.body.includes("5 detectives joined"));
+  const open = lb.boardHtml(meta("open"), rows);
+  assert.equal((open.body.match(/<tr /g) || []).length, 5);
+  assert.ok(open.body.indexOf("bob") < open.body.indexOf("Alice") && open.body.indexOf("Alice") < open.body.indexOf("Carol"), "finished first, by time");
+  assert.ok(open.body.includes("19:00 <abbr title=") && open.body.includes("20:30") && open.body.includes("chapter 3"));
+  assert.ok(!open.body.includes("podium") && !open.dateline.includes("closed"));
+  const closed = lb.boardHtml(meta("closed"), rows);
+  assert.ok(closed.dateline.includes("Session closed") && closed.body.indexOf("podium") < closed.body.indexOf("ranking"));
+  assert.ok(closed.body.includes('class="place-1"') && closed.body.includes('class="place-3"'));
+  assert.ok(lb.boardHtml(meta("open"), []).body.includes("No detective yet"));
+});
+
+test("admin and board pages: not in the sitemap, admin kept out of robots, the deploy versions their scripts, pure ASCII", () => {
+  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html/);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
+  const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
+  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js"]) assert.ok(yml.includes(f), f);
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
+    assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
+});
