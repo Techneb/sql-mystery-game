@@ -869,27 +869,45 @@ function offerCompete() {
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
 }
 
-// --- usage statistics: Google Analytics 4, opt-in only (spec section 8) ---------------------------
+// --- usage statistics (Google Analytics 4) and advertising (AdSense), opt-in only (spec section 8) ------
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
 // no Statistics link, no request to Google. Nothing loads before the reader says Yes (CNIL opt-in).
 export const GA_ID = "G-QG0K0D1NQZ";
-const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows
+// AdSense. On approval day: AD_SLOT = the display ad unit's data-ad-slot (AdSense > Ads > By ad unit), ADS_ON = true.
+// ADS_ON switches the consent path below: off, the home-made banner (#consent) asks about statistics; on, Google's
+// certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both.
+// ?ads=1 previews the ads-on path on localhost (Google serves no ad and no message there).
+export const ADS_CLIENT = "ca-pub-9765732642926043";
+export const AD_SLOT = "";
+export const ADS_ON = false;
+const ADS_KEY = "ritz.ads";
+const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ADS_ON false only)
+let statsGranted = false;             // ADS_ON: Google's message granted analytics_storage
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
+function adsOn() {
+  return ADS_ON || (["localhost", "127.0.0.1"].includes(location.hostname) && !!new URLSearchParams(location.search).get("ads"));
+}
 // ?ga=G-... tries the banner before an ID is committed, on localhost only (a link elsewhere cannot redirect the stats).
 function gaId() {
   return GA_ID || (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("ga")) || "";
 }
 // Every analytics call goes through here. Never pass the pseudo, answers, query text or the board URL.
 export function track(name, params) {
-  if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function" || consent() !== "yes") return false;
+  if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function") return false;
+  if (ADS_ON ? !statsGranted : consent() !== "yes") return false;
   window.gtag("event", name, params);
   return true;
 }
-function gaLoad(id) {
+// Consent Mode v2: everything denied until the reader says otherwise. Must run before gtag.js or adsbygoogle.js loads.
+function gtagDefaults() {
+  if (window.gtag) return;
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
   window.gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" });
-  window.gtag("consent", "update", { analytics_storage: "granted" });
+}
+function gaLoad(id) {
+  gtagDefaults();
+  if (!adsOn()) window.gtag("consent", "update", { analytics_storage: "granted" });   // ads on: Google's message did it
   window.gtag("js", new Date());
   window.gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
   const s = document.createElement("script");
@@ -917,6 +935,7 @@ function setConsent(v) {
 }
 function initConsent() {
   const id = gaId();
+  if (adsOn()) return initGoogleConsent(id);
   if (!id) return;
   $("stats-link").hidden = false;
   $("btn-stats").onclick = e => { e.preventDefault(); $("consent").hidden = false; $("consent-yes").focus(); };
@@ -925,18 +944,55 @@ function initConsent() {
   const c = consent();
   if (c === "yes") gaLoad(id); else if (c !== "no") $("consent").hidden = false;
 }
+// Ads on: Google's consent message replaces the banner. The page only sets the Consent Mode defaults (all denied,
+// gtagDefaults); once consent mode is enabled for the message (AdSense > Privacy & messaging > European
+// regulations > Settings), Google's CMP itself updates the consent state (ad_storage, ad_user_data,
+// ad_personalization, analytics_storage) with the reader's choice, for readers shown the message (EEA, UK,
+// Switzerland); elsewhere nothing updates it, so the defaults stand and GA never loads. Sources:
+// https://support.google.com/adsense/answer/16088460 (Google's CMP launches support for consent mode),
+// https://developers.google.com/funding-choices/fc-api-docs (googlefc: CONSENT_MODE_DATA_READY,
+// getGoogleConsentModeValues, showRevocationMessage), https://support.google.com/adsense/answer/10959060
+// (revocation link), https://developers.google.com/tag-platform/security/guides/consent (defaults).
+function initGoogleConsent(id) {
+  gtagDefaults();
+  window.googlefc = window.googlefc || {};
+  window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
+  // Google asks for a revocation link titled "Privacy and cookie settings" at the bottom of the site.
+  $("btn-stats").textContent = "Privacy and cookie settings";
+  $("btn-stats").onclick = e => { e.preventDefault(); window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage()); };
+  $("stats-link").hidden = false;
+  if (!id) return;
+  // ponytail: assumes CONSENT_MODE_DATA_READY fires again after a revocation; if not, the CMP's own consent
+  // update still stops GA's cookies, and the _ga cookies go on the next page load.
+  window.googlefc.callbackQueue.push({ CONSENT_MODE_DATA_READY: () => {
+    const granted = window.googlefc.getGoogleConsentModeValues().analyticsStoragePurposeConsentStatus === 1;   // ConsentModePurposeStatusEnum.GRANTED
+    window["ga-disable-" + id] = !granted;
+    if (granted && !statsGranted) gaLoad(id);
+    if (!granted) dropGaCookies();
+    statsGranted = granted;
+  } });
+}
 
-// The ad box under the schema (a native <details>: its summary is the toggle). Open by default; a student who
-// closes it keeps it closed (per browser, ADS_KEY). Hidden until ads go live (ADS_ON, after AdSense approval
-// and Google's consent message); ?ads=1 previews it on localhost.
-export const ADS_ON = false;
-const ADS_KEY = "ritz.ads";
+// The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
+// Open by default; a student who closes it keeps it closed (per browser, ADS_KEY). Hidden unless adsOn().
+export function adSlotHtml(client, slot) {
+  if (!slot) return '<span class="muted">Ad space (AD_SLOT not set)</span>';
+  return '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + slot +
+    '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+}
 function initAds() {
-  const box = $("ad-box"), local = ["localhost", "127.0.0.1"].includes(location.hostname);
-  if (!ADS_ON && !(local && new URLSearchParams(location.search).get("ads"))) return;
+  const box = $("ad-box");
+  if (!adsOn()) return;
   try { if (localStorage.getItem(ADS_KEY) === "closed") box.open = false; } catch {}
   box.hidden = false;
   box.addEventListener("toggle", () => { try { localStorage.setItem(ADS_KEY, box.open ? "open" : "closed"); } catch {} });
+  // adsbygoogle.js also serves Google's consent message, so it loads even before a slot exists.
+  const s = document.createElement("script");
+  s.async = true; s.crossOrigin = "anonymous";
+  s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
+  document.head.appendChild(s);
+  box.querySelector(".ad-slot").innerHTML = adSlotHtml(ADS_CLIENT, AD_SLOT);
+  if (AD_SLOT) (window.adsbygoogle = window.adsbygoogle || []).push({});
 }
 
 // Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is

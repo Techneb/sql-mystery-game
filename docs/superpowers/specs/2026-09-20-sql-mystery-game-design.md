@@ -434,12 +434,17 @@ framework, no bundler.
   `sitemap.xml`. Owner decisions on the way (2026-10-10): no How-to-play or For-teachers pages; chapter X's construct
   is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page links it from the game's "Twelve
   chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10).
-  **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
-  id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
-  it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
-  340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.ad-slot`; (c) `ADS_ON = true`;
-  (d) privacy.html: an advertising section (AdSense cookies, personalised vs non-personalised ads, the
-  consent message, how to withdraw); (e) check day, night and phone width in Chrome, then push.
+  **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged): `ADS_CLIENT`, `AD_SLOT`
+  and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.ad-slot` with a
+  responsive unit, keeps Consent Mode all denied by default and hands consent to Google's message (GA4 loads only once
+  it grants analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
+  privacy.html is written for that state. Approval-day checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
+  a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) set `ADS_ON = true`; (3) AdSense >
+  Privacy & messaging > European regulations > Settings: enable the consent mode flags (ads and analytics storage),
+  without which GA never loads; (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
+  and phone width in Chrome; (6) confirm Google's consent message appears on the live site (from an EEA connection,
+  in a private window) and that the footer link reopens it; (7) update the AdSense consent message if its privacy URL
+  (now https://alephb.uk/privacy.html) should point at the game's privacy.html instead.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small

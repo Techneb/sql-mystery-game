@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -341,6 +341,19 @@ test("track sends nothing without consent and gtag", () => {
 
 test("GA_ID is empty or a GA4 measurement ID", () => {
   assert.match(GA_ID, /^(G-[A-Z0-9]+)?$/);
+});
+
+test("ad slot: a placeholder until AD_SLOT is filled, then one responsive AdSense unit", () => {
+  assert.match(ADS_CLIENT, /^ca-pub-\d{16}$/);
+  assert.match(AD_SLOT, /^(\d+)?$/);
+  assert.equal(typeof ADS_ON, "boolean");
+  assert.ok(!adSlotHtml(ADS_CLIENT, "").includes("adsbygoogle"));
+  assert.match(adSlotHtml(ADS_CLIENT, ""), /AD_SLOT not set/);
+  const html = adSlotHtml("ca-pub-9765732642926043", "1234567890");
+  assert.match(html, /^<ins class="adsbygoogle" style="display:block" /);
+  assert.match(html, /data-ad-client="ca-pub-9765732642926043"/);
+  assert.match(html, /data-ad-slot="1234567890"/);
+  assert.match(html, /data-ad-format="auto" data-full-width-responsive="true"><\/ins>$/);
 });
 
 test("a comma join with nothing to match is refused before it can hang the page", () => {

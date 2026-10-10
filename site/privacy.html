@@ -24,12 +24,13 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 9 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 10 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
-  included, runs in your browser. Advertising may appear on the page's edges, outside the game, once
-  Google's review of the site is complete, and only with your consent (below). The game sets no cookies
-  and loads nothing from Google unless you allow usage statistics or advertising.</p>
+  included, runs in your browser. The page shows advertising from Google AdSense in one box beside the
+  game, under the schema, never inside a chapter. When you first visit, Google's consent message asks
+  whether Google and its partners may use cookies and your data for advertising and for usage statistics
+  (below). The game itself sets no cookies.</p>
 
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
@@ -37,12 +38,23 @@
   left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
 
-  <h2>Usage statistics (only if you say Yes)</h2>
-  <p>The game page asks once: <i>Help improve the course: allow anonymous usage statistics?</i> Your answer
-  is kept in local storage (<code>ritz.consent</code>). Until you answer Yes, and whenever you answer No,
-  nothing is loaded from Google and no analytics cookie is set. You can change your mind at any time from the
-  <i>Statistics</i> link at the bottom of the game page; choosing No deletes the <code>_ga</code> cookies.</p>
-  <p>If you say Yes, the page uses <b>Google Analytics 4</b>:</p>
+  <h2>Your consent: Google's consent message</h2>
+  <p>On your first visit, a message from Google (Google's certified consent management platform,
+  served by the AdSense script) asks for your consent to advertising and usage statistics, with
+  buttons to accept or refuse and a way to manage each purpose. Google keeps your
+  choice in its own cookies on this site. Until you choose, and whenever you refuse, the page tells
+  Google's tags that every purpose is denied (Google Consent Mode: ad storage, ad user data, ad
+  personalisation and analytics storage all start as denied).</p>
+  <p>You can change your mind at any time: the <i>Privacy and cookie settings</i> link at the bottom of
+  the game's front page reopens Google's message. If you withdraw consent to statistics, the page deletes
+  the <code>_ga</code> cookies.</p>
+  <p>Visitors outside the European Economic Area, the United Kingdom and Switzerland are not shown the
+  message: for them every purpose stays denied, usage statistics never load, and the ads shown are not
+  personalised.</p>
+
+  <h2>Usage statistics (only with your consent)</h2>
+  <p>Only if you consent to usage statistics (analytics storage) in Google's message does the page load
+  <b>Google Analytics 4</b>:</p>
   <ul>
     <li>It sets the first-party cookies <code>_ga</code> and <code>_ga_&lt;id&gt;</code>, which Google keeps
     for up to 13 months by default. The collected data itself is kept for 14 months, then deleted.</li>
@@ -64,10 +76,17 @@
   the EU-US Data Privacy Framework.</p>
 
   <h2>Advertising</h2>
-  <p>At the time of writing, no ad script is loaded: the site is waiting for Google AdSense to review it.
-  Once ads are switched on, they appear in a box beside the game, never inside a chapter, and this is what
-  they involve:</p>
+  <p>The page loads Google AdSense, which shows ads in one box beside the game, under the schema, never
+  inside a chapter; you can fold the box away (the page remembers it in <code>ritz.ads</code>). The
+  AdSense script loads on every visit, because it also carries Google's consent message; what it may do
+  depends on your choice:</p>
   <ul>
+    <li>If you consent, Google and its partners may set and read advertising cookies and use data about
+    your visits to this site and other sites to show <b>personalised ads</b>, and measure them.</li>
+    <li>If you refuse, or are not asked, you see <b>non-personalised ads</b>, chosen from the page's
+    content and your approximate location rather than your browsing; Google may still use cookies or
+    similar identifiers for frequency capping, aggregated reporting and fighting fraud and abuse, as
+    its policies allow, or show no ad at all.</li>
     <li>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this
     site or to other sites.</li>
     <li>Google's use of advertising cookies enables it and its partners to serve ads to you based on your
@@ -76,11 +95,9 @@
     <a href="https://www.google.com/settings/ads">Ads Settings</a>, or opt out of other vendors' use of
     cookies for personalised advertising at <a href="https://www.aboutads.info">www.aboutads.info</a>.</li>
   </ul>
-  <p>Advertising is asked for separately from usage statistics, in its own consent message. If you refuse
-  it, you see ads that are not personalised from your browsing, or none. The
-  <i>Statistics</i> link at the bottom of the game page only reopens the statistics question; to change your
-  advertising choice, clear this site's data in your browser and the consent message appears again on your
-  next visit.</p>
+  <p>To withdraw or change your advertising consent, use the <i>Privacy and cookie settings</i> link at
+  the bottom of the game's front page, which reopens Google's message. How Google uses data from sites
+  that use its services: <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
 
   <h2>Compete</h2>
   <p>When your teacher gives you a season link and you press <i>Start the clock</i>, the game sends the
@@ -98,17 +115,19 @@
   the course teacher, reached through Google Apps Script, so Google processes it under its own terms.
   Anyone with a leaderboard link sees the pseudos and times of the season that link names; the teacher
   sees every season. The rows stay until the teacher deletes them. This is separate from usage statistics
-  and does not depend on your answer to the banner.</p>
+  and does not depend on your answer to the consent message.</p>
   <p><b>Choose a pseudo that is not your full name.</b> A first name or a nom de guerre is enough.</p>
 
   <h2>What the page loads from elsewhere</h2>
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
     <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
-    <li>Only if you allow usage statistics: the Google Analytics script from googletagmanager.com, and its
-    measurements sent to google-analytics.com.</li>
-    <li>Once advertising is switched on (not yet): Google's ad and consent scripts and the ads themselves,
-    from Google's ad servers.</li>
+    <li>On every visit: Google's AdSense and consent scripts from pagead2.googlesyndication.com and
+    fundingchoicesmessages.google.com, and the ads themselves from Google's ad servers, including
+    googleads.g.doubleclick.net and tpc.googlesyndication.com; these see
+    your IP address, and with your consent set advertising cookies.</li>
+    <li>Only if you consent to usage statistics: the Google Analytics script from googletagmanager.com,
+    and its measurements sent to google-analytics.com.</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>
