@@ -326,6 +326,27 @@ class Compete(unittest.TestCase):
                 for v in planted + [V[ch["answer_key_compete"]]]:
                     self.assertNotIn(" %s " % g.normalise(str(v)), text, (seed, ch["n"], v))
 
+    def test_compete_solutions_differ_structurally_from_learn(self):
+        # owner, 2026-10-10: a learn query with new WHERE values must not solve a compete chapter. With every literal
+        # (string, number) blanked out, no compete solution reads like its learn solution.
+        import re
+        skeleton = lambda sql: " ".join(re.sub(r"\b\d+\b", "?", re.sub(r"'(?:[^']|'')*'", "?", sql)).lower().split())
+        for ch in plot.CHAPTERS[:8]:
+            learn, compete = skeleton(ch["solution"].format(**self.V)), skeleton(ch["solution_compete"].format(**self.V))
+            self.assertNotEqual(learn, compete, ch["n"])
+        # each compete shape, and not its learn twin: the window and the exclusion, the offset past a tie, distinct
+        # days, the interview join, equal halves, the busiest box, the last order before dawn
+        shapes = {1: "between ? and ? and type <> ?", 2: "limit ? offset ?", 4: "count(distinct date) >= ?",
+                  5: "join interview", 6: "min(t.amount) = max(t.amount)", 7: "order by count(*) desc", 8: "order by time desc"}
+        for ch in plot.CHAPTERS[:8]:
+            if ch["n"] in shapes:
+                self.assertIn(shapes[ch["n"]], skeleton(ch["solution_compete"].format(**self.V)), ch["n"])
+                self.assertNotIn(shapes[ch["n"]], skeleton(ch["solution"].format(**self.V)), ch["n"])
+        pattern = re.search(r"LIKE '([^']*)'", plot.CHAPTERS[2]["solution_compete"].format(**self.V)).group(1)
+        self.assertIn("_", pattern)   # ch3: single-figure wildcards, where learn has a prefix and %
+        self.assertNotIn("%", pattern)
+        self.assertIn("%", plot.CHAPTERS[2]["solution"])
+
     def test_compete_values_vary_by_season(self):
         v7, v8 = g.plant_values(7), g.plant_values(8)
         self.assertNotEqual(v7["compete_plate"], v8["compete_plate"])
