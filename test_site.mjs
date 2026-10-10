@@ -372,3 +372,64 @@ test("mastheadChapterHtml: only the current chapter's numeral is bold", () => {
   assert.equal(mastheadChapterHtml(12, 12, false), "CHAPTER <b>XII</b> OF XII");
   for (const h of [mastheadChapterHtml(9, 12, true), mastheadChapterHtml(8, 8, false)]) assert.equal(h.match(/<b>/g).length, 1);
 });
+
+// The Clerk's Handbook (site/learn/): every page repeats its chrome by hand, so these pin it.
+const LEARN = "site/learn/";
+const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
+const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
+const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1].matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1])];
+const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
+const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+test("handbook: every page carries the same masthead nav, footer and chapter menu, only the current item differs", () => {
+  assert.deepEqual([...readingOrder].sort(), learnPages, "the index's table of contents lists every page once");
+  const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
+  const linked = (f) => {
+    const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
+    assert.equal((menu.match(/class="current"/g) || []).length, 1, f + ": one current item");
+    return menu.replace(/<span class="current" aria-current="page">([^<]*)<\/span>/, `<a href="${f}">$1</a>`);
+  };
+  const ref = linked("index.html");
+  const items = [...ref.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)];
+  assert.deepEqual(items.map((m) => m[1]), readingOrder, "menu in table of contents order");
+  items.slice(1).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "menu numbered 1 to 10: " + m[2]));
+  for (const f of learnPages) {
+    assert.equal(one(learnHtml[f], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, f + " nav"), nav, f + " nav");
+    assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), nav, f + " footer");
+    assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
+  }
+});
+
+test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
+  readingOrder.forEach((f, i) => {
+    const pager = one(learnHtml[f], /<nav class="learn-pager">([\s\S]*?)<\/nav>/, f + " pager");
+    for (const [cls, want, word] of [["prev", readingOrder[i - 1], "Previous"], ["next", readingOrder[i + 1], "Next"]]) {
+      const m = pager.match(new RegExp(`<a class="${cls}" href="([^"]+)">([^<]*)</a>`));
+      if (!want) { assert.equal(m, null, `${f} has no ${cls}`); continue; }
+      assert.ok(m, `${f} ${cls}`);
+      assert.equal(m[1], want, `${f} ${cls} (so A's next is B exactly when B's previous is A)`);
+      assert.ok(fs.existsSync(LEARN + m[1]), m[1]);
+      assert.equal(m[2], `${word}: ${one(learnHtml[want], /<h1>([^<]*)<\/h1>/, want + " h1")}`, `${f} ${cls} label`);
+    }
+  });
+});
+
+test("handbook: sitemap lists the landing page, privacy and every learn page, and nothing missing", () => {
+  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
+  const files = [...xml.matchAll(/<loc>https:\/\/mystery\.alephb\.uk\/([^<]*)<\/loc>/g)]
+    .map((m) => (m[1] === "" || m[1].endsWith("/") ? m[1] + "index.html" : m[1]));
+  assert.equal(files.length, (xml.match(/<loc>/g) || []).length, "every loc is on mystery.alephb.uk");
+  for (const f of files) assert.ok(fs.existsSync("site/" + f), "sitemap entry exists: " + f);
+  assert.deepEqual([...new Set(files)].sort(), ["index.html", "privacy.html", ...learnPages.map((f) => "learn/" + f)].sort());
+});
+
+test("handbook: no page names a game table or a cast member", () => {
+  const tables = [...new Set(data.chapters.flatMap((c) => c.tables))];
+  const cast = data.cast.flatMap((c) => [c.name, c.name.split(" ").pop()]);
+  assert.ok(tables.length >= 13 && cast.length >= 12);
+  for (const f of learnPages) {
+    let text = unentity(learnHtml[f]);
+    for (const c of data.chapters) text = text.split(c.title).join(" "); // chapter titles are allowed ("The Neighbouring Suite")
+    for (const w of [...tables, ...cast]) assert.doesNotMatch(text, new RegExp(`\\b${w}\\b`, "i"), `${f} mentions ${w}`);
+  }
+});
