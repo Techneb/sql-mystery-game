@@ -163,6 +163,9 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 
 ## 4. Compete mode
 
+*2026-10-10: superseded where they differ by `2026-10-10-compete-admin-design.md` (seasons as named records opened
+and closed by the teacher, answers checked in the browser, a public projector board, an admin page).*
+
 - **Content**: a *season* database built by `python3 generate_db.py --season N`: same plot, cast and
   constructs, but every planted value (plates, addresses, accounts, names of non-suspects, amounts,
   ids) is re-drawn from the season seed, and each chapter uses its **compete objective**, a different
@@ -293,7 +296,9 @@ framework, no bundler.
    a help route after N wrong answers (would undo the 2026-09-30 hint removal) and sql.js in a Worker (the
    comma-join guard is enough). Compete stays honour-based against a student who posts a rival's start first.
    2026-10-09: the OpenGen source clips and uncropped originals moved from `~/Downloads` to the gitignored
-   `assets-source/` in the repo (Mac only). Still open: a class trial, then `RANKS` from real query counts.
+   `assets-source/` in the repo (Mac only). 2026-10-10: a regression playthrough of chapters 1-12 on the live site
+  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial set for 2026-10-14; the
+  compete and admin design for it is `2026-10-10-compete-admin-design.md`. Still open: `RANKS` from real query counts.
 
 ## 8. Backlog (not scheduled)
 
@@ -489,9 +494,10 @@ framework, no bundler.
 - **Compete mode simplification** (course owner, 2026-10-10): brainstorm before the class trial how to simplify
   compete mode (today: a teacher's `?season=N&board=<Apps Script URL>` link, the Apps Script backend with its
   Script Properties and posted hashes, the admin panel's Seasons and Settings, the leaderboard page, the start
-  token and the honour-based start). Not started: a brainstorming session with the owner, then a spec amendment.
+  token and the honour-based start). Designed 2026-10-10 with the owner: `2026-10-10-compete-admin-design.md`
+  (that document supersedes section 4 where they differ). In progress for the 2026-10-14 trial.
 - **Admin space** (course owner, 2026-10-10): one teacher-facing place to manage seasons (create, share, close),
   read the compete data from the Google Sheet behind the Apps Script, and show a live leaderboard on the classroom
   screen during a session. Today these are spread over the `?admin` panel (Seasons, Settings, passphrase-gated),
-  the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Not started; design it together
-  with the compete simplification item above.
+  the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Designed 2026-10-10 with the owner:
+  `2026-10-10-compete-admin-design.md`. In progress for the 2026-10-14 trial.
