@@ -552,7 +552,8 @@ def plant_part1(conn, V, r):
             (3810, 19120604, "disturbance", "The night manager reports a guest who rang for champagne at four in the morning, then denied it."),
             (3820, V["compete_window_burglary_date"], "burglary", "The night manager reports a ground-floor window forced. Only a hat was taken, returned the next day."),
             (3830, V["compete_night"], "disturbance", "The night manager reports a cellist practising in the corridor until dawn. The cellist reports the night manager."),
-            (3840, V["compete_report_date"], "disturbance", "The night manager reports two guests quarrelling over a taxi in the courtyard. Both went home on foot.")]:
+            (3840, V["compete_report_date"], "disturbance", "The night manager reports two guests quarrelling over a taxi in the courtyard. Both went home on foot."),
+            (3850, 19120605, "theft", "A silver ice bucket taken from one of the two bridal suites, just below the roof. Found the next morning in a cellist's case.")]:   # LIKE '%suite%'
         c.execute("INSERT INTO police_report VALUES (?,?,?,?,?,?)", (rid, d, "Paris", "Hotel Meurice", typ, text))
     c.execute("INSERT INTO interview VALUES (3,?,?,?)", ("Hippolyte Morand", V["compete_night"],
         "I am the night manager of the Meurice, monsieur, and I found the damage myself. Write the night of the "
@@ -576,6 +577,9 @@ def plant_part1(conn, V, r):
     for k, price in enumerate((255, 270, 290)):
         book(c, 43 + k, rc.choice(GUESTS), royal[2 + k], price, 19120304, 19120309)
     book(c, 46, rc.choice(GUESTS), rc.randint(101, 140), 310, 19120516, 19120518)   # a grand duke on the first floor: the floor is needed too
+    free3 = [s for s in range(303, 341) if s != V["compete_suite2"] and s not in royal]
+    for k, d in enumerate((19120402, 19120423)):   # dearer than his room yet below the pair, other weeks: the date is needed
+        book(c, 50 + k, rc.choice(GUESTS), rc.choice(free3), rc.randint(V["compete_suite2_price"] + 1, 239), d, _add_days(d, 4))
     # --- ch3: the interview and the cab; the solution's WHERE must match this DELETE
     c.execute("INSERT INTO interview VALUES (1,?,?,?)", ("Lord Ashcombe", T,
         "I was at the Opera until one. My valet saw a man in an English coat leave by the service door "
@@ -605,9 +609,10 @@ def plant_part1(conn, V, r):
                                              (both, 19120516, 1420, "Opera"), (both, 19120520, 1110, "Place Vendome")]):
         c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)",   # that night all three leave Place Vendome, like the Ritz cab
                   (30100 + i, plate, d, t, "Place Vendome" if d == T else rc.choice(PLACES), drop, rc.randint(2, 12), "franc"))
-    # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
+    # --- ch4: that cab's week: fence address 3 times by day (the night ride stops short, in Montmartre: "where did it
+    #     go that night" is no shortcut), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
-    rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
+    rides = [("Montmartre", T, 215, "Place Vendome"), (V["fence_address"], 19120513, 1630, None), (V["fence_address"], 19120514, 1030, None),
              (V["fence_address"], 19120516, 1715, None),
              ("12 rue de la Paix", 19120513, 900, None), ("12 rue de la Paix", 19120515, 1800, None),
              ("40 boulevard Haussmann", 19120517, 1100, None), ("40 boulevard Haussmann", 19120519, 1500, None)]
@@ -679,6 +684,14 @@ def plant_part1(conn, V, r):
     tx += [(cp, _date(rc, 5, 5), rc.randint(200, 900)) for cp in rc.sample(small, 8)]
     for i, (cp, d, amt) in enumerate(tx):
         c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (60 + i, V["compete_fence_account"], cp, d, amt))
+    #     Two more accounts got two equal halves in May from other payers: without the fence, the halves are no tell.
+    owned = [i for (i,) in c.execute("SELECT id FROM bank_account WHERE person_id IS NOT NULL AND id < 4000 ORDER BY id") if i not in V["accounts"]]
+    bearer = [i for (i,) in c.execute("SELECT id FROM bank_account WHERE person_id IS NULL AND id < 4000 AND id NOT IN "
+                                      "(SELECT counterparty_id FROM bank_transaction WHERE date BETWEEN 19120501 AND 19120531) ORDER BY id")]
+    for k, cp in enumerate(rc.sample([b for b in bearer if b not in V["accounts"]], 2)):
+        payer, amt = rc.choice(owned), rc.randint(8, 15) * 1000
+        for j, d in enumerate((19120506 + k, 19120513 + k)):
+            c.execute("INSERT INTO bank_transaction VALUES (?,?,?,?,?,'transfer')", (85 + 2 * k + j, payer, cp, d, amt))
     # --- ch7: telegrams from the Ritz desk on the 18th.
     # Every Ritz wire of the 18th is planted, so the box counts are exact. Lupin's wire is in the AFTERNOON (15:10;
     # Saturday, the races at Longchamp: the quietest box, 36 wires), not at night, so guessing "a thief wires at night"
@@ -728,11 +741,11 @@ def plant_part1(conn, V, r):
     #     35), the call (his), after hours (19:30, the quietest Bourse box). So learn's boxes, the quietest, his first and
     #     his last wire all land on a decoy.
     c.execute("DELETE FROM telegram WHERE office='Bourse' AND date=?", (T,))
-    wire = "SHARES %s STOP %s TO FOLLOW STOP %s LAST THING BEFORE DAWN AS ALWAYS STOP"
+    wire = "SHARES SOLD STOP PROCEEDS TO FOLLOW STOP %s LAST THING BEFORE DAWN AS ALWAYS STOP"   # only the drink differs
     c.execute("INSERT INTO telegram VALUES (?,?,?,?,?,?,?,?)",
         (V["compete_telegram_id"], "Bourse", T, rc.randint(15, 16) * 100 + rc.randint(5, 55), "A. Brissac", "Lazard Freres, London", None,
-         wire % ("SOLD", "PROCEEDS", "COGNAC")))
-    brissac = {900 + rc.randint(5, 55): wire % ("BOUGHT", "PAYMENT", "TEA"), 1930: wire % ("HELD", "NOTHING", "CONSOMME")}
+         wire % "COGNAC"))
+    brissac = {900 + rc.randint(5, 55): wire % "TEA", 1930: wire % "CONSOMME"}
     bourse = [(t, "A. Brissac") for t in brissac]
     # bands: 00-06, 06-10, 10-12, 12-15, 15-17, 17-18, 18-24 (the planted Brissac wires make 20 and 10, the answer 27)
     for h0, h1, n in ((0, 6, 4), (6, 10, 19), (10, 12, 16), (12, 15, 6), (15, 17, 26), (17, 18, 2), (18, 24, 9)):
@@ -752,13 +765,14 @@ def plant_part1(conn, V, r):
     #     inside the CTE). Decoys: a suite whose last order of the day is the cognac, after six; two whose FIRST order
     #     before dawn is the cognac (one the earliest cognac, one the latest). His suite orders coffee after six, so
     #     the filter outside the ranking finds nothing. All floor-2 suites with the lift rounds: ch11 is untouched.
-    his, late, latest, earliest = V["compete_suite8"], others[2], others[3], others[5]   # his: a suite with no cast stay
-    for s in (his, late, latest, earliest):
+    his, late, latest, earliest, busy = V["compete_suite8"], others[2], others[3], others[5], others[7]   # his: no cast stay
+    for s in (his, late, latest, earliest, busy):
         c.execute("DELETE FROM room_service WHERE suite=? AND date=?", (s, T))
     for i, (s, t, item, amt) in enumerate([(his, 120, "oysters", 18), (his, 240, "tea", 2), (his, 430, "cognac", 8), (his, 815, "coffee", 2),
                                            (late, 350, "tea", 2), (late, 730, "cognac", 8),
                                            (latest, 450, "cognac", 8), (latest, 530, "consomme", 6),
-                                           (earliest, 100, "cognac", 8), (earliest, 340, "omelette", 5)]):
+                                           (earliest, 100, "cognac", 8), (earliest, 340, "omelette", 5),
+                                           (busy, 50, "consomme", 6), (busy, 140, "tea", 2), (busy, 300, "oysters", 18), (busy, 520, "coffee", 2)]):   # the most orders before dawn
         c.execute("INSERT INTO room_service VALUES (?,?,?,?,?,?)", (7 + i, s, T, t, item, amt))
     #     The broker's suite has a guest who arrived past midnight, filed under the 18th (so learn ch2's night of the
     #     17th keeps its seven), under a name of his own choosing: "Brissac" in the register would hand out the suite.
