@@ -38,14 +38,24 @@ export function seasonCounts(rows) {
 
 export const newestFirst = seasons => [...seasons].sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
 
-const ACTIONS = [["open", "Open"], ["close", "Close"], ["copy", "Copy link"], ["qr", "QR"], ["board", "Board"], ["csv", "Export CSV"]];
+// Icon-only buttons in the game's style (app.js erdButtonHtml): a 16 px glyph stroked in currentColor, the action's
+// name in title (the tooltip) and aria-label.
+const ICON_ATTRS = 'width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const ACTIONS = [
+  ["open", "Open", '<path d="M4.5 2.5L13 8L4.5 13.5Z"/>'],
+  ["close", "Close", '<rect x="3.5" y="3.5" width="9" height="9" rx="1"/>'],
+  ["copy", "Copy link", '<path d="M6.5 9.5L9.5 6.5M8.5 4.5L9.5 3.5A2.5 2.5 0 0 1 13 7L12 8M7.5 11.5L6.5 12.5A2.5 2.5 0 0 1 3 9L4 8"/>'],
+  ["qr", "QR", '<rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><rect x="9.5" y="9.5" width="4" height="4"/>'],
+  ["board", "Board", '<path d="M2.5 13.5V9H6V13.5M6 13.5V4.5H10V13.5M10 13.5V10.5H13.5V13.5M1.5 13.5H14.5"/>'],
+  ["csv", "Export CSV", '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>']];
 export function seasonsTableHtml(seasons, counts, selected) {
   if (!seasons.length) return '<p class="muted">No season yet: create one above.</p>';
   return '<table class="seasons"><thead><tr><th>Name</th><th>Date</th><th>State</th><th>Database</th><th>Joined</th><th>Finished</th><th></th></tr></thead><tbody>' +
     seasons.map(s => {
       const c = counts[s.id] || { joined: 0, finished: 0 }, id = esc(s.id);
       const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state !== "closed"))
-        .map(([a, label]) => '<button class="quiet" data-act="' + a + '" data-id="' + id + '">' + label + "</button>").join(" ");
+        .map(([a, label, glyph]) => '<button class="quiet icon-btn" data-act="' + a + '" data-id="' + id + '" title="' + label +
+          '" aria-label="' + label + '"><svg class="icon" ' + ICON_ATTRS + ">" + glyph + "</svg></button>").join(" ");
       return '<tr data-id="' + id + '" class="' + (s.id === selected ? "selected" : "") + '" tabindex="0"><td>' + esc(s.name) +
         "</td><td>" + esc(s.date) + '</td><td class="state-' + esc(s.state) + '">' + esc(s.state) + "</td><td>" + esc(s.db) +
         "</td><td>" + c.joined + "</td><td>" + c.finished + '</td><td class="acts">' + btns + "</td></tr>";

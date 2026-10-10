@@ -15,7 +15,7 @@ table.seasons, table.detail { border-collapse: collapse; width: 100%; font-size:
 .seasons tbody tr { cursor: pointer; }
 .seasons tbody tr:hover, .seasons tr.selected { background: var(--shade); }
 .seasons .acts { white-space: nowrap; }
-.seasons .acts button { font-size: 13px; padding: 2px 8px; }
+.seasons .acts button { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; }
 .state-open { font-weight: 700; color: var(--rel); }
 .state-closed { opacity: .7; }
 .detail td:first-child { font-family: "Special Elite", monospace; }

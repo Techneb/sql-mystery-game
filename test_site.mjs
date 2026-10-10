@@ -605,6 +605,19 @@ test("admin seasons table: newest first, counts per season, actions by state, va
   assert.ok(detail.includes("PLAYERS (5)") && detail.includes("19:00 <abbr"));
 });
 
+test("admin seasons table: action buttons are icons named by title and aria-label, no visible text", () => {
+  const html = admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state: "created", createdAt: 1 }], {}, "");
+  const names = { open: "Open", close: "Close", copy: "Copy link", qr: "QR", board: "Board", csv: "Export CSV" };
+  const btns = [...html.matchAll(/<button ([^>]*)>([\s\S]*?)<\/button>/g)];
+  assert.deepEqual(btns.map(b => b[1].match(/data-act="(\w+)"/)[1]), Object.keys(names));
+  for (const [, attrs, inner] of btns) {
+    const name = names[attrs.match(/data-act="(\w+)"/)[1]];
+    assert.ok(attrs.includes('title="' + name + '"') && attrs.includes('aria-label="' + name + '"'), name);
+    assert.match(inner, /^<svg [^>]*aria-hidden="true"/, name + ": an svg");
+    assert.equal(inner.replace(/<[^>]*>/g, "").trim(), "", name + ": no visible text");
+  }
+});
+
 test("board: eight-cell strip, three states, every pseudo escaped", () => {
   assert.equal((lb.stripHtml(3).match(/<i class="on">/g) || []).length, 3);
   assert.equal((lb.stripHtml(3).match(/<i /g) || []).length, 8);
