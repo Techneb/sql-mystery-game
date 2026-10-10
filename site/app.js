@@ -6,13 +6,13 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, token: "" };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, token: "", stoppedAt: 0 };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
 // in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
 // token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection
-// never loses a row; over is set once the backend says the session is closed.
+// never loses a row; over is set once the backend says the session is closed, and stoppedAt freezes the clock then.
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
   const cap = state.part2 ? 12 : 8;
@@ -48,6 +48,10 @@ export function eventPayload(state, event, chapter, now = Date.now()) {
   return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
            wrong: s.wrong, queries: s.queries, clientAt: now,
            elapsedMs: (state.finishedAt || now) - state.startedAt };
+}
+// The masthead clock: frozen at the finish, or when the session closed (stoppedAt), else running.
+export function clockMs(state, now = Date.now()) {
+  return (state.finishedAt || state.stoppedAt || now) - state.startedAt;
 }
 // The teacher's Open on this browser's clock: the backend sends its own clock (meta.now) with the record, so a
 // browser clock that runs fast or slow cancels out of every elapsed time.
@@ -706,10 +710,15 @@ function tickClock() {
   const el = $("compete-info");
   el.hidden = false;
   el.textContent = "Season: " + state.seasonName + " \u2014 " + state.team.toUpperCase() + " \u2014 " +
-    fmtTime((state.finishedAt || Date.now()) - state.startedAt) + (boardUrl ? "" : " \u2014 NOT RECORDED") +
+    fmtTime(clockMs(state)) + (boardUrl ? "" : " \u2014 NOT RECORDED") +
     (state.over ? " \u2014 THE SESSION IS OVER" : "");
 }
-function startClock() { clearInterval(ticker); tickClock(); ticker = setInterval(tickClock, 1000); }
+function startClock() { clearInterval(ticker); tickClock(); if (!state.finishedAt && !state.stoppedAt) ticker = setInterval(tickClock, 1000); }
+function stopClock(at = Date.now()) {
+  state.over = true;
+  if (!state.finishedAt && !state.stoppedAt) state.stoppedAt = at;
+  save(state); clearInterval(ticker); tickClock();
+}
 
 function queueEvent(event, chapter) {
   state.outbox.push(eventPayload(state, event, chapter));
@@ -727,7 +736,7 @@ async function flushOutbox() {
       const j = await postBoard({ ...state.outbox[0], token: state.token || "" });
       if (!j.ok) {
         console.warn("leaderboard refused a row:", j.error, state.outbox[0]);
-        if (j.error === "session closed") { state.over = true; tickClock(); }
+        if (j.error === "session closed") stopClock();
       }
       state.outbox.shift();
       save(state);
@@ -765,7 +774,7 @@ function applyMeta(m) {
   state.seasonName = String(m.name || ""); state.db = Number(m.db) || state.db;
   if (Number.isInteger(m.penalty)) state.penalty = m.penalty;
   if (m.openedAt) state.startedAt = clockStart(m);
-  if (m.state === "closed") state.over = true;
+  if (m.state === "closed") { state.over = true; if (m.closedAt && !state.stoppedAt) state.stoppedAt = clockStart({ openedAt: m.closedAt, now: m.now }); }
   PENALTY.wrong = state.penalty;
   save(state);
 }

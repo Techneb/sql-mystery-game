@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
@@ -217,6 +217,12 @@ test("officialTime and chapterSummary: a negative interval (an old Date row) is 
   assert.ok(h.flagged, "no elapsedMs: still flagged");
 });
 
+test("clockMs runs, then freezes at the finish or when the session closed", () => {
+  const s = { ...freshState(), startedAt: 1000 };
+  assert.equal(clockMs(s, 61000), 60000, "running");
+  assert.equal(clockMs({ ...s, stoppedAt: 31000 }, 99000), 30000, "frozen when the session closed");
+  assert.equal(clockMs({ ...s, finishedAt: 21000, stoppedAt: 31000 }, 99000), 20000, "a finish wins");
+});
 test("clockStart cancels the browser clock's offset with the server's now", () => {
   const meta = { openedAt: 1_000_000, now: 1_600_000 };          // the server says: opened 10 minutes ago
   assert.equal(clockStart(meta, 1_600_000), 1_000_000, "clocks agree");
