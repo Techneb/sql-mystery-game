@@ -59,6 +59,10 @@ export function clockStart(meta, now = Date.now()) {
   const opened = Number(meta.openedAt), server = Number(meta.now);
   return Number.isFinite(server) && server > 0 ? opened - server + now : opened;
 }
+// The in-game watch on the season record (every 30 s): only in a compete game with a board, not finished, not over.
+export function watchOn(state, board) {
+  return !!board && state.mode === "compete" && !state.finishedAt && !state.over;
+}
 
 // The deploy loads this script as app.js?v=<commit> (.github/workflows/pages.yml); the data files are fetched
 // with the same query, so a page never mixes this deploy's code with a previous deploy's cached data.
@@ -692,7 +696,7 @@ function afterSolve(ch, event) {
       if (state.mode !== "compete") showExtra();
     }
     if (state.mode === "compete") {
-      if (ch.n === 8) { state.finishedAt = Date.now(); queueEvent("finish", 8); renderChapter(); tickClock(); }
+      if (ch.n === 8) { state.finishedAt = Date.now(); clearTimeout(watcher); queueEvent("finish", 8); renderChapter(); tickClock(); }
       else queueEvent("progress", ch.n);
     }
     if (ch.n === 12) { award(detectBadges(ctx({ event: "part2", chapter: ch.n }), state.badges)); showExtra2(); }
@@ -719,6 +723,27 @@ function stopClock(at = Date.now()) {
   if (!state.finishedAt && !state.stoppedAt) state.stoppedAt = at;
   save(state); clearInterval(ticker); tickClock();
 }
+// The teacher closed the season: freeze the clock (at the server's closedAt when known) and say so in the slip, once.
+const CLOSED_SLIP = "The teacher has closed the session. Your time is recorded up to here.";
+function sessionClosed(at) {
+  const first = !state.over;
+  stopClock(at); clearTimeout(watcher);
+  if (first && !state.finishedAt) typeTelegram(CLOSED_SLIP, "taunt");
+}
+// A student between answers posts nothing, so a slow poll of ?meta notices the close; an unknown season or an
+// unreachable backend keeps playing and asks again.
+let watcher = 0;
+function watchClose() {
+  clearTimeout(watcher);
+  if (!watchOn(state, boardUrl)) return;
+  watcher = setTimeout(async () => {
+    let m = null;
+    try { m = await fetchMeta(state.season); } catch {}
+    if (!watchOn(state, boardUrl)) return;
+    if (m && m.state === "closed") sessionClosed(m.closedAt ? clockStart({ openedAt: m.closedAt, now: m.now }) : Date.now());
+    else watchClose();
+  }, 30000);
+}
 
 function queueEvent(event, chapter) {
   state.outbox.push(eventPayload(state, event, chapter));
@@ -736,7 +761,7 @@ async function flushOutbox() {
       const j = await postBoard({ ...state.outbox[0], token: state.token || "" });
       if (!j.ok) {
         console.warn("leaderboard refused a row:", j.error, state.outbox[0]);
-        if (j.error === "session closed") stopClock();
+        if (j.error === "session closed") sessionClosed();
       }
       state.outbox.shift();
       save(state);
@@ -784,6 +809,7 @@ async function loadSeason() {
   PENALTY.wrong = state.penalty;
   startClock();
   flushOutbox();
+  watchClose();
 }
 let competeLoading = false;
 async function playCompete() {

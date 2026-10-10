@@ -107,8 +107,10 @@ is set when `|official before penalty - elapsedMs| > 60 s`.
 - `RANKS` and `TAUNTS` are constants; `PENALTY.wrong` comes from the season record. `applyConfig`, `?config=1`,
   the Settings section, the hashes status and paste, `seasonUsage`, `nextFreeSeason` and the "Investigate link
   with settings" go. The in-game panel keeps the chapter jumps, the board URL field and an `admin.html` link.
-- Compete info shows "Season: <name>" beside the clock. Closed season mid-play: the next refused post shows
-  "The session is over" in the status line; the game stays playable without posting.
+- Compete info shows "Season: <name>" beside the clock. Closed season mid-play: until the finish, the game polls `?meta`
+  every 30 s; a closed reply (or the next refused post) freezes the clock at `closedAt`, shows "The session is over"
+  beside it and types a slip ("The teacher has closed the session. Your time is recorded up to here."); the game
+  stays playable without posting.
 - `privacy.html`: the compete paragraph describes `join` (pseudo, season id, clientAt), progress and finish, and
   no longer an answer check request.
 
