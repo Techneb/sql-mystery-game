@@ -1,7 +1,9 @@
 # Compete simplification and the admin space
 
-Status (2026-10-10): branch `claude/compete-v2` implements work plan steps 1 and 2 (sections 2, 3 and 4:
-backend, build, game) and `site/shared.js` for section 5; the admin page and the board (sections 5 and 6) are next.
+Status (2026-10-10): branch `claude/compete-v2` implements work plan steps 1, 2 and 3 (sections 2 to 6: backend,
+build, game, `site/admin.html` and `site/leaderboard.html`), tested against a local stub of the backend in headless
+Chrome; next is the owner's look on his Chrome and the projector, then the rehearsal on the real backend. The admin
+page has no edit form for a created season yet (the backend's `update` is unused).
 Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
 whose newest season is oldest; a pseudo may not start with `= + - @` (Sheet formulas); `ritz.compete` also keeps
 the board URL, so a reload without the link still resumes.

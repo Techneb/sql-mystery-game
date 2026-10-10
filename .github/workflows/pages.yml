@@ -28,14 +28,19 @@ jobs:
         # A season record on the backend picks one; its answers are checked in the browser like learning mode.
         run: python3 generate_db.py --seasons
       - name: Tie the pages to this deploy's script and stylesheet
-        # Browsers keep app.js, shared.js and style.css for 10 minutes; versioned URLs stop a fresh index.html from running
-        # a stale cached app.js (app.js passes the same ?v= to the data files it fetches).
+        # Browsers keep scripts and stylesheets for 10 minutes; versioned URLs stop a fresh page from running a stale
+        # cached script (app.js passes the same ?v= to the data files it fetches). Any page or module importing
+        # shared.js or qr.js must be in these lists.
         run: |
           v="${GITHUB_SHA::7}"
-          sed -i "s#src=\"app.js\"#src=\"app.js?v=$v\"#; s#href=\"style.css\"#href=\"style.css?v=$v\"#" site/index.html site/privacy.html
-          sed -i "s#from \"./shared.js\"#from \"./shared.js?v=$v\"#" site/app.js
+          sed -i -E "s#(src|href)=\"(app\.js|admin\.js|leaderboard\.js|style\.css|admin\.css|learn/learn\.css)\"#\1=\"\2?v=$v\"#g" site/index.html site/privacy.html site/admin.html site/leaderboard.html
+          sed -i -E "s#from \"\./(shared|qr)\.js\"#from \"./\1.js?v=$v\"#g" site/app.js site/admin.js site/leaderboard.js
           grep -q "app.js?v=$v" site/index.html
+          grep -q "admin.js?v=$v" site/admin.html
+          grep -q "leaderboard.js?v=$v" site/leaderboard.html
           grep -q "shared.js?v=$v" site/app.js
+          grep -q "qr.js?v=$v" site/admin.js
+          grep -q "shared.js?v=$v" site/leaderboard.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
