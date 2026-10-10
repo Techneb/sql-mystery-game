@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
@@ -678,4 +678,9 @@ test("resultsLink: the season's public board, board URL and season id encoded", 
   assert.equal(u.searchParams.get("data"), board);
   assert.equal(u.searchParams.get("season"), "s1 &x");
   assert.equal(freshState().closedSeen, false, "the close pop-up shows once per close");
+});
+
+test("compete has no Suspects gallery: learn's cards would point at learn's traps", () => {
+  assert.equal(suspectsOn(freshState()), true);
+  assert.equal(suspectsOn({ ...freshState(), mode: "compete" }), false);
 });

@@ -298,6 +298,13 @@ class Compete(unittest.TestCase):
         self.assertNotIn("CHAPTER IX", j["chapters"][7]["telegram"])   # compete has no chapter IX
         self.assertIn("CHAPTER IX", g.chapters_json(self.V)["chapters"][7]["telegram"])
         self.assertEqual(j["chapters"][3]["construct"], "GROUP BY / HAVING")
+        self.assertEqual(j["chapters"][5]["construct"], "JOIN x3 + GROUP BY + HAVING")   # no SUM in compete ch6
+        learn = g.chapters_json(self.V)["chapters"]
+        for c, l in zip(j["chapters"][:7], learn):   # learn telegrams point at learn traps (pounds, loupe, Ritz desk)
+            if c["n"] != 3:
+                self.assertNotEqual(c["telegram"], l["telegram"], c["n"])
+        self.assertEqual([c["title"] for c in j["chapters"] if c["title"] != learn[c["n"] - 1]["title"]],
+                         ["The Night Manager", "Below the Royal Pair", "The Busiest Hour", "The Last Order Before Dawn"])
 
     def test_season_files_carry_hashes_the_compete_solutions_match(self):
         conn, V = g.build_db(1)

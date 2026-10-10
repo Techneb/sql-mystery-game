@@ -135,7 +135,7 @@ CHAPTERS = [
          "SELECT person_name FROM interview ORDER BY date DESC LIMIT 1"],
   naive_compete="SELECT p.name FROM person AS p JOIN address AS a ON p.address_id = a.id WHERE a.number = {compete_fence_number} AND a.street = '{compete_fence_street}'", naive_rows_compete=5,
   answer_key_compete="compete_fence_name"),
- dict(n=6, board="Shell account", part=1, construct="JOIN x3 + SUM + HAVING", tables=["bank_account", "bank_transaction"], answer_key="shell_account",
+ dict(n=6, board="Shell account", part=1, construct="JOIN x3 + SUM + HAVING", construct_compete="JOIN x3 + GROUP BY + HAVING", tables=["bank_account", "bank_transaction"], answer_key="shell_account",
   discovery=[
     dict(query="SELECT id FROM bank_account WHERE person_id = (SELECT id FROM person WHERE name = '{fence}')", row_count=1, note="The jeweller's account: {fence_account}."),
     dict(query="SELECT counterparty_id, COUNT(*) AS payments, SUM(amount) AS total, MAX(amount) AS biggest FROM bank_transaction WHERE account_id = {fence_account} AND date BETWEEN 19120501 AND 19120531 GROUP BY counterparty_id ORDER BY total DESC", must_contain="{shell_account}", note="What it paid each account in May. Decoys: the biggest single cheque (one payment), the biggest total (four payments, a supplier), and a second account paid in three small pieces."),
@@ -303,6 +303,8 @@ ENDINGS = dict(
 TEXT = {
  1: dict(
   title="The Night of the 17th",
+  title_compete="The Night Manager",
+  telegram_compete="MY DEAR GANIMARD STOP NOT ME THIS TIME STOP I HAVE A FRIEND WITH THE SAME TASTE IN ROOMS STOP A L",
   story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is ours**, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'*",
   story_compete="*Four in the morning, the Prefecture.* **Ganimard** has not slept since the Ritz, and now the *Hotel Meurice* has been burgled as well. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is the Meurice**, clerk. **Hippolyte Morand**, the night manager, found the damage himself. His clocks and ours have never agreed, so he will not swear to the night, only to near it. And mind what he says it was not.'*",
   objective="Mr Duroc knows which night.",
@@ -310,6 +312,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L"),
  2: dict(
   title="The Neighbouring Suite",
+  title_compete="Below the Royal Pair",
+  telegram_compete="MY DEAR GANIMARD STOP MY FRIEND NEVER WALKS STOP THE RIVAL COMPANY KEEPS BETTER BOOKS THAN YOURS STOP A L",
   story="**Ganimard** drops the report you found back on your desk. *'It is all in here, clerk, if you read it properly. I am not paid to read twice.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January.",
   story_compete="**Ganimard** reads the Meurice report you found and swears, once. *'Our man practises, clerk. What he did at the Meurice in June, he had done at the Ritz in May: the same floor, the same taste in rooms.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January. *'Two suites at the top of that floor share one price: the royal pair. He never touches those. Find me **the one just below the royal pair**, the night of the 17th of May.'*",
   objective="The report says where the thief came from. Who slept there?",
@@ -324,6 +328,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
  4: dict(
   title="The Cab's Week",
+  telegram_compete="MY DEAR GANIMARD STOP THREE DAYS AT THE SAME DOOR STOP FIVE TENANTS AND A CONCIERGE WHO SEES NOTHING STOP A L",
   story="**Ganimard** snorts at the plate. *'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'*\n\nThe book holds some sixty fares for that cab in the week before the theft, from the 13th to the 19th of May. *'A thief with a plan visits his fence before the job. Find me **the address this cab kept going back to**. I do not want the list. I want the address.'*",
   story_compete="**Ganimard** taps the plate you found in chapter 3. *'A second cab, clerk, and a second driver paid to forget. But his company pays him to write it all down.'*\n\nThe book holds that cab's fares for the week before the theft, from the 13th to the 19th of May. *'A wedding brings a cab back to one door again and again in a single afternoon. A fence brings it back day after day. Find me **the address it went back to on three different days**.'*",
   objective="Where did the cab from chapter 3 keep going the week before the theft?",
@@ -331,6 +336,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(
   title="The Boarding House",
+  telegram_compete="MY DEAR GANIMARD STOP HE BANKS AT THE SOCIETE GENERALE STOP A TIDY MAN PAYS IN TIDY SUMS STOP A L",
   story="The address is a boarding house: five tenants, and a landlady who has *seen nothing since 1889*.\n\n**Ganimard** wants the jeweller among them. Every fence in Paris calls himself a jeweller.",
   story_compete="The address is another boarding house: five tenants, and a concierge who has *minded her own business since the Commune*.\n\nOne of the tenants is a jeweller, and **Ganimard** could not care less. *'Every fence in Paris calls himself a jeweller, clerk, so ours calls himself nothing at all. He came to the police before we came to him: find me **the tenant who gave us a statement**.'*",
   objective="Who is the jeweller at the address from chapter 4?",
@@ -338,6 +344,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP GRIMAUD PAID ME WELL AND PROMPTLY STOP HE BANKS AT THE CREDIT LYONNAIS STOP HE PAYS A GREAT MANY PEOPLE STOP A L"),
  6: dict(
   title="Follow the Francs",
+  telegram_compete="MY DEAR GANIMARD STOP TWO HALVES TO THE FRANC STOP YOU ARE LEARNING STOP HIS BROKER CONFIRMED IT FROM THE BOURSE STOP A L",
   story="The jeweller banks at the *Credit Lyonnais*, and **Ganimard** has a warrant, so the bank hides nothing. Its ledger has one line per transfer: the account that paid, the account that was paid, the sum and the day.\n\n*'A fence pays a thief in three pieces, clerk: one for the job, one for the silence, one for the road. The bank does not blink at small sums. And of all the men he paid that way in May, **ours was paid best**.'*",
   story_compete="The fence banks at the *Societe Generale*, and **Ganimard**'s warrant opens that ledger too: one line per transfer, the account that paid, the account that was paid, the sum and the day.\n\n*'This one is tidier than the last, clerk. No three pieces for him: he paid his man in **two equal halves** in May, the same to the franc. Not two odd sums, and not three.'*",
   objective="Of the accounts the jeweller from chapter 5 paid in three pieces in May, which received the most?",
@@ -345,6 +352,8 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L"),
  7: dict(
   title="The Quietest Hour",
+  title_compete="The Busiest Hour",
+  telegram_compete="MY DEAR GANIMARD STOP YOU READ HIS WIRE STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L",
   story="Lupin wrote that he confirmed the payment by wire from the Ritz desk, at its quietest. The desk sent a hundred and seventy-odd wires on the 18th, and its clerk is *too proud to have read any of them*.\n\n**Ganimard** does not count hours the way you do. His day has four boxes:\n\n| Box | From | Before |\n| Night | 00:00 | 06:00 |\n| Morning | 06:00 | 12:00 |\n| Afternoon | 12:00 | 18:00 |\n| Evening | 18:00 | midnight |\n\n*'The quietest box is the one with the fewest wires, clerk. His wire is in it. He signs with one letter, which is one more than he needs. Which letter? Ask **Senor Ortega**: his card is in the Suspects file, and he has been complaining about it at the desk all week.'*",
   story_compete="The money was confirmed by wire, through a broker at the *Bourse*. **Anatole Brissac** signs every wire he sends, and the Bourse telegraph office sent dozens on the 18th.\n\nThe Bourse keeps its own hours, and **Ganimard** boxes its day its own way:\n\n| Box | From | Before |\n| Before the bell | 00:00 | 10:00 |\n| The session | 10:00 | 15:00 |\n| The call | 15:00 | 17:00 |\n| After hours | 17:00 | midnight |\n\n*'A broker hides in a crowd, clerk. He wired in three of those boxes that day, and his real wire went out in **the busiest box**, the one with the most wires.'*",
   objective="Find the wire he signed at the Ritz desk on the 18th, in the quietest of Ganimard's four boxes.",
@@ -352,6 +361,7 @@ TEXT = {
   telegram="MY DEAR GANIMARD STOP YOU READ MY WIRE STOP AS ALWAYS MY FIRST ORDER BEFORE DAWN STOP A MAN OF HABIT IS A MAN WITH A ROOM NUMBER STOP A L"),
  8: dict(
   title="The First Order Before Dawn",
+  title_compete="The Last Order Before Dawn",
   story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n*'A man of habit is a man with a room number, clerk. And before dawn, at my age, means before six.'*",
   story_compete="**Ganimard** reads aloud the broker's wire you found in chapter 7. It names his habit before dawn, *as always*.\n\n*'A broker who sells for a fence sleeps close to his client, clerk. That night he slept at the Ritz, and room service writes down every order, in order. I want the suite where it was **his last order before dawn**. And before dawn, at my age, means before six.'*",
   objective="The wire from chapter 7 describes a habit. Whose was it, on the 18th?",

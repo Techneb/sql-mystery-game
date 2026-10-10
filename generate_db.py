@@ -1024,12 +1024,12 @@ def chapters_json(V, mode="learn"):
     src = plot.CHAPTERS if mode == "learn" else plot.CHAPTERS[:8]
     suf = "" if mode == "learn" else "_compete"
     for ch in src:
-        d = {"title": ch["title"].format(**V), "story": ch.get("story" + suf, ch["story"]).format(**V)}   # compete: its own Part I stories
+        d = {"title": ch.get("title" + suf, ch["title"]).format(**V), "story": ch.get("story" + suf, ch["story"]).format(**V)}   # compete: its own Part I stories
         d["objective"] = ch["objective" + suf].format(**V)
         d["answer_form"] = ch["answer_form" + suf].format(**V)
         d["telegram"] = ch.get("telegram" + suf, ch["telegram"]).format(**V)
         d["board"] = ch.get("board" + suf, ch["board"])   # what the answer is, on its case-board card
-        d.update(n=ch["n"], tables=ch["tables"], construct=ch["construct"])
+        d.update(n=ch["n"], tables=ch["tables"], construct=ch.get("construct" + suf, ch["construct"]))
         d["answer_sha256"] = hashes(V[ch["answer_key" + suf]], ch["answer_form" + suf])   # checked in the browser
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,

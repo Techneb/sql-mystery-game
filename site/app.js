@@ -268,7 +268,7 @@ function runQuery() {
   renderHistory();
   const text = eggText(res);
   state.film = seenFilms(text, state.film);
-  const faces = foundSuspects(data.cast, res, state.suspects || (state.suspects = []));
+  const faces = suspectsOn(state) ? foundSuspects(data.cast, res, state.suspects || (state.suspects = [])) : [];
   if (faces.length) { state.suspects.push(...faces); markSuspects(); }
   award(detectBadges(ctx({ sql, text, rows: error ? -1 : (res ? res.values.length : 0), cols: res ? res.columns.length : 0, error: !!error }), state.badges));
   save(state);
@@ -507,6 +507,8 @@ function showExtra2() {
 
 // A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
 // their name (state.suspects); each note joins the bio once its chapter is reached (plot.py CAST).
+// Compete has no Suspects gallery: the cards and notes are learn's (Ashcombe's valet, Ortega's R.).
+export function suspectsOn(state) { return state.mode !== "compete"; }
 export function metSuspects(cast, state, chapters) {
   const reached = currentChapter(state, chapters).n, found = state.suspects || [];
   return cast.filter(s => s.meet <= reached || found.includes(s.name))
@@ -533,6 +535,8 @@ function renderSuspects() {
 }
 // The Suspects button carries a dot while the gallery holds a face or a note the student has not opened yet.
 function markSuspects() {
+  $("btn-suspects").hidden = !suspectsOn(state);
+  if (!suspectsOn(state)) return;
   const met = metSuspects(data.cast, state, data.chapters);
   $("btn-suspects").classList.toggle("new", met.reduce((k, s) => k + 1 + s.notes.length, 0) > (state.suspectsSeen || 0));
   introduceSuspects(met.map(s => s.name));
