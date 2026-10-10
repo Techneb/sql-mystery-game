@@ -490,3 +490,8 @@ framework, no bundler.
   compete mode (today: a teacher's `?season=N&board=<Apps Script URL>` link, the Apps Script backend with its
   Script Properties and posted hashes, the admin panel's Seasons and Settings, the leaderboard page, the start
   token and the honour-based start). Not started: a brainstorming session with the owner, then a spec amendment.
+- **Admin space** (course owner, 2026-10-10): one teacher-facing place to manage seasons (create, share, close),
+  read the compete data from the Google Sheet behind the Apps Script, and show a live leaderboard on the classroom
+  screen during a session. Today these are spread over the `?admin` panel (Seasons, Settings, passphrase-gated),
+  the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Not started; design it together
+  with the compete simplification item above.
