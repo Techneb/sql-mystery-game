@@ -111,6 +111,10 @@ async function showDetail(id) {
     if (gen !== detailGen) return;   // another row was clicked, or the same one refreshed, meanwhile
     if (!meta || meta.id !== id) { $("detail").innerHTML = '<p class="muted">This season does not exist.</p>'; return; }
     $("detail").innerHTML = detailHtml(meta, Array.isArray(rows) ? rows : []);
+    // The seasons table's Joined and Finished cells follow the poll, from the same rows.
+    const c = seasonCounts(Array.isArray(rows) ? rows.map(r => ({ ...r, season: id })) : [])[id] || { joined: 0, finished: 0 };
+    const tr = document.querySelector('table.seasons tr[data-id="' + CSS.escape(id) + '"]');
+    if (tr) { tr.cells[4].textContent = c.joined; tr.cells[5].textContent = c.finished; }
     if (meta.state !== "closed") pollTimer = setTimeout(() => showDetail(id), POLL_MS);
   } catch (e) {
     if (gen !== detailGen) return;
