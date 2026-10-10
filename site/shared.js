@@ -33,6 +33,15 @@ export const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase
 // itself is never in the repo. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
 export const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
 
+// mm:ss (past an hour the minutes keep counting: 75:00), never negative.
+export function fmtTime(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+
+// Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
+export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
+
 // Rows are a season's backend rows (doGet ?season=<id>: timestamp, event, team, chapter, wrong, queries, elapsedMs...);
 // meta is its season record (openedAt, penalty). Players group by teamKey, named as they typed it first.
 function players(rows) {

@@ -1,6 +1,6 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
-import { normalise, sha256, teamKey, ADMIN_PASS_SHA256 } from "./shared.js";
-export { normalise, sha256, teamKey, STOP_WORDS } from "./shared.js";
+import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime } from "./shared.js";
+export { normalise, sha256, teamKey, STOP_WORDS, fmtTime } from "./shared.js";
 
 export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
@@ -35,10 +35,6 @@ export function save(state) {
 }
 
 // --- compete mode: season, team, clock, events -------------------------------------------------
-export function fmtTime(ms) {
-  const s = Math.max(0, Math.round(ms / 1000));
-  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
-}
 export function competeStats(state) {
   const s = partStats(state, 1, 8);
   let wrong = 0;
