@@ -73,6 +73,12 @@ doPost, players (`team` 1-40 chars trimmed, `season` an existing id):
 - The token is HMAC(`teamKey|season id`), stateless, as today. The `check` action and `hashes`/`config` posts are
   removed.
 
+Row timestamps are written as `Date.now()`, a plain number of ms (2026-10-10, after the live test): a `Date` cell
+read back with `getValues()` came back shifted by the gap between the spreadsheet's time zone and the script's
+(about 7 hours), which made every interval negative. Old Date rows still read through `getTime()`; a negative
+interval is flagged "?" and the browser's `elapsedMs` stands in for it. The script lock waits 30 s: 25
+simultaneous joins took about 22 s on the real backend.
+
 Official time of a finish = `finish.timestamp - openedAt` (server clocks only) + `wrong x penalty`. The "?" flag
 is set when `|official before penalty - elapsedMs| > 60 s`.
 
@@ -115,9 +121,12 @@ already import.
 
 - Gate: the passphrase dialog on load (never stored); the board URL remembered in `localStorage` `ritz.admin.board`.
 - Seasons: a table of every record, newest first: name, date, state, joined, finished, database number; actions
-  per row: Open, Close (confirm), Copy link, QR, Board, Export CSV. Create form: name, date (default today),
+  per row: Open, Close (confirm), Copy link, QR, Board, Export CSV, as icon-only 28 px buttons in the game's icon
+  style (play triangle, stop square, chain links, 2x2 squares, podium, arrow into a tray; 16 px SVG stroked in
+  `currentColor`), each named by `title` (the tooltip) and `aria-label` (owner, 2026-10-10). Create form: name, date (default today),
   penalty (default 10).
-- Season detail (click a row): the joined list live (10 s poll) with each player's chapter; the per-chapter
+- Season detail (click a row): the joined list live (10 s poll, which also refreshes that row's Joined and
+  Finished cells) with each player's chapter; the per-chapter
   summary (players who solved it, median minutes from `openedAt`, median queries, median wrong) computed from
   the rows in the browser; the CSV export of the raw rows (client-generated, columns as the Sheet).
 - QR: an in-repo byte-mode QR encoder (`site/qr.js`, error correction M, versions up to 10, no dependency),
