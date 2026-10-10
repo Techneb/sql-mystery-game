@@ -102,6 +102,7 @@ is set when `|official before penalty - elapsedMs| > 60 s`.
   teacher to open the session", polling `?meta` every 5 s. When `state` is open, it loads `season-<db>`, keeps
   `openedAt`, starts the clock from it (a late joiner's clock already runs) and plays as today. A reload resumes
   from `ritz.compete` (season id, team, token, db, openedAt) and re-reads `?meta` once.
+- Stories (2026-10-10 rehearsal): the season file's `story` is the chapter's `story_compete` (the Meurice case and its own named witnesses), not the learn story.
 - Answers checked with `answer_sha256` from the season file, as learn mode does (`checkRemote` removed).
 - `RANKS` and `TAUNTS` are constants; `PENALTY.wrong` comes from the season record. `applyConfig`, `?config=1`,
   the Settings section, the hashes status and paste, `seasonUsage`, `nextFreeSeason` and the "Investigate link
