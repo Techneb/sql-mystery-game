@@ -1,38 +1,18 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
-export const STOP_WORDS = new Set(["the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "senor",
-  "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate",
-  "m", "monsieur", "madame", "mme", "miss", "sir", "lady", "countess", "room", "id", "wire", "paris"]);
-
-export function normalise(s) {
-  // Same rules as normalise() in generate_db.py. Keep both in sync (fixture in chapters.json).
-  // A lone letter glues to the digits after it ("A-7", "A 7", "A7" -> "a7") before stop words go, so "a" is not eaten;
-  // a trailing STOP is telegram punctuation; an all-digit answer drops leading zeros ("0214" -> "214").
-  const raw = String(s).toLowerCase().match(/[a-z0-9]+/g) || [];
-  const glued = [];
-  for (let i = 0; i < raw.length; i++) {
-    if (/^[a-z]$/.test(raw[i]) && i + 1 < raw.length && /^[0-9]+$/.test(raw[i + 1])) glued.push(raw[i] + raw[++i]);
-    else glued.push(raw[i]);
-  }
-  const tokens = glued.filter(t => !STOP_WORDS.has(t));
-  if (tokens.length > 1 && tokens[tokens.length - 1] === "stop") tokens.pop();
-  if (tokens.length && tokens.every(t => /^[0-9]+$/.test(t))) return tokens.join("").replace(/^0+(?=.)/, "");
-  return tokens.join(" ");
-}
-
-export async function sha256(s) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
-}
+import { normalise, sha256, teamKey, ADMIN_PASS_SHA256 } from "./shared.js";
+export { normalise, sha256, teamKey, STOP_WORDS } from "./shared.js";
 
 export function freshState() {
-  return { mode: "learn", season: 0, team: "", startedAt: 0, finishedAt: 0, outbox: [],
+  return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
            film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, token: "" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
-// mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-N.*);
-// outbox holds compete events not yet accepted by the Apps Script, so a lost connection never loses a row.
+// mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
+// in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
+// token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection
+// never loses a row; over is set once the backend says the session is closed.
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
   const cap = state.part2 ? 12 : 8;
@@ -66,7 +46,7 @@ export function competeStats(state) {
   return { ...s, wrong };
 }
 // One row of the Apps Script's log sheet. The server stamps the time itself; the client's clock travels
-// too (clientAt, and elapsedMs at the finish) so the leaderboard can flag a start that arrived late.
+// too (clientAt, and elapsedMs = finish - openedAt at the finish) so the board can flag a disagreeing clock.
 export function eventPayload(state, event, chapter, now = Date.now()) {
   const s = competeStats(state);
   return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
@@ -94,7 +74,7 @@ const PORTRAIT_FILE = { "Lord Ashcombe": "ashcombe", "Paul Sernine": "sernine", 
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
-let season = 0, seasonData = null, boardUrl = "";
+let seasonId = "", seasonMeta = null, boardUrl = "";
 
 async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
@@ -168,7 +148,8 @@ function renderChapter() {
       "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +
       "plus " + duration(PENALTY.wrong) + " per wrong answer.";
     $("objective").innerHTML = boardUrl
-      ? 'Your result is on the class leaderboard: <a href="leaderboard.html?data=' + encodeURIComponent(boardUrl) + '" target="_blank">open it</a>.'
+      ? 'Your result is on the class leaderboard: <a href="leaderboard.html?data=' + encodeURIComponent(boardUrl) +
+        "&season=" + encodeURIComponent(state.season) + '" target="_blank">open it</a>.'
       : "No leaderboard is connected to this season, so the result stays on this screen.";
     $("btn-print").hidden = false;
   }
@@ -412,37 +393,9 @@ function award(list) {
 export const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
 export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 
-// Settings the ?admin panel changes live: apps_script.gs stores them (Script Property CONFIG) and serves
-// them at <board>?config=1; boot applies them over the defaults above. leaderboard.html reads `penalty`.
-// Returns the fields it refused; a refused or missing field keeps its default.
-export const PENALTY = { wrong: 10 };  // seconds per wrong answer, mirrored as the default in leaderboard.html
-export function applyConfig(cfg) {
-  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) return [];
-  const bad = [];
-  const r = cfg.ranks;
-  if (r !== undefined) {
-    if (Array.isArray(r) && r.length === 3 && r.every((q, i) => Number.isInteger(q) && q > 0 && q <= 10000 && (!i || q > r[i - 1])))
-      r.forEach((q, i) => { RANKS[i][0] = q; });
-    else bad.push("ranks");
-  }
-  const t = cfg.taunts;
-  if (t !== undefined) {
-    if (Array.isArray(t) && t.length && t.length <= 10 && t.every(s => typeof s === "string" && s.trim() && s.length <= 300))
-      TAUNTS.splice(0, TAUNTS.length, ...t.map(s => s.trim()));
-    else bad.push("taunts");
-  }
-  for (const k of ["wrong"]) {
-    const v = cfg.penalty?.[k];
-    if (v === undefined) continue;
-    if (Number.isInteger(v) && v >= 0 && v <= 3600) PENALTY[k] = v; else bad.push("penalty." + k);
-  }
-  return bad;
-}
-export function currentConfig() {
-  return { ranks: RANKS.slice(0, 3).map(([q]) => q), taunts: [...TAUNTS], penalty: { ...PENALTY } };
-}
+// Seconds per wrong answer on the board; a compete game takes its season record's penalty.
+export const PENALTY = { wrong: 10 };
 export function duration(s) { return s && s % 60 === 0 ? s / 60 + (s === 60 ? " minute" : " minutes") : s + " seconds"; }
-export function configUrl(board) { const u = new URL(board); u.searchParams.set("config", "1"); return u.href; }
 export function partStats(state, from, to) {
   let queries = 0;
   for (let n = from; n <= to; n++) queries += state.queries[n] || 0;
@@ -610,15 +563,8 @@ async function submitAnswer() {
     else { $("reply").textContent = "That is not the code. Four words, the first of them STOP, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
   }
-  let correct;
-  if (ch.answer_sha256) correct = ch.answer_sha256.includes(hash);
-  else {   // compete: the season file carries no hashes; the class backend holds them (python3 generate_db.py --hashes)
-    $("reply").textContent = "Asking the Prefecture...";
-    const r = await checkRemote(ch.n, norm);
-    if (r.error) { $("reply").textContent = r.error; return; }
-    correct = r.correct;
-  }
-  if (correct) {
+  if (ch.answer_sha256.includes(hash)) {   // compete too: the season file carries its hashes
+
     state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
     track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
                              queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
@@ -757,8 +703,9 @@ let ticker = null;
 function tickClock() {
   const el = $("compete-info");
   el.hidden = false;
-  el.textContent = "SEASON " + state.season + " \u2014 " + state.team.toUpperCase() + " \u2014 " +
-    fmtTime((state.finishedAt || Date.now()) - state.startedAt) + (boardUrl ? "" : " \u2014 NOT RECORDED");
+  el.textContent = "Season: " + state.seasonName + " \u2014 " + state.team.toUpperCase() + " \u2014 " +
+    fmtTime((state.finishedAt || Date.now()) - state.startedAt) + (boardUrl ? "" : " \u2014 NOT RECORDED") +
+    (state.over ? " \u2014 THE SESSION IS OVER" : "");
 }
 function startClock() { clearInterval(ticker); tickClock(); ticker = setInterval(tickClock, 1000); }
 
@@ -770,14 +717,16 @@ function queueEvent(event, chapter) {
 let flushing = false;
 async function flushOutbox() {
   // Oldest first, one at a time, in order; a failure leaves the row in the outbox and retries in 30 s.
-  // The body is text/plain so the browser sends no CORS preflight (Apps Script cannot answer one).
+  // A refusal drops the row; a closed session says so beside the clock and the game stays playable.
   if (!boardUrl || flushing || !state.outbox.length) return;
   flushing = true;
   try {
     while (state.outbox.length) {
       const j = await postBoard({ ...state.outbox[0], token: state.token || "" });
-      if (j.ok && j.token) state.token = j.token;   // issued on "start", required on everything after
-      else if (!j.ok) console.warn("leaderboard refused a row:", j.error, state.outbox[0]);
+      if (!j.ok) {
+        console.warn("leaderboard refused a row:", j.error, state.outbox[0]);
+        if (j.error === "session closed") { state.over = true; tickClock(); }
+      }
       state.outbox.shift();
       save(state);
     }
@@ -796,77 +745,97 @@ async function postBoard(body) {
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }
-// Compete answers are checked by the backend: it holds the season hashes, the browser only sends the normalised answer.
-async function checkRemote(chapter, norm) {
-  if (!boardUrl) return { error: "This season needs the class link to check answers. Ask your teacher." };
+// The season record (apps_script.gs ?meta=<id>): null when unknown or unreachable.
+async function fetchMeta(id) {
+  if (!boardUrl || !id) return null;
   try {
-    const j = await postBoard({ check: 1, team: state.team, season: state.season, chapter, answer: norm, token: state.token || "" });
-    return j.ok ? { correct: !!j.correct } : { error: "The Prefecture refused: " + (j.error || "unknown") + "." };
-  } catch { return { error: "The Prefecture is unreachable. Try again in a moment; the clock is still running." }; }
+    const u = new URL(boardUrl); u.searchParams.set("meta", id);
+    const m = await (await fetch(u, { signal: AbortSignal.timeout(15000) })).json();
+    return m && m.id === id ? m : null;
+  } catch { return null; }
+}
+// Copies what the game uses from a season record; the clock runs from the teacher's Open.
+function applyMeta(m) {
+  if (!m) return;
+  state.seasonName = String(m.name || ""); state.db = Number(m.db) || state.db;
+  if (Number.isInteger(m.penalty)) state.penalty = m.penalty;
+  if (m.openedAt) state.startedAt = Number(m.openedAt);
+  if (m.state === "closed") state.over = true;
+  PENALTY.wrong = state.penalty;
+  save(state);
 }
 async function loadSeason() {
-  data = seasonData || await (await fetch("season-" + season + ".json" + VERSION)).json();
-  await loadDb("season-" + season);
+  data = await (await fetch("season-" + state.db + ".json" + VERSION)).json();
+  await loadDb("season-" + state.db);
+  PENALTY.wrong = state.penalty;
   startClock();
   flushOutbox();
 }
-
-// One leaderboard row per name and season (leaderboard.html keys on name|season), so a second player
-// typing the same name would merge into the first: refuse it up front.
-export const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase();   // mirrored in leaderboard.html
-export function nameTaken(rows, season, name) {
-  const n = teamKey(name);
-  return rows.some(r => Number(r.season) === season && teamKey(r.team) === n);
-}
-
-async function startCompete() {
-  const team = $("team").value.trim();
-  if (!team) { $("team").focus(); return; }
-  $("btn-start").disabled = true;
-  if (boardUrl) {
-    $("status").textContent = "Checking the pseudo...";
-    // An unreachable board must not block the class: the check is skipped, the game still starts.
-    const rows = await fetch(boardUrl).then(r => r.json()).catch(() => []);
-    if (nameTaken(rows, season, team)) {
-      $("status").textContent = "Someone already plays season " + season + " as \"" + team + "\". Pick another pseudo.";
-      $("btn-start").disabled = false; $("team").focus(); return;
-    }
-  }
-  $("status").textContent = "Opening season " + season + "...";
-  key = storageKey("compete");
-  state = { ...freshState(), mode: "compete", season, team, startedAt: Date.now() };
-  queueEvent("start", 0);
+async function playCompete() {
   await loadSeason();
   renderBoard(); renderHistory(); enterGame();
   $("notes").value = state.notes;
 }
+// Joined, the season not open yet: the landing card waits, asking the backend every 5 s.
+let waiter = null;
+function waitForOpen() {
+  $("landing").hidden = false;
+  document.querySelector(".landing-buttons").hidden = true;
+  $("compete-form").hidden = true;
+  $("compete-wait").hidden = false;
+  $("wait-name").textContent = state.seasonName;
+  $("wait-team").textContent = state.team;
+  $("status").textContent = "";
+  clearInterval(waiter);
+  waiter = setInterval(async () => {
+    const m = await fetchMeta(state.season);
+    if (!m || m.state === "created") return;
+    clearInterval(waiter);
+    applyMeta(m);
+    $("compete-wait").hidden = true;
+    playCompete();
+  }, 5000);
+}
+const JOIN_REFUSED = { "pseudo taken": "Someone already plays this season under that pseudo. Pick another.",
+  "session closed": "This session is closed.", "no such season": "This season does not exist." };
 
-async function fetchSeason(n) {
-  return fetch("season-" + n + ".json" + VERSION).then(r => r.ok ? r.json() : null).catch(() => null);
+async function joinCompete() {
+  const team = $("team").value.trim();
+  if (!team) { $("team").focus(); return; }
+  $("btn-start").disabled = true;
+  $("status").textContent = "Joining...";
+  let j;
+  try { j = await postBoard({ event: "join", team, season: seasonId, clientAt: Date.now() }); }
+  catch { j = { error: "unreachable" }; }
+  if (!j.ok) {
+    $("status").textContent = JOIN_REFUSED[j.error] || (j.error === "unreachable"
+      ? "The leaderboard is unreachable. Try again in a moment." : "The leaderboard refused: " + (j.error || "unknown") + ".");
+    $("btn-start").disabled = false; $("team").focus(); return;
+  }
+  key = storageKey("compete");
+  state = { ...freshState(), mode: "compete", season: seasonId, team, token: j.token, board: boardUrl };
+  applyMeta(j.meta);
+  if (j.meta.state === "created") waitForOpen(); else playCompete();
 }
 
-// The teacher's link (?season=N) names the season; without one, Compete asks for the number instead.
+// The teacher's link (?season=<id>&board=<url>) names the season; boot has read its record (seasonMeta).
 function offerCompete() {
   const b = $("btn-compete");
-  if (season && !seasonData) { b.title = "Season " + season + " is not on this server. Ask your teacher to build it."; return; }
+  if (!seasonId) return;   // no season link: Compete stays disabled
+  if (!seasonMeta) {
+    $("status").textContent = boardUrl ? "This season does not exist." : "This season link has no leaderboard: ask your teacher for the full link.";
+    return;
+  }
+  if (seasonMeta.state === "closed") { $("status").textContent = "This session is closed."; return; }
   b.disabled = false; b.title = "Part I only, against the clock.";
-  b.onclick = async () => {
-    if (!seasonData) {
-      const n = Number(prompt("Season number (ask your teacher):"));
-      if (!n) return;
-      seasonData = await fetchSeason(n);
-      if (!seasonData) { $("status").textContent = "Season " + n + " is not on this server."; return; }
-      season = n;
-    }
-    $("compete-note").innerHTML = boardUrl
-      ? "Part I, chapters I to VIII, against the clock. " + duration(PENALTY.wrong) +
-        " per wrong answer; queries are free. The clock starts when you press the button and stops when Lupin is named." +
-        ' Your pseudo, progress and answers go to the class leaderboard, which checks them (<a href="privacy.html" target="_blank">what is sent</a>).'
-      : "Compete needs your teacher's class link: the class leaderboard checks the answers. Investigate works without it.";
-    $("compete-form").hidden = !boardUrl; if (boardUrl) $("team").focus();
+  b.onclick = () => {
+    $("compete-note").innerHTML = "Season: " + esc(seasonMeta.name) + ". Part I, chapters I to VIII, against the clock. " +
+      duration(seasonMeta.penalty) + " per wrong answer; queries are free. The clock starts when your teacher opens the session " +
+      'and stops when Lupin is named. Your pseudo and progress go to the class leaderboard (<a href="privacy.html" target="_blank">what is sent</a>).';
+    $("compete-form").hidden = false; $("team").focus();
   };
-  $("btn-start").onclick = startCompete;
-  $("team").addEventListener("keydown", e => { if (e.key === "Enter") startCompete(); });
+  $("btn-start").onclick = joinCompete;
+  $("team").addEventListener("keydown", e => { if (e.key === "Enter") joinCompete(); });
 }
 
 // --- usage statistics: Google Analytics 4, opt-in only (spec section 8) ---------------------------
@@ -982,9 +951,8 @@ function toggleTheme() {
 
 // Gates both ?chapter=N and the ?admin panel: nobody skips ahead just by knowing the query params.
 // Passphrase is asked for once per page load (adminUnlocked persists after); ask the course owner
-// for it, it is not committed in plaintext anywhere. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
-const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
-let adminUnlocked = false, adminPass = "";  // adminPass: memory only, sent as the key when saving settings
+// for it, it is not committed in plaintext anywhere (its hash: ADMIN_PASS_SHA256 in shared.js).
+let adminUnlocked = false;
 function askPassphrase() {   // #passgate: a native <dialog> with a password field, so the letters are masked (Escape cancels)
   return new Promise(resolve => {
     const d = $("passgate"), input = d.querySelector("input");
@@ -998,7 +966,6 @@ async function unlockAdmin() {
   const pass = await askPassphrase();
   if (!pass) return false;
   adminUnlocked = (await sha256(pass.trim().toLowerCase())) === ADMIN_PASS_SHA256;   // trimmed, lowercased: exactly what apps_script.gs compares; never the answer normaliser (its rules change)
-  if (adminUnlocked) adminPass = pass;
   if (!adminUnlocked) toast("Wrong passphrase.", "Admin");
   return adminUnlocked;
 }
@@ -1013,144 +980,19 @@ async function jumpToChapter(n) {
   return true;
 }
 
-// Admin Seasons view. Every deploy builds seasons 1-20 (pages.yml), so "managing" a season is only
-// picking an unused number and sharing its links; usage is read back from the log sheet's rows.
-export function seasonUsage(rows) {
-  const by = new Map();
-  for (const r of rows) {
-    const n = Number(r.season);
-    if (!n) continue;
-    const u = by.get(n) || { season: n, teams: new Set(), last: 0 };
-    u.teams.add(r.team);
-    u.last = Math.max(u.last, Number(r.timestamp) || 0);
-    by.set(n, u);
-  }
-  return [...by.values()].sort((a, b) => a.season - b.season).map(u => ({ ...u, teams: u.teams.size }));
-}
-export function nextFreeSeason(usage) { let n = 1; while (usage.some(u => u.season === n)) n++; return n; }
-export function seasonLinks(base, n, board) {
-  const q = encodeURIComponent(board);
-  return { investigate: base + (board ? "?board=" + q : ""),
-           student: base + "?season=" + n + (board ? "&board=" + q : ""),
-           leaderboard: base + "leaderboard.html" + (board ? "?data=" + q + "&season=" + n : "") };
-}
-
+// The in-game panel: chapter jumps and a link to the teacher's page (admin.html: seasons, board, export).
 async function renderAdminPanel() {
   if (!new URLSearchParams(location.search).has("admin") || !(await unlockAdmin())) return;
   document.getElementById("admin-panel")?.remove();
   const el = document.createElement("div"); el.id = "admin-panel"; el.className = "admin-panel";
   el.innerHTML = '<span class="label">ADMIN</span>' +
     data.chapters.map(c => '<button data-n="' + c.n + '">' + c.n + '</button>').join("") +
-    '<button id="admin-seasons-btn">Seasons</button> <button id="admin-settings-btn">Settings</button>' +
-    '<input id="admin-board" class="admin-board" placeholder="Apps Script /exec URL">' +
-    '<div id="admin-settings" class="admin-seasons" hidden>' +
-    'Rank = most queries for Part I:<br>' +
-    RANKS.slice(0, 3).map(([, name], i) => name + ' <input id="cfg-r' + i + '" type="number" min="1"> ').join("") +
-    '<br>Leaderboard penalty, seconds per wrong answer ' +
-    '<input id="cfg-pw" type="number" min="0"><br>Telegrams after every third wrong answer, one per line:' +
-    '<textarea id="cfg-taunts" rows="4"></textarea><button id="cfg-save">Save</button>' +
-    '<div id="cfg-msg" class="admin-msg"></div>' +
-    '<br><span id="cfg-hashes-status">Season answers: checking...</span>' +
-    '<br>By hand, if the deploy cannot post them (repository secrets BOARD_URL and ADMIN_KEY): paste the output of <code>python3 generate_db.py --hashes</code>:' +
-    '<textarea id="cfg-hashes" rows="3" placeholder=\'{"1": [[...], ...], ...}\'></textarea><button id="cfg-hashes-save">Save answers</button>' +
-    '<div id="cfg-hashes-msg" class="admin-msg"></div></div>' +
-    '<div id="admin-seasons" class="admin-seasons" hidden>' +
-    '<button id="admin-load">Reload</button>' +
-    '<table id="admin-usage"></table>' +
-    'Season <input id="admin-season" type="number" min="1" max="20"> ' +
-    '<button id="admin-copy-student">Compete link</button> <button id="admin-copy-board">Leaderboard link</button>' +
-    '<br><button id="admin-copy-learn">Investigate link</button> (carries your settings into learning mode)' +
-    '<div id="admin-msg" class="admin-msg"></div></div>';
+    '<input id="admin-board" class="admin-board" placeholder="Apps Script /exec URL"> <a id="admin-link" target="_blank">Seasons and board</a>';
   el.querySelectorAll("button[data-n]").forEach(b => b.onclick = () => jumpToChapter(Number(b.dataset.n)));
-  const q = id => el.querySelector("#" + id);
-  q("admin-board").value = boardUrl;
-  const loadUsage = async () => {
-    const board = q("admin-board").value.trim();
-    if (!board) { q("admin-msg").textContent = "Paste the /exec URL (or open ?admin&board=<url>) to see which seasons are used."; return; }
-    q("admin-msg").textContent = "Loading...";
-    try {
-      const usage = seasonUsage(await (await fetch(board)).json());
-      q("admin-usage").innerHTML = "<tr><th>Season</th><th>Players</th><th>Last activity</th></tr>" +
-        usage.map(u => "<tr><td>" + u.season + "</td><td>" + u.teams + "</td><td>" +
-          (u.last ? new Date(u.last).toISOString().slice(0, 10) : "-") + "</td></tr>").join("");
-      q("admin-season").value = nextFreeSeason(usage);
-      q("admin-msg").textContent = usage.length ? "" : "No season used yet.";
-    } catch { q("admin-msg").textContent = "Could not read the leaderboard backend."; }
-  };
-  const copy = async which => {
-    const n = Number(q("admin-season").value);
-    if (which !== "investigate" && (!(n >= 1) || !(await fetchSeason(n)))) { q("admin-msg").textContent = "Season " + n + " is not on this server (1-20 are built)."; return; }
-    const base = location.href.replace(/[?#].*$/, "").replace(/index\.html$/, "");
-    const link = seasonLinks(base, n, q("admin-board").value.trim())[which];
-    try { await navigator.clipboard.writeText(link); q("admin-msg").textContent = "Copied: " + link; }
-    catch { q("admin-msg").textContent = link; }
-  };
-  q("admin-seasons-btn").onclick = () => { const s = q("admin-seasons"); s.hidden = !s.hidden; if (!s.hidden) loadUsage(); };
-  const fillSettings = () => {
-    const c = currentConfig();
-    c.ranks.forEach((v, i) => { q("cfg-r" + i).value = v; });
-    q("cfg-pw").value = c.penalty.wrong;
-    q("cfg-taunts").value = c.taunts.join("\n");
-  };
-  // Each season file carries a fingerprint of its answer hashes; the backend keeps the one it was last sent.
-  const hashesStatus = async board => {
-    const el = q("cfg-hashes-status");
-    if (!board) { el.textContent = "Season answers: no /exec URL to check against."; return; }
-    try {
-      const u = new URL(board); u.searchParams.set("hashes", "1");
-      const have = await (await fetch(u)).json();
-      const seasons = await Promise.all([...Array(20)].map((_, i) => fetchSeason(i + 1)));
-      const stale = seasons.map((s, i) => s && s.hashes_sha256 !== have[i + 1] ? i + 1 : 0).filter(Boolean);
-      el.textContent = stale.length ? "Season answers STALE on the backend for seasons " + stale.join(", ") + ": the deploy posts them when the repository secrets are set; otherwise paste below."
-        : "Season answers: up to date for all " + seasons.filter(Boolean).length + " seasons on this server.";
-    } catch { el.textContent = "Season answers: could not read the backend."; }
-  };
-  q("admin-settings-btn").onclick = async () => {
-    const s = q("admin-settings"); s.hidden = !s.hidden;
-    if (s.hidden) return;
-    const board = q("admin-board").value.trim();
-    q("cfg-msg").textContent = board ? "Loading..." : "No /exec URL: showing the built-in defaults, saving is off.";
-    hashesStatus(board);
-    if (board) {
-      try { applyConfig(await (await fetch(configUrl(board))).json()); q("cfg-msg").textContent = ""; }
-      catch { q("cfg-msg").textContent = "Could not read the settings; showing what this page has."; }
-    }
-    fillSettings();
-  };
-  q("cfg-save").onclick = async () => {
-    const board = q("admin-board").value.trim();
-    if (!board) { q("cfg-msg").textContent = "Paste the /exec URL first."; return; }
-    const cfg = { ranks: [0, 1, 2].map(i => Number(q("cfg-r" + i).value)),
-                  penalty: { wrong: Number(q("cfg-pw").value) },
-                  taunts: q("cfg-taunts").value.split("\n").map(s => s.trim()).filter(Boolean) };
-    const bad = applyConfig(cfg);
-    if (bad.length) { q("cfg-msg").textContent = "Not saved, check: " + bad.join(", ") + " (ranks must be whole numbers, increasing)."; return; }
-    q("cfg-msg").textContent = "Saving...";
-    try {
-      const r = await (await fetch(board, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                            body: JSON.stringify({ config: cfg, key: adminPass }) })).json();
-      q("cfg-msg").textContent = r.ok ? "Saved. Players get it on their next page load."
-        : "Refused by the backend: " + (r.error || "unknown") + ". Is ADMIN_KEY set to the admin passphrase?";
-    } catch { q("cfg-msg").textContent = "Could not reach the backend (is apps_script.gs redeployed?)."; }
-  };
-  q("cfg-hashes-save").onclick = async () => {
-    const board = q("admin-board").value.trim();
-    if (!board) { q("cfg-hashes-msg").textContent = "Paste the /exec URL first."; return; }
-    let hashes;
-    try { hashes = JSON.parse(q("cfg-hashes").value); if (!Object.values(hashes).every(s => Array.isArray(s) && s.length === 8)) throw 0; }
-    catch { q("cfg-hashes-msg").textContent = "Not valid: paste the whole output of python3 generate_db.py --hashes."; return; }
-    q("cfg-hashes-msg").textContent = "Saving...";
-    try {
-      const r = await (await fetch(board, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-                                            body: JSON.stringify({ hashes, key: adminPass }) })).json();
-      q("cfg-hashes-msg").textContent = r.ok ? "Saved: " + r.seasons + " seasons." : "Refused by the backend: " + (r.error || "unknown") + ".";
-      if (r.ok) hashesStatus(board);
-    } catch { q("cfg-hashes-msg").textContent = "Could not reach the backend."; }
-  };
-  q("admin-load").onclick = loadUsage;
-  q("admin-copy-student").onclick = () => copy("student");
-  q("admin-copy-board").onclick = () => copy("leaderboard");
-  q("admin-copy-learn").onclick = () => copy("investigate");
+  const input = el.querySelector("#admin-board"), link = el.querySelector("#admin-link");
+  const sync = () => { const b = input.value.trim(); link.href = "admin.html" + (b ? "?board=" + encodeURIComponent(b) : ""); };
+  input.value = boardUrl; sync();
+  input.oninput = sync;
   document.body.appendChild(el);
 }
 
@@ -1166,38 +1008,42 @@ async function boot() {
   initAds();
   applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
-  season = Number(params.get("season")) || 0;
+  seasonId = params.get("season") || "";
   boardUrl = params.get("board") || "";   // the deployment URL travels in links, never in this public repo
   let badBoard = false;
   try { if (boardUrl) new URL(boardUrl); } catch { boardUrl = ""; badBoard = true; }
-  // Not awaited: settings only matter at the first wrong answer or the rank, well after load.
-  if (boardUrl) fetch(configUrl(boardUrl)).then(r => r.json()).then(applyConfig).catch(() => {});
   const debugChapter = Number(params.get("chapter"));
-  const linked = season > 0;
-  // A team that reloads the page mid-season lands back in its game, clock still running: with the
-  // season link, always (a finished season shows its finish screen); without it, only while unfinished.
+  const linked = !!seasonId;
+  // A player who reloads the page mid-season lands back in the game (or the waiting card), clock still running:
+  // with the season link, always (a finished season shows its finish screen); without it, only while unfinished.
   const saved = loadFrom(storageKey("compete"));
-  const savedLive = saved.mode === "compete" && saved.team && saved.season > 0;
-  if (!season && savedLive && !part1Done(saved) && !debugChapter) season = saved.season;
-  if (season) seasonData = await fetchSeason(season);
-  const resuming = !!(seasonData && savedLive && saved.season === season && !debugChapter);
+  const savedLive = saved.mode === "compete" && saved.team && saved.token && saved.db > 0;
+  if (!seasonId && savedLive && !part1Done(saved) && !debugChapter) seasonId = saved.season;
+  const resuming = !!(savedLive && saved.season === seasonId && !debugChapter);
+  if (resuming && !boardUrl) boardUrl = saved.board || "";
+  if (seasonId) seasonMeta = await fetchMeta(seasonId);
   // debugChapter is gated by unlockAdmin() (same passphrase as the ?admin panel): only asked when
   // ?chapter=N is actually present, so a plain ?season= link never prompts for anything.
   let debugOk = false;
   if (resuming) {
     key = storageKey("compete");
     state = saved;
-    await loadSeason();
-  } else {
+    applyMeta(seasonMeta);   // re-read once: the teacher may have opened or closed the session meanwhile
+  }
+  const playing = resuming && state.startedAt > 0;
+  if (playing) await loadSeason();
+  else {
     data = await (await fetch("chapters.json" + VERSION)).json();
-    debugOk = debugChapter >= 1 && debugChapter <= 12 && await unlockAdmin();
-    if (debugOk) {
-      noPersist = true;
-      state = freshState();
-      for (let n = 1; n < debugChapter; n++) state.solved.push(n);   // no answer recorded: the board card shows its label alone
-      if (debugChapter > 8) state.part2 = true;
-    } else {
-      state = loadFrom(key);
+    if (!resuming) {
+      debugOk = debugChapter >= 1 && debugChapter <= 12 && await unlockAdmin();
+      if (debugOk) {
+        noPersist = true;
+        state = freshState();
+        for (let n = 1; n < debugChapter; n++) state.solved.push(n);   // no answer recorded: the board card shows its label alone
+        if (debugChapter > 8) state.part2 = true;
+      } else {
+        state = loadFrom(key);
+      }
     }
     await loadDb("mystery");
   }
@@ -1205,7 +1051,9 @@ async function boot() {
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = enterGame;
   // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
-  if (resuming || (!linked && state.solved.length) || debugOk) enterGame(); else renderAdminPanel();
+  if (playing || (!linked && state.solved.length) || debugOk) enterGame();
+  else if (resuming) waitForOpen();
+  else renderAdminPanel();
   if (!resuming) offerCompete();
   $("btn-back").onclick = backToInvestigation;
   btnLike($("masthead-chapter"), e => {

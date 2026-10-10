@@ -219,15 +219,8 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .admin-panel { position: fixed; left: 16px; bottom: 16px; background: var(--card); border: 2px dashed var(--accent); border-radius: var(--r-panel);
   padding: 6px 8px; z-index: 20; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: min(420px, calc(100vw - 32px)); }
 .admin-panel button { padding: 2px 8px; font-size: 12px; border-radius: var(--r-box); }
-.admin-seasons { flex-basis: 100%; font-size: 12px; }
-.admin-seasons input { font-size: 12px; }
-.admin-board { flex-basis: 100%; box-sizing: border-box; font-size: 12px; }
-.admin-seasons input[type=number] { width: 4em; }
-.admin-seasons textarea { width: 100%; box-sizing: border-box; font-size: 12px; }
-.admin-seasons #admin-season { width: 4em; }
-.admin-seasons table { border-collapse: collapse; margin: 6px 0; }
-.admin-seasons th, .admin-seasons td { padding: 1px 8px 1px 0; text-align: left; }
-.admin-msg { word-break: break-all; margin-top: 4px; }
+.admin-board { flex: 1 1 60%; box-sizing: border-box; font-size: 12px; }
+.admin-panel a { font-size: 12px; }
 
 /* usage-statistics consent banner: above the landing overlay (20) and the theme button (21) */
 .consent { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 22; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: center; background: var(--card); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--r-panel); box-shadow: 0 3px 8px rgba(0,0,0,.22); padding: 8px 12px; text-align: center; }

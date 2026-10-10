@@ -27,11 +27,16 @@
     <p class="landing-kicker">You are <b>the clerk</b>. Your only weapon is <b>SQL</b>.</p>
     <div class="landing-buttons">
       <button id="btn-investigate" disabled>Investigate</button>
-      <button id="btn-compete" disabled title="The season has not opened yet. Ask your teacher for the season link.">Compete</button>
+      <button id="btn-compete" disabled title="Ask your teacher for the season link.">Compete</button>
     </div>
     <div id="compete-form" class="compete-form" hidden>
-      <div class="row"><span class="label">PSEUDO</span><input id="team" autocomplete="off" maxlength="40" placeholder="Your pseudo"><button id="btn-start">Start the clock</button></div>
+      <div class="row"><span class="label">PSEUDO</span><input id="team" autocomplete="off" maxlength="40" placeholder="Your pseudo"><button id="btn-start">Join</button></div>
       <p id="compete-note" class="muted"></p>
+    </div>
+    <div id="compete-wait" class="compete-form" hidden>
+      <div class="label">SEASON</div>
+      <p><b id="wait-name"></b>, as <b id="wait-team"></b></p>
+      <p class="muted">Waiting for the teacher to open the session. Keep this page open: the clock starts for everyone at once.</p>
     </div>
     <p id="status" class="muted">Loading the archives...</p>
     <details class="landing-about">
@@ -55,7 +60,7 @@
         <tr><td>XII. Follow the Money</td><td>WITH RECURSIVE</td></tr>
       </table>
       <p>After chapter VIII the paper switches to its night edition: Part II follows the case after dark through four more chapters and new tables.</p>
-      <p>In compete mode a teacher hands out a season link; each player picks a pseudo, starts the clock, and a class leaderboard ranks everyone by time.</p>
+      <p>In compete mode a teacher hands out a season link; each player picks a pseudo, the teacher starts every clock at once, and a class leaderboard ranks everyone by time.</p>
       <p>The story borrows Arsene Lupin and Ganimard from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate. For the SQL itself, <a href="learn/">The Clerk's Handbook</a> explains every construct the chapters use, on a separate example database.</p>
     </details>
     <p class="muted landing-foot">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="learn/">The Clerk's Handbook</a> &middot; <a href="privacy.html">Privacy</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="mailto:contact@alephb.uk">Contact</a></p>

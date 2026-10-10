@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, seasonUsage, nextFreeSeason, seasonLinks, nameTaken, applyConfig, currentConfig, configUrl, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
+import * as shared from "./site/shared.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -166,50 +167,61 @@ test("compete events carry the Part I totals the leaderboard scores", () => {
   assert.equal(fmtTime(-500), "00:00");
 });
 
-test("admin seasons: usage per season, next free number, share links", () => {
-  const rows = [
-    { timestamp: 100, event: "start", team: "A", season: 1 }, { timestamp: 300, event: "finish", team: "A", season: 1 },
-    { timestamp: 200, event: "start", team: "B", season: 1 }, { timestamp: 50, event: "start", team: "C", season: 3 },
-    { timestamp: 9, event: "start", team: "test", season: "" },
-  ];
-  const usage = seasonUsage(rows);
-  assert.deepEqual(usage, [{ season: 1, teams: 2, last: 300 }, { season: 3, teams: 1, last: 50 }]);
-  assert.equal(nextFreeSeason(usage), 2);
-  assert.equal(nextFreeSeason([]), 1);
-  const l = seasonLinks("https://x.uk/g/", 2, "https://s.g/exec?a=1");
-  assert.equal(l.student, "https://x.uk/g/?season=2&board=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1");
-  assert.equal(l.leaderboard, "https://x.uk/g/leaderboard.html?data=https%3A%2F%2Fs.g%2Fexec%3Fa%3D1&season=2");
-  assert.equal(seasonLinks("b/", 4, "").student, "b/?season=4");
+test("pseudos fold to one key per player, whatever the case or width", () => {
+  assert.equal(teamKey(" Alice "), "alice");
+  assert.equal(teamKey("\uFF21lice"), "alice", "look-alikes fold to the same key");
+  assert.equal(PENALTY.wrong, 10, "the default until a season record sets it");
 });
 
-test("compete refuses a name already used in the same season, whatever the case", () => {
-  const rows = [{ team: "Alice", season: 2 }, { team: "Bob ", season: "3" }];
-  assert.ok(nameTaken(rows, 2, " alice"));
-  assert.ok(nameTaken(rows, 3, "BOB"));
-  assert.ok(!nameTaken(rows, 3, "Alice"), "same name in another season is fine");
-  assert.ok(nameTaken(rows, 2, "Al\u0131ce".replace("\u0131", "i")) && teamKey("\uFF21lice") === "alice", "look-alikes fold to the same key");
-  assert.ok(!nameTaken([], 2, "Alice"));
+test("shared.js is what app.js re-exports", () => {
+  assert.equal(normalise, shared.normalise);
+  assert.equal(sha256, shared.sha256);
+  assert.equal(teamKey, shared.teamKey);
+  assert.match(shared.ADMIN_PASS_SHA256, /^[0-9a-f]{64}$/);
 });
 
-test("admin settings: valid fields apply, invalid ones are refused and keep the default", () => {
-  const before = currentConfig();
-  try {
-    assert.deepEqual(applyConfig([{ team: "x" }]), [], "an old backend answers rows: ignored");
-    assert.deepEqual(applyConfig({ ranks: [10, 20, 30], penalty: { wrong: 5 }, taunts: [" A L ", "B"] }), []);
-    assert.equal(rank(10), "Ganimard himself");
-    assert.equal(rank(31), "Constable");
-    assert.deepEqual(TAUNTS, ["A L", "B"]);
-    assert.deepEqual(PENALTY, { wrong: 5 });
-    assert.deepEqual(applyConfig({ ranks: [30, 20, 40], taunts: [], penalty: { wrong: -1 } }), ["ranks", "taunts", "penalty.wrong"]);
-    assert.deepEqual(applyConfig({ penalty: { wrong: 1e12 } }), ["penalty.wrong"], "an hour is the most a wrong answer may cost");
-    assert.deepEqual(applyConfig({ penalty: { wrong: 0.5 } }), ["penalty.wrong"]);
-    assert.deepEqual(applyConfig({ taunts: ["x".repeat(301)] }), ["taunts"], "a telegram is short");
-    assert.deepEqual(currentConfig().ranks, [10, 20, 30], "refused ranks change nothing");
-    assert.equal(configUrl("https://s.g/exec"), "https://s.g/exec?config=1");
-  } finally {
-    applyConfig(before);
-  }
-  assert.deepEqual(currentConfig(), before);
+// A season's rows as doGet ?season=<id> returns them; progress/finish carry Part I running totals.
+const T0 = 1_000_000;
+const row = (event, team, chapter, min, wrong = 0, queries = 0, elapsedMs = null) =>
+  ({ timestamp: T0 + min * 60000, event, team, season: "s1", chapter, hints: 0, wrong, queries, clientAt: null, elapsedMs });
+const fixture = () => {
+  const r = [row("join", "Alice", "", -5), row("join", "bob", "", -4), row("join", "Carol", "", -3), row("join", "Dan", "", 2)];
+  for (let n = 1; n <= 7; n++) r.push(row("progress", n === 3 ? "ALICE" : "Alice", n, n * 2, n === 2 ? 1 : 0, n * 3));
+  r.push(row("finish", "Alice", 8, 20, 1, 30, 20 * 60000 + 5000));          // 20:00 + 1 wrong x 30 s, clocks agree
+  for (let n = 1; n <= 7; n++) r.push(row("progress", "bob", n, n * 2 + 1, 0, n * 2));
+  r.push(row("finish", "bob", 8, 19, 0, 20, 17 * 60000));                    // 19:00, browser says 17:00: flagged
+  r.push(row("progress", "Carol", 1, 4, 3, 10), row("progress", "Carol", 2, 9, 3, 16));
+  return r;
+};
+
+test("officialTime ranks finishers by server time plus penalty, then the others by progress", () => {
+  const out = shared.officialTime(fixture(), { openedAt: T0, penalty: 30 });
+  assert.deepEqual(out.map(p => [p.rank, p.team, p.finished, p.solved, p.chapter]),
+    [[1, "bob", true, 8, 8], [2, "Alice", true, 8, 8], [3, "Carol", false, 2, 3], [4, "Dan", false, 0, 1]]);
+  assert.equal(out[0].ms, 19 * 60000);
+  assert.equal(out[1].ms, 20 * 60000 + 30000, "one wrong answer at 30 s");
+  assert.deepEqual(out.map(p => p.flagged), [true, false, false, false]);
+  assert.equal(out[2].queries, 16);
+  const harsh = shared.officialTime(fixture(), { openedAt: T0, penalty: 0 });
+  assert.equal(harsh[1].ms, 20 * 60000, "no penalty, the server interval alone");
+  assert.deepEqual(shared.officialTime([], { openedAt: T0, penalty: 10 }), []);
+});
+
+test("chapterSummary: solvers and medians per chapter, per-chapter queries and wrong from running totals", () => {
+  const s = shared.chapterSummary(fixture(), { openedAt: T0, penalty: 30 });
+  assert.equal(s.length, 8);
+  assert.deepEqual(s[0], { chapter: 1, solvers: 3, minutes: 3, queries: 3, wrong: 0 });   // 2/3/4 min; 3/2/10 q; 0/0/3 wrong
+  assert.deepEqual(s[1], { chapter: 2, solvers: 3, minutes: 5, queries: 3, wrong: 0 });   // 4/5/9; 3/2/6; 1/0/0
+  assert.deepEqual(s[7], { chapter: 8, solvers: 2, minutes: 19.5, queries: 7.5, wrong: 0.5 });   // 9 and 6 queries
+  assert.deepEqual(shared.chapterSummary([], { openedAt: T0 })[3], { chapter: 4, solvers: 0, minutes: null, queries: null, wrong: null });
+});
+
+test("built season files carry an answer hash list per chapter and the normaliser fixture", { skip: !fs.existsSync("site/season-1.json") }, () => {
+  const season = JSON.parse(fs.readFileSync("site/season-1.json", "utf8"));
+  assert.equal(season.chapters.length, 8);
+  for (const ch of season.chapters) assert.ok(ch.answer_sha256.length >= 1 && ch.answer_sha256.every(h => /^[0-9a-f]{64}$/.test(h)), "chapter " + ch.n);
+  assert.deepEqual(season.normalise_fixture, data.normalise_fixture);
+  assert.equal(season.hashes_sha256, undefined);
 });
 
 test("penalty durations read naturally in the compete note", () => {
