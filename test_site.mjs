@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
 import * as shared from "./site/shared.js";
+import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -453,4 +454,80 @@ test("handbook: every code block is already coloured by colour_learn.mjs", () =>
       assert.equal(colourBlock(inner), inner, `${f}: a code block is not coloured, run node colour_learn.mjs`);
     }
   assert.ok(n >= 40, "the handbook's code blocks were found");
+});
+
+const qrRows = (m) => m.map((r) => r.map((d) => (d ? "1" : "0")).join(""));
+
+test("qrMatrix: HELLO WORLD at M is a version 1 code (21 x 21) with a finder in three corners", () => {
+  const m = qrMatrix("HELLO WORLD", "M"), rows = qrRows(m);
+  assert.equal(m.length, 21);
+  for (const r of m) assert.equal(r.length, 21);
+  const finder = ["1111111", "1000001", "1011101", "1011101", "1011101", "1000001", "1111111"];
+  for (const [r0, c0] of [[0, 0], [0, 14], [14, 0]])
+    finder.forEach((line, i) => assert.equal(rows[r0 + i].slice(c0, c0 + 7), line, `finder at ${r0},${c0} row ${i}`));
+  assert.equal(qrMatrix("x".repeat(150), "M").length, 8 * 4 + 17, "a 150-byte link takes version 8 at M");
+  assert.equal(qrMatrix("x".repeat(300), "M").length, 13 * 4 + 17, "versions above 10 work (13-M holds 331 bytes)");
+  assert.throws(() => qrMatrix("x", "X"));
+});
+
+// Reference obtained independently with the Python library `qrcode` 8.x (Lincoln Loop), a separate
+// implementation: QRCode(error_correction=ERROR_CORRECT_M, border=0) fed QRData(b"mystery.alephb.uk",
+// mode=MODE_8BIT_BYTE), make(fit=True), get_matrix(). Version 2 (one alignment pattern), its own mask choice.
+// The same comparison was run offline over 54 strings, versions 2 to 37, all four levels, masks forced,
+// and every automatic choice decoded back with zxing-cpp.
+test("qrMatrix matches an independent encoder's matrix for a fixed input", () => {
+  const ref = [
+    "1111111010100101001111111", "1000001010010100101000001", "1011101001001001101011101",
+    "1011101011110010001011101", "1011101000010011101011101", "1000001001100100001000001",
+    "1111111010101010101111111", "0000000010101000100000000", "1011011101111100001001011",
+    "0000110111101110100101010", "0001001011010100001111100", "0110100001111001000101110",
+    "1111001100001010011010100", "0000010111111011011111001", "0101111100010100110110110",
+    "1000110110110010011110011", "0001111011001010111110101", "0000000010000010100011101",
+    "1111111011100110101010011", "1000001011110111100011000", "1011101001000110111111000",
+    "1011101011000001011011011", "1011101010100010101010110", "1000001001011110000001100",
+    "1111111010010000001010111",
+  ];
+  assert.deepEqual(qrRows(qrMatrix("mystery.alephb.uk", "M")), ref);
+});
+
+test("qrMatrix invariants: format bits decode, Reed-Solomon syndromes vanish, data re-reads to the text", () => {
+  const text = "HELLO WORLD", m = qrMatrix(text, "M");
+  // Format information, first copy: column 8 rows 0-5, 7, 8, then row 8 columns 7, 5..0 (bit 0 first).
+  const cells = [[0, 8], [1, 8], [2, 8], [3, 8], [4, 8], [5, 8], [7, 8], [8, 8], [8, 7], [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0]];
+  const fmt = cells.reduce((v, [r, c], i) => v | (m[r][c] ? 1 << i : 0), 0);
+  const second = [...Array(8)].map((_, i) => [8, 20 - i]).concat([...Array(7)].map((_, i) => [14 + i, 8]));
+  assert.equal(second.reduce((v, [r, c], i) => v | (m[r][c] ? 1 << i : 0), 0), fmt, "both copies agree");
+  // Unmasked by 0x5412, the 15 bits are a BCH codeword: divisible by 0x537 (polynomials over GF(2)).
+  const raw = fmt ^ 0x5412;
+  let rem = raw;
+  for (let i = 14; i >= 10; i--) if ((rem >> i) & 1) rem ^= 0x537 << (i - 10);
+  assert.equal(rem, 0, "format BCH remainder");
+  assert.equal(raw >> 13, 0, "level bits 00 = M");
+  const mask = (raw >> 10) & 7;
+  // Unmask and read the 26 codewords back in placement order.
+  const bits = dataPositions(1).map(([r, c]) => (m[r][c] !== MASKS[mask](r, c) ? 1 : 0));
+  const cw = [...Array(26)].map((_, i) => bits.slice(i * 8, i * 8 + 8).reduce((v, b) => (v << 1) | b, 0));
+  // 1-M is one block: 16 data + 10 EC codewords; c(x) evaluated at a^0..a^9 must be 0.
+  for (let i = 0; i < 10; i++) assert.equal(cw.reduce((acc, b) => gfMul(acc, gfExp(i)) ^ b, 0), 0, `syndrome ${i}`);
+  // Mode 0100, 8-bit count, the bytes, then the 0000 terminator and 0xEC/0x11 padding.
+  const s = cw.slice(0, 16).map((b) => b.toString(2).padStart(8, "0")).join("");
+  assert.equal(s.slice(0, 4), "0100");
+  const n = parseInt(s.slice(4, 12), 2);
+  const bytes = [...Array(n)].map((_, i) => parseInt(s.slice(12 + 8 * i, 20 + 8 * i), 2));
+  assert.equal(String.fromCharCode(...bytes), text);
+  assert.equal(s.slice(12 + 8 * n, 16 + 8 * n), "0000");
+  assert.deepEqual(cw.slice(13, 16), [0xec, 0x11, 0xec]);
+});
+
+test("qrSvg is one well-formed svg with a crisp path and the quiet zone", () => {
+  const svg = qrSvg("https://mystery.alephb.uk/?season=3", { size: 300 });
+  const n = qrMatrix("https://mystery.alephb.uk/?season=3").length + 8;
+  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" [^>]*><rect [^>]*\/><path [^>]*\/><\/svg>$/);
+  assert.ok(svg.includes(`width="300" height="300" viewBox="0 0 ${n} ${n}"`));
+  assert.ok(svg.includes('shape-rendering="crispEdges"'));
+  assert.equal((svg.match(/<path/g) || []).length, 1);
+  const xs = [...svg.matchAll(/M(\d+) (\d+)/g)].flatMap((x) => [+x[1], +x[2]]);
+  assert.equal(Math.min(...xs), 4, "dark modules start after a four-module quiet zone");
+  assert.equal(Math.max(...xs), n - 5, "and end four modules before the edge");
+  assert.ok(qrSvg("a", { quiet: 2, dark: "#123", light: "none" }).includes('fill="#123"'));
 });
