@@ -433,7 +433,9 @@ framework, no bundler.
   the game chapters it serves by numeral), linked from the landing footer and privacy.html, with `robots.txt` and
   `sitemap.xml`. Owner decisions on the way (2026-10-10): no How-to-play or For-teachers pages; chapter X's construct
   is "Self-join" everywhere (Hint, About table, handbook). The alephb.uk home page links it from the game's "Twelve
-  chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10).
+  chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10). A quality pass the same day (44c4d32) re-ran all 43 examples
+  against the bakery script (all matched; multi-row queries gained an ORDER BY), proofread the pages, and added four
+  node tests pinning the page chrome, the pagers, the sitemap and the absence of game table and cast names.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
