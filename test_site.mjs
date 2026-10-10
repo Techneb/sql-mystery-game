@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
@@ -669,4 +669,13 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, the d
   for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js"]) assert.ok(yml.includes(f), f);
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
+});
+
+test("resultsLink: the season's public board, board URL and season id encoded", () => {
+  const board = "https://x.invalid/exec?a=1&b=2";
+  const u = new URL(resultsLink(board, "s1 &x"), "https://mystery.example/");
+  assert.equal(u.pathname, "/leaderboard.html");
+  assert.equal(u.searchParams.get("data"), board);
+  assert.equal(u.searchParams.get("season"), "s1 &x");
+  assert.equal(freshState().closedSeen, false, "the close pop-up shows once per close");
 });

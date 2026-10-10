@@ -1,18 +1,19 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
-import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime } from "./shared.js";
-export { normalise, sha256, teamKey, STOP_WORDS, fmtTime } from "./shared.js";
+import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime, resultsLink } from "./shared.js";
+export { normalise, sha256, teamKey, STOP_WORDS, fmtTime, resultsLink } from "./shared.js";
 
 export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, token: "", stoppedAt: 0 };
+           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
 // in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
 // token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection
-// never loses a row; over is set once the backend says the session is closed, and stoppedAt freezes the clock then.
+// never loses a row; over is set once the backend says the session is closed, and stoppedAt freezes the clock then;
+// closedSeen once the #closed pop-up has been shown for it.
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
   const cap = state.part2 ? 12 : 8;
@@ -158,8 +159,7 @@ function renderChapter() {
       "Your side of the clock read " + fmtTime(state.finishedAt - state.startedAt) + "; the leaderboard keeps the official time, " +
       "plus " + duration(PENALTY.wrong) + " per wrong answer.";
     $("objective").innerHTML = boardUrl
-      ? 'Your result is on the class leaderboard: <a href="leaderboard.html?data=' + encodeURIComponent(boardUrl) +
-        "&season=" + encodeURIComponent(state.season) + '" target="_blank">open it</a>.'
+      ? 'Your result is on the class leaderboard: <a href="' + esc(resultsLink(boardUrl, state.season)) + '" target="_blank" rel="noopener">open it</a>.'
       : "No leaderboard is connected to this season, so the result stays on this screen.";
     $("btn-print").hidden = false;
   }
@@ -723,12 +723,24 @@ function stopClock(at = Date.now()) {
   if (!state.finishedAt && !state.stoppedAt) state.stoppedAt = at;
   save(state); clearInterval(ticker); tickClock();
 }
-// The teacher closed the season: freeze the clock (at the server's closedAt when known) and say so in the slip, once.
+// The teacher closed the season: freeze the clock (at the server's closedAt when known) and say so in the #closed
+// pop-up, once per close (state.closedSeen; enterGame shows it on a reload that finds the season closed), never after
+// a finish. The slip is the fallback where <dialog> cannot open.
 const CLOSED_SLIP = "The teacher has closed the session. Your time is recorded up to here.";
 function sessionClosed(at) {
-  const first = !state.over;
   stopClock(at); clearTimeout(watcher);
-  if (first && !state.finishedAt) typeTelegram(CLOSED_SLIP, "taunt");
+  showClosed();
+}
+function showClosed() {
+  if (state.mode !== "compete" || !state.over || state.finishedAt || state.closedSeen) return;
+  state.closedSeen = true; save(state);
+  const d = $("closed");
+  if (!d.showModal) { typeTelegram(CLOSED_SLIP, "taunt"); return; }
+  d.querySelector(".closed-time").textContent = "Season: " + state.seasonName + " \u2014 " + state.team.toUpperCase() + " \u2014 " + fmtTime(clockMs(state));
+  const a = d.querySelector("a");
+  a.hidden = !boardUrl;
+  if (boardUrl) a.href = resultsLink(boardUrl, state.season);
+  if (!d.open) d.showModal();
 }
 // A student between answers posts nothing, so a slow poll of ?meta notices the close; an unknown season or an
 // unreachable backend keeps playing and asks again.
@@ -1064,6 +1076,7 @@ function enterGame() {
   $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel();
   if (awaitingCode(state) && !state.extraSeen) showExtra();   // solved chapter VIII, closed the page before the extra edition
   if (state.mode !== "compete" && state.solved.includes(12) && !state.extraSeen2) showExtra2();   // the same for chapter XII
+  showClosed();   // the season closed while the page was shut
 }
 
 async function boot() {
