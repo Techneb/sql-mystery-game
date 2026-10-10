@@ -744,7 +744,7 @@ async function flushOutbox() {
 // a JSON {ok:false, error} is the backend's own refusal and comes back as is.
 async function postBoard(body) {
   const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(body), signal: AbortSignal.timeout(30000) });
+    body: JSON.stringify(body), signal: AbortSignal.timeout(40000) });
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }

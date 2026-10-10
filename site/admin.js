@@ -82,7 +82,7 @@ async function getJson(params) {
 async function post(body) {
   try {
     const r = await fetch(board, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ ...body, key }), signal: AbortSignal.timeout(30000) });
+      body: JSON.stringify({ ...body, key }), signal: AbortSignal.timeout(40000) });
     const out = await r.json();
     if (!out.ok) say("Refused: " + (out.error || "no reason given"), true);
     return out;

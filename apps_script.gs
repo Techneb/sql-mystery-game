@@ -161,10 +161,11 @@ function find_(list, id) {
 }
 
 // Two joins with the same pseudo in the same second, or two admin writes, must not both read the old state.
-// The game retries a "busy, try again" join once by itself.
+// The game retries a "busy, try again" join once by itself. 25 simultaneous joins take about 22 s (the lock serialises
+// them, about 0.9 s each), hence the 30 s wait; the game waits 40 s for a reply.
 function locked_(fn) {
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(20000)) return {ok: false, error: "busy, try again"};
+  if (!lock.tryLock(30000)) return {ok: false, error: "busy, try again"};
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
