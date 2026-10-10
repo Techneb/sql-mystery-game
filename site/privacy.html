@@ -24,7 +24,7 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 9 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 10 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. Advertising may appear on the page's edges, outside the game, once
@@ -83,20 +83,21 @@
   next visit.</p>
 
   <h2>Compete</h2>
-  <p>When your teacher gives you a season link and you press <i>Start the clock</i>, the game sends the
-  following to the class leaderboard, at the start, after each chapter and at the finish:</p>
+  <p>When your teacher gives you a season link, the page asks the class leaderboard for that season's name
+  and state, and asks again every 5 seconds while you wait for the teacher to open the session. When you
+  press <i>Join</i>, it sends your pseudo, the season's identifier and your browser's clock reading. After
+  each chapter and at the finish it sends:</p>
   <ul>
-    <li>the pseudo you type,</li>
-    <li>the season number and the chapter you reached,</li>
+    <li>your pseudo and the season's identifier,</li>
+    <li>the chapter you solved,</li>
     <li>how many queries you ran and wrong answers you gave,</li>
-    <li>your browser's clock reading at each message and, at the finish, the time you took by that clock.</li>
+    <li>your browser's clock reading and the time since the session opened by that clock.</li>
   </ul>
-  <p>Each answer you submit in compete mode is also sent, in its simplified form, so the leaderboard can
-  check it against the season's answers; it is checked and not stored. The leaderboard adds the time it
+  <p>Your answers are checked in your browser and never sent. The leaderboard adds the time it
   received each message and gives your browser a code tied to your pseudo, so that nobody else can post
   under it afterwards. It never receives your queries or your notes. It is a Google Sheet belonging to
   the course teacher, reached through Google Apps Script, so Google processes it under its own terms.
-  Anyone with a leaderboard link sees the pseudos and times of the season that link names; the teacher
+  Anyone with a leaderboard link sees the pseudos and progress of the season that link names; the teacher
   sees every season. The rows stay until the teacher deletes them. This is separate from usage statistics
   and does not depend on your answer to the banner.</p>
   <p><b>Choose a pseudo that is not your full name.</b> A first name or a nom de guerre is enough.</p>

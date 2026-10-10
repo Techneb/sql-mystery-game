@@ -1,5 +1,11 @@
 # Compete simplification and the admin space
 
+Status (2026-10-10): branch `claude/compete-v2` implements work plan steps 1 and 2 (sections 2, 3 and 4:
+backend, build, game) and `site/shared.js` for section 5; the admin page and the board (sections 5 and 6) are next.
+Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
+whose newest season is oldest; a pseudo may not start with `= + - @` (Sheet formulas); `ritz.compete` also keeps
+the board URL, so a reload without the link still resumes.
+
 Design agreed with the course owner on 2026-10-10 (grilling in the SQL Game main session). Amends section 4
 (Compete mode) and the "Compete mode simplification" and "Admin space" backlog items of
 `2026-09-20-sql-mystery-game-design.md`. Dates: backend redeploy by the owner 2026-10-11, rehearsal on the live
