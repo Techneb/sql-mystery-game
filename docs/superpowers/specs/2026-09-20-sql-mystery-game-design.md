@@ -486,3 +486,7 @@ framework, no bundler.
   paper colour, legible at the chapter header's size and in the night edition. **Done 2026-10-03:** made by
   the owner from `docs/mockups/chapter-icon-prompts.md`, background cut to transparency, `site/icons/chNN.png`;
   `PROPS` removed.
+- **Compete mode simplification** (course owner, 2026-10-10): brainstorm before the class trial how to simplify
+  compete mode (today: a teacher's `?season=N&board=<Apps Script URL>` link, the Apps Script backend with its
+  Script Properties and posted hashes, the admin panel's Seasons and Settings, the leaderboard page, the start
+  token and the honour-based start). Not started: a brainstorming session with the owner, then a spec amendment.
