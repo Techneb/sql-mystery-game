@@ -443,8 +443,11 @@ framework, no bundler.
   Privacy & messaging > European regulations > Settings: enable the consent mode flags (ads and analytics storage),
   without which GA never loads; (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
   and phone width in Chrome; (6) confirm Google's consent message appears on the live site (from an EEA connection,
-  in a private window) and that the footer link reopens it; (7) update the AdSense consent message if its privacy URL
-  (now https://alephb.uk/privacy.html) should point at the game's privacy.html instead.
+  in a private window) and that the footer link reopens it; (7) in AdSense > Privacy & messaging, point the consent
+  message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
+  2026-10-10); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
+  rename rather than drop the game's own link, Google requires the second title verbatim): rename the handbook's
+  nav and footer "Privacy" links to "Privacy notice" too, once the handbook QA branch has landed.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
