@@ -36,16 +36,16 @@
 <h2>WITH: naming a result</h2>
 <p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. Its value is in the reading. Instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
 <p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, and the main query adds those values up per order and keeps the larger orders.</p>
-<pre><code>WITH line AS (
-  SELECT oi.order_id, oi.quantity * p.price AS amount
-  FROM order_item AS oi
-  JOIN product AS p ON p.id = oi.product_id
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">line</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>, <span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span> <span class="sql-kw">AS</span> <span class="sql-id">amount</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
 )
-SELECT order_id, ROUND(SUM(amount), 2) AS total
-FROM line
-GROUP BY order_id
-HAVING SUM(amount) &gt;= 7
-ORDER BY total DESC;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">amount</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">total</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">line</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">order_id</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">amount</span>) &gt;= <span class="sql-num">7</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">total</span> <span class="sql-kw">DESC</span>;</code></pre>
 <table class="result">
 <tr><th>order_id</th><th>total</th></tr>
 <tr><td>3</td><td>9.5</td></tr>
@@ -58,23 +58,23 @@ ORDER BY total DESC;</code></pre>
 
 <h2>Several steps, and joining a CTE</h2>
 <p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine.</p>
-<pre><code>WITH order_total AS (
-  SELECT oi.order_id, SUM(oi.quantity * p.price) AS total
-  FROM order_item AS oi
-  JOIN product AS p ON p.id = oi.product_id
-  GROUP BY oi.order_id
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">order_total</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">total</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
+  <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>
 ),
-customer_total AS (
-  SELECT o.customer_id, COUNT(*) AS orders, SUM(t.total) AS spent
-  FROM orders AS o
-  JOIN order_total AS t ON t.order_id = o.id
-  GROUP BY o.customer_id
+<span class="sql-id">customer_total</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">t</span>.<span class="sql-id">total</span>) <span class="sql-kw">AS</span> <span class="sql-id">spent</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">order_total</span> <span class="sql-kw">AS</span> <span class="sql-id">t</span> <span class="sql-kw">ON</span> <span class="sql-id">t</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
+  <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
 )
-SELECT c.name, ct.orders, ROUND(ct.spent / ct.orders, 2) AS average_order
-FROM customer_total AS ct
-JOIN customer AS c ON c.id = ct.customer_id
-ORDER BY average_order DESC
-LIMIT 3;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">ct</span>.<span class="sql-id">orders</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">ct</span>.<span class="sql-id">spent</span> / <span class="sql-id">ct</span>.<span class="sql-id">orders</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_order</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer_total</span> <span class="sql-kw">AS</span> <span class="sql-id">ct</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">ct</span>.<span class="sql-id">customer_id</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">average_order</span> <span class="sql-kw">DESC</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>orders</th><th>average_order</th></tr>
 <tr><td>Grace Lee</td><td>1</td><td>8.4</td></tr>
@@ -87,14 +87,14 @@ LIMIT 3;</code></pre>
 <h2>WITH RECURSIVE: following a chain</h2>
 <p>Some questions have no fixed number of steps. "Who referred this customer's referrer, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
 <p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Starting from the customers who came on their own, each round adds the people they referred, one generation further down.</p>
-<pre><code>WITH RECURSIVE tree(id, name, generation) AS (
-  SELECT id, name, 0 FROM customer WHERE referred_by IS NULL
-  UNION ALL
-  SELECT c.id, c.name, t.generation + 1
-  FROM customer AS c
-  JOIN tree AS t ON c.referred_by = t.id
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">tree</span>(<span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">generation</span>) <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-num">0</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+  <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
+  <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">t</span>.<span class="sql-id">generation</span> + <span class="sql-num">1</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">tree</span> <span class="sql-kw">AS</span> <span class="sql-id">t</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">referred_by</span> = <span class="sql-id">t</span>.<span class="sql-id">id</span>
 )
-SELECT name, generation FROM tree ORDER BY generation, id;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">generation</span> <span class="sql-kw">FROM</span> <span class="sql-id">tree</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">generation</span>, <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>generation</th></tr>
 <tr><td>Alice Turner</td><td>0</td></tr>
@@ -110,16 +110,16 @@ SELECT name, generation FROM tree ORDER BY generation, id;</code></pre>
 
 <h2>WITH RECURSIVE: generating rows</h2>
 <p>A recursive CTE does not need a table at all. It can count, or produce every date of a period, which is handy for finding days that are missing from the data. The anchor gives the first date, the recursive part adds one day, and a condition in its <code>WHERE</code> stops the recursion.</p>
-<pre><code>WITH RECURSIVE calendar(day) AS (
-  SELECT '2026-03-02'
-  UNION ALL
-  SELECT date(day, '+1 day') FROM calendar WHERE day &lt; '2026-03-08'
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">calendar</span>(<span class="sql-id">day</span>) <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-str">'2026-03-02'</span>
+  <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
+  <span class="sql-kw">SELECT</span> <span class="sql-fn">date</span>(<span class="sql-id">day</span>, <span class="sql-str">'+1 day'</span>) <span class="sql-kw">FROM</span> <span class="sql-id">calendar</span> <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-08'</span>
 )
-SELECT cal.day, COUNT(o.id) AS orders
-FROM calendar AS cal
-LEFT JOIN orders AS o ON o.day = cal.day
-GROUP BY cal.day
-ORDER BY cal.day;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">cal</span>.<span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(<span class="sql-id">o</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">calendar</span> <span class="sql-kw">AS</span> <span class="sql-id">cal</span>
+<span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> = <span class="sql-id">cal</span>.<span class="sql-id">day</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">cal</span>.<span class="sql-id">day</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">cal</span>.<span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>orders</th></tr>
 <tr><td>2026-03-02</td><td>3</td></tr>

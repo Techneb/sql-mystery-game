@@ -40,28 +40,28 @@
 <tr><td>order_item</td><td>order_id, product_id, quantity</td><td>one line of an order: how many of one product</td></tr>
 </table>
 <p>The ids link the tables: each order line points to its order and its product, each order to its customer, and a customer to the customer who referred them. A few rows of each table:</p>
-<pre><code>SELECT * FROM customer ORDER BY id LIMIT 3;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>town</th><th>joined</th><th>referred_by</th></tr>
 <tr><td>1</td><td>Alice Turner</td><td>Riverside</td><td>2024-01-15</td><td>NULL</td></tr>
 <tr><td>2</td><td>Ben Okafor</td><td>Hillcrest</td><td>2024-02-03</td><td>1</td></tr>
 <tr><td>3</td><td>Chloe Martin</td><td>Riverside</td><td>2024-02-20</td><td>1</td></tr>
 </table>
-<pre><code>SELECT * FROM product ORDER BY id LIMIT 3;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>category</th><th>price</th></tr>
 <tr><td>1</td><td>Baguette</td><td>bread</td><td>1.2</td></tr>
 <tr><td>2</td><td>Sourdough loaf</td><td>bread</td><td>4.5</td></tr>
 <tr><td>3</td><td>Rye loaf</td><td>bread</td><td>3.8</td></tr>
 </table>
-<pre><code>SELECT * FROM orders ORDER BY id LIMIT 3;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
 <tr><td>1</td><td>1</td><td>2026-03-02</td><td>07:15</td></tr>
 <tr><td>2</td><td>2</td><td>2026-03-02</td><td>08:40</td></tr>
 <tr><td>3</td><td>4</td><td>2026-03-02</td><td>12:30</td></tr>
 </table>
-<pre><code>SELECT * FROM order_item ORDER BY order_id, product_id LIMIT 3;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">order_id</span>, <span class="sql-id">product_id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>order_id</th><th>product_id</th><th>quantity</th></tr>
 <tr><td>1</td><td>1</td><td>2</td></tr>
@@ -70,40 +70,40 @@
 </table>
 <p>The full database is eight customers, ten products, fourteen orders and twenty-three order lines. To run the examples yourself, paste this script into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below.</p>
 <details class="script"><summary>The bakery database as a SQLite script</summary>
-<pre><code>CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id));
-CREATE TABLE product (id INTEGER PRIMARY KEY, name TEXT, category TEXT, price REAL);
-CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customer(id), day TEXT, time TEXT);
-CREATE TABLE order_item (order_id INTEGER REFERENCES orders(id), product_id INTEGER REFERENCES product(id), quantity INTEGER);
-INSERT INTO customer VALUES
- (1,'Alice Turner','Riverside','2024-01-15',NULL),
- (2,'Ben Okafor','Hillcrest','2024-02-03',1),
- (3,'Chloe Martin','Riverside','2024-02-20',1),
- (4,'David Chen','Old Town','2024-03-11',NULL),
- (5,'Emma Novak','Hillcrest','2024-04-02',3),
- (6,'Farid Haddad','Old Town','2024-05-19',5),
- (7,'Grace Lee','Riverside','2024-06-07',2),
- (8,'Hugo Silva','Hillcrest','2024-07-23',NULL);
-INSERT INTO product VALUES
- (1,'Baguette','bread',1.20),
- (2,'Sourdough loaf','bread',4.50),
- (3,'Rye loaf','bread',3.80),
- (4,'Croissant','pastry',1.40),
- (5,'Pain au chocolat','pastry',1.60),
- (6,'Almond croissant','pastry',2.20),
- (7,'Lemon tart','cake',3.90),
- (8,'Chocolate eclair','cake',2.80),
- (9,'Carrot cake slice','cake',3.20),
- (10,'Seeded rolls','bread',3.80);
-INSERT INTO orders VALUES
- (1,1,'2026-03-02','07:15'),(2,2,'2026-03-02','08:40'),(3,4,'2026-03-02','12:30'),
- (4,3,'2026-03-03','07:50'),(5,1,'2026-03-04','07:20'),(6,5,'2026-03-04','16:10'),
- (7,6,'2026-03-05','09:05'),(8,2,'2026-03-05','17:45'),(9,1,'2026-03-07','07:10'),
- (10,7,'2026-03-07','10:30'),(11,4,'2026-03-07','13:15'),(12,3,'2026-03-08','08:05'),
- (13,5,'2026-03-08','11:40'),(14,1,'2026-03-08','18:20');
-INSERT INTO order_item VALUES
- (1,1,2),(1,4,1),(2,2,1),(2,5,2),(3,7,1),(3,8,2),(4,4,3),(5,1,1),(6,6,2),(6,7,1),
- (7,3,1),(7,10,1),(8,2,1),(9,1,2),(9,5,1),(10,8,3),(11,2,1),(11,6,1),(12,4,2),(12,5,2),
- (13,7,2),(14,1,1),(14,10,1);</code></pre>
+<pre><code><span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">customer</span> (<span class="sql-id">id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">PRIMARY</span> <span class="sql-id">KEY</span>, <span class="sql-id">name</span> <span class="sql-id">TEXT</span>, <span class="sql-id">town</span> <span class="sql-id">TEXT</span>, <span class="sql-id">joined</span> <span class="sql-id">TEXT</span>, <span class="sql-id">referred_by</span> <span class="sql-id">INTEGER</span> <span class="sql-id">REFERENCES</span> <span class="sql-fn">customer</span>(<span class="sql-id">id</span>));
+<span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">product</span> (<span class="sql-id">id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">PRIMARY</span> <span class="sql-id">KEY</span>, <span class="sql-id">name</span> <span class="sql-id">TEXT</span>, <span class="sql-id">category</span> <span class="sql-id">TEXT</span>, <span class="sql-id">price</span> <span class="sql-id">REAL</span>);
+<span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">orders</span> (<span class="sql-id">id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">PRIMARY</span> <span class="sql-id">KEY</span>, <span class="sql-id">customer_id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">REFERENCES</span> <span class="sql-fn">customer</span>(<span class="sql-id">id</span>), <span class="sql-id">day</span> <span class="sql-id">TEXT</span>, <span class="sql-id">time</span> <span class="sql-id">TEXT</span>);
+<span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">order_item</span> (<span class="sql-id">order_id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">REFERENCES</span> <span class="sql-fn">orders</span>(<span class="sql-id">id</span>), <span class="sql-id">product_id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">REFERENCES</span> <span class="sql-fn">product</span>(<span class="sql-id">id</span>), <span class="sql-id">quantity</span> <span class="sql-id">INTEGER</span>);
+<span class="sql-kw">INSERT</span> <span class="sql-kw">INTO</span> <span class="sql-id">customer</span> <span class="sql-kw">VALUES</span>
+ (<span class="sql-num">1</span>,<span class="sql-str">'Alice Turner'</span>,<span class="sql-str">'Riverside'</span>,<span class="sql-str">'2024-01-15'</span>,<span class="sql-kw">NULL</span>),
+ (<span class="sql-num">2</span>,<span class="sql-str">'Ben Okafor'</span>,<span class="sql-str">'Hillcrest'</span>,<span class="sql-str">'2024-02-03'</span>,<span class="sql-num">1</span>),
+ (<span class="sql-num">3</span>,<span class="sql-str">'Chloe Martin'</span>,<span class="sql-str">'Riverside'</span>,<span class="sql-str">'2024-02-20'</span>,<span class="sql-num">1</span>),
+ (<span class="sql-num">4</span>,<span class="sql-str">'David Chen'</span>,<span class="sql-str">'Old Town'</span>,<span class="sql-str">'2024-03-11'</span>,<span class="sql-kw">NULL</span>),
+ (<span class="sql-num">5</span>,<span class="sql-str">'Emma Novak'</span>,<span class="sql-str">'Hillcrest'</span>,<span class="sql-str">'2024-04-02'</span>,<span class="sql-num">3</span>),
+ (<span class="sql-num">6</span>,<span class="sql-str">'Farid Haddad'</span>,<span class="sql-str">'Old Town'</span>,<span class="sql-str">'2024-05-19'</span>,<span class="sql-num">5</span>),
+ (<span class="sql-num">7</span>,<span class="sql-str">'Grace Lee'</span>,<span class="sql-str">'Riverside'</span>,<span class="sql-str">'2024-06-07'</span>,<span class="sql-num">2</span>),
+ (<span class="sql-num">8</span>,<span class="sql-str">'Hugo Silva'</span>,<span class="sql-str">'Hillcrest'</span>,<span class="sql-str">'2024-07-23'</span>,<span class="sql-kw">NULL</span>);
+<span class="sql-kw">INSERT</span> <span class="sql-kw">INTO</span> <span class="sql-id">product</span> <span class="sql-kw">VALUES</span>
+ (<span class="sql-num">1</span>,<span class="sql-str">'Baguette'</span>,<span class="sql-str">'bread'</span>,<span class="sql-num">1.20</span>),
+ (<span class="sql-num">2</span>,<span class="sql-str">'Sourdough loaf'</span>,<span class="sql-str">'bread'</span>,<span class="sql-num">4.50</span>),
+ (<span class="sql-num">3</span>,<span class="sql-str">'Rye loaf'</span>,<span class="sql-str">'bread'</span>,<span class="sql-num">3.80</span>),
+ (<span class="sql-num">4</span>,<span class="sql-str">'Croissant'</span>,<span class="sql-str">'pastry'</span>,<span class="sql-num">1.40</span>),
+ (<span class="sql-num">5</span>,<span class="sql-str">'Pain au chocolat'</span>,<span class="sql-str">'pastry'</span>,<span class="sql-num">1.60</span>),
+ (<span class="sql-num">6</span>,<span class="sql-str">'Almond croissant'</span>,<span class="sql-str">'pastry'</span>,<span class="sql-num">2.20</span>),
+ (<span class="sql-num">7</span>,<span class="sql-str">'Lemon tart'</span>,<span class="sql-str">'cake'</span>,<span class="sql-num">3.90</span>),
+ (<span class="sql-num">8</span>,<span class="sql-str">'Chocolate eclair'</span>,<span class="sql-str">'cake'</span>,<span class="sql-num">2.80</span>),
+ (<span class="sql-num">9</span>,<span class="sql-str">'Carrot cake slice'</span>,<span class="sql-str">'cake'</span>,<span class="sql-num">3.20</span>),
+ (<span class="sql-num">10</span>,<span class="sql-str">'Seeded rolls'</span>,<span class="sql-str">'bread'</span>,<span class="sql-num">3.80</span>);
+<span class="sql-kw">INSERT</span> <span class="sql-kw">INTO</span> <span class="sql-id">orders</span> <span class="sql-kw">VALUES</span>
+ (<span class="sql-num">1</span>,<span class="sql-num">1</span>,<span class="sql-str">'2026-03-02'</span>,<span class="sql-str">'07:15'</span>),(<span class="sql-num">2</span>,<span class="sql-num">2</span>,<span class="sql-str">'2026-03-02'</span>,<span class="sql-str">'08:40'</span>),(<span class="sql-num">3</span>,<span class="sql-num">4</span>,<span class="sql-str">'2026-03-02'</span>,<span class="sql-str">'12:30'</span>),
+ (<span class="sql-num">4</span>,<span class="sql-num">3</span>,<span class="sql-str">'2026-03-03'</span>,<span class="sql-str">'07:50'</span>),(<span class="sql-num">5</span>,<span class="sql-num">1</span>,<span class="sql-str">'2026-03-04'</span>,<span class="sql-str">'07:20'</span>),(<span class="sql-num">6</span>,<span class="sql-num">5</span>,<span class="sql-str">'2026-03-04'</span>,<span class="sql-str">'16:10'</span>),
+ (<span class="sql-num">7</span>,<span class="sql-num">6</span>,<span class="sql-str">'2026-03-05'</span>,<span class="sql-str">'09:05'</span>),(<span class="sql-num">8</span>,<span class="sql-num">2</span>,<span class="sql-str">'2026-03-05'</span>,<span class="sql-str">'17:45'</span>),(<span class="sql-num">9</span>,<span class="sql-num">1</span>,<span class="sql-str">'2026-03-07'</span>,<span class="sql-str">'07:10'</span>),
+ (<span class="sql-num">10</span>,<span class="sql-num">7</span>,<span class="sql-str">'2026-03-07'</span>,<span class="sql-str">'10:30'</span>),(<span class="sql-num">11</span>,<span class="sql-num">4</span>,<span class="sql-str">'2026-03-07'</span>,<span class="sql-str">'13:15'</span>),(<span class="sql-num">12</span>,<span class="sql-num">3</span>,<span class="sql-str">'2026-03-08'</span>,<span class="sql-str">'08:05'</span>),
+ (<span class="sql-num">13</span>,<span class="sql-num">5</span>,<span class="sql-str">'2026-03-08'</span>,<span class="sql-str">'11:40'</span>),(<span class="sql-num">14</span>,<span class="sql-num">1</span>,<span class="sql-str">'2026-03-08'</span>,<span class="sql-str">'18:20'</span>);
+<span class="sql-kw">INSERT</span> <span class="sql-kw">INTO</span> <span class="sql-id">order_item</span> <span class="sql-kw">VALUES</span>
+ (<span class="sql-num">1</span>,<span class="sql-num">1</span>,<span class="sql-num">2</span>),(<span class="sql-num">1</span>,<span class="sql-num">4</span>,<span class="sql-num">1</span>),(<span class="sql-num">2</span>,<span class="sql-num">2</span>,<span class="sql-num">1</span>),(<span class="sql-num">2</span>,<span class="sql-num">5</span>,<span class="sql-num">2</span>),(<span class="sql-num">3</span>,<span class="sql-num">7</span>,<span class="sql-num">1</span>),(<span class="sql-num">3</span>,<span class="sql-num">8</span>,<span class="sql-num">2</span>),(<span class="sql-num">4</span>,<span class="sql-num">4</span>,<span class="sql-num">3</span>),(<span class="sql-num">5</span>,<span class="sql-num">1</span>,<span class="sql-num">1</span>),(<span class="sql-num">6</span>,<span class="sql-num">6</span>,<span class="sql-num">2</span>),(<span class="sql-num">6</span>,<span class="sql-num">7</span>,<span class="sql-num">1</span>),
+ (<span class="sql-num">7</span>,<span class="sql-num">3</span>,<span class="sql-num">1</span>),(<span class="sql-num">7</span>,<span class="sql-num">10</span>,<span class="sql-num">1</span>),(<span class="sql-num">8</span>,<span class="sql-num">2</span>,<span class="sql-num">1</span>),(<span class="sql-num">9</span>,<span class="sql-num">1</span>,<span class="sql-num">2</span>),(<span class="sql-num">9</span>,<span class="sql-num">5</span>,<span class="sql-num">1</span>),(<span class="sql-num">10</span>,<span class="sql-num">8</span>,<span class="sql-num">3</span>),(<span class="sql-num">11</span>,<span class="sql-num">2</span>,<span class="sql-num">1</span>),(<span class="sql-num">11</span>,<span class="sql-num">6</span>,<span class="sql-num">1</span>),(<span class="sql-num">12</span>,<span class="sql-num">4</span>,<span class="sql-num">2</span>),(<span class="sql-num">12</span>,<span class="sql-num">5</span>,<span class="sql-num">2</span>),
+ (<span class="sql-num">13</span>,<span class="sql-num">7</span>,<span class="sql-num">2</span>),(<span class="sql-num">14</span>,<span class="sql-num">1</span>,<span class="sql-num">1</span>),(<span class="sql-num">14</span>,<span class="sql-num">10</span>,<span class="sql-num">1</span>);</code></pre>
 </details>
 <nav class="learn-pager"><a class="prev" href="index.html">Previous: The Clerk's Handbook</a><a class="next" href="schema.html">Next: Tables, keys and the schema</a></nav>
 </main>

@@ -36,10 +36,10 @@
 <h2>Why rows need sorting</h2>
 <p>A beginner often assumes that rows come back in the order they were inserted. Sometimes they do, by accident, but the SQL standard makes no such promise, and a database is free to return rows in whatever order is fastest for it. The moment a question contains a word like "cheapest", "latest", "first" or "top three", the query needs an <code>ORDER BY</code> clause.</p>
 <p><code>ORDER BY</code> comes after <code>WHERE</code> and names one or more columns. Each column sorts ascending by default (<code>ASC</code>: smallest number, earliest date, A before Z); add <code>DESC</code> after a column to reverse it. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
-<pre><code>SELECT name, price
-FROM product
-WHERE category = 'cake'
-ORDER BY price DESC;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Lemon tart</td><td>3.9</td></tr>
@@ -49,9 +49,9 @@ ORDER BY price DESC;</code></pre>
 
 <h2>Several sort keys</h2>
 <p>When two rows tie on the first column, the second column decides, then the third, and so on. Each column carries its own direction, so you can sort by category alphabetically and, inside each category, by price from the most to the least expensive, with the name as a third key for the two breads that cost the same. The database never looks at the second key unless the first one ties.</p>
-<pre><code>SELECT category, name, price
-FROM product
-ORDER BY category, price DESC, name;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>, <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>name</th><th>price</th></tr>
 <tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td></tr>
@@ -69,10 +69,10 @@ ORDER BY category, price DESC, name;</code></pre>
 
 <h2>Keeping the first rows: LIMIT</h2>
 <p><code>LIMIT n</code>, written at the very end of the query, keeps only the first n rows of the result. On its own it keeps an arbitrary n rows, which is rarely useful; combined with <code>ORDER BY</code> it answers questions such as "the three most recent orders" or "the cheapest pastry". <code>OFFSET k</code> skips the first k rows before counting, which is how a website shows page two of a list.</p>
-<pre><code>SELECT id, customer_id, day, time
-FROM orders
-ORDER BY day DESC, time DESC
-LIMIT 3;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span> <span class="sql-kw">DESC</span>, <span class="sql-id">time</span> <span class="sql-kw">DESC</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
 <tr><td>14</td><td>1</td><td>2026-03-08</td><td>18:20</td></tr>
@@ -80,10 +80,10 @@ LIMIT 3;</code></pre>
 <tr><td>12</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
 </table>
 <p>Here the second key matters: three orders were placed on the last day, and only the time tells them apart. Without <code>time DESC</code>, the database would be free to pick any of them in any order.</p>
-<pre><code>SELECT name, price
-FROM product
-ORDER BY price
-LIMIT 2 OFFSET 2;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">2</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">2</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td></tr>

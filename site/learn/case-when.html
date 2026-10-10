@@ -35,23 +35,23 @@
 
 <h2>The shape of a CASE expression</h2>
 <p>A <code>CASE</code> expression lists conditions in order and returns the value of the first one that is true:</p>
-<pre><code>CASE
-  WHEN condition_1 THEN value_1
-  WHEN condition_2 THEN value_2
-  ELSE other_value
-END</code></pre>
+<pre><code><span class="sql-kw">CASE</span>
+  <span class="sql-kw">WHEN</span> <span class="sql-id">condition_1</span> <span class="sql-kw">THEN</span> <span class="sql-id">value_1</span>
+  <span class="sql-kw">WHEN</span> <span class="sql-id">condition_2</span> <span class="sql-kw">THEN</span> <span class="sql-id">value_2</span>
+  <span class="sql-kw">ELSE</span> <span class="sql-id">other_value</span>
+<span class="sql-kw">END</span></code></pre>
 <p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2>Labelling rows</h2>
 <p>The simplest use turns a number into a word. Here every product receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
-<pre><code>SELECT name, price,
-       CASE
-         WHEN price &lt; 2 THEN 'small'
-         WHEN price &lt; 3.5 THEN 'medium'
-         ELSE 'large'
-       END AS band
-FROM product
-ORDER BY price, name;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>,
+       <span class="sql-kw">CASE</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &lt; <span class="sql-num">2</span> <span class="sql-kw">THEN</span> <span class="sql-str">'small'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &lt; <span class="sql-num">3.5</span> <span class="sql-kw">THEN</span> <span class="sql-str">'medium'</span>
+         <span class="sql-kw">ELSE</span> <span class="sql-str">'large'</span>
+       <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>, <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th><th>band</th></tr>
 <tr><td>Baguette</td><td>1.2</td><td>small</td></tr>
@@ -68,16 +68,16 @@ ORDER BY price, name;</code></pre>
 
 <h2>Buckets and GROUP BY</h2>
 <p>The real power appears when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per bucket. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
-<pre><code>SELECT CASE
-         WHEN time &lt; '09:00' THEN 'early'
-         WHEN time &lt; '12:00' THEN 'morning'
-         WHEN time &lt; '17:00' THEN 'afternoon'
-         ELSE 'evening'
-       END AS part_of_day,
-       COUNT(*) AS orders
-FROM orders
-GROUP BY part_of_day
-ORDER BY orders DESC, part_of_day;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CASE</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'early'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'morning'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'17:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'afternoon'</span>
+         <span class="sql-kw">ELSE</span> <span class="sql-str">'evening'</span>
+       <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">part_of_day</span>,
+       <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">part_of_day</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">part_of_day</span>;</code></pre>
 <table class="result">
 <tr><th>part_of_day</th><th>orders</th></tr>
 <tr><td>early</td><td>6</td></tr>
@@ -90,13 +90,13 @@ ORDER BY orders DESC, part_of_day;</code></pre>
 
 <h2>Conditional counts and sums</h2>
 <p>A <code>CASE</code> inside an aggregate counts or adds only some rows, which lets one query produce several figures side by side. <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> counts the rows that meet the condition. The same idea with a quantity in the <code>THEN</code> branch adds up only part of a column.</p>
-<pre><code>SELECT day,
-       COUNT(*) AS orders,
-       SUM(CASE WHEN time &lt; '12:00' THEN 1 ELSE 0 END) AS before_noon,
-       SUM(CASE WHEN time &gt;= '12:00' THEN 1 ELSE 0 END) AS after_noon
-FROM orders
-GROUP BY day
-ORDER BY day;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>,
+       <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>,
+       <span class="sql-fn">SUM</span>(<span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">ELSE</span> <span class="sql-num">0</span> <span class="sql-kw">END</span>) <span class="sql-kw">AS</span> <span class="sql-id">before_noon</span>,
+       <span class="sql-fn">SUM</span>(<span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &gt;= <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">ELSE</span> <span class="sql-num">0</span> <span class="sql-kw">END</span>) <span class="sql-kw">AS</span> <span class="sql-id">after_noon</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>orders</th><th>before_noon</th><th>after_noon</th></tr>
 <tr><td>2026-03-02</td><td>3</td><td>2</td><td>1</td></tr>
@@ -110,9 +110,9 @@ ORDER BY day;</code></pre>
 
 <h2>CASE in ORDER BY</h2>
 <p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
-<pre><code>SELECT DISTINCT category
-FROM product
-ORDER BY CASE category WHEN 'pastry' THEN 1 WHEN 'bread' THEN 2 ELSE 3 END;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-kw">CASE</span> <span class="sql-id">category</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'pastry'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'bread'</span> <span class="sql-kw">THEN</span> <span class="sql-num">2</span> <span class="sql-kw">ELSE</span> <span class="sql-num">3</span> <span class="sql-kw">END</span>;</code></pre>
 <table class="result">
 <tr><th>category</th></tr>
 <tr><td>pastry</td></tr>

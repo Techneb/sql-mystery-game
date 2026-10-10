@@ -38,11 +38,11 @@
 
 <h2>The inner JOIN</h2>
 <p><code>FROM a JOIN b ON condition</code> pairs every row of <code>a</code> with every row of <code>b</code> for which the condition is true. The condition is almost always "this foreign key equals that primary key". Give each table a short alias (<code>o</code>, <code>c</code>) and prefix the columns with it, so that both you and the database know which <code>id</code> you mean.</p>
-<pre><code>SELECT o.id, o.day, c.name, c.town
-FROM orders AS o
-JOIN customer AS c ON c.id = o.customer_id
-WHERE o.day = '2026-03-02'
-ORDER BY o.id;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">id</span>, <span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">c</span>.<span class="sql-id">town</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>day</th><th>name</th><th>town</th></tr>
 <tr><td>1</td><td>2026-03-02</td><td>Alice Turner</td><td>Riverside</td></tr>
@@ -53,14 +53,14 @@ ORDER BY o.id;</code></pre>
 
 <h2>Several joins in a row</h2>
 <p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products and their prices: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code>. This finishes the example started on the GROUP BY page.</p>
-<pre><code>SELECT c.name, ROUND(SUM(oi.quantity * p.price), 2) AS spent
-FROM customer AS c
-JOIN orders AS o      ON o.customer_id = c.id
-JOIN order_item AS oi ON oi.order_id = o.id
-JOIN product AS p     ON p.id = oi.product_id
-GROUP BY c.id, c.name
-HAVING SUM(oi.quantity * p.price) &gt; 7
-ORDER BY spent DESC;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">spent</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>      <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>     <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>) &gt; <span class="sql-num">7</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">spent</span> <span class="sql-kw">DESC</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>spent</th></tr>
 <tr><td>David Chen</td><td>16.2</td></tr>
@@ -75,10 +75,10 @@ ORDER BY spent DESC;</code></pre>
 
 <h2>Keeping the unmatched rows: LEFT JOIN</h2>
 <p><code>LEFT JOIN</code> keeps every row of the table on its left, even when nothing on the right matches. For those rows, the columns of the right-hand table are filled with NULL. That makes it the tool for questions about absence: which customers have never ordered, which products nobody bought. Join, then keep the rows where the right-hand side is NULL.</p>
-<pre><code>SELECT p.name, p.category
-FROM product AS p
-LEFT JOIN order_item AS oi ON oi.product_id = p.id
-WHERE oi.product_id IS NULL;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">p</span>.<span class="sql-id">category</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
+<span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">product_id</span> = <span class="sql-id">p</span>.<span class="sql-id">id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">oi</span>.<span class="sql-id">product_id</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th></tr>
 <tr><td>Carrot cake slice</td><td>cake</td></tr>
@@ -87,10 +87,10 @@ WHERE oi.product_id IS NULL;</code></pre>
 
 <h2>A table joined to itself</h2>
 <p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the customer who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own.</p>
-<pre><code>SELECT newcomer.name AS customer, referrer.name AS referred_by
-FROM customer AS newcomer
-LEFT JOIN customer AS referrer ON referrer.id = newcomer.referred_by
-ORDER BY newcomer.id;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">newcomer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">customer</span>, <span class="sql-id">referrer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">referred_by</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">newcomer</span>
+<span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span> <span class="sql-kw">ON</span> <span class="sql-id">referrer</span>.<span class="sql-id">id</span> = <span class="sql-id">newcomer</span>.<span class="sql-id">referred_by</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">newcomer</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>customer</th><th>referred_by</th></tr>
 <tr><td>Alice Turner</td><td>NULL</td></tr>
@@ -103,11 +103,11 @@ ORDER BY newcomer.id;</code></pre>
 <tr><td>Hugo Silva</td><td>NULL</td></tr>
 </table>
 <p>Self-joins also compare rows of the same table with each other: two orders by the same customer on the same day, or two customers from the same town. In that case add a condition such as <code>a.id &lt; b.id</code>, so that a row is not paired with itself and each pair appears once rather than twice.</p>
-<pre><code>SELECT a.name, b.name AS neighbour, a.town
-FROM customer AS a
-JOIN customer AS b ON b.town = a.town AND a.id &lt; b.id
-WHERE a.town = 'Riverside'
-ORDER BY a.id, b.id;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">a</span>.<span class="sql-id">name</span>, <span class="sql-id">b</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">neighbour</span>, <span class="sql-id">a</span>.<span class="sql-id">town</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">a</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">b</span> <span class="sql-kw">ON</span> <span class="sql-id">b</span>.<span class="sql-id">town</span> = <span class="sql-id">a</span>.<span class="sql-id">town</span> <span class="sql-kw">AND</span> <span class="sql-id">a</span>.<span class="sql-id">id</span> &lt; <span class="sql-id">b</span>.<span class="sql-id">id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">a</span>.<span class="sql-id">town</span> = <span class="sql-str">'Riverside'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">a</span>.<span class="sql-id">id</span>, <span class="sql-id">b</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>neighbour</th><th>town</th></tr>
 <tr><td>Alice Turner</td><td>Chloe Martin</td><td>Riverside</td></tr>

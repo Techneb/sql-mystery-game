@@ -1,7 +1,8 @@
 /* The Clerk's Handbook (site/learn/): article layout over ../style.css. No JavaScript on these pages, so the
    night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
 @media (prefers-color-scheme: dark) {
-  :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5; }
+  :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
+    --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
 }
 /* the same line as the landing's .landing-foot (.muted: 13px Cormorant, middle dots, underlined links) */
 .learn-nav { margin-top: 6px; }
