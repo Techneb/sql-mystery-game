@@ -74,10 +74,14 @@ export function officialTime(rows, meta) {
     const solved = Object.keys(s).length;
     const reached = s[Math.max(0, ...Object.keys(s).map(Number))] || p.rows.find(r => r.event === "join") || p.rows[0];
     const raw = fin ? Number(fin.timestamp) - opened : null;
+    // A negative interval (an old row written as a Date, read back shifted by a time zone): flagged, and the
+    // browser's elapsedMs stands in for it when the row has one.
+    const el = fin && fin.elapsedMs != null && fin.elapsedMs !== "" ? Number(fin.elapsedMs) : null;
+    const time = raw < 0 && el !== null ? el : raw;
     return { team: p.team, finished: !!fin, solved, chapter: Math.min(solved + 1, 8),
              wrong: Number((fin || last).wrong) || 0, queries: Number((fin || last).queries) || 0,
-             ms: fin ? raw + (Number(fin.wrong) || 0) * pen : null,
-             flagged: !!fin && fin.elapsedMs != null && Math.abs(raw - Number(fin.elapsedMs)) > 60000,
+             ms: fin ? time + (Number(fin.wrong) || 0) * pen : null,
+             flagged: !!fin && (raw < 0 || (el !== null && Math.abs(raw - el) > 60000)),
              last: Number(reached.timestamp) };
 
   });
@@ -96,19 +100,22 @@ const median = xs => {
 // player's previous solve).
 export function chapterSummary(rows, meta) {
   const opened = Number(meta.openedAt) || 0;
-  const per = Array.from({ length: 8 }, () => ({ minutes: [], queries: [], wrong: [] }));
+  const per = Array.from({ length: 8 }, () => ({ solvers: 0, minutes: [], queries: [], wrong: [] }));
   for (const p of players(rows)) {
     const s = solves(p);
     let q = 0, w = 0;
     for (let n = 1; n <= 8; n++) {
       const r = s[n];
       if (!r) continue;
-      per[n - 1].minutes.push((Number(r.timestamp) - opened) / 60000);
+      const raw = Number(r.timestamp) - opened;   // negative: an old Date row (see officialTime), elapsedMs instead
+      if (raw >= 0) per[n - 1].minutes.push(raw / 60000);
+      else if (r.elapsedMs != null && r.elapsedMs !== "") per[n - 1].minutes.push(Number(r.elapsedMs) / 60000);
+      per[n - 1].solvers++;
       per[n - 1].queries.push((Number(r.queries) || 0) - q);
       per[n - 1].wrong.push((Number(r.wrong) || 0) - w);
       q = Number(r.queries) || 0; w = Number(r.wrong) || 0;
     }
   }
-  return per.map((c, i) => ({ chapter: i + 1, solvers: c.minutes.length,
+  return per.map((c, i) => ({ chapter: i + 1, solvers: c.solvers,
     minutes: median(c.minutes), queries: median(c.queries), wrong: median(c.wrong) }));
 }

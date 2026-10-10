@@ -62,10 +62,11 @@ function join_(sheet, team, id, data) {
   return {ok: true, token: token_(team, id), meta: withNow_(season)};
 }
 
-// One log row, columns unchanged. The pseudo and the season id go in as text (a leading apostrophe): the Sheet would
+// One log row, columns unchanged. The timestamp is a plain number of ms (Date.now()): a Date cell reads back shifted
+// by the gap between the spreadsheet's time zone and the script's (7 hours on the real backend). The pseudo and the season id go in as text (a leading apostrophe): the Sheet would
 // otherwise read "007" as 7, "1/2" as a date or "=x" as a formula, and the pseudo would no longer match its teamKey.
 function row_(ev, team, id, chapter, wrong, queries, clientAt, elapsedMs) {
-  return [new Date(), ev, "'" + team, "'" + id, chapter, 0, wrong, queries,
+  return [Date.now(), ev, "'" + team, "'" + id, chapter, 0, wrong, queries,
           count_(clientAt, 9007199254740991), count_(elapsedMs, 86399999)];
 }
 // A non-negative integer up to hi, else an empty cell.

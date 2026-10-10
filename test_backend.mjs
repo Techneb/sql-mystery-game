@@ -81,6 +81,8 @@ test("join: one per pseudo after NFKC folding; '007' stays text and finishes aft
   for (const dup of ["alice", " ALICE ", "\uff21lice"]) assert.equal(b.post({ event: "join", team: dup, season: s.id }).error, "pseudo taken", dup);
   const k = b.post({ event: "join", team: "007", season: s.id });
   assert.ok(k.ok);
+  const stamp = b.log().at(-1)[0];
+  assert.ok(typeof stamp === "number" && Math.abs(stamp - Date.now()) < 5000, "the timestamp is a number of ms, never a Date");
   assert.equal(b.post({ event: "join", team: "007", season: s.id }).error, "pseudo taken", "read back as text, so it matches");
   assert.equal(b.post({ event: "join", team: "=1+1", season: s.id }).ok, true, "a formula-looking pseudo is plain text now");
   assert.equal(b.post(ev("progress", "007", s.id, 1, k.token)).error, "session not open");

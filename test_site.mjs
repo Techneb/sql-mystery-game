@@ -206,6 +206,17 @@ test("officialTime ranks finishers by server time plus penalty, then the others 
   assert.deepEqual(shared.officialTime([], { openedAt: T0, penalty: 10 }), []);
 });
 
+test("officialTime and chapterSummary: a negative interval (an old Date row) is flagged, elapsedMs stands in", () => {
+  const rows = [row("join", "Gus", "", -500), row("progress", "Gus", 1, -480, 0, 3, 120000), row("finish", "Gus", 8, -400, 1, 9, 600000)];
+  const [g] = shared.officialTime(rows, { openedAt: T0, penalty: 30 });
+  assert.equal(g.ms, 600000 + 30000, "elapsedMs plus the penalty, never a negative time");
+  assert.equal(g.flagged, true);
+  const s = shared.chapterSummary(rows, { openedAt: T0 });
+  assert.deepEqual([s[0].solvers, s[0].minutes, s[7].minutes], [1, 2, 10]);
+  const [h] = shared.officialTime([row("finish", "Hal", 8, -400, 0, 9, null)], { openedAt: T0 });
+  assert.ok(h.flagged, "no elapsedMs: still flagged");
+});
+
 test("clockStart cancels the browser clock's offset with the server's now", () => {
   const meta = { openedAt: 1_000_000, now: 1_600_000 };          // the server says: opened 10 minutes ago
   assert.equal(clockStart(meta, 1_600_000), 1_000_000, "clocks agree");
