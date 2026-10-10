@@ -46,12 +46,12 @@ export function competeStats(state) {
   return { ...s, wrong };
 }
 // One row of the Apps Script's log sheet. The server stamps the time itself; the client's clock travels
-// too (clientAt, and elapsedMs = finish - openedAt at the finish) so the board can flag a disagreeing clock.
+// too (clientAt, and elapsedMs = now or the finish - openedAt) so the board can flag a disagreeing clock.
 export function eventPayload(state, event, chapter, now = Date.now()) {
   const s = competeStats(state);
   return { event, team: state.team, season: state.season, chapter: chapter || state.solved.length,
            wrong: s.wrong, queries: s.queries, clientAt: now,
-           ...(event === "finish" ? { elapsedMs: (state.finishedAt || now) - state.startedAt } : {}) };
+           elapsedMs: (state.finishedAt || now) - state.startedAt };
 }
 
 // The deploy loads this script as app.js?v=<commit> (.github/workflows/pages.yml); the data files are fetched

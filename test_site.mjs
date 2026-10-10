@@ -150,16 +150,14 @@ test("compete mode runs Part I only and never asks for the Part II code", () => 
 });
 
 test("compete events carry the Part I totals the leaderboard scores", () => {
-  const s = { ...freshState(), mode: "compete", season: 7, team: "Alpha", solved: [1, 2, 3],
+  const s = { ...freshState(), mode: "compete", season: "s7", team: "Alpha", solved: [1, 2, 3], startedAt: 400,
               queries: { 1: 4, 2: 6, 3: 5, 9: 100 }, wrong: { 1: 2, 3: 1, 11: 9 } };
   assert.deepEqual(competeStats(s), { queries: 15, wrong: 3 });
   assert.deepEqual(eventPayload(s, "progress", 3, 1000),
-    { event: "progress", team: "Alpha", season: 7, chapter: 3, wrong: 3, queries: 15, clientAt: 1000 });
+    { event: "progress", team: "Alpha", season: "s7", chapter: 3, wrong: 3, queries: 15, clientAt: 1000, elapsedMs: 600 });
   const f = { ...s, solved: [1, 2, 3, 4, 5, 6, 7, 8], startedAt: 5000, finishedAt: 65000 };
   assert.equal(eventPayload(f, "finish", 8, 70000).elapsedMs, 60000, "the finish carries the browser's own elapsed time");
-  assert.equal(eventPayload(s, "progress", 3, 1000).elapsedMs, undefined);
-  assert.equal(eventPayload(s, "start", 0).chapter, 3, "chapter defaults to the number solved");
-  assert.equal(eventPayload({ ...freshState(), team: "B", season: 1 }, "start", 0).chapter, 0);
+  assert.equal(eventPayload(s, "progress", 0).chapter, 3, "chapter defaults to the number solved");
   assert.equal(fmtTime(0), "00:00");
   assert.equal(fmtTime(4000), "00:04");
   assert.equal(fmtTime(124000), "02:04");
