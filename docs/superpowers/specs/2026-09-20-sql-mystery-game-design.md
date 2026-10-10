@@ -436,6 +436,8 @@ framework, no bundler.
   chapters" bullet (supermain, alephb-site e7fe159, 2026-10-10). A quality pass the same day (44c4d32) re-ran all 43 examples
   against the bakery script (all matched; multi-row queries gained an ORDER BY), proofread the pages, and added four
   node tests pinning the page chrome, the pagers, the sitemap and the absence of game table and cast names.
+  The code blocks are coloured at build time with the game's highlighter (`node colour_learn.mjs`, 72da87c, owner's
+  request 2026-10-10), a test keeps them coloured, and the pages stay free of JavaScript.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
