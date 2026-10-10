@@ -109,7 +109,7 @@ class Noise(unittest.TestCase):
             self.assertFalse([f for f in films if f in name.lower()], name)
 
     def test_census_surnames_stay_unambiguous(self):
-        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle", "Hippolyte Morand", "Firmin Lagarde"]
+        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + plot.COMPETE_TENANT_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle", "Hippolyte Morand", "Firmin Lagarde"]
         for name in planted:
             self.assertFalse([l for l in g.LAST if name.endswith(" " + l)], name)
 
@@ -359,6 +359,7 @@ class Compete(unittest.TestCase):
         self.assertNotEqual(v7["compete_plate"], v8["compete_plate"])
         self.assertNotEqual(v7["compete_shell_account"], v8["compete_shell_account"])
         self.assertNotEqual(v7["compete_fence_name"], v8["compete_fence_name"])
+        self.assertEqual(len({g.plant_values(s)["compete_fence_name"] for s in range(1, g.SEASONS + 1)}), g.SEASONS)   # one fence per season
 
     def test_compete_telegram_id_never_collides_with_night_telegram_id(self):
         # seed 232462 drew the same value for both before Task 2 Step 1's redraw loop was added

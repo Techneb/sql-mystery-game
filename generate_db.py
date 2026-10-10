@@ -129,7 +129,7 @@ def plant_values(seed):
     while len(set(V["accounts"])) < 4:
         V["accounts"] = [r.randint(1000, 3999) for _ in range(4)]
         V["fence_account"], V["shell_account"], V["compete_fence_account"], V["compete_shell_account"] = V["accounts"]
-    V["compete_suite8"] = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])][0]
+    V["compete_suite8"] = [s for s in FLOOR2 if s not in (V["neighbour_suite"], V["lupin_suite"], V["ortega_suite"])][6]   # no cast stay
     while (V["compete_fence_number"], V["compete_fence_street"]) == (V["fence_number"], V["fence_street"]):
         V["compete_fence_number"] = r.randint(3, 60)
         V["compete_fence_street"] = r.choice(STREETS)
@@ -138,6 +138,9 @@ def plant_values(seed):
     V["compete_plate_prefix"] = V["compete_plate"][:4]
     V["compete_fence_address"] = "%d %s" % (V["compete_fence_number"], V["compete_fence_street"])
     V["chain"] = []                              # filled by plant_part2: [(account_id, amount), ...]
+    if not learn:   # one fence per season (the draw above stays, so later values do not move)
+        names = plot.COMPETE_FENCE_NAMES
+        V["compete_fence_name"] = names[1 + (seed - 1) % (len(names) - 1)]
     # compete structural variants (owner, 2026-10-10), drawn after every older value so those stay as they were
     V["compete_night"] = 19120611                # ch1: the night manager's night, a day either side
     V["compete_night_lo"], V["compete_night_hi"] = _add_days(V["compete_night"], -1), _add_days(V["compete_night"], 1)
@@ -489,8 +492,11 @@ def plant_part1(conn, V, r):
               (V["compete_fence_name"], r.choice(NATION), r.randint(1850, 1890)))
     for i in range(4):
         occ = r.choice(["clerk", "seamstress", "waiter", "student"])
+        name = _name(r)
+        if i == 1:   # the other tenant with no trade
+            name = plot.COMPETE_TENANT_NAMES[V["seed"] % len(plot.COMPETE_TENANT_NAMES)]
         c.execute("INSERT INTO person VALUES (?,?,?,?,?,2)",
-                  (19 + i, _name(r), "French", r.randint(1850, 1890), ("jeweller", None, occ, occ)[i]))
+                  (19 + i, name, "French", r.randint(1850, 1890), ("jeweller", None, occ, occ)[i]))
     c.execute("INSERT INTO interview VALUES (5,?,19120520,?)", (V["compete_fence_name"],
         "I came of my own accord, monsieur. A respectable man has nothing to hide. "
         "I mend watches, I pay my rent on the first of the month, and I sleep at night."))
@@ -540,7 +546,7 @@ def plant_part1(conn, V, r):
     c.execute("DELETE FROM police_report WHERE place='Hotel Meurice' AND date=? AND type='burglary'", (V["compete_window_burglary_date"],))
     c.execute("INSERT INTO police_report VALUES (?,?,'Paris','Hotel Meurice','vandalism',?)",
         (V["compete_report_id"], V["compete_report_date"],
-         "A window forced on the third floor, in the room priced just below the two finest suites. Nothing else taken."))
+         "A window forced on the third floor, in the room priced just below the two finest suites. Nothing taken."))
     # the night manager files other reports too, so LIKE '%manager%' or '%window%' is no shortcut
     for rid, d, typ, text in [
             (3810, 19120604, "disturbance", "The night manager reports a guest who rang for champagne at four in the morning, then denied it."),
@@ -584,9 +590,8 @@ def plant_part1(conn, V, r):
     #     plate needs LIKE with _ ('75-9_7_'). That night no other plate fits both; one fits the start alone (and drops
     #     at Gare Saint-Lazare, where the old variant looked), one the figure alone; a plate fitting both rides other days.
     c.execute("INSERT INTO interview VALUES (4,?,?,?)", ("Firmin Lagarde", T,
-        "I am the despatcher of the rival cab company, monsieur. One of our drivers took a fare that night, the 18th of May "
-        "in our book. He swears the plate began with {compete_plate_prefix} and that the figure before the last was a {lagarde_figure}. "
-        "The others he never wrote down.".format(**V)))
+        "One of our cabs took a fare that night, the 18th of May in our book, and its driver has vanished. His night sheet is torn: "
+        "the plate began with {compete_plate_prefix} and the figure before the last was a {lagarde_figure}. The rest is torn off.".format(**V)))
     pre, fig = V["compete_plate_prefix"], V["lagarde_figure"]
     c.execute("DELETE FROM cab_ride WHERE date=? AND (plate LIKE ? OR (dropoff='Gare Saint-Lazare' AND plate LIKE ?))",
               (T, V["compete_plate_pattern"], pre + "%"))
@@ -598,7 +603,8 @@ def plant_part1(conn, V, r):
         both = pre + digit() + fig + digit()
     for i, (plate, d, t, drop) in enumerate([(start_only, T, 305, "Gare Saint-Lazare"), (figure_only, T, 250, "Gare du Nord"),
                                              (both, 19120516, 1420, "Opera"), (both, 19120520, 1110, "Place Vendome")]):
-        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)", (30100 + i, plate, d, t, rc.choice(PLACES), drop, rc.randint(2, 12), "franc"))
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)",   # that night all three leave Place Vendome, like the Ritz cab
+                  (30100 + i, plate, d, t, "Place Vendome" if d == T else rc.choice(PLACES), drop, rc.randint(2, 12), "franc"))
     # --- ch4: that cab's week: fence address 3 times (incl. the night ride), two other addresses twice, 54 once
     week = [19120513, 19120514, 19120515, 19120516, 19120517, 19120519]
     rides = [(V["fence_address"], T, 215, "Place Vendome"), (V["fence_address"], 19120514, 1030, None),
@@ -635,7 +641,8 @@ def plant_part1(conn, V, r):
             seen.add(drop)
             rides_c.append((drop, rc.choice([d for d in week if d != T]), _time(rc)))
     for i, (drop, d, t) in enumerate(rides_c):
-        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)", (30000 + i, V["compete_plate"], d, t, rc.choice(PLACES), drop, rc.randint(2, 12), "franc"))
+        c.execute("INSERT INTO cab_ride VALUES (?,?,?,?,?,?,?,?)",
+                  (30000 + i, V["compete_plate"], d, t, "Place Vendome" if d == T else rc.choice(PLACES), drop, rc.randint(2, 12), "franc"))
     # --- ch6: the fence pays his thief in three pieces, and the most of anyone paid in three. Decoys: the biggest
     #     single cheque (one payment), the biggest total (a weekly supplier, four payments), and another account paid
     #     in three small pieces. Decoy accounts are above 4000: the fence's noise payments never reach them.
@@ -745,7 +752,7 @@ def plant_part1(conn, V, r):
     #     inside the CTE). Decoys: a suite whose last order of the day is the cognac, after six; two whose FIRST order
     #     before dawn is the cognac (one the earliest cognac, one the latest). His suite orders coffee after six, so
     #     the filter outside the ranking finds nothing. All floor-2 suites with the lift rounds: ch11 is untouched.
-    his, late, latest, earliest = others[0], others[2], others[3], others[5]
+    his, late, latest, earliest = V["compete_suite8"], others[2], others[3], others[5]   # his: a suite with no cast stay
     for s in (his, late, latest, earliest):
         c.execute("DELETE FROM room_service WHERE suite=? AND date=?", (s, T))
     for i, (s, t, item, amt) in enumerate([(his, 120, "oysters", 18), (his, 240, "tea", 2), (his, 430, "cognac", 8), (his, 815, "coffee", 2),
@@ -753,6 +760,11 @@ def plant_part1(conn, V, r):
                                            (latest, 450, "cognac", 8), (latest, 530, "consomme", 6),
                                            (earliest, 100, "cognac", 8), (earliest, 340, "omelette", 5)]):
         c.execute("INSERT INTO room_service VALUES (?,?,?,?,?,?)", (7 + i, s, T, t, item, amt))
+    #     The broker's suite has a guest who arrived past midnight, filed under the 18th (so learn ch2's night of the
+    #     17th keeps its seven), under a name of his own choosing: "Brissac" in the register would hand out the suite.
+    #     The two empty cognac suites get such a guest too, so a check-in on the 18th is no tell.
+    for k, (s, price) in enumerate(((his, 165), (latest, 170), (earliest, 160))):
+        book(c, 47 + k, rc.choice(GUESTS), s, price, T, _add_days(T, 1))
     V["velmont_suite"] = others[1]
     conn.commit()
 

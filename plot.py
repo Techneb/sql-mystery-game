@@ -6,7 +6,12 @@ STOP_WORDS = {"the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "s
 
 # Season-varying but noise-safe: these full names cannot be produced by generate_db.py's FIRST x LAST pool
 # (none of these surnames appear in LAST), so a person.name filter on one is always unambiguous.
-COMPETE_FENCE_NAMES = ["Isidore Vasseur", "Anselme Rocher", "Casimir Lenoir", "Ambroise Fontaine", "Theodule Vasseur"]
+# The first is learn's; season N takes the (N-1) % 9 + 1-th, so no two of seasons 1-9 share a fence.
+COMPETE_FENCE_NAMES = ["Isidore Vasseur", "Anselme Rocher", "Casimir Lenoir", "Ambroise Fontaine", "Theodule Marchais",
+                       "Aristide Bompard", "Leonce Gaudin", "Hilaire Desforges", "Fulbert Lamoureux", "Evariste Pommier"]
+# The fence's housemate who also gives no trade: a realistic name too, so the fence is not the only one among the mash-ups.
+COMPETE_TENANT_NAMES = ["Honorine Delaunay", "Augustine Perrin", "Clotilde Barbier", "Eulalie Chevalier", "Philomene Garnier",
+                        "Leontine Marchand", "Celestine Royer", "Albertine Lemaire", "Josephine Vidal", "Mathilde Brunet"]
 
 # Each chapter: n, part, construct, tables revealed when it opens, answer_key (a key of V), solution SQL,
 # the naive SQL a student writes without the construct, and naive_rows (its row count, None = any).
@@ -98,7 +103,8 @@ CHAPTERS = [
          "SELECT plate FROM cab_ride WHERE plate LIKE '%9%' AND date = {theft_date}",
          "SELECT DISTINCT plate FROM cab_ride WHERE plate LIKE '{compete_plate_pattern}'",
          "SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND date = {theft_date} AND time < '06:00'",
-         "SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND date = {theft_date} AND currency = 'pound'"],
+         "SELECT plate FROM cab_ride WHERE plate LIKE '{compete_plate_prefix}%' AND date = {theft_date} AND currency = 'pound'",
+         "SELECT plate FROM cab_ride WHERE pickup = 'Place Vendome' AND plate LIKE '{compete_plate_prefix}%' AND date = {theft_date} AND time < '06:00'"],
   answer_key_compete="compete_plate"),
  dict(n=4, board="Fence's address", part=1, construct="GROUP BY / HAVING", tables=[], answer_key="fence_address",
   discovery=[dict(query="SELECT dropoff, COUNT(*) AS n FROM cab_ride WHERE plate = '{plate}' AND date BETWEEN 19120513 AND 19120519 GROUP BY dropoff ORDER BY n DESC", must_contain="{fence_address}", note="The cab's week, 13th to 19th: one address comes back three times.")],
@@ -211,7 +217,8 @@ CHAPTERS = [
          "WITH ranked AS (SELECT suite, item, time, RANK() OVER (PARTITION BY suite ORDER BY time DESC) AS rk FROM room_service WHERE date = {theft_date}) SELECT suite FROM ranked WHERE rk = 1 AND item = 'cognac'",
          "SELECT suite FROM room_service WHERE date = {theft_date} AND item = 'cognac' AND time < '06:00' ORDER BY time DESC LIMIT 1",
          "SELECT suite FROM room_service WHERE date = {theft_date} AND item = 'cognac' AND time < '06:00' ORDER BY time LIMIT 1",
-         "SELECT suite FROM room_service WHERE date = {theft_date} AND item = 'cognac' ORDER BY time DESC LIMIT 1"],
+         "SELECT suite FROM room_service WHERE date = {theft_date} AND item = 'cognac' ORDER BY time DESC LIMIT 1",
+         "SELECT suite FROM hotel_register WHERE floor = 2 AND checkin = {theft_date}"],
   answer_key_compete="compete_suite8"),
  dict(n=9, board="The trunk", explain="Put each of Ashcombe's trunks next to the ticket it travelled on and the name of the ticket's holder, then keep the one whose holder is neither His Lordship nor his valet nor his maid: the unknown gentleman who paid cash.",
   part=2, construct="CTE + JOIN", tables=["train_ticket", "luggage"], answer_key="trunk_no",
@@ -306,7 +313,7 @@ TEXT = {
   title_compete="The Night Manager",
   telegram_compete="MY DEAR GANIMARD STOP NOT ME THIS TIME STOP I HAVE A FRIEND WITH THE SAME TASTE IN ROOMS STOP A L",
   story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is ours**, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'*",
-  story_compete="*Four in the morning, the Prefecture.* **Ganimard** has not slept since the Ritz, and now the *Hotel Meurice* has been burgled as well. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is the Meurice**, clerk. **Hippolyte Morand**, the night manager, found the damage himself. His clocks and ours have never agreed, so he will not swear to the night, only to near it. And mind what he says it was not.'*",
+  story_compete="*June, four in the morning, the Prefecture.* The Ritz file is still open on **Ganimard**'s desk, and now the *Hotel Meurice* has been burgled. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is the Meurice**, clerk. **Hippolyte Morand**, the night manager, found the damage himself. His clocks and ours have never agreed, so he will swear to no more than the night or so. And mind what he says it was not.'*",
   objective="Mr Duroc knows which night.",
   answer_form="the report id",
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L"),
@@ -315,14 +322,14 @@ TEXT = {
   title_compete="Below the Royal Pair",
   telegram_compete="MY DEAR GANIMARD STOP MY FRIEND NEVER WALKS STOP THE RIVAL COMPANY KEEPS BETTER BOOKS THAN YOURS STOP A L",
   story="**Ganimard** drops the report you found back on your desk. *'It is all in here, clerk, if you read it properly. I am not paid to read twice.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January.",
-  story_compete="**Ganimard** reads the Meurice report you found and swears, once. *'Our man practises, clerk. What he did at the Meurice in June, he had done at the Ritz in May: the same floor, the same taste in rooms.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January. *'Two suites at the top of that floor share one price: the royal pair. He never touches those. Find me **the one just below the royal pair**, the night of the 17th of May.'*",
+  story_compete="**Ganimard** reads the Meurice report you found and swears, once. *'Our man has habits, clerk. What he did at the Meurice in June, he had done at the Ritz in May: the same floor, the same taste in rooms.'*\n\nThe Ritz has sent over its *register*: every guest, every suite and every price since January. *'On that floor, the two dearest suites share one price: the royal pair. He never touches those. Find me **the one just below the royal pair**, the night of the 17th of May.'*",
   objective="The report says where the thief came from. Who slept there?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP HIS LORDSHIP SNORES STOP I CROSSED HIS BALCONY TWICE AND HE NEVER STIRRED STOP HIS VALET SLEEPS LESS STOP ASK HIM ABOUT MY COAT STOP A L"),
  3: dict(
   title="A Plate in the Dark",
   story="**His Lordship**, woken at dawn, is displeased but useful. *'My valet saw the man,'* he says, *'and his account is with your inspector already. Read it, if you doubt a peer's memory.'*\n\nThe cab company keeps a book of every fare. **Ganimard** wants **the cab that took our man**.",
-  story_compete="Whoever slept in that room did not walk home. **Ganimard** has found a second cab book: a rival company, which writes down its fares as carefully as the first and trusts its drivers less.\n\nIts despatcher, **Firmin Lagarde**, has already talked to the inspector. *'He is sure of two figures, clerk, and of nothing in between. Read what he said, then find me **the cab that took our second man**.'*",
+  story_compete="Whoever slept in that room did not walk home. **Ganimard** has found a second cab book: a rival company, which writes down its fares as carefully as the first and trusts its drivers less.\n\nIts despatcher, **Firmin Lagarde**, has already talked to the inspector. *'He is sure how the plate began, and of one figure near the end. Read what he said, then find me **the cab that took him**.'*",
   objective="Read what the neighbour told Ganimard, then find the cab.",
   answer_form="the plate",
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
@@ -346,7 +353,7 @@ TEXT = {
   title="Follow the Francs",
   telegram_compete="MY DEAR GANIMARD STOP TWO HALVES TO THE FRANC STOP YOU ARE LEARNING STOP HIS BROKER CONFIRMED IT FROM THE BOURSE STOP A L",
   story="The jeweller banks at the *Credit Lyonnais*, and **Ganimard** has a warrant, so the bank hides nothing. Its ledger has one line per transfer: the account that paid, the account that was paid, the sum and the day.\n\n*'A fence pays a thief in three pieces, clerk: one for the job, one for the silence, one for the road. The bank does not blink at small sums. And of all the men he paid that way in May, **ours was paid best**.'*",
-  story_compete="The fence banks at the *Societe Generale*, and **Ganimard**'s warrant opens that ledger too: one line per transfer, the account that paid, the account that was paid, the sum and the day.\n\n*'This one is tidier than the last, clerk. No three pieces for him: he paid his man in **two equal halves** in May, the same to the franc. Not two odd sums, and not three.'*",
+  story_compete="The fence banks at the *Societe Generale*, and **Ganimard**'s warrant opens that ledger too: one line per transfer, the account that paid, the account that was paid, the sum and the day.\n\n*'This one is tidier than the last, clerk. No three pieces for him: he paid his man in **two equal halves** in May, the same to the franc. Not two different sums, and not three.'*",
   objective="Of the accounts the jeweller from chapter 5 paid in three pieces in May, which received the most?",
   answer_form="the account number",
   telegram="MY DEAR GANIMARD STOP THREE PIECES AND THE BEST SHARE STOP YOU ARE LEARNING STOP I CONFIRMED RECEIPT BY WIRE FROM THE RITZ DESK AT ITS QUIETEST STOP THE CLERK THERE READS NOTHING STOP A L"),
@@ -363,7 +370,7 @@ TEXT = {
   title="The First Order Before Dawn",
   title_compete="The Last Order Before Dawn",
   story="**Ganimard** reads aloud the wire you found in chapter 7: *'as always my first order before dawn'*. It names the drink, too.\n\n*'A man of habit is a man with a room number, clerk. And before dawn, at my age, means before six.'*",
-  story_compete="**Ganimard** reads aloud the broker's wire you found in chapter 7. It names his habit before dawn, *as always*.\n\n*'A broker who sells for a fence sleeps close to his client, clerk. That night he slept at the Ritz, and room service writes down every order, in order. I want the suite where it was **his last order before dawn**. And before dawn, at my age, means before six.'*",
+  story_compete="**Ganimard** reads aloud the broker's wire you found in chapter 7. It names his habit before dawn, *as always*.\n\n*'A broker who sells a stolen stone sleeps near it, clerk. That night he slept at the Ritz, and room service writes down every order, in order. I want the suite where it was **his last order before dawn**. And before dawn, at my age, means before six.'*",
   objective="The wire from chapter 7 describes a habit. Whose was it, on the 18th?",
   answer_form="the guest's name",
   telegram="MY DEAR GANIMARD STOP GARE DU NORD NINE FIFTEEN STOP DO NOT BE LATE STOP THE BLUE STAR SENDS REGARDS FROM LONDON STOP CHAPTER IX IF YOU DARE STOP A L"),
