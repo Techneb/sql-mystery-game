@@ -455,8 +455,9 @@ framework, no bundler.
   in a private window) and that the footer link reopens it; (7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
   2026-10-10); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
-  rename rather than drop the game's own link, Google requires the second title verbatim): rename the handbook's
-  nav and footer "Privacy" links to "Privacy notice" too, once the handbook QA branch has landed.
+  rename rather than drop the game's own link, Google requires the second title verbatim): ~~rename the handbook's
+  nav and footer "Privacy" links to "Privacy notice" too~~ (done on the branch 2026-10-10, with admin.html, after main's
+  compete v2 was merged into it).
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
