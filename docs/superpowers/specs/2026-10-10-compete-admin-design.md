@@ -5,7 +5,8 @@ build, game, `site/admin.html` and `site/leaderboard.html`), tested against a lo
 Chrome; next is the owner's look on his Chrome and the projector, then the rehearsal on the real backend. The admin
 page has no edit form for a created season yet (the backend's `update` is unused).
 Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
-whose newest season is oldest; a pseudo may not start with `= + - @` (Sheet formulas); `ritz.compete` also keeps
+whose newest season is oldest; pseudos and season ids are written to the Sheet as text (a leading apostrophe),
+so "007" stays "007" and no pseudo is read as a formula; `ritz.compete` also keeps
 the board URL, so a reload without the link still resumes.
 
 Design agreed with the course owner on 2026-10-10 (grilling in the SQL Game main session). Amends section 4
@@ -49,9 +50,11 @@ Season record: `{id, name, date, db, penalty, state, createdAt, openedAt, closed
   open, else the least recently closed one (so a sixth season reuses a database, which a student from an
   earlier class could have seen; the admin page says which number is reused).
 - `penalty`: integer seconds per wrong answer, 0-3600, default 10.
-- `state`: `created` -> `open` -> `closed`, never back.
+- `state`: `created` -> `open` -> `closed`, or `created` -> `closed` (a season created by mistake; its database
+  is freed), never back.
 
-doGet (public reads): `?seasons=1` all records; `?meta=<id>` one record; `?season=<id>` that season's rows
+doGet (public reads): `?seasons=1` all records; `?meta=<id>` one record plus the server's clock `now` (also in the join reply's meta: the game starts its clock
+at `openedAt - now + its own now`, so a wrong browser clock cancels out); `?season=<id>` that season's rows
 (`timestamp, event, team, season, chapter, hints, wrong, queries, clientAt, elapsedMs`, as today); no parameter:
 all rows (kept for the admin page's export of everything, not for the game).
 
@@ -86,7 +89,9 @@ is set when `|official before penalty - elapsedMs| > 60 s`.
 - Link: `index.html?season=<id>&board=<exec url>` (the board URL still travels in the link; the admin page shows
   it as a QR and a short typed line). Boot fetches `?meta=<id>`; a missing or unknown id shows "This season does
   not exist" on the landing card.
-- Join: the Compete button opens the pseudo form; `join` posts, a refusal ("pseudo taken", "session closed") is
+- Join: the Compete button opens the pseudo form; `join` posts, a refusal ("pseudo taken", "session closed"; "busy, try again" when the script lock is held, retried once
+  after 2 s, then "The archives are busy, press Join again") is
+
   shown under the form. On `ok`, the page shows a waiting card with the season name and "Waiting for the
   teacher to open the session", polling `?meta` every 5 s. When `state` is open, it loads `season-<db>`, keeps
   `openedAt`, starts the clock from it (a late joiner's clock already runs) and plays as today. A reload resumes
