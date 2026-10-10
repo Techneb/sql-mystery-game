@@ -200,6 +200,16 @@ values per season seed). The shapes:
    day is the cognac, after six; two whose first order before dawn is the cognac (the earliest and the latest
    cognac); his suite orders coffee after six, so the filter outside the ranking finds nothing.
 
+Review fixes (2026-10-10, after a student play-through): compete ships its own telegrams (`telegram_compete`, ch1-2
+and 4-8), titles (`title_compete`: The Night Manager, Below the Royal Pair, The Busiest Hour, The Last Order
+Before Dawn) and the ch6 construct (`construct_compete`, JOIN x3 + GROUP BY + HAVING); the Suspects gallery is off
+in compete. Ch5's fence is drawn per season and a second tenant with no trade has a real name. Ch8's suite holds
+no cast stay: a guest under a noise name checked in on the 18th, as in the two empty cognac suites (not Brissac:
+the register would hand out the suite). New traps: ch1 LIKE suite (a bridal-suites report), ch2 `price < 240`
+without the date (two April stays), ch3 pickup Place Vendome with the prefix, ch6 equal halves over the whole
+ledger (two other payees), ch7 LIKE SOLD / PROCEEDS (his three wires differ only by the drink), ch8 the most
+orders before dawn (a suite with four) and a floor-2 check-in on the 18th.
+
 Each chapter's naive query, the learn shape with the season's values, the old compete query and the shortcuts
 found by the shortcut check are in its `traps_compete`, so the build keeps them closed; a test checks that no
 compete solution reads like its learn solution once every literal is blanked out.
