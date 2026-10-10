@@ -64,19 +64,22 @@ function solves(p) {
 }
 
 // The ranking: finished players by official time (server finish - openedAt + wrong x penalty), then the others by
-// chapters solved, first there first. flagged ("?"): the server's interval and the browser's elapsedMs differ by
+// chapters solved, first there first (the row that solved the highest chapter, else the join row, so a retried
+// duplicate row changes nothing). flagged ("?"): the server's interval and the browser's elapsedMs differ by
 // more than a minute.
 export function officialTime(rows, meta) {
   const opened = Number(meta.openedAt) || 0, pen = (Number(meta.penalty) || 0) * 1000;
   const out = players(rows).map(p => {
     const s = solves(p), fin = s[8], last = p.rows[p.rows.length - 1];
     const solved = Object.keys(s).length;
+    const reached = s[Math.max(0, ...Object.keys(s).map(Number))] || p.rows.find(r => r.event === "join") || p.rows[0];
     const raw = fin ? Number(fin.timestamp) - opened : null;
     return { team: p.team, finished: !!fin, solved, chapter: Math.min(solved + 1, 8),
              wrong: Number((fin || last).wrong) || 0, queries: Number((fin || last).queries) || 0,
              ms: fin ? raw + (Number(fin.wrong) || 0) * pen : null,
              flagged: !!fin && fin.elapsedMs != null && Math.abs(raw - Number(fin.elapsedMs)) > 60000,
-             last: Number(last.timestamp) };
+             last: Number(reached.timestamp) };
+
   });
   out.sort((a, b) => (b.finished - a.finished) || (a.finished ? a.ms - b.ms : b.solved - a.solved || a.last - b.last));
   return out.map((p, i) => ({ rank: i + 1, ...p }));

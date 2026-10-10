@@ -22,10 +22,13 @@ export const waitingHtml = ranking => '<p class="waiting">Waiting for the teache
   (ranking.length === 1 ? " detective" : " detectives") + ' joined</p><ul class="joined">' +
   ranking.map(p => "<li>" + esc(p.team) + "</li>").join("") + "</ul>";
 
-// Top three, second place on the left, the winner in the middle, as on a podium.
-export const podiumHtml = ranking => '<ol class="podium">' + [ranking[1], ranking[0], ranking[2]].filter(Boolean).map(p =>
-  '<li class="place-' + p.rank + '"><span class="place">' + p.rank + '</span><span class="team">' + esc(p.team) +
-  '</span><span class="time">' + timeHtml(p) + "</span></li>").join("") + "</ol>";
+// Top three finishers (finished players rank first), second place on the left, the winner in the middle, as on a podium.
+export const podiumHtml = ranking => {
+  const f = ranking.filter(p => p.finished);
+  return f.length ? '<ol class="podium">' + [f[1], f[0], f[2]].filter(Boolean).map(p =>
+    '<li class="place-' + p.rank + '"><span class="place">' + p.rank + '</span><span class="team">' + esc(p.team) +
+    '</span><span class="time">' + timeHtml(p) + "</span></li>").join("") + "</ol>" : "";
+};
 
 // The page body for a season record and its rows: { head, dateline, body } as HTML strings.
 export function boardHtml(meta, rows) {
@@ -50,20 +53,20 @@ async function main() {
   const say = msg => { $("board").innerHTML = '<p class="waiting">' + esc(msg) + "</p>"; };
   try { new URL(data); } catch { return say("No board here: open it from the teacher's page."); }
   if (!id) return say("No season in this link: open it from the teacher's page.");
-  let timer = 0;
+  // One chain of timeouts: the next poll is scheduled only once this one has answered, so polls never overlap.
   async function tick() {
     let meta, rows;
     try { [meta, rows] = await Promise.all([getJson(data, { meta: id }), getJson(data, { season: id })]); }
-    catch { $("updated").textContent = "Could not reach the board; trying again."; return; }
-    if (!meta || meta.id !== id) { clearInterval(timer); return say("This season does not exist."); }
+    catch { $("updated").textContent = "Could not reach the board; trying again."; setTimeout(tick, POLL_MS); return; }
+    if (!meta || meta.id !== id) return say("This season does not exist.");
     const b = boardHtml(meta, Array.isArray(rows) ? rows : []);
     document.title = meta.name + " -- The Ritz Affair";
     $("headline").innerHTML = b.head; $("dateline").innerHTML = b.dateline; $("board").innerHTML = b.body;
     $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
-    if (meta.state === "closed") clearInterval(timer);   // nothing changes once closed
+    if (meta.state !== "closed") setTimeout(tick, POLL_MS);   // nothing changes once closed
   }
-  timer = setInterval(tick, POLL_MS);
   tick();
+
 }
 
 if (typeof document !== "undefined") main();

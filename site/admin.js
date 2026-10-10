@@ -44,7 +44,7 @@ export function seasonsTableHtml(seasons, counts, selected) {
   return '<table class="seasons"><thead><tr><th>Name</th><th>Date</th><th>State</th><th>Database</th><th>Joined</th><th>Finished</th><th></th></tr></thead><tbody>' +
     seasons.map(s => {
       const c = counts[s.id] || { joined: 0, finished: 0 }, id = esc(s.id);
-      const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state === "open"))
+      const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state !== "closed"))
         .map(([a, label]) => '<button class="quiet" data-act="' + a + '" data-id="' + id + '">' + label + "</button>").join(" ");
       return '<tr data-id="' + id + '" class="' + (s.id === selected ? "selected" : "") + '" tabindex="0"><td>' + esc(s.name) +
         "</td><td>" + esc(s.date) + '</td><td class="state-' + esc(s.state) + '">' + esc(s.state) + "</td><td>" + esc(s.db) +
@@ -69,7 +69,7 @@ export function detailHtml(meta, rows) {
 
 // --- page wiring (browser only) ----------------------------------------------------------------
 const $ = id => document.getElementById(id);
-let board = "", key = "", seasons = [], selected = "", pollTimer = 0;
+let board = "", key = "", seasons = [], selected = "", pollTimer = 0, detailGen = 0;
 
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
@@ -99,18 +99,25 @@ async function loadSeasons() {
   } catch (e) { say("Could not read the seasons: " + e.message, true); }
 }
 
+// One poll chain: each call supersedes the earlier ones (detailGen), and the next poll is scheduled only once
+// this one has answered, so a click during a poll never leaves two chains running.
 async function showDetail(id) {
   clearTimeout(pollTimer);
+  const gen = ++detailGen;
   selected = id;
   document.querySelectorAll("table.seasons tr[data-id]").forEach(tr => tr.classList.toggle("selected", tr.dataset.id === id));
   try {
     const [meta, rows] = await Promise.all([getJson({ meta: id }), getJson({ season: id })]);
-    if (selected !== id) return;   // another row was clicked meanwhile
+    if (gen !== detailGen) return;   // another row was clicked, or the same one refreshed, meanwhile
     if (!meta || meta.id !== id) { $("detail").innerHTML = '<p class="muted">This season does not exist.</p>'; return; }
     $("detail").innerHTML = detailHtml(meta, Array.isArray(rows) ? rows : []);
     if (meta.state !== "closed") pollTimer = setTimeout(() => showDetail(id), POLL_MS);
-  } catch (e) { say("Could not read the season: " + e.message, true); pollTimer = setTimeout(() => showDetail(id), POLL_MS); }
+  } catch (e) {
+    if (gen !== detailGen) return;
+    say("Could not read the season: " + e.message, true); pollTimer = setTimeout(() => showDetail(id), POLL_MS);
+  }
 }
+
 
 const gameUrl = () => new URL("./", location.href).href;
 

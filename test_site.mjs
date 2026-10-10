@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
 import { colourBlock } from "./colour_learn.mjs";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
@@ -204,6 +204,24 @@ test("officialTime ranks finishers by server time plus penalty, then the others 
   const harsh = shared.officialTime(fixture(), { openedAt: T0, penalty: 0 });
   assert.equal(harsh[1].ms, 20 * 60000, "no penalty, the server interval alone");
   assert.deepEqual(shared.officialTime([], { openedAt: T0, penalty: 10 }), []);
+});
+
+test("clockStart cancels the browser clock's offset with the server's now", () => {
+  const meta = { openedAt: 1_000_000, now: 1_600_000 };          // the server says: opened 10 minutes ago
+  assert.equal(clockStart(meta, 1_600_000), 1_000_000, "clocks agree");
+  assert.equal(clockStart(meta, 1_900_000), 1_300_000, "a browser 5 minutes fast still reads 10 minutes elapsed");
+  assert.equal(1_900_000 - clockStart(meta, 1_900_000), 600_000);
+  assert.equal(clockStart({ openedAt: 1_000_000 }, 5), 1_000_000, "no now (an older backend): openedAt as is");
+});
+
+test("officialTime: unfinished players tie on the row that solved their highest chapter, retries harmless", () => {
+  // Carol and Dan both solved chapter 2; Carol first. Carol then sends a late duplicate of chapter 1 (a retry).
+  const rows = [row("join", "Carol", "", -3), row("join", "Dan", "", -2),
+    row("progress", "Carol", 1, 1), row("progress", "Dan", 1, 2), row("progress", "Carol", 2, 3), row("progress", "Dan", 2, 4),
+    row("progress", "Carol", 1, 9)];
+  assert.deepEqual(shared.officialTime(rows, { openedAt: T0 }).map(p => p.team), ["Carol", "Dan"]);
+  // Nobody solved anything: the join row decides.
+  assert.deepEqual(shared.officialTime([row("join", "Eve", "", 1), row("join", "Fay", "", 0)], { openedAt: T0 }).map(p => p.team), ["Fay", "Eve"]);
 });
 
 test("chapterSummary: solvers and medians per chapter, per-chapter queries and wrong from running totals", () => {
@@ -567,7 +585,7 @@ test("admin seasons table: newest first, counts per season, actions by state, va
   const html = admin.seasonsTableHtml(seasons, counts, "s1");
   assert.ok(!html.includes("<b>old") && html.includes("&#60;b&#62;old"), "a name is escaped");
   const [created, closed] = html.split('<tr data-id="').slice(1);
-  assert.ok(created.includes('data-act="open"') && !created.includes('data-act="close"'));
+  assert.ok(created.includes('data-act="open"') && created.includes('data-act="close"'), "a season created by mistake can be closed");
   assert.ok(!closed.includes('data-act="open"') && !closed.includes('data-act="close"') && closed.includes('data-act="csv"'));
   assert.ok(closed.startsWith('s1" class="selected"'));
   const detail = admin.detailHtml({ id: "s1", name: "x", date: "d", state: "open", penalty: 30, openedAt: T0 },
@@ -596,8 +614,11 @@ test("board: eight-cell strip, three states, every pseudo escaped", () => {
   assert.ok(!open.body.includes("podium") && !open.dateline.includes("closed"));
   const closed = lb.boardHtml(meta("closed"), rows);
   assert.ok(closed.dateline.includes("Session closed") && closed.body.indexOf("podium") < closed.body.indexOf("ranking"));
-  assert.ok(closed.body.includes('class="place-1"') && closed.body.includes('class="place-3"'));
+  assert.ok(closed.body.includes('class="place-1"') && closed.body.includes('class="place-2"') && !closed.body.includes('class="place-3"'), "two finishers, two steps");
   assert.ok(lb.boardHtml(meta("open"), []).body.includes("No detective yet"));
+  const nobodyDone = lb.boardHtml(meta("closed"), fixture().filter(r => r.event !== "finish"));
+  assert.ok(!nobodyDone.body.includes("podium") && nobodyDone.body.includes("ranking"), "the podium shows finished players only");
+
 });
 
 test("admin and board pages: not in the sitemap, admin kept out of robots, the deploy versions their scripts, pure ASCII", () => {

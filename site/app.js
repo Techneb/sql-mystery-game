@@ -49,6 +49,12 @@ export function eventPayload(state, event, chapter, now = Date.now()) {
            wrong: s.wrong, queries: s.queries, clientAt: now,
            elapsedMs: (state.finishedAt || now) - state.startedAt };
 }
+// The teacher's Open on this browser's clock: the backend sends its own clock (meta.now) with the record, so a
+// browser clock that runs fast or slow cancels out of every elapsed time.
+export function clockStart(meta, now = Date.now()) {
+  const opened = Number(meta.openedAt), server = Number(meta.now);
+  return Number.isFinite(server) && server > 0 ? opened - server + now : opened;
+}
 
 // The deploy loads this script as app.js?v=<commit> (.github/workflows/pages.yml); the data files are fetched
 // with the same query, so a page never mixes this deploy's code with a previous deploy's cached data.
@@ -70,7 +76,7 @@ const PORTRAIT_FILE = { "Lord Ashcombe": "ashcombe", "Paul Sernine": "sernine", 
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {};
-let seasonId = "", seasonMeta = null, boardUrl = "";
+let seasonId = "", seasonMeta = null, metaUnreachable = false, boardUrl = "";
 
 async function loadDb(stem) {
   const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
@@ -737,25 +743,28 @@ async function flushOutbox() {
 // text/plain so the browser sends no CORS preflight (Apps Script cannot answer one). Throws on network or HTTP failure;
 // a JSON {ok:false, error} is the backend's own refusal and comes back as is.
 async function postBoard(body) {
-  const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+  const r = await fetch(boardUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(30000) });
   if (!r.ok) throw new Error("HTTP " + r.status);
   return r.json();
 }
-// The season record (apps_script.gs ?meta=<id>): null when unknown or unreachable.
+// The season record (apps_script.gs ?meta=<id>): null when the backend does not know the season (or there is no
+// board); throws when the backend is unreachable (network, timeout, an HTML error page instead of JSON).
 async function fetchMeta(id) {
   if (!boardUrl || !id) return null;
-  try {
-    const u = new URL(boardUrl); u.searchParams.set("meta", id);
-    const m = await (await fetch(u, { signal: AbortSignal.timeout(15000) })).json();
-    return m && m.id === id ? m : null;
-  } catch { return null; }
+  const u = new URL(boardUrl); u.searchParams.set("meta", id);
+  const r = await fetch(u, { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const m = await r.json();
+  return m && m.id === id ? m : null;
 }
+const UNREACHABLE = "Could not reach the leaderboard. Reload the page.";
 // Copies what the game uses from a season record; the clock runs from the teacher's Open.
 function applyMeta(m) {
   if (!m) return;
   state.seasonName = String(m.name || ""); state.db = Number(m.db) || state.db;
   if (Number.isInteger(m.penalty)) state.penalty = m.penalty;
-  if (m.openedAt) state.startedAt = Number(m.openedAt);
+  if (m.openedAt) state.startedAt = clockStart(m);
   if (m.state === "closed") state.over = true;
   PENALTY.wrong = state.penalty;
   save(state);
@@ -767,13 +776,17 @@ async function loadSeason() {
   startClock();
   flushOutbox();
 }
+let competeLoading = false;
 async function playCompete() {
+  if (competeLoading) return;   // once per page: a second call (a late poll, a double click) does nothing
+  competeLoading = true;
   await loadSeason();
   renderBoard(); renderHistory(); enterGame();
   $("notes").value = state.notes;
 }
-// Joined, the season not open yet: the landing card waits, asking the backend every 5 s.
-let waiter = null;
+// Joined, the season not open yet: the landing card waits, asking the backend 5 s after each answer (one chain:
+// a newer call supersedes an older one, waitGen).
+let waiter = 0, waitGen = 0;
 function waitForOpen() {
   $("landing").hidden = false;
   document.querySelector(".landing-buttons").hidden = true;
@@ -782,27 +795,40 @@ function waitForOpen() {
   $("wait-name").textContent = state.seasonName;
   $("wait-team").textContent = state.team;
   $("status").textContent = "";
-  clearInterval(waiter);
-  waiter = setInterval(async () => {
-    const m = await fetchMeta(state.season);
-    if (!m || m.state === "created") return;
-    clearInterval(waiter);
+  clearTimeout(waiter);
+  const gen = ++waitGen;
+  const poll = async () => {
+    let m;
+    try { m = await fetchMeta(state.season); } catch { m = undefined; }
+    if (gen !== waitGen) return;
+    if (m === null || (m && m.state === "closed" && !m.openedAt)) {   // closed before it ever opened
+      $("compete-wait").hidden = true;
+      $("status").textContent = m ? "This session is closed." : "This season does not exist.";
+      return;
+    }
+    if (!m || m.state === "created") { waiter = setTimeout(poll, 5000); return; }
     applyMeta(m);
     $("compete-wait").hidden = true;
     playCompete();
-  }, 5000);
+  };
+  waiter = setTimeout(poll, 5000);
 }
 const JOIN_REFUSED = { "pseudo taken": "Someone already plays this season under that pseudo. Pick another.",
-  "session closed": "This session is closed.", "no such season": "This season does not exist." };
+  "session closed": "This session is closed.", "no such season": "This season does not exist.",
+  "busy, try again": "The archives are busy, press Join again." };
 
 async function joinCompete() {
   const team = $("team").value.trim();
+  if ($("btn-start").disabled) return;   // Enter while a join is under way
   if (!team) { $("team").focus(); return; }
   $("btn-start").disabled = true;
   $("status").textContent = "Joining...";
+  const join = () => postBoard({ event: "join", team, season: seasonId, clientAt: Date.now() });
   let j;
-  try { j = await postBoard({ event: "join", team, season: seasonId, clientAt: Date.now() }); }
-  catch { j = { error: "unreachable" }; }
+  try {
+    j = await join();
+    if (j.error === "busy, try again") { await new Promise(r => setTimeout(r, 2000)); j = await join(); }   // once
+  } catch { j = { error: "unreachable" }; }
   if (!j.ok) {
     $("status").textContent = JOIN_REFUSED[j.error] || (j.error === "unreachable"
       ? "The leaderboard is unreachable. Try again in a moment." : "The leaderboard refused: " + (j.error || "unknown") + ".");
@@ -818,13 +844,20 @@ async function joinCompete() {
 function offerCompete() {
   const b = $("btn-compete");
   if (!seasonId) return;   // no season link: Compete stays disabled
-  if (!seasonMeta) {
+  if (!seasonMeta && !metaUnreachable) {
     $("status").textContent = boardUrl ? "This season does not exist." : "This season link has no leaderboard: ask your teacher for the full link.";
     return;
   }
-  if (seasonMeta.state === "closed") { $("status").textContent = "This session is closed."; return; }
+  if (seasonMeta && seasonMeta.state === "closed") { $("status").textContent = "This session is closed."; return; }
+  if (metaUnreachable) $("status").textContent = UNREACHABLE;
   b.disabled = false; b.title = "Part I only, against the clock.";
-  b.onclick = () => {
+  b.onclick = async () => {
+    if (!seasonMeta) {   // unreachable at boot: ask again
+      try { seasonMeta = await fetchMeta(seasonId); } catch { $("status").textContent = UNREACHABLE; return; }
+      const no = !seasonMeta ? "This season does not exist." : seasonMeta.state === "closed" ? "This session is closed." : "";
+      $("status").textContent = no || "The archives are open.";
+      if (no) { b.disabled = true; return; }
+    }
     $("compete-note").innerHTML = "Season: " + esc(seasonMeta.name) + ". Part I, chapters I to VIII, against the clock. " +
       duration(seasonMeta.penalty) + " per wrong answer; queries are free. The clock starts when your teacher opens the session " +
       'and stops when Lupin is named. Your pseudo and progress go to the class leaderboard (<a href="privacy.html" target="_blank">what is sent</a>).';
@@ -1014,10 +1047,18 @@ async function boot() {
   // with the season link, always (a finished season shows its finish screen); without it, only while unfinished.
   const saved = loadFrom(storageKey("compete"));
   const savedLive = saved.mode === "compete" && saved.team && saved.token && saved.db > 0;
-  if (!seasonId && savedLive && !part1Done(saved) && !debugChapter) seasonId = saved.season;
-  const resuming = !!(savedLive && saved.season === seasonId && !debugChapter);
+  if (!seasonId && savedLive && !part1Done(saved) && !saved.over && !debugChapter) seasonId = saved.season;
+  let resuming = !!(savedLive && saved.season === seasonId && !debugChapter);
   if (resuming && !boardUrl) boardUrl = saved.board || "";
-  if (seasonId) seasonMeta = await fetchMeta(seasonId);
+  if (seasonId) {
+    try { seasonMeta = await fetchMeta(seasonId); } catch { metaUnreachable = true; }
+  }
+  // Without the link, an unfinished game resumes only into a season still running (or while the backend is
+  // unreachable); a closed or unknown one is set over, so the landing shows. The save stays (the Sheet has the rows).
+  if (!linked && resuming && !metaUnreachable && (!seasonMeta || seasonMeta.state === "closed")) {
+    try { localStorage.setItem(storageKey("compete"), JSON.stringify({ ...saved, over: true })); } catch {}
+    resuming = false; seasonId = ""; seasonMeta = null;
+  }
   // debugChapter is gated by unlockAdmin() (same passphrase as the ?admin panel): only asked when
   // ?chapter=N is actually present, so a plain ?season= link never prompts for anything.
   let debugOk = false;
@@ -1043,7 +1084,9 @@ async function boot() {
     }
     await loadDb("mystery");
   }
-  $("status").textContent = badBoard ? "The archives are open. The leaderboard link in this address is broken, so nothing is recorded." : "The archives are open.";
+  $("status").textContent = badBoard ? "The archives are open. The leaderboard link in this address is broken, so nothing is recorded."
+    : resuming && metaUnreachable ? UNREACHABLE : "The archives are open.";
+
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = enterGame;
   // A season link always shows the landing page (the student picks Compete there), unless a season game is under way.
