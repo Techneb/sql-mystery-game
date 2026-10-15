@@ -220,7 +220,7 @@ REPORT_TEXT = [
     "Monsieur Proust reports a madeleine missing from his tea. He is writing seven volumes about it.",
     "A black cat crossed the street twice, exactly the same way. Nothing else seemed wrong.",
     "A gentleman with a very small moustache stole a bread roll and did a little dance with it.",
-    "A child claims a man offered him an offer he could not refuse: a sou for a pear.",
+    "A child claims a man made him an offer he could not refuse: a sou for a pear.",
     "Monsieur Eiffel reports that someone has again tried to buy his tower. It is not for sale.",
     "A young woman in glass slippers left one on the stairs at midnight. Kept at the desk.",
     "An inventor reports his flying machine flew. The complaint is from the neighbour whose roof it met.",
@@ -301,7 +301,7 @@ INTERVIEW_TEXT = [
     "The butler did it, the gardener did it, my mother-in-law did it. Pick one.",
     "I was on the telephone all night. Nobody answered. It is a new invention.",
     "You talking to me? You talking to me? Then I was in bed, monsieur.",
-    "Keep your friends close and your umbrellas closer. Mine was stolen in May.",
+    "Keep your friends close and your umbrellas closer. Mine was stolen last week.",
     "It is not a bug, monsieur, it is a feature of the building. The pipes sing at night.",
     "I asked the cat. The cat looked at me as if I were the suspect.",
     "Life is like a box of bonbons, monsieur. Mine was empty before I arrived.",
@@ -598,7 +598,7 @@ def plant_part1(conn, V, r):
     #     at Gare Saint-Lazare, where the old variant looked), one the figure alone; a plate fitting both rides other days.
     c.execute("INSERT INTO interview VALUES (4,?,?,?)", ("Firmin Lagarde", T,
         "One of our cabs took a fare that night, the 18th of May in our book, and its driver has vanished. His night sheet is torn: "
-        "the plate began with {compete_plate_prefix} and the figure before the last was a {lagarde_figure}. The rest is torn off.".format(**V)))
+        "the plate began with {compete_plate_prefix} and the figure before the last was a {lagarde_figure}. The rest is gone.".format(**V)))
     pre, fig = V["compete_plate_prefix"], V["lagarde_figure"]
     c.execute("DELETE FROM cab_ride WHERE date=? AND (plate LIKE ? OR (dropoff='Gare Saint-Lazare' AND plate LIKE ?))",
               (T, V["compete_plate_pattern"], pre + "%"))
