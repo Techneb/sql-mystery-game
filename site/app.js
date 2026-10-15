@@ -730,7 +730,7 @@ function stopClock(at = Date.now()) {
 // The teacher closed the season: freeze the clock (at the server's closedAt when known) and say so in the #closed
 // pop-up, once per close (state.closedSeen; enterGame shows it on a reload that finds the season closed), never after
 // a finish. The slip is the fallback where <dialog> cannot open.
-const CLOSED_SLIP = "The teacher has closed the session. Your time is recorded up to here.";
+const CLOSED_SLIP = "The teacher has closed the session. Your time is recorded up to this point.";
 function sessionClosed(at) {
   stopClock(at); clearTimeout(watcher);
   showClosed();

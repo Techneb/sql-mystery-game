@@ -89,7 +89,7 @@
 <tr><td>Pain au chocolat</td><td>1.6</td></tr>
 <tr><td>Almond croissant</td><td>2.2</td></tr>
 </table>
-<p>This is the third and fourth cheapest products: the two cheapest are skipped, the next two are kept.</p>
+<p>These are the third and fourth cheapest products: the two cheapest are skipped, the next two are kept.</p>
 
 <h2>Ties and LIMIT</h2>
 <p>Be careful when the value you sort by can tie at the edge of the limit. If two products both cost the same and you ask for <code>LIMIT 1</code>, you get one of them, and which one is not defined. When the question is "which product is the cheapest", it is worth checking whether the second row has the same price as the first: drop the limit, or raise it to five, and read the top of the list with your own eyes. Adding a second sort key, such as the name or the id, at least makes the answer the same every time you run it.</p>
