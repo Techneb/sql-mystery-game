@@ -126,6 +126,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 .erd .table .head { fill: var(--ink); stroke: var(--ink); }
 .erd .table .tname { fill: var(--paper); }
 .erd .table .col { fill: var(--ink); font-size: 10px; }
+.erd .table .type { fill: var(--ink); fill-opacity: .5; font-size: 9px; }   /* the declared type, right-aligned */
 /* Relationship lines: one soft red S-curve each (erd.py), round ends, a dot and 1 / N at each end. */
 .erd .fk path { stroke: var(--rel); stroke-opacity: .8; fill: none; stroke-width: 1.3; stroke-linecap: round; }
 .erd .fk circle { fill: var(--rel); }
