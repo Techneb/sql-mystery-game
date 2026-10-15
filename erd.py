@@ -8,7 +8,8 @@ and each line carries its cardinality: a dot at each end, with N on the many sid
 """
 import itertools
 
-W, GAP, LAYER_H, ROW, HEAD = 170, 56, 60, 14, 16
+W, GAP, LAYER_H, ROW, HEAD = 184, 56, 60, 14, 16   # W fits the longest name + type row (dropoff_address_id INTEGER)
+NAME_PX, TYPE_PX = 6.0, 5.6   # px per character of a column name (10 px Special Elite) and of its type (9 px), rounded up
 MARGIN = 28   # a lane down each outer side, for lines that stay in their column
 PER_ROW = 2   # a row wraps after this many tables, so the schema stays about one column wide (the site fits it to its 340-440 px column)
 KEY = ('<symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/>'
@@ -257,5 +258,6 @@ def svg(conn, chapters=()):
             if pk or ref:
                 g.append('<use href="#erd-key" class="key %s" x="4" y="%d" width="14" height="9"/>' % ("pk" if pk else "fk", base - 11))
             g.append('<text class="col" x="21" y="%d">%s</text>' % (base - 3, c))
+            g.append('<text class="type" x="%d" y="%d" text-anchor="end">%s</text>' % (w - 6, base - 3, typ))
         out.append("\n".join(g) + "</g>")
     return "\n".join(out) + "\n</svg>\n"

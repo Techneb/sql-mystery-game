@@ -411,6 +411,21 @@ class Erd(unittest.TestCase):
         s.encode("ascii")
         conn.close()
 
+    def test_every_column_shows_its_type_right_aligned(self):
+        import erd, re
+        conn, V = g.build_db(1912)
+        tables, _ = erd.read_schema(conn)
+        s = erd.svg(conn, [ch["tables"] for ch in plot.CHAPTERS])
+        for t, cols in tables.items():
+            block = s.split('data-table="%s"' % t)[1].split("</g>")[0]
+            types = re.findall(r'<text class="type" x="(\d+)" y="\d+" text-anchor="end">(\w+)</text>', block)
+            self.assertEqual([typ for _, typ in types], [typ for _, typ, _, _ in cols], t)
+            self.assertTrue(all(typ for _, typ, _, _ in cols), t)   # every column declares a type
+            self.assertEqual({int(x) for x, _ in types}, {erd.W - 6}, t)
+            for c, typ, _, _ in cols:   # name and type never meet (widths measured in Chrome, rounded up)
+                self.assertLessEqual(21 + erd.NAME_PX * len(c) + 8 + erd.TYPE_PX * len(typ), erd.W - 6, "%s.%s" % (t, c))
+        conn.close()
+
     def test_lines_clear_every_table(self):
         import erd
         conn, V = g.build_db(1912)
