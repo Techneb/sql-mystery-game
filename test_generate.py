@@ -183,6 +183,14 @@ class PartI(unittest.TestCase):
         self.assertFalse(set(q("SELECT guest_name FROM hotel_register WHERE id >= 20000")) & planted)
         self.assertEqual(q("SELECT MAX(id) FROM telegram"), [9001])
 
+    def test_id_joins_across_tables_do_not_list_the_plot(self):
+        # a student joined police_report.id = interview.person_id (meaningless): when the hotel guests sat above the
+        # census, only the cast's ids could meet another table's, and the 4 rows were the planted interviews
+        for (t,) in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name <> 'person'").fetchall():
+            names = [n for (n,) in self.conn.execute("SELECT i.person_name FROM %s x JOIN interview i ON x.id = i.person_id" % t)]
+            planted = [n for n in names if n not in g.GUESTS]
+            self.assertLessEqual(10 * len(planted), len(names), (t, planted))
+
     def test_transcripts_write_dates_in_english(self):
         for (t,) in self.conn.execute("SELECT transcript FROM interview"):
             self.assertNotRegex(t, r"1912\d{4}")

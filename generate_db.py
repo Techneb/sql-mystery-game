@@ -582,14 +582,17 @@ def plant_part1(conn, V, r):
         book(c, 50 + k, rc.choice(GUESTS), rc.choice(free3), rc.randint(V["compete_suite2_price"] + 1, 239), d, _add_days(d, 4))
     # --- ch3: the interview and the cab; the solution's WHERE must match this DELETE
     c.execute("INSERT INTO interview VALUES (1,?,?,?)", ("Lord Ashcombe", T,
-        "I was at the Opera until one. My valet saw a man in an English coat leave by the service door "
-        "and take a motor-cab on the Place. He says the plate began with {plate_prefix}, the rest he could not read. "
+        "I was at the Opera until one, and back at the Ritz and asleep before two. My valet, who sleeps less, had stepped "
+        "out on the Place Vendome for a cigarette when a man in an English coat came out of the hotel by the service door "
+        "and took a motor-cab there. He says the plate began with {plate_prefix}, the rest he could not read. "
         "The fellow tipped in English coins.".format(**V)))
     c.execute("DELETE FROM cab_ride WHERE date=? AND pickup='Place Vendome' AND time>=200 AND plate LIKE ?", (T, V["plate_prefix"] + "%"))
     c.execute("DELETE FROM cab_ride WHERE date=? AND currency='pound' AND plate LIKE ?", (T, V["plate_prefix"] + "%"))
-    # decoys: same prefix that night elsewhere in francs, and paid in pounds from Vendome the evening before
+    # decoys: same prefix that night from the Opera in francs, and paid in pounds from Vendome the evening before
     c.execute("INSERT INTO cab_ride VALUES (2,?,?,140,'Opera',?,5,'franc')", (V["plate_prefix"] + "107", T, "3 rue Blanche"))
     c.execute("INSERT INTO cab_ride VALUES (3,?,?,2310,'Place Vendome',?,1,'pound')", (V["plate_prefix"] + "290", E, "9 rue Royale"))
+    # and a second plate with that prefix leaves the Place Vendome after the lift, in francs: the valet's square is no shortcut
+    c.execute("INSERT INTO cab_ride VALUES (4,?,?,230,'Place Vendome',?,7,'franc')", (V["plate_prefix"] + ("563" if V["plate"][-3:] != "563" else "564"), T, "18 rue de Clichy"))
     # --- compete ch3: the rival despatcher is sure of two figures, the start and the figure before the last, so the
     #     plate needs LIKE with _ ('75-9_7_'). That night no other plate fits both; one fits the start alone (and drops
     #     at Gare Saint-Lazare, where the old variant looked), one the figure alone; a plate fitting both rides other days.
@@ -882,25 +885,41 @@ def scatter_planted(conn, noise, r, keep):
     foreign keys follow the swap. Only the ids pinned in V (`keep`, per table, drawn inside the noise range) and the
     Part II code wire stay put, and nothing may name a planted row by a literal id outside plant_part1 / plant_part2."""
     tables = [t for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
-    refs = {t: [] for t in tables}
-    for t in tables:
-        for fk in conn.execute("PRAGMA foreign_key_list(%s)" % t):
-            refs[fk[2]].append((t, fk[3]))
+    refs = fk_refs(conn)
+    planted = {}   # each table's planted ids once swapped (link_tables keeps the hotel guests off them)
     conn.commit()
     conn.execute("PRAGMA foreign_keys = OFF")   # the swap moves parent and children in three steps
     for t in tables:
         ids = {i for (i,) in conn.execute("SELECT id FROM %s" % t)}
         pool = sorted(ids & noise[t])
         pool = pool[len(pool) // 4: 3 * len(pool) // 4]
+        planted[t] = ids & keep.get(t, set())
         for a in sorted(ids - noise[t] - keep.get(t, set())):
             b = pool.pop(r.randrange(len(pool)))
-            for x, y in ((a, -1), (b, a), (-1, b)):
-                conn.execute("UPDATE %s SET id=? WHERE id=?" % t, (y, x))
-                for rt, col in refs[t]:
-                    conn.execute("UPDATE %s SET %s=? WHERE %s=?" % (rt, col, col), (y, x))
+            swap_ids(conn, t, a, b, refs)
+            planted[t].add(b)
     conn.commit()
     conn.execute("PRAGMA foreign_keys = ON")
     assert not conn.execute("PRAGMA foreign_key_check").fetchall(), "scatter_planted broke a foreign key"
+    return planted
+
+
+def fk_refs(conn):
+    """{parent table: [(child table, column)]} from the declared foreign keys."""
+    tables = [t for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    refs = {t: [] for t in tables}
+    for t in tables:
+        for fk in conn.execute("PRAGMA foreign_key_list(%s)" % t):
+            refs[fk[2]].append((t, fk[3]))
+    return refs
+
+
+def swap_ids(conn, t, a, b, refs):
+    """Rows a and b of t trade ids, every foreign key following its row (call with foreign_keys OFF)."""
+    for x, y in ((a, -1), (b, a), (-1, b)):
+        conn.execute("UPDATE %s SET id=? WHERE id=?" % t, (y, x))
+        for rt, col in refs[t]:
+            conn.execute("UPDATE %s SET %s=? WHERE %s=?" % (rt, col, col), (y, x))
 
 
 GUEST_DRINKS = ["absinthe, louched", "tea with three lumps", "hot chocolate", "Vichy water", "a Kir", "lemonade on ice",
@@ -916,18 +935,30 @@ GUEST_REMARKS = ["Always settles. Eventually.", "Charming. Sings in the bath.", 
                  "Prefers the garden side.", "Never before noon.", "A delight, by all accounts but his own.", None]
 
 
-def link_tables(conn, V, r):
+def link_tables(conn, V, r, planted):
     """The links between tables, added once every row is planted and the ids are final (after scatter_planted).
     Each is read from the data itself, so no puzzle changes: an interview's speaker, a cab's dropoff address, and a
     guest card (1:1 with a person; fun only, never a clue, and none for the cast)."""
     c = conn.cursor()
-    # the hotel guests who talk to the police join the census (ids above the noise range)
+    # the hotel guests who talk to the police join the census: appended above the noise, then each trades ids with a
+    # random noise person, so interview.person_id spreads over the census like the cast's ids do. Left at the top, the
+    # cast would be the only speakers whose person_id another table's id can meet (a meaningless
+    # police_report.id = interview.person_id join listed only the planted interviews).
     guest_id = {name: 6000 + i for i, name in enumerate(GUESTS)}
     homes = [a for (a,) in c.execute(   # any address but the two boarding houses, whose tenants ch5 counts (5)
         "SELECT id FROM address WHERE NOT (number=? AND street=?) AND NOT (number=? AND street=?) ORDER BY id",
         (V["fence_number"], V["fence_street"], V["compete_fence_number"], V["compete_fence_street"])).fetchall()]
     c.executemany("INSERT INTO person VALUES (?,?,?,?,?,?)",
         [(guest_id[n], n, r.choice(NATION), r.randint(1840, 1894), r.choice(OCCUP), r.choice(homes)) for n in GUESTS])
+    noise_people = sorted(i for (i,) in c.execute("SELECT id FROM person WHERE id BETWEEN 100 AND 5099") if i not in planted)
+    refs = fk_refs(conn)
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys = OFF")
+    for n, b in zip(GUESTS, r.sample(noise_people, len(GUESTS))):
+        swap_ids(conn, "person", guest_id[n], b, refs)
+        guest_id[n] = b
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys = ON")
     c.execute("ALTER TABLE interview ADD COLUMN person_id INTEGER REFERENCES person(id)")
     for (iid, name) in c.execute("SELECT id, person_name FROM interview").fetchall():
         pid = guest_id.get(name) or c.execute("SELECT MIN(id) FROM person WHERE name=?", (name,)).fetchone()[0]
@@ -976,9 +1007,9 @@ def build_db(seed):
              for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     plant_part1(conn, V, r)
     plant_part2(conn, V, r)
-    scatter_planted(conn, noise, r, keep={"police_report": {V["report_id"], V["compete_report_id"]}, "bank_account": set(V["accounts"]),
+    planted = scatter_planted(conn, noise, r, keep={"police_report": {V["report_id"], V["compete_report_id"]}, "bank_account": set(V["accounts"]),
                                           "telegram": {V["night_telegram_id"], V["compete_telegram_id"], 9001}})
-    link_tables(conn, V, r)
+    link_tables(conn, V, r, planted["person"])
     clock_times(conn)
     # The ch.1 decoy (the eve's Ritz theft): a wrong answer the site's "Filed Under the 17th" badge recognises,
     # looked up after scatter_planted moved it. Shipped in chapters.json, so it must never be the answer.

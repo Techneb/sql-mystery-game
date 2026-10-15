@@ -180,7 +180,7 @@ values per season seed). The shapes:
    `75-`, so the prefix before the dash says nothing) and of the figure before the last: `plate LIKE '75-9_7_'`
    with the date. That night a plate fits the start alone (dropping at Gare Saint-Lazare, so the old drop-off
    query finds it) and one the figure alone; a plate fitting both rides on other days.
-4. GROUP BY / HAVING: the address visited on three different days of the week before the theft,
+4. GROUP BY / HAVING: the address visited on three different days of the week of the theft,
    `HAVING COUNT(DISTINCT date) >= 3`; a wedding brings the cab to one door four times on one day (so
    `COUNT(*) >= 3` returns two addresses and `ORDER BY COUNT(*)` the wedding); Gare de Lyon on two days of the
    week and one before it.
