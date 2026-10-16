@@ -27,7 +27,8 @@
     <a href="joins.html">7. JOIN</a>
     <a href="case-when.html">8. CASE</a>
     <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="ctes.html">10. CTEs</a>
+    <a href="strict-sql.html">11. Strict SQL</a></nav>
 <main class="learn">
 <h1>GROUP BY, aggregates and HAVING</h1>
 <p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
@@ -111,7 +112,7 @@
 <p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page.</p>
 
 <h2>Common mistakes</h2>
-<p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which SQLite allows and fills with an arbitrary value. Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
+<p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which SQLite allows and fills with an arbitrary value, and which PostgreSQL and the game's terminal refuse (see <a href="strict-sql.html#group-by">Strict SQL</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="joins.html">Next: JOIN, LEFT JOIN and self-joins</a></nav>

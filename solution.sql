@@ -292,7 +292,7 @@ WITH RECURSIVE flows AS (
     AND type = 'transfer'
   GROUP BY account_id, counterparty_id
 ), chain(account_id, amount, hop) AS (
-  SELECT 3213, 40000, 0
+  SELECT 3213, CAST(40000 AS BIGINT), 0
   UNION ALL
   SELECT f.counterparty_id, f.amount, c.hop + 1
   FROM chain AS c

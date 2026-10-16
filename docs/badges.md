@@ -47,7 +47,7 @@ new investigation to hunt for them. Keep this page in step with `BADGES` when a 
 | Needle | A query that returns exactly one row. |
 | Haystack | A query that returns more than 200 rows (more than the screen shows). |
 | Ghost Hunter | A query that runs without error and returns no rows. |
-| Typo | Five queries in a row that end in an error. |
+| Typo | Five queries in a row that end in an error (a strict-terminal refusal counts as one). |
 
 ## Wrong answers on purpose
 

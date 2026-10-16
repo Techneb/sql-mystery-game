@@ -27,7 +27,8 @@
     <a href="joins.html">7. JOIN</a>
     <a href="case-when.html">8. CASE</a>
     <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="ctes.html">10. CTEs</a>
+    <a href="strict-sql.html">11. Strict SQL</a></nav>
 <main class="learn">
 <h1>SELECT and WHERE</h1>
 <p class="game-label">Game: chapter <a href="../">I</a></p>
@@ -113,7 +114,7 @@
 <p>Start wide and narrow down. Look at a few rows of the table first, then add one condition at a time and check that each one removes what you expected. When a result is empty, remove the last condition and look at what was there before it. Reading the result after every step is faster than writing a long query and wondering why it returns nothing.</p>
 
 <h2>Common mistakes</h2>
-<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, and SQLite only falls back to treating it as text when no such column exists, which hides the mistake until the day a column of that name appears. Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
+<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, and SQLite only falls back to treating it as text when no such column exists, which hides the mistake until the day a column of that name appears. PostgreSQL, and the game's terminal, refuse it (see <a href="strict-sql.html#double-quotes">Strict SQL</a>). Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter I, <i>The Night of the 17th</i>, practises SELECT and WHERE.</p>
 <nav class="learn-pager"><a class="prev" href="schema.html">Previous: Tables, keys and the schema</a><a class="next" href="order-by-limit.html">Next: ORDER BY and LIMIT</a></nav>

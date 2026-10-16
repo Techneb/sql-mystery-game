@@ -299,6 +299,14 @@ framework, no bundler.
    `assets-source/` in the repo (Mac only). 2026-10-10: a regression playthrough of chapters 1-12 on the live site
   (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial set for 2026-10-14; the
   compete and admin design for it is `2026-10-10-compete-admin-design.md`. Still open: `RANKS` from real query counts.
+  2026-10-16: the strict terminal (owner's decision: PostgreSQL is the yardstick, always on in learn and compete).
+  `strictCheck` in `site/app.js` refuses, before sql.js runs it, what PostgreSQL would reject (ungrouped columns,
+  HAVING and ORDER BY after grouping, DISTINCT with an unselected sort, double-quoted text, `==`, type clashes,
+  aliases in WHERE/HAVING, non-boolean conditions, SQLite-only syntax), with PostgreSQL's error line, a plain-English
+  fix and a link to the new handbook page `learn/strict-sql.html`; LIKE is case-sensitive and ILIKE is added, in the
+  browser and in the build. A query that errors still counts but is no longer kept in History. Every plot query and
+  `solution.sql` pass the checker (two rewritten: ch10's `SUM(condition)` trap, ch12's recursive seed cast to BIGINT).
+  Not yet checked in a real browser.
 
 ## 8. Backlog (not scheduled)
 
