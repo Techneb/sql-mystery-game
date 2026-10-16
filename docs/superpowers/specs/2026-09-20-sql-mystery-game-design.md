@@ -297,7 +297,7 @@ framework, no bundler.
    comma-join guard is enough). Compete stays honour-based against a student who posts a rival's start first.
    2026-10-09: the OpenGen source clips and uncropped originals moved from `~/Downloads` to the gitignored
    `assets-source/` in the repo (Mac only). 2026-10-10: a regression playthrough of chapters 1-12 on the live site
-  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial set for 2026-10-14; the
+  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial: students played the game (reported 2026-10-15); the
   compete and admin design for it is `2026-10-10-compete-admin-design.md`. Still open: `RANKS` from real query counts.
   2026-10-16: the strict terminal (owner's decision: PostgreSQL is the yardstick, always on in learn and compete).
   `strictCheck` in `site/app.js` refuses, before sql.js runs it, what PostgreSQL would reject (ungrouped columns,
@@ -306,7 +306,17 @@ framework, no bundler.
   fix and a link to the new handbook page `learn/grammar.html`; LIKE is case-sensitive and ILIKE is added, in the
   browser and in the build. A query that errors still counts but is no longer kept in History. Every plot query and
   `solution.sql` pass the checker (two rewritten: ch10's `SUM(condition)` trap, ch12's recursive seed cast to BIGINT).
-  Not yet checked in a real browser.
+  Checked in Chrome (refusals, ILIKE with ESCAPE, both editions). Kept on purpose although PostgreSQL accepts it: an
+  INTEGER column against a quoted number is refused (a teaching rule, owner). The handbook page presents the rules as
+  how SQL is written, never as a strict mode ("The Grammar of SQL", owner). A Fable review found no false refusal in
+  1,100+ queries; its fixes (suggestions that run in sql.js, `::` and left/right refusals, the full schema in the
+  plot-query test, a cached test build) shipped the same day, and the unused `admin: "update"` action was removed from
+  `apps_script.gs` (redeployed by the owner).
+  2026-10-15/16, from the class trial's student reports: the meaningless `police_report.id = interview.person_id`
+  join no longer lists only the planted witnesses (guests trade census ids with the noise; a test covers every
+  table), ch3's interview no longer reads as if the valet were at the Opera (a second 75-2 cab leaves Vendome that
+  night), the schema shows each column's type, and an outside editor's English and coherence pass was applied
+  (compete ch2 now has Ganimard's "Lupin has no friends, clerk, only names"). Still open: `RANKS` from real query counts.
 
 ## 8. Backlog (not scheduled)
 
