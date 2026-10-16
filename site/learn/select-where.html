@@ -23,12 +23,16 @@
     <span class="current" aria-current="page">3. SELECT</span>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a>
-    <a href="grammar.html">11. Grammar</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="window-functions.html">12. Windows</a>
+    <a href="ctes.html">13. CTEs</a>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
 <main class="learn">
 <h1>SELECT and WHERE</h1>
 <p class="game-label">Game: chapter <a href="../">I</a></p>
@@ -83,7 +87,7 @@
 <tr><td>Carrot cake slice</td><td>cake</td><td>3.2</td></tr>
 <tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
 </table>
-<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero.</p>
+<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero; the <a href="dates-times.html">dates and times page</a> explains why.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">IN</span> (<span class="sql-str">'2026-03-07'</span>, <span class="sql-str">'2026-03-08'</span>)
@@ -98,7 +102,7 @@
 </table>
 
 <h2>Missing values: IS NULL</h2>
-<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>.</p>
+<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>

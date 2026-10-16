@@ -23,12 +23,16 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <span class="current" aria-current="page">7. JOIN</span>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a>
-    <a href="grammar.html">11. Grammar</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <span class="current" aria-current="page">8. JOIN</span>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="window-functions.html">12. Windows</a>
+    <a href="ctes.html">13. CTEs</a>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
 <main class="learn">
 <h1>JOIN, LEFT JOIN and self-joins</h1>
 <p class="game-label">Game: chapters <a href="../">V</a>, <a href="../">VI</a>, <a href="../">IX</a> and <a href="../">X</a></p>
@@ -120,7 +124,7 @@
 <p>Forgetting the <code>ON</code> condition, or listing two tables separated by a comma with no condition: every row is paired with every other row, and a few thousand rows become millions. Joining on the wrong columns, such as <code>o.id = c.id</code>, which runs without error and returns nonsense. Leaving a column name unprefixed when both tables have it. Summing after a join that has duplicated rows. Filtering a left join's right-hand table in <code>WHERE</code> and losing the unmatched rows you wanted to keep.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter V, <i>The Boarding House</i>, introduces JOIN; Chapter VI, <i>Follow the Francs</i>, chains three; Chapter IX, <i>The Trunk</i>, joins inside a CTE; Chapter X, <i>Never Seen Together</i>, practises the self-join.</p>
-<nav class="learn-pager"><a class="prev" href="group-by-having.html">Previous: GROUP BY, aggregates and HAVING</a><a class="next" href="case-when.html">Next: CASE WHEN</a></nav>
+<nav class="learn-pager"><a class="prev" href="group-by-having.html">Previous: GROUP BY, aggregates and HAVING</a><a class="next" href="nulls.html">Next: NULL and missing values</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

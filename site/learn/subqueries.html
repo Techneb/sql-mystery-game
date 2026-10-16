@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subqueries -- The Ritz Affair</title>
+<meta name="description" content="SQL subqueries explained: scalar subqueries, IN, EXISTS and NOT EXISTS, correlated subqueries and derived tables in FROM, and when a JOIN or a CTE reads better. A beginner&#x27;s guide with SQLite examples.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+</header>
+<nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">1. Database</a>
+    <a href="schema.html">2. Schema</a>
+    <a href="select-where.html">3. SELECT</a>
+    <a href="order-by-limit.html">4. ORDER BY</a>
+    <a href="like.html">5. LIKE</a>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <span class="current" aria-current="page">11. Subqueries</span>
+    <a href="window-functions.html">12. Windows</a>
+    <a href="ctes.html">13. CTEs</a>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
+<main class="learn">
+<h1>Subqueries</h1>
+<p class="game-label">Game: chapters <a href="../">VII</a> and <a href="../">VIII</a></p>
+<p class="lede">A query returns a table, a list or a single value, and each of those can be used inside another query. That is a subquery: a question asked in the middle of a bigger one.</p>
+
+<h2>A query in brackets</h2>
+<p>A subquery is a complete <code>SELECT</code> written between parentheses inside another statement. The database works it out and uses its result where the brackets stand. What you may do with it depends on the shape of that result:</p>
+<table class="result">
+<tr><th>The subquery returns</th><th>It can stand</th><th>Example</th></tr>
+<tr><td>one value (one row, one column)</td><td>wherever a value can: WHERE, SELECT, HAVING</td><td><code>price &gt; (SELECT AVG(price) FROM product)</code></td></tr>
+<tr><td>one column, any number of rows</td><td>after IN or NOT IN</td><td><code>id IN (SELECT customer_id FROM orders)</code></td></tr>
+<tr><td>any rows at all</td><td>after EXISTS or NOT EXISTS</td><td><code>EXISTS (SELECT 1 FROM orders WHERE ...)</code></td></tr>
+<tr><td>a whole table</td><td>in FROM, with an alias</td><td><code>FROM (SELECT ...) AS per_order</code></td></tr>
+</table>
+<p>The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
+
+<h2>One value: the scalar subquery</h2>
+<p>Which products cost more than the average product? The average is a fact about the whole table, while the filter works row by row, so a single query level cannot do both: <code>WHERE price &gt; AVG(price)</code> is refused, because <code>WHERE</code> runs before any aggregate exists (see the <a href="group-by-having.html">GROUP BY page</a>). A subquery computes the average first and hands the number to the outer query.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">price</span> - (<span class="sql-kw">SELECT</span> <span class="sql-fn">AVG</span>(<span class="sql-id">price</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">above_average</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; (<span class="sql-kw">SELECT</span> <span class="sql-fn">AVG</span>(<span class="sql-id">price</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th><th>above_average</th></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td><td>1.66</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td><td>1.06</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td><td>0.96</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td><td>0.96</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td><td>0.36</td></tr>
+</table>
+<p>The same subquery appears twice, once to filter and once to display the difference; both evaluate to the same 2.84. A scalar subquery must return at most one row and one column. With no row it gives NULL. With several rows PostgreSQL stops with an error ("more than one row returned by a subquery used as an expression"), while SQLite quietly takes the first row and carries on, which is worse: the query runs and the answer is wrong. If a subquery could ever return more than one row, it does not belong after <code>=</code> or <code>&gt;</code>.</p>
+
+<h2>A list: IN</h2>
+<p><code>x IN (subquery)</code> is true when <code>x</code> equals one of the values the subquery returns. Which customers bought at least one pastry? The subquery walks from the order lines to the orders and collects the customer ids; the outer query lists those customers.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
+             <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
+             <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
+             <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
+             <span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">category</span> = <span class="sql-str">'pastry'</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>town</th></tr>
+<tr><td>Alice Turner</td><td>Riverside</td></tr>
+<tr><td>Ben Okafor</td><td>Hillcrest</td></tr>
+<tr><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>David Chen</td><td>Old Town</td></tr>
+<tr><td>Emma Novak</td><td>Hillcrest</td></tr>
+</table>
+<p>A plain join would answer too, but it returns one row per pastry line, so a customer who bought pastries on two orders appears twice and you need <code>DISTINCT</code> to clean up. <code>IN</code> only asks a yes-or-no question about each customer, so every customer appears at most once. Choose the join when you need columns from the other tables in the result (which pastry, on which day); choose <code>IN</code> when the other tables only decide which rows to keep.</p>
+<p><code>NOT IN</code> is the opposite, with one serious trap: if the subquery's column contains a single NULL, <code>NOT IN</code> keeps no rows at all. The <a href="nulls.html">NULL page</a> shows it happening and how to avoid it.</p>
+
+<h2>Is there one? EXISTS and NOT EXISTS</h2>
+<p><code>EXISTS (subquery)</code> is true when the subquery returns at least one row, whatever is in it; <code>NOT EXISTS</code> is true when it returns none. What the subquery selects does not matter, which is why people write <code>SELECT 1</code>. The interesting part is its <code>WHERE</code>, which usually refers to the row of the outer query. Which customers have never placed an order?</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">c</span>.<span class="sql-id">joined</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
+<span class="sql-kw">WHERE</span> <span class="sql-kw">NOT</span> <span class="sql-kw">EXISTS</span> (<span class="sql-kw">SELECT</span> <span class="sql-num">1</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>joined</th></tr>
+<tr><td>Hugo Silva</td><td>2024-07-23</td></tr>
+</table>
+<p>Read it the way it is written: keep each customer <code>c</code> for whom there does not exist an order whose <code>customer_id</code> is <code>c.id</code>. <code>NOT EXISTS</code> does the same job as the <code>LEFT JOIN ... IS NULL</code> pattern of the <a href="joins.html">JOIN page</a>, and unlike <code>NOT IN</code> it is never fooled by NULL: a NULL simply matches nothing, so it never stops a row from qualifying.</p>
+
+<h2>Correlated subqueries</h2>
+<p>The subquery in the last example cannot run on its own: <code>c.id</code> belongs to the outer query. Such a subquery is <i>correlated</i>. Logically it is worked out again for every row of the outer query, with that row's values plugged in. (The database is free to find a faster plan, but the result must be the same as if it had.)</p>
+<p>Correlation answers questions that compare a row with its own group. Which products cost more than the average of their own category? The inner query uses a second alias, <code>q</code>, for the same table, and its condition ties it to the category of the outer row <code>p</code>.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">price</span> &gt; (<span class="sql-kw">SELECT</span> <span class="sql-fn">AVG</span>(<span class="sql-id">q</span>.<span class="sql-id">price</span>)
+                 <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">q</span>
+                 <span class="sql-kw">WHERE</span> <span class="sql-id">q</span>.<span class="sql-id">category</span> = <span class="sql-id">p</span>.<span class="sql-id">category</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>category</th><th>price</th></tr>
+<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td></tr>
+<tr><td>Rye loaf</td><td>bread</td><td>3.8</td></tr>
+<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
+<tr><td>Lemon tart</td><td>cake</td><td>3.9</td></tr>
+<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td></tr>
+</table>
+<p>A correlated subquery in <code>SELECT</code> computes one figure per row. Counting each customer's orders this way gives 0 for a customer who never came, with no join and no <code>COALESCE</code>: <code>COUNT</code> of no rows is 0.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>,
+       (<span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>orders</th></tr>
+<tr><td>Ben Okafor</td><td>2</td></tr>
+<tr><td>Emma Novak</td><td>2</td></tr>
+<tr><td>Hugo Silva</td><td>0</td></tr>
+</table>
+<p>Always qualify the columns inside a correlated subquery. If the inner condition said <code>WHERE q.category = category</code>, the bare <code>category</code> would be read as <code>q.category</code>, the nearest table that has one, and the condition would compare each row with itself: always true, no error, wrong answer.</p>
+
+<h2>A table: subqueries in FROM</h2>
+<p>A subquery in <code>FROM</code>, often called a derived table, is used like a table: the outer query selects from it, filters it, joins it. It is the classic answer to "an aggregate of an aggregate". How many lines does an order have, on average? First count the lines of each order, then average those counts.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">lines</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_lines</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">lines</span>) <span class="sql-kw">AS</span> <span class="sql-id">most_lines</span>
+<span class="sql-kw">FROM</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
+      <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
+      <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">order_id</span>) <span class="sql-kw">AS</span> <span class="sql-id">per_order</span>;</code></pre>
+<table class="result">
+<tr><th>orders</th><th>average_lines</th><th>most_lines</th></tr>
+<tr><td>14</td><td>1.64</td><td>2</td></tr>
+</table>
+<p>Give the derived table an alias (<code>AS per_order</code>): PostgreSQL required one until version 16, and a name says what the step holds. The columns of the outer query are those the subquery selects, under the names it gives them, so <code>lines</code> exists out here only because the inner query wrote <code>AS lines</code>.</p>
+
+<h2>When a JOIN or a CTE reads better</h2>
+<p>Subqueries nest, and nesting is where they stop being pleasant: a derived table inside a derived table with an <code>IN</code> inside that is read from the inside out, which is the opposite of how people read. A <a href="ctes.html">CTE</a> takes the same subquery out of the brackets, gives it a name and puts it first, so the query reads top to bottom. It also lets you use a step twice without writing it twice, and look at each step on its own while you build.</p>
+<p>The category comparison above, rewritten with a CTE and a join, computes each category's average once and can show it next to each product, which the correlated version could not do without repeating itself.</p>
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">category_average</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">AVG</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">average</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+  <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+)
+<span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">price</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">a</span>.<span class="sql-id">average</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">category_average</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">category_average</span> <span class="sql-kw">AS</span> <span class="sql-id">a</span> <span class="sql-kw">ON</span> <span class="sql-id">a</span>.<span class="sql-id">category</span> = <span class="sql-id">p</span>.<span class="sql-id">category</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">price</span> &gt; <span class="sql-id">a</span>.<span class="sql-id">average</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>category</th><th>price</th><th>category_average</th></tr>
+<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td><td>3.32</td></tr>
+<tr><td>Rye loaf</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
+<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
+<tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.3</td></tr>
+<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.73</td></tr>
+</table>
+<p>A rough guide. Use a scalar subquery for one number you compare against. Use <code>IN</code> or <code>EXISTS</code> when other tables only decide which rows to keep. Use a join when you need their columns in the result. Use a CTE as soon as a subquery grows past a few lines, appears twice, or would sit inside another one. All of them can express most questions; pick the one a reader will understand first.</p>
+
+<h2>Common mistakes</h2>
+<p>A scalar subquery that can return several rows, which PostgreSQL refuses and SQLite quietly cuts down to its first row. <code>NOT IN</code> over a column that may hold NULL. Unqualified columns inside a correlated subquery, which bind to the inner table. Forgetting the alias of a derived table, or referring outside it to a column it did not select. Writing <code>= (SELECT ...)</code> where <code>IN (SELECT ...)</code> was meant. Nesting three levels deep when three named steps would read in one pass.</p>
+
+<p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, and Chapter VIII, <i>The First Order Before Dawn</i>, are where a subquery, or the CTE it can become, earns its place.</p>
+<nav class="learn-pager"><a class="prev" href="case-when.html">Previous: CASE WHEN</a><a class="next" href="window-functions.html">Next: Window functions: RANK and LAG</a></nav>
+</main>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+</body>
+</html>

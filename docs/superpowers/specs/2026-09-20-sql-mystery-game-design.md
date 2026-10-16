@@ -465,6 +465,9 @@ framework, no bundler.
   authorised), seen in AdSense > Sites on 2026-10-16 (account signed in as the AlephB address, not the owner's
   personal one). Google's criteria: substantial unique value, a consistent web presence, and real user interest.
   A re-review can be requested from that page once fixed; not requested yet.
+  **2026-10-16:** the handbook deepened for the re-review: four new pages (dates and times stored as text or
+  numbers, NULL and missing values, subqueries, and fourteen graded exercises with hidden solutions), fifteen
+  numbered pages in all, The Grammar of SQL still last; every example rerun on the bakery script.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the

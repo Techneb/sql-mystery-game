@@ -23,12 +23,16 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <span class="current" aria-current="page">10. CTEs</span>
-    <a href="grammar.html">11. Grammar</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="window-functions.html">12. Windows</a>
+    <span class="current" aria-current="page">13. CTEs</span>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
 <main class="learn">
 <h1>CTEs and WITH RECURSIVE</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a>, <a href="../">IX</a> and <a href="../">XII</a></p>
@@ -137,7 +141,7 @@
 <p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE generation &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates. Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
-<nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a><a class="next" href="grammar.html">Next: The Grammar of SQL</a></nav>
+<nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a><a class="next" href="exercises.html">Next: SQL exercises with solutions</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

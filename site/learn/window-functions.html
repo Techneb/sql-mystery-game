@@ -23,12 +23,16 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <span class="current" aria-current="page">9. Windows</span>
-    <a href="ctes.html">10. CTEs</a>
-    <a href="grammar.html">11. Grammar</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <span class="current" aria-current="page">12. Windows</span>
+    <a href="ctes.html">13. CTEs</a>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
 <main class="learn">
 <h1>Window functions: RANK and LAG</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a> and <a href="../">XI</a></p>
@@ -118,7 +122,7 @@
 <p>Using a window function in <code>WHERE</code> or <code>HAVING</code> instead of filtering in an outer query. Omitting <code>PARTITION BY</code>, so that the window runs across groups. Omitting the <code>ORDER BY</code> inside <code>OVER</code>, which makes <code>LAG</code> and <code>ROW_NUMBER</code> depend on an arbitrary order. Confusing the <code>ORDER BY</code> inside the window, which drives the computation, with the one at the end of the query, which only sorts the output. Choosing <code>ROW_NUMBER</code> when ties should share a place, or <code>RANK</code> when exactly one row per group is wanted.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, practises RANK() OVER with a CTE; Chapter XI, <i>The Silence</i>, practises LAG() OVER.</p>
-<nav class="learn-pager"><a class="prev" href="case-when.html">Previous: CASE WHEN</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
+<nav class="learn-pager"><a class="prev" href="subqueries.html">Previous: Subqueries</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

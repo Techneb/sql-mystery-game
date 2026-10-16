@@ -23,6 +23,10 @@
 .learn .result td { border-bottom: 1px solid var(--rule); padding: 3px 12px 3px 0; vertical-align: top; }
 .learn .in-game { border-top: 2px solid var(--ink); margin-top: 28px; padding-top: 8px; }
 .learn details.script summary { cursor: pointer; font-weight: 700; }
+/* exercises.html: each solution hidden in a <details> until opened (no JavaScript) */
+.learn .exercise { margin: 18px 0 4px; }
+.learn details.solution { margin: 0 0 12px; padding: 4px 10px; border-left: 2px solid var(--rule); }
+.learn details.solution summary { cursor: pointer; font-weight: 700; }
 .learn .toc li { margin: 4px 0; }
 /* page menu in reading order and previous/next links: copied by hand on every page, test_site.mjs checks they agree */
 .learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }

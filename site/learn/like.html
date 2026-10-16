@@ -23,12 +23,16 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <span class="current" aria-current="page">5. LIKE</span>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a>
-    <a href="grammar.html">11. Grammar</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="window-functions.html">12. Windows</a>
+    <a href="ctes.html">13. CTEs</a>
+    <a href="exercises.html">14. Exercises</a>
+    <a href="grammar.html">15. Grammar</a></nav>
 <main class="learn">
 <h1>LIKE and text patterns</h1>
 <p class="game-label">Game: chapter <a href="../">III</a></p>
@@ -112,7 +116,7 @@
 <p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> ignores case: in PostgreSQL and in the game it does not, and <code>ILIKE</code> does. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>
 
 <p class="in-game"><b>In the game:</b> Chapter III, <i>A Plate in the Dark</i>, practises LIKE.</p>
-<nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
+<nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="dates-times.html">Next: Dates and times stored as text or numbers</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>
