@@ -73,8 +73,32 @@ CREATE TABLE lift_log (
 """
 
 
+def ilike(pattern, value, escape=None):
+    """Case-insensitive LIKE, as site/app.js ilike(): the terminal runs ILIKE as REGEXP bound to it."""
+    if pattern is None or value is None:
+        return None
+    out, chars = [], iter(str(pattern))
+    for ch in chars:
+        out.append(re.escape(next(chars, "")) if escape is not None and ch == str(escape)
+                   else ".*" if ch == "%" else "." if ch == "_" else re.escape(ch))
+    return int(re.fullmatch("".join(out), str(value), re.I | re.S) is not None)
+
+
+def sqlite_sql(sql):
+    """site/app.js toSqlite: ILIKE becomes REGEXP (strings untouched)."""
+    return re.sub(r"('(?:[^']|'')*')|\bILIKE\b", lambda m: m.group(1) or "REGEXP", sql, flags=re.I)
+
+
+def strict_conn(conn):
+    """The terminal's semantics (PostgreSQL's): LIKE is case-sensitive, ILIKE is not."""
+    conn.execute("PRAGMA case_sensitive_like = ON")
+    conn.create_function("regexp", 2, ilike)
+    conn.create_function("regexp", 3, ilike)
+    return conn
+
+
 def empty_db():
-    conn = sqlite3.connect(":memory:")
+    conn = strict_conn(sqlite3.connect(":memory:"))
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(DDL)
     return conn
@@ -991,7 +1015,7 @@ def build_db(seed):
 def check_discovery(conn, V, ch, compete=False):
     """Each chapter's discovery queries must actually surface the fact the story withholds."""
     for d in ch.get("discovery_compete" if compete else "discovery", []):
-        rows = conn.execute(d["query"].format(**V)).fetchall()
+        rows = conn.execute(sqlite_sql(d["query"].format(**V))).fetchall()
         if "row_count" in d:
             assert len(rows) == d["row_count"], \
                 "chapter %s discovery: got %d rows, expected %d (%s)" % (ch["n"], len(rows), d["row_count"], d["query"])
@@ -1010,18 +1034,43 @@ def check_chapter(conn, V, ch, compete=False):
     check_discovery(conn, V, ch, compete)
     suf = "_compete" if compete else ""
     want = normalise(str(V[ch["answer_key" + suf]]))
-    rows = conn.execute(ch["solution" + suf].format(**V)).fetchall()
+    rows = conn.execute(sqlite_sql(ch["solution" + suf].format(**V))).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
         "chapter %d%s: solution returned %r" % (ch["n"], suf, rows[:3])
-    for trap in ch.get("traps" + suf, []):   # other plausible shortcuts that must not reach the answer
-        rows = conn.execute(trap.format(**V)).fetchall()
+    for trap in [v for t in ch.get("traps" + suf, []) for v in like_variants(t.format(**V))]:   # other plausible shortcuts that must not reach the answer
+        rows = conn.execute(sqlite_sql(trap)).fetchall()
         assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap %r does not bite" % (ch["n"], suf, trap)
-    rows = conn.execute(ch["naive" + suf].format(**V)).fetchall()
+    rows = conn.execute(sqlite_sql(ch["naive" + suf].format(**V))).fetchall()
     naive_rows = ch["naive_rows" + suf]
     assert naive_rows is None or len(rows) == naive_rows, \
         "chapter %d%s: naive returned %d rows, expected %d" % (ch["n"], suf, len(rows), naive_rows)
     assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap does not bite" % (ch["n"], suf)
     return len(rows)
+
+
+def like_variants(sql):
+    """A LIKE trap also as ILIKE: the terminal offers both, so neither may reach the answer."""
+    return [sql] + [re.sub(r"\bLIKE\b", "ILIKE", sql)] * bool(re.search(r"\bLIKE\b", sql))
+
+
+def plot_queries():
+    """Every plot query (learn and the compete seasons) and the schema, as JSON for test_site.mjs's strict-terminal test."""
+    out = []
+    for seed in [1912] + list(range(1, SEASONS + 1)):
+        V = plant_values(seed)
+        for ch in plot.CHAPTERS:
+            for k in ["solution", "naive", "solution_compete", "naive_compete"]:
+                if k in ch:
+                    out.append(["%d ch%d %s" % (seed, ch["n"], k), ch[k].format(**V)])
+            for k in ["traps", "traps_compete"]:
+                out += [["%d ch%d %s" % (seed, ch["n"], k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
+            for k in ["discovery", "discovery_compete"]:
+                out += [["%d ch%d %s" % (seed, ch["n"], k), d["query"].format(**V)] for d in ch.get(k, [])]
+    conn = empty_db()
+    clock_times(conn)
+    schema = {t: [[c[1], c[2], c[5]] for c in conn.execute("PRAGMA table_info(%s)" % t)]
+              for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    return {"schema": schema, "queries": out}
 
 
 def sha(s):
@@ -1199,7 +1248,11 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=1912)
     ap.add_argument("--season", type=int, help="build season-N.* for compete mode (re-draws the planted values)")
     ap.add_argument("--seasons", action="store_true", help="build every compete season, 1 to SEASONS (the deploy)")
+    ap.add_argument("--queries", action="store_true", help="print every plot query and the schema as JSON (test_site.mjs)")
     a = ap.parse_args(argv)
+    if a.queries:
+        print(json.dumps(plot_queries()))
+        return
     if a.seasons:
         for n in range(1, SEASONS + 1):
             main(["--season", str(n)])

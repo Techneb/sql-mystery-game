@@ -27,7 +27,8 @@
     <a href="joins.html">7. JOIN</a>
     <a href="case-when.html">8. CASE</a>
     <span class="current" aria-current="page">9. Windows</span>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="ctes.html">10. CTEs</a>
+    <a href="strict-sql.html">11. Strict SQL</a></nav>
 <main class="learn">
 <h1>Window functions: RANK and LAG</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a> and <a href="../">XI</a></p>
@@ -90,25 +91,25 @@
 <tr><td>3</td><td>2026-03-03</td><td>NULL</td></tr>
 <tr><td>3</td><td>2026-03-08</td><td>2026-03-03</td></tr>
 </table>
-<p>Dates written as text cannot be subtracted directly, but SQLite's <code>julianday()</code> turns a date into a number of days, so the difference between two of them is a gap in days. Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
+<p>Dates written as text cannot be subtracted directly. Every order here falls in March 2026, so the day of the month is enough: <code>substr</code> cuts it out of the text and <code>CAST(... AS INTEGER)</code> turns it into a number, and the difference between two of them is a gap in days. (SQLite's <code>julianday()</code> would handle any two dates, but PostgreSQL has no such function: there you would turn the text into a real date with <code>CAST(day AS DATE)</code> and subtract.) Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">visits</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>,
          <span class="sql-fn">LAG</span>(<span class="sql-id">day</span>) <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">previous_visit</span>
   <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 )
 <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">previous_visit</span>, <span class="sql-id">day</span>,
-       <span class="sql-fn">julianday</span>(<span class="sql-id">day</span>) - <span class="sql-fn">julianday</span>(<span class="sql-id">previous_visit</span>) <span class="sql-kw">AS</span> <span class="sql-id">gap_days</span>
+       <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) - <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">previous_visit</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">gap_days</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">visits</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">previous_visit</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">gap_days</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>
 <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>previous_visit</th><th>day</th><th>gap_days</th></tr>
-<tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5.0</td></tr>
-<tr><td>4</td><td>2026-03-02</td><td>2026-03-07</td><td>5.0</td></tr>
-<tr><td>5</td><td>2026-03-04</td><td>2026-03-08</td><td>4.0</td></tr>
+<tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5</td></tr>
+<tr><td>4</td><td>2026-03-02</td><td>2026-03-07</td><td>5</td></tr>
+<tr><td>5</td><td>2026-03-04</td><td>2026-03-08</td><td>4</td></tr>
 </table>
-<p>The same technique works with times: <code>ROUND((julianday('2000-01-01 ' || b) - julianday('2000-01-01 ' || a)) * 24 * 60)</code> gives the minutes between two <code>HH:MM</code> values on the same day; the <code>ROUND</code> removes the tiny error left by floating-point arithmetic.</p>
+<p>The same technique works with times: turning each <code>HH:MM</code> value into minutes, hours times sixty plus minutes, cut out and cast the same way, gives the minutes between two times on the same day.</p>
 
 <h2>Partitions matter</h2>
 <p>Forgetting <code>PARTITION BY</code> in a <code>LAG</code> is the classic error: the previous row then belongs to another customer, and the gap you compute is meaningless. Ask yourself, before you write the window, "previous within what?" The answer goes into <code>PARTITION BY</code>, and "previous in which order?" goes into <code>ORDER BY</code>. If the order can tie (two orders on the same day), add a second key so that "previous" is well defined.</p>

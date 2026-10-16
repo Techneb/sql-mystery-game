@@ -31,6 +31,23 @@ class Normalise(unittest.TestCase):
             self.assertEqual(g.normalise(raw), want, raw)
 
 
+class StrictSemantics(unittest.TestCase):
+    """The build checks queries as the terminal runs them: LIKE case-sensitive (PostgreSQL), ILIKE as REGEXP."""
+    def test_like_is_case_sensitive_and_ilike_is_not(self):
+        c = g.empty_db()
+        q = lambda sql: c.execute(g.sqlite_sql(sql)).fetchone()[0]
+        self.assertEqual(q("SELECT 'Hotel Ritz' LIKE '%ritz%'"), 0)
+        self.assertEqual(q("SELECT 'Hotel Ritz' ILIKE '%ritz%'"), 1)
+        self.assertEqual(q("SELECT 'Hotel Ritz' NOT ILIKE 'hotel_r%'"), 0)
+        self.assertEqual(q("SELECT '10%' ILIKE '10!%' ESCAPE '!'"), 1)
+        self.assertEqual(q("SELECT 'a.c' ILIKE 'abc'"), 0)
+        self.assertEqual(g.sqlite_sql("SELECT 1 WHERE a ILIKE 'ILIKE'"), "SELECT 1 WHERE a REGEXP 'ILIKE'")
+
+    def test_like_traps_are_also_checked_as_ilike(self):
+        self.assertEqual(g.like_variants("SELECT 1 WHERE a LIKE '%x%'"), ["SELECT 1 WHERE a LIKE '%x%'", "SELECT 1 WHERE a ILIKE '%x%'"])
+        self.assertEqual(g.like_variants("SELECT 1"), ["SELECT 1"])
+
+
 class Schema(unittest.TestCase):
     def test_tables_and_fks(self):
         conn = g.empty_db()
