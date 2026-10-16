@@ -251,15 +251,15 @@ export function cartesian(sql) {
   const body = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
   return /\bfrom\s+[a-z_][a-z0-9_]*(?:\s+(?:as\s+)?[a-z_][a-z0-9_]*)?\s*,\s*[a-z_]/i.test(body) && !/\b(?:where|on|using)\b/i.test(body);
 }
-// --- Strict terminal: PostgreSQL is the yardstick (learn/strict-sql.html) --------------------------------------
+// --- Strict terminal: PostgreSQL is the yardstick (learn/correct-sql.html) --------------------------------------
 // strictCheck parses a query with the schema in hand and refuses what PostgreSQL would reject but SQLite runs
 // anyway: ungrouped columns, aliases in WHERE, "text" in double quotes, ==, mixed types, a WHERE that is not a
 // condition, SQLite-only syntax. A refusal is { error, why, anchor }; null means run it. Anything the parser does
 // not know is let through (SQLite still reports its own errors): a false refusal is the worst bug here.
-export const STRICT_PAGE = "learn/strict-sql.html";
+export const STRICT_PAGE = "learn/correct-sql.html";
 export const STRICT_SECTIONS = { "group-by": "GROUP BY", "having": "HAVING without GROUP BY", "order-by-grouped": "ORDER BY after GROUP BY",
   "distinct-order": "DISTINCT and ORDER BY", "double-quotes": "Double quotes", "double-equals": "One equals sign", "types": "Types",
-  "aliases": "Aliases in WHERE and HAVING", "boolean": "Conditions", "sqlite-only": "SQLite-only syntax", "like-ilike": "LIKE and ILIKE" };
+  "aliases": "Aliases in WHERE and HAVING", "boolean": "Conditions", "sqlite-only": "Standard syntax", "like-ilike": "LIKE and ILIKE" };
 const RESERVED = new Set(("select from where group by having order limit offset union intersect except join inner left right full outer " +
   "cross natural on using as and or not in is null like ilike glob regexp match between case when then else end with recursive " +
   "distinct all exists cast over partition window asc desc values collate escape true false filter isnull notnull").split(" "));
@@ -304,7 +304,7 @@ function parseSql(src, toks) {
   const nameAhead = (k = 0) => peek(k).t === "qid" || (peek(k).t === "word" && !RESERVED.has(peek(k).lv));
   function ident(anyWord) {
     const x = peek();
-    if (x.t === "bq") refuse('syntax error at or near "' + x.v[0] + '"', "PostgreSQL quotes a name with double quotes, not backticks or square brackets: write " +
+    if (x.t === "bq") refuse('syntax error at or near "' + x.v[0] + '"', "SQL quotes a name with double quotes, not backticks or square brackets: write " +
       '"' + x.v.slice(1, -1) + '", or the bare name.', "double-quotes");
     if (x.t === "qid") { i++; return { name: x.v.slice(1, -1).replace(/""/g, '"'), q: true, raw: x.v }; }
     if (x.t === "word" && (anyWord || !RESERVED.has(x.lv))) { i++; return { name: x.lv, q: false, raw: x.v }; }
@@ -338,7 +338,7 @@ function parseSql(src, toks) {
       const a = expr();
       if (eat(",")) {
         const b = expr();
-        refuse("LIMIT #,# syntax is not supported", "LIMIT " + a.text + ", " + b.text + " is SQLite's shorthand; PostgreSQL writes LIMIT " + b.text +
+        refuse("LIMIT #,# syntax is not supported", "LIMIT " + a.text + ", " + b.text + " is not standard SQL: write LIMIT " + b.text +
           " OFFSET " + a.text + " (the row count first, then how many rows to skip).", "sqlite-only");
       }
       q.limit = a;
@@ -446,7 +446,7 @@ function parseSql(src, toks) {
         if (eat("null") || eat("true") || eat("false") || eat("unknown")) { l = mk(s, { k: "is", l }); continue; }
         if (eat("distinct")) { need("from"); l = mk(s, { k: "cmp", op: "IS DISTINCT FROM", l, r: otherExpr() }); continue; }
         const v = peek().v;
-        refuse('syntax error at or near "' + v + '"', "IS only goes with NULL, TRUE or FALSE in PostgreSQL: write = " + v + " to compare with " + v +
+        refuse('syntax error at or near "' + v + '"', "IS only goes with NULL, TRUE or FALSE: write = " + v + " to compare with " + v +
           ", or IS NOT DISTINCT FROM " + v + " if NULLs must match too.", "sqlite-only");
       }
       if (eat("isnull") || eat("notnull")) { l = mk(s, { k: "is", l }); continue; }
@@ -459,7 +459,7 @@ function parseSql(src, toks) {
       }
       if (["like", "ilike", "glob", "regexp", "match"].includes(peek().lv) && peek().t === "word") {
         const op = next().v;
-        if (!/^i?like$/i.test(op)) refuse('syntax error at or near "' + op + '"', op.toUpperCase() + " is SQLite's; PostgreSQL matches patterns with LIKE " +
+        if (!/^i?like$/i.test(op)) refuse('syntax error at or near "' + op + '"', op.toUpperCase() + " is not standard SQL: match patterns with LIKE " +
           "(case-sensitive, % for any run of characters, _ for one) or ILIKE (the same, ignoring case).", "sqlite-only");
         const r = otherExpr(); let esc = null;
         if (eat("escape")) esc = otherExpr();
@@ -480,7 +480,7 @@ function parseSql(src, toks) {
     while (eat("collate")) {
       const c = ident(true);
       if (!c.q && ["nocase", "rtrim", "binary"].includes(c.name)) refuse('collation "' + c.name + '" for encoding "UTF8" does not exist',
-        "COLLATE " + c.raw + " is SQLite's; to ignore case in PostgreSQL, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "sqlite-only");
+        "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "sqlite-only");
       e = mk(s, { k: "collate", e });
     }
     if (is("::")) throw UNSUPPORTED;
@@ -591,7 +591,7 @@ function analyse(stmts, schema, src) {
         if (r && !r.unknown && !r.loose) return r.type;
         if (r && r.unknown) return null;
         const quoted = n.c.q || (n.t && n.t.q);
-        if (r && r.loose) refuse('column "' + n.c.name + '" does not exist', "Names in double quotes keep their exact case in PostgreSQL, and " + text(n) +
+        if (r && r.loose) refuse('column "' + n.c.name + '" does not exist', "Names in double quotes keep their exact case, and " + text(n) +
           " matches nothing written that way: drop the quotes, or write the name in lower case.", "double-quotes");
         const alias = !n.t && cx.aliases && cx.aliases.get(n.c.name);
         if (alias) refuse('column "' + n.c.name + '" does not exist', text(n) + " is a name given in SELECT" + (
@@ -685,9 +685,9 @@ function analyse(stmts, schema, src) {
     if (n.aggOrder) n.aggOrder.forEach(o => T(o.e, cx));
     if (n.over) { n.over.partition.forEach(e => T(e, cx)); n.over.order.forEach(o => T(o.e, cx)); }
     const sig = n.name + "(" + a.map(pgT).join(", ") + ")";
-    if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is SQLite's own function; PostgreSQL has " + SQLITE_FUNCS[n.name] + " instead.", "sqlite-only");
+    if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", "sqlite-only");
     if ((n.name === "min" || n.name === "max") && n.args.length > 1) refuse("function " + sig + " does not exist",
-      "With several arguments " + n.name + "() is SQLite's; PostgreSQL writes " + (n.name === "max" ? "GREATEST" : "LEAST") + "(" + n.args.map(text).join(", ") + ").", "sqlite-only");
+      "With several arguments " + n.name + "() is not standard SQL: write " + (n.name === "max" ? "GREATEST" : "LEAST") + "(" + n.args.map(text).join(", ") + ").", "sqlite-only");
     if ((n.name === "sum" || n.name === "avg") && (a[0] === "text" || a[0] === "bool")) refuse("function " + sig + " does not exist", a[0] === "bool"
       ? text(n.args[0]) + " is a condition (true or false), not a number: count where it holds with SUM(CASE WHEN " + text(n.args[0]) + " THEN 1 ELSE 0 END)."
       : n.name.toUpperCase() + " works on numbers, and " + text(n.args[0]) + " is text: use COUNT, MIN or MAX on text, or convert digits with CAST(... AS INTEGER).", "types");
@@ -718,7 +718,7 @@ function analyse(stmts, schema, src) {
         if (ctes.has(nm)) cols = ctes.get(nm);
         else if (tables.has(nm) && (!f.name.q || nm === nm.toLowerCase())) { cols = tables.get(nm); base = true; }
         else if (f.name.q && (tables.has(nm.toLowerCase()) || ctes.has(nm.toLowerCase()))) refuse('relation "' + nm + '" does not exist',
-          "Names in double quotes keep their exact case in PostgreSQL: write " + nm.toLowerCase() + " without quotes.", "double-quotes");
+          "Names in double quotes keep their exact case: write " + nm.toLowerCase() + " without quotes.", "double-quotes");
       }
       if (cols && f.cols) cols = f.cols.map((a, j) => ({ name: a.name, type: cols[j] ? cols[j].type : null, pk: false }));
       scope.rvs.push({ id: ++ids, name: f.alias ? f.alias.name : f.k === "table" ? f.name.name : "", cols: colMap(cols), base,
@@ -819,11 +819,11 @@ function strictScan(toks, src) {
   for (let i = 0; i < toks.length; i++) {
     const x = toks[i], nx = toks[i + 1] || {};
     if (x.v === "==") refuse("operator does not exist: ==", "SQL compares with a single equals sign: write = instead of ==.", "double-equals");
-    if (x.t === "bq") refuse('syntax error at or near "' + x.v[0] + '"', "PostgreSQL quotes a name with double quotes, not backticks or square brackets.", "double-quotes");
+    if (x.t === "bq") refuse('syntax error at or near "' + x.v[0] + '"', "SQL quotes a name with double quotes, not backticks or square brackets.", "double-quotes");
     if (x.t === "word" && nx.v === "(" && Object.hasOwn(SQLITE_FUNCS, x.lv) && (toks[i - 1] || {}).v !== ".")
-      refuse("function " + x.lv + " does not exist", x.lv + "() is SQLite's own function; PostgreSQL has " + SQLITE_FUNCS[x.lv] + " instead.", "sqlite-only");
+      refuse("function " + x.lv + " does not exist", x.lv + "() is not standard SQL: use " + SQLITE_FUNCS[x.lv] + " instead.", "sqlite-only");
     if (x.t === "word" && ["glob", "regexp"].includes(x.lv)) refuse('syntax error at or near "' + x.v + '"',
-      x.v.toUpperCase() + " is SQLite's; PostgreSQL matches patterns with LIKE or ILIKE.", "sqlite-only");
+      x.v.toUpperCase() + " is not standard SQL: match patterns with LIKE or ILIKE.", "sqlite-only");
   }
   return src;
 }
@@ -862,7 +862,7 @@ export function ilike(pattern, value, escape) {
 }
 export function strictHtml(r) {
   return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + STRICT_PAGE + "#" + r.anchor +
-    '" target="_blank" rel="noopener">Strict SQL: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
+    '" target="_blank" rel="noopener">Correct SQL: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
 }
 
 export function pushHistory(state, sql) {

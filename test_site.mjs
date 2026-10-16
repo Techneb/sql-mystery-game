@@ -753,7 +753,7 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
   assert.match(strictCheck(cases[0][1], GAME).why, /add cab_ride.date to GROUP BY/, "the why names the column");
   const html = strictHtml(strictCheck(cases[0][1], GAME));
   assert.match(html, /^<div class="error strict"><div class="pg-error">ERROR: column "cab_ride.date" must appear/);
-  assert.match(html, /href="learn\/strict-sql\.html#group-by" target="_blank" rel="noopener">Strict SQL: GROUP BY<\/a>/);
+  assert.match(html, /href="learn\/correct-sql\.html#group-by" target="_blank" rel="noopener">Correct SQL: GROUP BY<\/a>/);
   assert.match(strictHtml({ error: "<b>", why: "<i>", anchor: "types" }), /&lt;b&gt;.*&lt;i&gt;/, "escaped");
 });
 
@@ -850,9 +850,9 @@ test("handbook: every example passes the strict terminal; each wrong one is refu
     }
   }
   assert.ok(wrong >= 10);
-  const page = learnHtml["strict-sql.html"];
+  const page = learnHtml["correct-sql.html"];
   for (const a of Object.keys(STRICT_SECTIONS)) assert.match(page, new RegExp(`<h2 id="${a}">`), "section " + a);
   assert.match(page, /follows PostgreSQL's rules/);
-  assert.ok(fs.readFileSync("site/index.html", "utf8").includes('class="dialect" href="learn/strict-sql.html"'), "the terminal's PostgreSQL label");
+  assert.ok(fs.readFileSync("site/index.html", "utf8").includes('class="dialect" href="learn/correct-sql.html"'), "the terminal's PostgreSQL label");
   assert.equal(strictCheck("SELECT id FROM orders WHERE day = 20260302", bakery).anchor, "types", "the page's text-against-number claim");
 });

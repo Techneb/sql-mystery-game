@@ -28,7 +28,7 @@
     <span class="current" aria-current="page">8. CASE</span>
     <a href="window-functions.html">9. Windows</a>
     <a href="ctes.html">10. CTEs</a>
-    <a href="strict-sql.html">11. Strict SQL</a></nav>
+    <a href="correct-sql.html">11. Correct SQL</a></nav>
 <main class="learn">
 <h1>CASE WHEN</h1>
 <p class="game-label">Game: chapter <a href="../">VII</a></p>
@@ -121,7 +121,7 @@
 <tr><td>bread</td></tr>
 <tr><td>cake</td></tr>
 </table>
-<p><code>GROUP BY</code> keeps one row per category, and the <code>CASE</code> only uses the grouped column. (With <code>SELECT DISTINCT</code> instead, PostgreSQL refuses the sort: see <a href="strict-sql.html#distinct-order">DISTINCT and ORDER BY</a>.) This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
+<p><code>GROUP BY</code> keeps one row per category, and the <code>CASE</code> only uses the grouped column. (With <code>SELECT DISTINCT</code> instead, the sort would be an error: see <a href="correct-sql.html#distinct-order">DISTINCT and ORDER BY</a>.) This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
 
 <h2>Common mistakes</h2>
 <p>Forgetting <code>END</code>, which produces a confusing syntax error further down the query. Writing overlapping conditions in the wrong order, so that a broad condition placed first catches rows meant for a narrower one below it. Leaving out <code>ELSE</code> and getting NULL labels for the rows nobody thought of. Testing for NULL in the short form, where <code>WHEN NULL</code> never matches. Comparing times stored without a leading zero, where <code>'9:30'</code> sorts after <code>'12:00'</code>.</p>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Strict SQL -- The Ritz Affair</title>
-<meta name="description" content="The rules the game's SQL terminal enforces, taken from PostgreSQL: GROUP BY and aggregates, HAVING, ORDER BY after grouping, quotes, one equals sign, types, aliases, conditions, SQLite-only syntax, and LIKE against ILIKE. A wrong and a right query for each, with real results.">
+<title>Writing correct SQL -- The Ritz Affair</title>
+<meta name="description" content="How to write SQL correctly: GROUP BY and aggregates, HAVING, ORDER BY after grouping, quotes, one equals sign, types, aliases, conditions, standard syntax, and LIKE against ILIKE. A wrong and a right query for each, with real results.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -28,15 +28,15 @@
     <a href="case-when.html">8. CASE</a>
     <a href="window-functions.html">9. Windows</a>
     <a href="ctes.html">10. CTEs</a>
-    <span class="current" aria-current="page">11. Strict SQL</span></nav>
+    <span class="current" aria-current="page">11. Correct SQL</span></nav>
 <main class="learn">
-<h1>Strict SQL</h1>
+<h1>Writing correct SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
-<p class="lede">The game runs your queries in SQLite, inside the browser, but its terminal follows PostgreSQL's rules. SQLite is forgiving: it runs many queries that PostgreSQL, and most other databases, refuse, and it quietly guesses what you meant. The terminal checks each query first and refuses what PostgreSQL would refuse, with PostgreSQL's error line and a sentence on how to fix it.</p>
-<p>A refused query never runs. It still counts as a query, but it is not kept in the History list. A query without <code>ORDER BY</code> that ends in <code>LIMIT</code> is accepted, as in PostgreSQL, even though the rows it keeps are then whichever come first. Each section below shows a query the terminal refuses, the message it gives, and a version it accepts, on the <a href="database.html">bakery database</a>.</p>
+<p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
+<p>The game's terminal follows PostgreSQL's rules: a query that breaks one does not run, and the terminal answers with PostgreSQL's error line and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
 
 <h2 id="group-by">GROUP BY: grouped or aggregated</h2>
-<p>After <code>GROUP BY</code>, each row of the result stands for a whole group. A column in <code>SELECT</code> must therefore be one of the grouped columns, or sit inside an aggregate such as <code>COUNT</code>, <code>SUM</code>, <code>MIN</code> or <code>MAX</code>: anything else has several values inside one group. SQLite picks one of them at random; PostgreSQL refuses.</p>
+<p>After <code>GROUP BY</code>, each row of the result stands for a whole group. A column in <code>SELECT</code> must therefore be one of the grouped columns, or sit inside an aggregate such as <code>COUNT</code>, <code>SUM</code>, <code>MIN</code> or <code>MAX</code>: anything else has several values inside one group, and no single one of them to show.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*)
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
@@ -51,7 +51,7 @@
 <tr><td>cake</td><td>3</td><td>Carrot cake slice</td></tr>
 <tr><td>pastry</td><td>3</td><td>Almond croissant</td></tr>
 </table>
-<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is refused too. <code>SELECT *</code> with <code>GROUP BY</code> is refused for the same reason. One exception: when you group by a table's primary key, every other column of that table has a single value per group, and PostgreSQL accepts them.</p>
+<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>. One exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
@@ -127,7 +127,7 @@
 <p><code>GROUP BY</code> also keeps one row per category, and it lets you sort the categories by an aggregate, here their cheapest product.</p>
 
 <h2 id="double-quotes">Double quotes</h2>
-<p>Single quotes make a text value: <code>'bread'</code>. Double quotes make a name, of a column or a table: <code>"category"</code>. When no column is called <code>bread</code>, SQLite quietly reads <code>"bread"</code> as text; PostgreSQL refuses. Names in double quotes also keep their exact case, so <code>"Category"</code> is not <code>category</code>.</p>
+<p>Single quotes make a text value: <code>'bread'</code>. Double quotes make a name, of a column or a table: <code>"category"</code>. So <code>"bread"</code> asks for a column called bread, and there is none. Names in double quotes also keep their exact case, so <code>"Category"</code> is not <code>category</code>.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">"bread"</span>;</code></pre>
@@ -143,10 +143,10 @@
 <tr><td>Rye loaf</td></tr>
 <tr><td>Seeded rolls</td></tr>
 </table>
-<p>The same goes for aliases: <code>AS 'total'</code> is refused, write <code>AS total</code>, or <code>AS "Total"</code> to keep a capital or a space. Backticks and square brackets, which SQLite accepts around names, are refused too.</p>
+<p>The same goes for aliases: an alias is a name, so write <code>AS total</code>, or <code>AS "Total"</code> to keep a capital or a space, never <code>AS 'total'</code>. Names are quoted with double quotes only, not with backticks or square brackets.</p>
 
 <h2 id="double-equals">One equals sign</h2>
-<p>SQL compares with a single <code>=</code>. SQLite also accepts <code>==</code>, as in many programming languages; PostgreSQL does not.</p>
+<p>SQL compares with a single <code>=</code>. The double <code>==</code> belongs to programming languages, not to SQL.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> == <span class="sql-num">4</span>;</code></pre>
@@ -161,7 +161,7 @@
 <p>Not equal is <code>&lt;&gt;</code> or <code>!=</code>; both are accepted.</p>
 
 <h2 id="types">Types</h2>
-<p>Every column has a type, and the terminal reads it from the schema: whole numbers (<code>INTEGER</code>), text (<code>TEXT</code>). A number is compared with a number, text with text. SQLite converts silently, and a comparison of the wrong kinds may then match nothing, or the wrong rows; PostgreSQL refuses it. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
+<p>Every column has a type, written in the schema: whole numbers (<code>INTEGER</code>), text (<code>TEXT</code>). A number is compared with a number, text with text; a comparison of two different kinds is an error. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-str">'1'</span>;</code></pre>
@@ -175,10 +175,10 @@
 <tr><td>Ben Okafor</td></tr>
 <tr><td>Chloe Martin</td></tr>
 </table>
-<p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is refused as well: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>. (PostgreSQL itself would accept a quoted number that it can read as one; the terminal is stricter there, so that the types always show in the query.)</p>
+<p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>. (Some databases read a quoted number as a number on their own; write it bare, and the type shows in the query.)</p>
 
 <h2 id="aliases">Aliases in WHERE and HAVING</h2>
-<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists, so they cannot use it; SQLite lets them, PostgreSQL does not. Repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
+<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists, so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">double_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">double_price</span> &gt; <span class="sql-num">7</span>;</code></pre>
@@ -196,7 +196,7 @@
 </table>
 
 <h2 id="boolean">Conditions</h2>
-<p><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and each <code>WHEN</code> of a <code>CASE</code> need a condition, something true or false. SQLite treats any number other than zero as true, so <code>WHERE referred_by</code> runs there; PostgreSQL wants the comparison written out. The same holds for each side of <code>AND</code> and <code>OR</code>, and for <code>NOT</code>.</p>
+<p><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and each <code>WHEN</code> of a <code>CASE</code> need a condition, something true or false. A bare column such as <code>WHERE referred_by</code> is a value, not a condition: write the comparison out. The same holds for each side of <code>AND</code> and <code>OR</code>, and for <code>NOT</code>.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span>;</code></pre>
@@ -214,13 +214,13 @@
 <tr><td>Grace Lee</td></tr>
 </table>
 
-<h2 id="sqlite-only">SQLite-only syntax</h2>
-<p>Some of what SQLite accepts exists nowhere else. The terminal refuses it and names the standard form.</p>
+<h2 id="sqlite-only">Standard syntax</h2>
+<p>Some shorthands of a single database are not SQL anywhere else. Write the standard form.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
 <span class="sql-kw">LIMIT</span> <span class="sql-num">2</span>, <span class="sql-num">3</span>;</code></pre>
-<div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 2, 3 is SQLite's shorthand; PostgreSQL writes LIMIT 3 OFFSET 2 (the row count first, then how many rows to skip).</div>
+<div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 2, 3 is not standard SQL: write LIMIT 3 OFFSET 2 (the row count first, then how many rows to skip).</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
@@ -233,7 +233,7 @@
 </table>
 <p>The others, with what to write instead:</p>
 <table class="result">
-<tr><th>SQLite</th><th>Standard (PostgreSQL)</th></tr>
+<tr><th>Instead of</th><th>Write</th></tr>
 <tr><td>LIMIT 2, 3</td><td>LIMIT 3 OFFSET 2</td></tr>
 <tr><td>IFNULL(a, b)</td><td>COALESCE(a, b)</td></tr>
 <tr><td>IIF(c, a, b)</td><td>CASE WHEN c THEN a ELSE b END</td></tr>
@@ -248,7 +248,7 @@
 <tr><td>x = 'a' COLLATE NOCASE</td><td>lower(x) = 'a', or x ILIKE 'a'</td></tr>
 <tr><td>`name`, [name]</td><td>"name", or the bare name</td></tr>
 </table>
-<p>A coalesced column, for example, reads the same in both databases:</p>
+<p><code>COALESCE</code>, for example, gives the first value that is not NULL:</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-id">referred_by</span>, <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>
@@ -261,14 +261,14 @@
 </table>
 
 <h2 id="like-ilike">LIKE and ILIKE</h2>
-<p>In the terminal, as in PostgreSQL, <code>LIKE</code> is case-sensitive: a capital letter in the data must be a capital in the pattern. Nothing is refused here, but a pattern in the wrong case quietly finds nothing.</p>
+<p><code>LIKE</code> is case-sensitive: a capital letter in the data must be a capital in the pattern. Nothing is wrong with the query below, but a pattern in the wrong case quietly finds nothing.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'croissant%'</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 </table>
-<p><code>ILIKE</code> is the same match with case ignored. Plain SQLite has no <code>ILIKE</code>, and its <code>LIKE</code> ignores case instead; the terminal adds <code>ILIKE</code> so that you can use both, as in PostgreSQL.</p>
+<p><code>ILIKE</code> is the same match with case ignored.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-id">ILIKE</span> <span class="sql-str">'croissant%'</span>
