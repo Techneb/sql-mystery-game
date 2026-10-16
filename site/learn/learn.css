@@ -14,7 +14,7 @@
 .learn code { font: 15px "Special Elite", monospace; }
 .learn pre { background: var(--term); color: var(--term-text); border-radius: var(--r-panel); padding: 10px 12px; overflow-x: auto; margin: 12px 0 6px; }
 .learn pre code { font: 14px/1.45 "Special Elite", monospace; white-space: pre; }
-/* correct-sql.html: a query the terminal refuses, then its refusal (written by colour_learn.mjs) */
+/* grammar.html: a query the terminal refuses, then its refusal (written by colour_learn.mjs) */
 .learn pre.wrong { border-left: 4px solid var(--rel); }
 .learn .refusal { margin: 0 0 14px; padding: 6px 10px; border: 1px solid var(--rel); border-radius: var(--r-box); font-size: 15px; }
 .learn .refusal code { display: block; color: var(--rel); font: 13px/1.4 "Special Elite", monospace; margin-bottom: 2px; }

@@ -251,12 +251,12 @@ export function cartesian(sql) {
   const body = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
   return /\bfrom\s+[a-z_][a-z0-9_]*(?:\s+(?:as\s+)?[a-z_][a-z0-9_]*)?\s*,\s*[a-z_]/i.test(body) && !/\b(?:where|on|using)\b/i.test(body);
 }
-// --- Strict terminal: PostgreSQL is the yardstick (learn/correct-sql.html) --------------------------------------
+// --- Strict terminal: PostgreSQL is the yardstick (learn/grammar.html) --------------------------------------
 // strictCheck parses a query with the schema in hand and refuses what PostgreSQL would reject but SQLite runs
 // anyway: ungrouped columns, aliases in WHERE, "text" in double quotes, ==, mixed types, a WHERE that is not a
 // condition, SQLite-only syntax. A refusal is { error, why, anchor }; null means run it. Anything the parser does
 // not know is let through (SQLite still reports its own errors): a false refusal is the worst bug here.
-export const STRICT_PAGE = "learn/correct-sql.html";
+export const STRICT_PAGE = "learn/grammar.html";
 export const STRICT_SECTIONS = { "group-by": "GROUP BY", "having": "HAVING without GROUP BY", "order-by-grouped": "ORDER BY after GROUP BY",
   "distinct-order": "DISTINCT and ORDER BY", "double-quotes": "Double quotes", "double-equals": "One equals sign", "types": "Types",
   "aliases": "Aliases in WHERE and HAVING", "boolean": "Conditions", "sqlite-only": "Standard syntax", "like-ilike": "LIKE and ILIKE" };
@@ -862,7 +862,7 @@ export function ilike(pattern, value, escape) {
 }
 export function strictHtml(r) {
   return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + STRICT_PAGE + "#" + r.anchor +
-    '" target="_blank" rel="noopener">Correct SQL: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
+    '" target="_blank" rel="noopener">Grammar: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
 }
 
 export function pushHistory(state, sql) {

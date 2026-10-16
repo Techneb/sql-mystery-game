@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Writing correct SQL -- The Ritz Affair</title>
+<title>The Grammar of SQL -- The Ritz Affair</title>
 <meta name="description" content="How to write SQL correctly: GROUP BY and aggregates, HAVING, ORDER BY after grouping, quotes, one equals sign, types, aliases, conditions, standard syntax, and LIKE against ILIKE. A wrong and a right query for each, with real results.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,9 +28,9 @@
     <a href="case-when.html">8. CASE</a>
     <a href="window-functions.html">9. Windows</a>
     <a href="ctes.html">10. CTEs</a>
-    <span class="current" aria-current="page">11. Correct SQL</span></nav>
+    <span class="current" aria-current="page">11. Grammar</span></nav>
 <main class="learn">
-<h1>Writing correct SQL</h1>
+<h1>The Grammar of SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
 <p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
 <p>The game's terminal follows PostgreSQL's rules: a query that breaks one does not run, and the terminal answers with PostgreSQL's error line and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
