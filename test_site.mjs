@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, strictCheck, strictHtml, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -687,7 +687,7 @@ test("compete has no Suspects gallery: learn's cards would point at learn's trap
 });
 
 // --- The strict terminal (PostgreSQL's rules, site/app.js strictCheck) --------------------------------------
-// The plot's queries and the game schema come from generate_db.py --queries (plant_values only, no build: fast).
+// The plot's queries and the game schema come from generate_db.py --queries (plant_values and site/mystery.sqlite's schema, no build: fast).
 const plotDump = JSON.parse(execFileSync("python3", ["generate_db.py", "--queries"], { encoding: "utf8" }));
 const GAME = plotDump.schema;
 
@@ -741,6 +741,8 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
     ["sqlite-only", "SELECT id FROM person WHERE name = 'x' COLLATE NOCASE", /collation "nocase"/],
     ["sqlite-only", "SELECT id FROM person WHERE occupation IS 'jeweller'", /syntax error/],
     ["sqlite-only", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
+    ["sqlite-only", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
+    ["sqlite-only", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
     ["double-equals", "SELECT id FROM cab_ride WHERE plate == '75' AND (", /==/],   // the parser gives up, the token scan still refuses
   ];
   for (const [anchor, q, re] of cases) {
@@ -755,6 +757,20 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
   assert.match(html, /^<div class="error strict"><div class="pg-error">ERROR: column "cab_ride.date" must appear/);
   assert.match(html, /href="learn\/grammar\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/);
   assert.match(strictHtml({ error: "<b>", why: "<i>", anchor: "types" }), /&lt;b&gt;.*&lt;i&gt;/, "escaped");
+});
+
+test("strict terminal: every replacement a refusal or the grammar page suggests names only functions SQLite has", () => {
+  const have = new Set(JSON.parse(execFileSync("python3", ["-c",
+    "import sqlite3, json; print(json.dumps([r[0] for r in sqlite3.connect(':memory:').execute('SELECT DISTINCT name FROM pragma_function_list')]))"],
+    { encoding: "utf8" })));
+  const grammar = fs.readFileSync("site/learn/grammar.html", "utf8");
+  const writes = [...grammar.matchAll(/<tr><td>[^<]*<\/td><td>([^<]*)<\/td><\/tr>/g)].map(m => m[1]);
+  assert.ok(writes.some(w => /CASE WHEN a &gt; b/.test(w)), "the Write column is read");
+  const whys = Object.keys(SQLITE_FUNCS).map(f => strictCheck("SELECT " + f + "(fare, 3) FROM cab_ride", GAME).why);
+  whys.push(strictCheck("SELECT MAX(fare, 3) FROM cab_ride", GAME).why, strictCheck("SELECT fare::text FROM cab_ride", GAME).why);
+  for (const s of [...writes, ...whys])
+    for (const [, f] of s.replace(/^.*?: (write|use) /, "").matchAll(/\b([A-Za-z_]+)\(/g))
+      assert.ok(SQL_KEYWORDS.has(f.toLowerCase()) || have.has(f.toLowerCase()), f + "() does not run in SQLite: " + s);
 });
 
 test("strict terminal: valid PostgreSQL is never refused", () => {

@@ -240,9 +240,11 @@
 <tr><td>x GLOB 'A*'</td><td>x LIKE 'A%'</td></tr>
 <tr><td>x REGEXP ...</td><td>LIKE or ILIKE</td></tr>
 <tr><td>GROUP_CONCAT(x)</td><td>string_agg(x, ', ')</td></tr>
-<tr><td>INSTR(text, part)</td><td>strpos(text, part)</td></tr>
-<tr><td>strftime, julianday, datetime</td><td>to_char, EXTRACT, date arithmetic</td></tr>
-<tr><td>MAX(a, b), MIN(a, b)</td><td>GREATEST(a, b), LEAST(a, b)</td></tr>
+<tr><td>INSTR(text, part)</td><td>text LIKE '%part%'</td></tr>
+<tr><td>strftime, julianday, datetime</td><td>compare the date text (d &gt;= '2024-06-01'), or substr(d, 1, 7)</td></tr>
+<tr><td>MAX(a, b), MIN(a, b)</td><td>CASE WHEN a &gt; b THEN a ELSE b END, CASE WHEN a &lt; b THEN a ELSE b END</td></tr>
+<tr><td>LEFT(t, n), RIGHT(t, n)</td><td>substr(t, 1, n), substr(t, length(t) - n + 1)</td></tr>
+<tr><td>x::integer</td><td>CAST(x AS INTEGER)</td></tr>
 <tr><td>2 || 3 (two numbers)</td><td>2 + 3, or CAST(2 AS TEXT) || 3</td></tr>
 <tr><td>x IS 5</td><td>x = 5, or x IS NOT DISTINCT FROM 5</td></tr>
 <tr><td>x = 'a' COLLATE NOCASE</td><td>lower(x) = 'a', or x ILIKE 'a'</td></tr>
@@ -271,7 +273,7 @@
 <p><code>ILIKE</code> is the same match with case ignored.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-id">ILIKE</span> <span class="sql-str">'croissant%'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'croissant%'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>

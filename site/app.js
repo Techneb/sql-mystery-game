@@ -26,7 +26,7 @@ export function competeDone(state) { return state.mode === "compete" && part1Don
 // Learning-mode and compete progress are separate localStorage keys (spec section 4).
 export function storageKey(mode) { return mode === "compete" ? "ritz.compete" : "ritz.learn"; }
 let key = storageKey("learn");
-export function loadFrom(k) { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(k) || "{}") }; } catch { return freshState(); } }
+function loadFrom(k) { try { return { ...freshState(), ...JSON.parse(localStorage.getItem(k) || "{}") }; } catch { return freshState(); } }
 let noPersist = false;
 let saveWarned = false;
 export function save(state) {
@@ -94,8 +94,8 @@ async function loadDb(stem) {
   db = new SQL.Database(new Uint8Array(buf));
   db.run("PRAGMA query_only = 1");   // DROP/UPDATE/DELETE fail with "attempt to write a readonly database" instead of silently breaking the chapter
   db.run("PRAGMA case_sensitive_like = ON");   // LIKE as in PostgreSQL; ILIKE runs as REGEXP (toSqlite), bound to ilike()
-  db.create_function("regexp", (p, v) => ilike(p, v));
-  db.create_function("regexp", (p, v, e) => ilike(p, v, e));
+  // One registration for both arities (x REGEXP p, and with ESCAPE): sql.js takes nArg from the function's length, -1 = any.
+  db.create_function("regexp", Object.defineProperty((p, v, e) => ilike(p, v, e), "length", { value: -1 }));
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
   tableSizes = {};
@@ -178,7 +178,7 @@ function renderChapter() {
 }
 
 // SQL colouring for the terminal: a <pre> under a transparent textarea (index.html .editor).
-export const SQL_KEYWORDS = new Set(("select from where and or not in is null like glob between join inner left right full outer " +
+export const SQL_KEYWORDS = new Set(("select from where and or not in is null like ilike glob between join inner left right full outer " +
   "cross natural on using as group by order having limit offset distinct all union intersect except with recursive case " +
   "when then else end asc desc over partition rows range exists cast collate escape values insert into update set delete " +
   "create table view drop filter window").split(" "));
@@ -256,19 +256,21 @@ export function cartesian(sql) {
 // anyway: ungrouped columns, aliases in WHERE, "text" in double quotes, ==, mixed types, a WHERE that is not a
 // condition, SQLite-only syntax. A refusal is { error, why, anchor }; null means run it. Anything the parser does
 // not know is let through (SQLite still reports its own errors): a false refusal is the worst bug here.
-export const STRICT_PAGE = "learn/grammar.html";
+const STRICT_PAGE = "learn/grammar.html";
 export const STRICT_SECTIONS = { "group-by": "GROUP BY", "having": "HAVING without GROUP BY", "order-by-grouped": "ORDER BY after GROUP BY",
   "distinct-order": "DISTINCT and ORDER BY", "double-quotes": "Double quotes", "double-equals": "One equals sign", "types": "Types",
   "aliases": "Aliases in WHERE and HAVING", "boolean": "Conditions", "sqlite-only": "Standard syntax", "like-ilike": "LIKE and ILIKE" };
 const RESERVED = new Set(("select from where group by having order limit offset union intersect except join inner left right full outer " +
   "cross natural on using as and or not in is null like ilike glob regexp match between case when then else end with recursive " +
   "distinct all exists cast over partition window asc desc values collate escape true false filter isnull notnull").split(" "));
+// array_agg, bool_and, bool_or, every: not in SQLite, kept so a GROUP BY around one is not refused for its argument (SQLite then names the function).
 const AGGS = new Set("count sum avg min max total group_concat string_agg array_agg bool_and bool_or every".split(" "));
-const SQLITE_FUNCS = { ifnull: "COALESCE(a, b)", iif: "CASE WHEN ... THEN ... ELSE ... END", group_concat: "string_agg(x, ', ')",
-  instr: "strpos(text, part)", strftime: "to_char() or EXTRACT()", julianday: "date arithmetic on real dates", datetime: "to_char() or a timestamp",
-  unixepoch: "EXTRACT(EPOCH FROM ...)", printf: "format()", typeof: "pg_typeof(x)", total: "SUM(x)", char: "chr(n)", unicode: "ascii(text)",
-  hex: "to_hex(n)", quote: "quote_literal(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
-  changes: "nothing like it", total_changes: "nothing like it", sqlite_version: "version()", likely: "the condition alone",
+// Each suggestion must also run here (sql.js), not only in PostgreSQL: a test checks every function it names exists in SQLite.
+const DATE_TEXT = "a comparison of the date text, as in d >= '1912-01-01', or substr(d, 1, 7) for its year and month";
+export const SQLITE_FUNCS = { ifnull: "COALESCE(a, b)", iif: "CASE WHEN ... THEN ... ELSE ... END", group_concat: "string_agg(x, ', ')",
+  instr: "text LIKE '%part%'", strftime: DATE_TEXT, julianday: DATE_TEXT, datetime: DATE_TEXT, unixepoch: DATE_TEXT,
+  left: "substr(text, 1, n)", right: "substr(text, length(text) - n + 1)", printf: "format()", total: "SUM(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
+  changes: "nothing like it", total_changes: "nothing like it", likely: "the condition alone",
   unlikely: "the condition alone", likelihood: "the condition alone" };
 const PG_TYPE = { int: "integer", num: "numeric", text: "text", bool: "boolean", str: "text" };
 const pgT = t => PG_TYPE[t] || "unknown";
@@ -281,7 +283,7 @@ class Refusal { constructor(error, why, anchor) { this.out = { error, why, ancho
 const UNSUPPORTED = { unsupported: true };   // thrown when the parser meets syntax it does not know: no refusal
 const refuse = (error, why, anchor) => { throw new Refusal(error, why, anchor); };
 
-export function sqlTokens(src) {
+function sqlTokens(src) {
   const re = /(\s+|--[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|('(?:[^']|'')*')|("(?:[^"]|"")*")|(`[^`]*`|\[[^\]]*\])|((?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)|([A-Za-z_][A-Za-z0-9_$]*)|(<=|>=|<>|!=|==|\|\||::|[-+*/%(),.;=<>|&~?:@^!])|([\s\S])/g;
   const out = []; let m;
   while ((m = re.exec(src))) {
@@ -483,7 +485,8 @@ function parseSql(src, toks) {
         "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "sqlite-only");
       e = mk(s, { k: "collate", e });
     }
-    if (is("::")) throw UNSUPPORTED;
+    if (eat("::")) { const x = src.slice(e.from, e.to), t = peek().t === "word" ? next().v : "INTEGER"; refuse('syntax error at or near "::"',
+      x + "::" + t + " is a PostgreSQL shorthand the terminal does not run: write CAST(" + x + " AS " + t.toUpperCase() + ").", "sqlite-only"); }
     return e;
   }
   function typeName() { const parts = []; while (peek().t === "word") parts.push(next().lv); if (eat("(")) while (!eat(")")) next(); return parts.join(" "); }
@@ -687,19 +690,20 @@ function analyse(stmts, schema, src) {
     const sig = n.name + "(" + a.map(pgT).join(", ") + ")";
     if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", "sqlite-only");
     if ((n.name === "min" || n.name === "max") && n.args.length > 1) refuse("function " + sig + " does not exist",
-      "With several arguments " + n.name + "() is not standard SQL: write " + (n.name === "max" ? "GREATEST" : "LEAST") + "(" + n.args.map(text).join(", ") + ").", "sqlite-only");
+      "With several arguments " + n.name + "() is not standard SQL: write " + (n.args.length === 2 ? "CASE WHEN " + text(n.args[0]) +
+      (n.name === "max" ? " > " : " < ") + text(n.args[1]) + " THEN " + text(n.args[0]) + " ELSE " + text(n.args[1]) + " END" : "CASE WHEN ... THEN ... ELSE ... END") + ".", "sqlite-only");
     if ((n.name === "sum" || n.name === "avg") && (a[0] === "text" || a[0] === "bool")) refuse("function " + sig + " does not exist", a[0] === "bool"
       ? text(n.args[0]) + " is a condition (true or false), not a number: count where it holds with SUM(CASE WHEN " + text(n.args[0]) + " THEN 1 ELSE 0 END)."
       : n.name.toUpperCase() + " works on numbers, and " + text(n.args[0]) + " is text: use COUNT, MIN or MAX on text, or convert digits with CAST(... AS INTEGER).", "types");
     const first = a[0] === "str" ? "text" : a[0];
     switch (n.name) {
-      case "count": case "length": case "char_length": case "strpos": case "row_number": case "rank": case "dense_rank": case "ntile": return "int";
+      case "count": case "length": case "row_number": case "rank": case "dense_rank": case "ntile": return "int";
       case "avg": case "percent_rank": case "cume_dist": return "num";
       case "round": return a.length > 1 || first !== "int" ? "num" : "int";
       case "sum": case "abs": case "min": case "max": case "lag": case "lead": case "first_value": case "last_value": case "nth_value": return first;
       case "coalesce": case "nullif": return a.map(t => (t === "str" ? "text" : t)).find(t => t && t !== "null") || null;
       case "lower": case "upper": case "trim": case "ltrim": case "rtrim": case "btrim": case "replace": case "substr": case "substring": case "concat":
-      case "string_agg": case "format": case "left": case "right": return "text";
+      case "string_agg": case "format": return "text";
     }
     return null;
   }
@@ -1029,7 +1033,7 @@ function award(list) {
   if (list.length) save(state);
 }
 
-export const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
+const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
 export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 
 // Seconds per wrong answer on the board; a compete game takes its season record's penalty.
@@ -1607,7 +1611,7 @@ function initConsent() {
 // The ad box under the schema (a native <details>: its summary is the toggle). Open by default; a student who
 // closes it keeps it closed (per browser, ADS_KEY). Hidden until ads go live (ADS_ON, after AdSense approval
 // and Google's consent message); ?ads=1 previews it on localhost.
-export const ADS_ON = false;
+const ADS_ON = false;
 const ADS_KEY = "ritz.ads";
 function initAds() {
   const box = $("ad-box"), local = ["localhost", "127.0.0.1"].includes(location.hostname);

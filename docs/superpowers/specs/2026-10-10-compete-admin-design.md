@@ -2,8 +2,8 @@
 
 Status (2026-10-10): branch `claude/compete-v2` implements work plan steps 1, 2 and 3 (sections 2 to 6: backend,
 build, game, `site/admin.html` and `site/leaderboard.html`), tested against a local stub of the backend in headless
-Chrome; next is the owner's look on his Chrome and the projector, then the rehearsal on the real backend. The admin
-page has no edit form for a created season yet (the backend's `update` is unused).
+Chrome; next is the owner's look on his Chrome and the projector, then the rehearsal on the real backend. A season
+is never edited: a wrong one is closed and created again (the unused `update` action was removed, 2026-10-16).
 Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
 whose newest season is oldest; pseudos and season ids are written to the Sheet as text (a leading apostrophe),
 so "007" stays "007" and no pseudo is read as a formula; `ritz.compete` also keeps
@@ -60,7 +60,6 @@ all rows (kept for the admin page's export of everything, not for the game).
 
 doPost, admin (`key` must equal `ADMIN_KEY`, compared trimmed and lowercased as today):
 - `{admin:"create", name, date, penalty, key}` -> `{ok, season}`; name 1-60 chars, date `YYYY-MM-DD`.
-- `{admin:"update", season, name, date, penalty, key}` while state is created.
 - `{admin:"open", season, key}` sets `openedAt` to the server's now; `{admin:"close", season, key}` sets
   `closedAt`. Both idempotent on repeat, refused on a state that cannot move there.
 

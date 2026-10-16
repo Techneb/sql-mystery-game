@@ -6,11 +6,11 @@ import { sha256, ADMIN_PASS_SHA256, officialTime, chapterSummary, fmtTime, escap
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
-export const BOARD_KEY = "ritz.admin.board";
+const BOARD_KEY = "ritz.admin.board";
 export const CSV_COLUMNS = ["timestamp", "event", "team", "season", "chapter", "wrong", "queries", "clientAt", "elapsedMs"];
 
 // RFC 4180: a field with a comma, a quote or a line break goes in quotes, its quotes doubled; lines end CRLF.
-export const csvField = v => {
+const csvField = v => {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 };

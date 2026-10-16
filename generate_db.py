@@ -1097,10 +1097,9 @@ def plot_queries():
                 out += [["%d ch%d %s" % (seed, ch["n"], k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
             for k in ["discovery", "discovery_compete"]:
                 out += [["%d ch%d %s" % (seed, ch["n"], k), d["query"].format(**V)] for d in ch.get(k, [])]
-    conn = empty_db()
-    clock_times(conn)
+    conn = sqlite3.connect("site/mystery.sqlite")   # the schema the browser reads (link_tables' columns too); the seasons share it
     schema = {t: [[c[1], c[2], c[5]] for c in conn.execute("PRAGMA table_info(%s)" % t)]
-              for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+              for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     return {"schema": schema, "queries": out}
 
 
@@ -1121,9 +1120,6 @@ FIXTURE = [("  Phileas Fogg, Esq. ", "phileas fogg"), ("phileas   fogg", "philea
            ("Mr. Waldo", "waldo"), ("M. Dupont", "dupont"), ("Countess Smith", "smith"), ("Comtesse de Segur", "segur"),
            ("Trunk no B-3", "b3"), ("B 3", "b3"), ("B3", "b3"), ("WIRE 12 STOP", "12"),
            ("stop at the door stop", "stop at door"), ("STOP", "stop")]
-
-TEXT_KEYS = ["title", "story", "objective", "answer_form", "telegram"]
-
 
 def chapters_json(V, mode="learn"):
     chapters = []
@@ -1149,7 +1145,7 @@ def chapters_json(V, mode="learn"):
 
 # A port of site/app.js formatSql (Ctrl+F in the terminal), so solution.sql reads like a formatted query.
 # The site test runs the JS formatter over solution.sql and requires it to change nothing: the two must agree.
-SQL_KEYWORDS = set(("select from where and or not in is null like glob between join inner left right full outer "
+SQL_KEYWORDS = set(("select from where and or not in is null like ilike glob between join inner left right full outer "
     "cross natural on using as group by order having limit offset distinct all union intersect except with recursive case "
     "when then else end asc desc over partition rows range exists cast collate escape values insert into update set delete "
     "create table view drop filter window").split(" "))

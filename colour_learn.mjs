@@ -17,7 +17,7 @@ export function bakerySchema(databaseHtml) {
   return Object.fromEntries([...script.matchAll(/CREATE TABLE (\w+) \(([^;]*)\);/g)].map(([, t, cols]) =>
     [t, cols.split(/,(?![^(]*\))/).map((c) => c.trim().split(/\s+/)).map((w) => [w[0], w[1], /PRIMARY KEY/.test(w.join(" ")) ? 1 : 0])]));
 }
-export const refusalHtml = (r) => '<div class="refusal"><code>ERROR: ' + escHtml(r.error) + "</code> " + escHtml(r.why) + "</div>";
+const refusalHtml = (r) => '<div class="refusal"><code>ERROR: ' + escHtml(r.error) + "</code> " + escHtml(r.why) + "</div>";
 export const colourPage = (html, schema) => html
   .replace(/<pre( class="wrong")?><code>([\s\S]*?)<\/code><\/pre>(\n<div class="refusal">[\s\S]*?<\/div>)?/g, (_, wrong, inner) => {
     const out = "<pre" + (wrong || "") + "><code>" + colourBlock(inner) + "</code></pre>";

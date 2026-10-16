@@ -70,7 +70,8 @@ test("seasons: create, open, close; close from created; never reopened; admin ke
   assert.equal(closed.state, "closed", "a season created by mistake can be closed");
   assert.equal(closed.openedAt, null);
   assert.equal(b.admin("open", { season: t.id }).ok, false);
-  assert.equal(b.admin("update", { season: t.id, name: "y", date: "2026-10-15" }).ok, false);
+  const u = b.create();
+  assert.equal(b.admin("update", { season: u.id, name: "y", date: "2026-10-15" }).error, "unknown admin action", "no edit: a season is created as it plays");
 });
 
 test("join: one per pseudo after NFKC folding; '007' stays text and finishes after its seven progress rows", () => {

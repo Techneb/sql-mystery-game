@@ -39,7 +39,7 @@
 <p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-id">ILIKE</span> <span class="sql-str">'%croissant%'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%croissant%'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
@@ -95,7 +95,7 @@
 <p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>ILIKE '%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-id">ILIKE</span> <span class="sql-str">'%choc%'</span> <span class="sql-kw">OR</span> <span class="sql-id">name</span> <span class="sql-id">ILIKE</span> <span class="sql-str">'%tart%'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%choc%'</span> <span class="sql-kw">OR</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%tart%'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>

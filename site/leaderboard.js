@@ -10,20 +10,20 @@ const FLAG_TITLE = "The browser's own clock disagrees with the server by more th
 export const stripHtml = solved => '<span class="strip" aria-label="' + solved + ' of 8 chapters">' +
   Array.from({ length: 8 }, (_, i) => '<i class="' + (i < solved ? "on" : "") + '"></i>').join("") + "</span>";
 
-export const timeHtml = p => p.finished
+const timeHtml = p => p.finished
   ? fmtTime(p.ms) + (p.flagged ? ' <abbr title="' + esc(FLAG_TITLE) + '">?</abbr>' : "")
   : "chapter " + p.chapter;
 
-export const rankingHtml = ranking => '<table class="ranking"><tbody>' + ranking.map(p =>
+const rankingHtml = ranking => '<table class="ranking"><tbody>' + ranking.map(p =>
   '<tr class="' + (p.finished ? "done" : "playing") + '"><td class="rank">' + p.rank + '</td><td class="team">' + esc(p.team) +
   "</td><td>" + stripHtml(p.solved) + '</td><td class="time">' + timeHtml(p) + "</td></tr>").join("") + "</tbody></table>";
 
-export const waitingHtml = ranking => '<p class="waiting">Waiting for the teacher</p><p class="count">' + ranking.length +
+const waitingHtml = ranking => '<p class="waiting">Waiting for the teacher</p><p class="count">' + ranking.length +
   (ranking.length === 1 ? " detective" : " detectives") + ' joined</p><ul class="joined">' +
   ranking.map(p => "<li>" + esc(p.team) + "</li>").join("") + "</ul>";
 
 // Top three finishers (finished players rank first), second place on the left, the winner in the middle, as on a podium.
-export const podiumHtml = ranking => {
+const podiumHtml = ranking => {
   const f = ranking.filter(p => p.finished);
   return f.length ? '<ol class="podium">' + [f[1], f[0], f[2]].filter(Boolean).map(p =>
     '<li class="place-' + p.rank + '"><span class="place">' + p.rank + '</span><span class="team">' + esc(p.team) +
