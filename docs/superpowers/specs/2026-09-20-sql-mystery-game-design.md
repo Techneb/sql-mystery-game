@@ -470,7 +470,11 @@ framework, no bundler.
   (keep it on both home pages); the game's sitemap.xml read, 14 pages. alephb.uk's home page links Play, About the game
   and the Handbook (owner: the page stays short, links not prose). Four new handbook pages (NULL, subqueries, dates
   and times, exercises; 15 pages in all) shipped 2026-10-17 after a browser check (phone width, night mode,
-  closed solutions) and the sitemap resubmitted. Next: wait 3-4 weeks (indexing, real visits), then request the
+  closed solutions) and the sitemap resubmitted. A content review of all the new pages followed the same day
+  (results checked cell by cell, no spoilers) and its fixes shipped: no promise that the examples run in
+  PostgreSQL (plain SQLite needs `lower() LIKE` for ILIKE), the quoted-number refusal named as the terminal's own
+  rule, no CTE on the dates page, exercises reordered by difficulty with each one's expected row count, a "By AlephB"
+  byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. Next: wait 3-4 weeks (indexing, real visits), then request the
   AdSense re-review, about mid-November.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
