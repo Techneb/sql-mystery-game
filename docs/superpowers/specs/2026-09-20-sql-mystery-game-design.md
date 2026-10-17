@@ -469,9 +469,9 @@ framework, no bundler.
   https://mystery.alephb.uk/ and https://alephb.uk/, both verified by the same `google-site-verification` meta tag
   (keep it on both home pages); the game's sitemap.xml read, 14 pages. alephb.uk's home page links Play, About the game
   and the Handbook (owner: the page stays short, links not prose). Four new handbook pages (NULL, subqueries, dates
-  and times, exercises; 15 pages in all) wait on branch `claude/handbook-more-pages` (478ed4c): tests pass, not yet
-  seen in a browser nor merged. Plan: merge after a browser check, resubmit the sitemap, wait 3-4 weeks, then request
-  the AdSense re-review.
+  and times, exercises; 15 pages in all) shipped 2026-10-17 after a browser check (phone width, night mode,
+  closed solutions) and the sitemap resubmitted. Next: wait 3-4 weeks (indexing, real visits), then request the
+  AdSense re-review, about mid-November.
   **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
