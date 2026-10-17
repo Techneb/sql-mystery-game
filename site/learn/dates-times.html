@@ -92,42 +92,37 @@
 <p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code>, which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a half-open range, <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>: <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss everything after midnight, because <code>'2026-03-05 17:45'</code> sorts after <code>'2026-03-05'</code>.</p>
 
 <h2>Taking a date apart: substr</h2>
-<p>A fixed format means each part sits at a fixed position, so <code>substr(text, start, length)</code> cuts it out (positions count from 1). In an ISO date the year is characters 1 to 4, the year and month 1 to 7, the day 9 and 10; in a time the hour is 1 and 2, the minutes 4 and 5. Grouping by the first seven characters counts the customers who joined each month.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">substr</span>(<span class="sql-id">joined</span>, <span class="sql-num">1</span>, <span class="sql-num">7</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">new_customers</span>
+<p>A fixed format means each part sits at a fixed position, so <code>substr(text, start, length)</code> cuts it out (positions count from 1). In an ISO date the year is characters 1 to 4, the year and month 1 to 7, the day 9 and 10; in a time the hour is 1 and 2, the minutes 4 and 5. Here the first seven characters give the month each customer joined.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">joined</span>, <span class="sql-fn">substr</span>(<span class="sql-id">joined</span>, <span class="sql-num">1</span>, <span class="sql-num">7</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">joined</span> &lt; <span class="sql-str">'2024-05-01'</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">month</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">month</span>;</code></pre>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">joined</span>, <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>month</th><th>new_customers</th></tr>
-<tr><td>2024-01</td><td>1</td></tr>
-<tr><td>2024-02</td><td>2</td></tr>
-<tr><td>2024-03</td><td>1</td></tr>
-<tr><td>2024-04</td><td>1</td></tr>
+<tr><th>name</th><th>joined</th><th>month</th></tr>
+<tr><td>Alice Turner</td><td>2024-01-15</td><td>2024-01</td></tr>
+<tr><td>Ben Okafor</td><td>2024-02-03</td><td>2024-02</td></tr>
+<tr><td>Chloe Martin</td><td>2024-02-20</td><td>2024-02</td></tr>
+<tr><td>David Chen</td><td>2024-03-11</td><td>2024-03</td></tr>
+<tr><td>Emma Novak</td><td>2024-04-02</td><td>2024-04</td></tr>
 </table>
+<p>The filter <code>joined &lt; '2024-05-01'</code> compares two pieces of text, and because both are ISO dates, text order is date order: it keeps everyone who joined before the first of May 2024. The month column can then be grouped on, to count the newcomers of each month (see <a href="group-by-having.html">GROUP BY</a>).</p>
 <p>A prefix can also be matched with <a href="like.html">LIKE</a>: <code>joined LIKE '2024-02-%'</code> keeps February 2024. It works, but a range (<code>joined &gt;= '2024-02-01' AND joined &lt; '2024-03-01'</code>) says what you mean and can use an index. Avoid patterns with a wildcard on both sides, such as <code>LIKE '%03%'</code>: it matches March, the third of any month, and the year 2003.</p>
 
 <h2>From text to number: CAST</h2>
-<p><code>substr</code> returns text. As long as you only compare or group, that is fine, but arithmetic needs numbers: <code>CAST(text AS INTEGER)</code> converts. Turning a clock time into minutes after midnight, for instance, makes durations computable. The first step below does the conversion; the second finds, for each day, how long the bakery's orders were spread over.</p>
-<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">stamped</span> <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">day</span>,
-         <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) * <span class="sql-num">60</span> + <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">4</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">minute</span>
-  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
-)
-<span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>, <span class="sql-fn">MIN</span>(<span class="sql-id">minute</span>) <span class="sql-kw">AS</span> <span class="sql-id">first_minute</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">minute</span>) - <span class="sql-fn">MIN</span>(<span class="sql-id">minute</span>) <span class="sql-kw">AS</span> <span class="sql-id">span_minutes</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">stamped</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
+<p><code>substr</code> returns text. As long as you only compare or sort, that is fine, but arithmetic needs numbers: <code>CAST(text AS INTEGER)</code> converts. Turning a clock time into the number of minutes since midnight, for instance, lets you add and subtract times: the hours times 60, plus the minutes.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span>,
+       <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) * <span class="sql-num">60</span> + <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">4</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">minutes_after_midnight</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">time</span>, <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>day</th><th>orders</th><th>first_minute</th><th>span_minutes</th></tr>
-<tr><td>2026-03-02</td><td>3</td><td>435</td><td>315</td></tr>
-<tr><td>2026-03-03</td><td>1</td><td>470</td><td>0</td></tr>
-<tr><td>2026-03-04</td><td>2</td><td>440</td><td>530</td></tr>
-<tr><td>2026-03-05</td><td>2</td><td>545</td><td>520</td></tr>
-<tr><td>2026-03-07</td><td>3</td><td>430</td><td>365</td></tr>
-<tr><td>2026-03-08</td><td>3</td><td>485</td><td>615</td></tr>
+<tr><th>id</th><th>time</th><th>minutes_after_midnight</th></tr>
+<tr><td>1</td><td>07:15</td><td>435</td></tr>
+<tr><td>2</td><td>08:40</td><td>520</td></tr>
+<tr><td>3</td><td>12:30</td><td>750</td></tr>
 </table>
-<p>Grouping by the hour works the same way. <code>CAST(substr(time, 1, 2) AS INTEGER)</code> is a number from 0 to 23, which can be compared, bucketed with a <a href="case-when.html">CASE</a>, or grouped on directly.</p>
+<p>The first two orders of that day are 520 - 435 = 85 minutes apart.</p>
+<p>The hour alone, <code>CAST(substr(time, 1, 2) AS INTEGER)</code>, is a number from 0 to 23, which can be compared, bucketed with a <a href="case-when.html">CASE</a>, or grouped on directly; the next page, <a href="group-by-having.html">GROUP BY</a>, explains the grouping used below.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">hour</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
@@ -143,23 +138,11 @@
 </table>
 
 <h2>Dates stored as numbers</h2>
-<p>Some systems store a date as the integer <code>YYYYMMDD</code>: 5 March 2026 is <code>20260305</code>. Larger units sit in the higher digits, so numeric order is calendar order and comparisons work exactly as with ISO text, without quotes this time: the value is a number, and a number is compared with a number (see <a href="grammar.html#types">Types</a>). Integer division and the remainder take it apart: <code>d / 10000</code> is the year, <code>d / 100 % 100</code> the month, <code>d % 100</code> the day. Here the ISO text is turned into that number with <code>replace</code> and <code>CAST</code>, to show the arithmetic.</p>
-<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">numbered</span> <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-kw">CAST</span>(<span class="sql-fn">replace</span>(<span class="sql-id">day</span>, <span class="sql-str">'-'</span>, <span class="sql-str">''</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">d</span>
-  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
-)
-<span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">d</span>, <span class="sql-id">d</span> / <span class="sql-num">10000</span> <span class="sql-kw">AS</span> <span class="sql-id">year</span>, <span class="sql-id">d</span> / <span class="sql-num">100</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">month</span>, <span class="sql-id">d</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">day_of_month</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">numbered</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">d</span> <span class="sql-kw">BETWEEN</span> <span class="sql-num">20260307</span> <span class="sql-kw">AND</span> <span class="sql-num">20260308</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<p>Some systems store a date as the integer <code>YYYYMMDD</code>: 5 March 2026 is <code>20260305</code>. Larger units sit in the higher digits, so numeric order is calendar order and comparisons work exactly as with ISO text, without quotes this time: the value is a number, and a number is compared with a number (see <a href="grammar.html#types">Types</a>). Integer division and the remainder take it apart: <code>d / 10000</code> is the year, <code>d / 100 % 100</code> the month, <code>d % 100</code> the day. Here it is applied to a number written in the query, to show the arithmetic; <code>CAST(replace(day, '-', '') AS INTEGER)</code> would turn an ISO text date into such a number.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-num">20260305</span> / <span class="sql-num">10000</span> <span class="sql-kw">AS</span> <span class="sql-id">year</span>, <span class="sql-num">20260305</span> / <span class="sql-num">100</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">month</span>, <span class="sql-num">20260305</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">day_of_month</span>;</code></pre>
 <table class="result">
-<tr><th>id</th><th>d</th><th>year</th><th>month</th><th>day_of_month</th></tr>
-<tr><td>9</td><td>20260307</td><td>2026</td><td>3</td><td>7</td></tr>
-<tr><td>10</td><td>20260307</td><td>2026</td><td>3</td><td>7</td></tr>
-<tr><td>11</td><td>20260307</td><td>2026</td><td>3</td><td>7</td></tr>
-<tr><td>12</td><td>20260308</td><td>2026</td><td>3</td><td>8</td></tr>
-<tr><td>13</td><td>20260308</td><td>2026</td><td>3</td><td>8</td></tr>
-<tr><td>14</td><td>20260308</td><td>2026</td><td>3</td><td>8</td></tr>
+<tr><th>year</th><th>month</th><th>day_of_month</th></tr>
+<tr><td>2026</td><td>3</td><td>5</td></tr>
 </table>
 <p>What the number does not support is subtraction. Two dates a day apart can differ by 1, by 70 (31 March to 1 April) or by 8870 (31 December to 1 January), because the digits are a code, not a count of days:</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-num">20260306</span> - <span class="sql-num">20260305</span> <span class="sql-kw">AS</span> <span class="sql-id">same_month</span>, <span class="sql-num">20260401</span> - <span class="sql-num">20260331</span> <span class="sql-kw">AS</span> <span class="sql-id">across_months</span>;</code></pre>
@@ -170,7 +153,7 @@
 <p>A range such as "the first week of March" is still easy to write (<code>d BETWEEN 20260301 AND 20260307</code>); "seven days after a given date" is not, because the end of a month gets in the way. Real date arithmetic needs the database's own date functions, and those differ from one database to the next (SQLite's <code>date()</code> and <code>julianday()</code>, PostgreSQL's <code>DATE</code> type and intervals). For the comparisons, ranges and parts on this page, plain text and integer operations are enough, and they behave the same everywhere.</p>
 
 <h2>Common mistakes</h2>
-<p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in another shape than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>
+<p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in a shape other than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>
 
 <p class="in-game"><b>In the game:</b> the archives keep their dates and times in the shapes this page describes. Chapter I, <i>The Night of the 17th</i>, Chapter IV, <i>The Cab's Week</i>, and Chapter VI, <i>Follow the Francs</i>, compare dates; Chapter VII, <i>The Quietest Hour</i>, and Chapter XI, <i>The Silence</i>, compare times.</p>
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>

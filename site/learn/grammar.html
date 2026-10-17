@@ -37,7 +37,7 @@
 <h1>The Grammar of SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
 <p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
-<p>The game's terminal follows PostgreSQL's rules: a query that breaks one does not run, and the terminal answers with PostgreSQL's error line and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
+<p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one does not run, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
 
 <h2 id="group-by">GROUP BY: grouped or aggregated</h2>
 <p>After <code>GROUP BY</code>, each row of the result stands for a whole group. A column in <code>SELECT</code> must therefore be one of the grouped columns, or sit inside an aggregate such as <code>COUNT</code>, <code>SUM</code>, <code>MIN</code> or <code>MAX</code>: anything else has several values inside one group, and no single one of them to show.</p>
@@ -45,12 +45,12 @@
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <div class="refusal"><code>ERROR: column "product.name" must appear in the GROUP BY clause or be used in an aggregate function</code> Each row of the result is one group, and product.name can hold several values inside a group: add product.name to GROUP BY, or wrap it in an aggregate such as MAX(product.name).</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">MIN</span>(<span class="sql-id">name</span>) <span class="sql-kw">AS</span> <span class="sql-id">first_name</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">MIN</span>(<span class="sql-id">name</span>) <span class="sql-kw">AS</span> <span class="sql-id">first_alphabetically</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
-<tr><th>category</th><th>products</th><th>first_name</th></tr>
+<tr><th>category</th><th>products</th><th>first_alphabetically</th></tr>
 <tr><td>bread</td><td>4</td><td>Baguette</td></tr>
 <tr><td>cake</td><td>3</td><td>Carrot cake slice</td></tr>
 <tr><td>pastry</td><td>3</td><td>Almond croissant</td></tr>
@@ -166,6 +166,7 @@
 
 <h2 id="types">Types</h2>
 <p>Every column has a type, written in the schema: whole numbers (<code>INTEGER</code>), text (<code>TEXT</code>). A number is compared with a number, text with text; a comparison of two different kinds is an error. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
+<p>The example below is this terminal's own rule, not PostgreSQL's: PostgreSQL would read the quoted <code>'1'</code> as the number 1 and run the query. The terminal refuses it on purpose, so that a number is always written as a number and its type shows in the query.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-str">'1'</span>;</code></pre>
@@ -179,7 +180,7 @@
 <tr><td>Ben Okafor</td></tr>
 <tr><td>Chloe Martin</td></tr>
 </table>
-<p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>. (Some databases read a quoted number as a number on their own; write it bare, and the type shows in the query.)</p>
+<p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>.</p>
 
 <h2 id="aliases">Aliases in WHERE and HAVING</h2>
 <p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists, so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
@@ -219,7 +220,7 @@
 </table>
 
 <h2 id="sqlite-only">Standard syntax</h2>
-<p>Some shorthands of a single database are not SQL anywhere else. Write the standard form.</p>
+<p>The terminal runs the forms that PostgreSQL and SQLite share; a shorthand that only one of them knows is refused. Write these instead:</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
