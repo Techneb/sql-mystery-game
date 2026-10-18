@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Grammar of SQL -- The Ritz Affair</title>
-<meta name="description" content="How to write SQL correctly: GROUP BY and aggregates, HAVING, ORDER BY after grouping, quotes, one equals sign, types, aliases, conditions, standard syntax, and LIKE against ILIKE. A wrong and a right query for each, with real results.">
+<meta name="description" content="How to write SQL correctly: the order in which a query is worked out, GROUP BY and aggregates, HAVING, ORDER BY after grouping, quotes, one equals sign, types, aliases, conditions, standard syntax, and LIKE against ILIKE. A wrong and a right query for each, with real results.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -29,15 +29,31 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <span class="current" aria-current="page">15. Grammar</span></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <span class="current" aria-current="page">16. Grammar</span></nav>
 <main class="learn">
 <h1>The Grammar of SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
 <p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
 <p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one does not run, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
+
+<h2 id="order-of-execution">Order of execution</h2>
+<p>A query is written starting with <code>SELECT</code>, but it is not worked out in that order. Logically, the database takes the clauses in this order, and each step sees only what the step before it produced:</p>
+<table class="result">
+<tr><th>Step</th><th>Clause</th><th>What it does</th></tr>
+<tr><td>1</td><td>FROM and JOIN</td><td>gathers the rows of the tables and pairs them up</td></tr>
+<tr><td>2</td><td>WHERE</td><td>keeps the rows whose condition is true</td></tr>
+<tr><td>3</td><td>GROUP BY</td><td>gathers the remaining rows into groups</td></tr>
+<tr><td>4</td><td>HAVING</td><td>keeps the groups whose condition is true</td></tr>
+<tr><td>5</td><td>SELECT</td><td>works out the columns of the result, window functions included, and names them</td></tr>
+<tr><td>6</td><td>DISTINCT</td><td>removes the rows of the result that repeat</td></tr>
+<tr><td>7</td><td>ORDER BY</td><td>sorts the result</td></tr>
+<tr><td>8</td><td>LIMIT and OFFSET</td><td>keeps a slice of the sorted rows</td></tr>
+</table>
+<p>Most of the rules on this page follow from that order. An alias is a name given at step 5, so <code>WHERE</code> and <code>HAVING</code>, at steps 2 and 4, run before it exists and cannot use it (see <a href="#aliases">Aliases in WHERE and HAVING</a>), while <code>ORDER BY</code>, at step 7, can. A window function is computed at step 5 too, which is why it cannot be filtered in <code>WHERE</code>: compute it in a <a href="ctes.html">CTE</a> and filter outside. After step 3 each row is a group, so steps 4 to 7 may only use grouped columns and aggregates, plus, in <code>ORDER BY</code>, the result's own column names. And <code>LIMIT</code> comes last, so it keeps the first rows of the sorted result, never a sample taken before sorting. With <a href="set-operations.html">UNION, INTERSECT or EXCEPT</a>, each half runs steps 1 to 6 on its own, the two results are combined, and the one <code>ORDER BY</code> and <code>LIMIT</code> apply to the combination. The database may take shortcuts when it actually runs a query, but the result is always the one this order gives.</p>
 
 <h2 id="group-by">GROUP BY: grouped or aggregated</h2>
 <p>After <code>GROUP BY</code>, each row of the result stands for a whole group. A column in <code>SELECT</code> must therefore be one of the grouped columns, or sit inside an aggregate such as <code>COUNT</code>, <code>SUM</code>, <code>MIN</code> or <code>MAX</code>: anything else has several values inside one group, and no single one of them to show.</p>
@@ -183,7 +199,7 @@
 <p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>.</p>
 
 <h2 id="aliases">Aliases in WHERE and HAVING</h2>
-<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists, so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
+<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists (see <a href="#order-of-execution">Order of execution</a>), so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">double_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">double_price</span> &gt; <span class="sql-num">7</span>;</code></pre>

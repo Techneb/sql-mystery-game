@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Clerk's Handbook -- The Ritz Affair</title>
-<meta name="description" content="A free SQL handbook for beginners: SELECT, WHERE, ORDER BY, LIKE, dates, GROUP BY, JOIN, NULL, CASE, subqueries, window functions and recursive CTEs, explained in plain English on one small example database you can run yourself, with graded exercises and solutions.">
+<meta name="description" content="A free SQL handbook for beginners: SELECT, WHERE, ORDER BY, LIKE, dates, GROUP BY, JOIN, NULL, CASE, subqueries, UNION, window functions and recursive CTEs, explained in plain English on one small example database you can run yourself, with graded exercises and solutions.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -29,10 +29,11 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <a href="grammar.html">15. Grammar</a></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>The Clerk's Handbook</h1>
 <p class="muted byline">By <a href="https://alephb.uk/">AlephB</a></p>
@@ -49,9 +50,10 @@
 <li><a href="nulls.html">NULL and missing values</a>: three-valued logic, COUNT, COALESCE and the NOT IN trap.</li>
 <li><a href="case-when.html">CASE WHEN</a>: labels, buckets and conditional counts.</li>
 <li><a href="subqueries.html">Subqueries</a>: scalar, IN, EXISTS, correlated and derived tables.</li>
+<li><a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>: stacking two results, the rows they share, the rows one lacks.</li>
 <li><a href="window-functions.html">Window functions: RANK and LAG</a>: ranking rows and comparing with the previous one.</li>
 <li><a href="ctes.html">CTEs and WITH RECURSIVE</a>: named steps and following chains.</li>
-<li><a href="exercises.html">SQL exercises with solutions</a>: fourteen graded questions with hidden solutions.</li>
+<li><a href="exercises.html">SQL exercises with solutions</a>: fifteen graded questions with hidden solutions.</li>
 <li><a href="grammar.html">The Grammar of SQL</a>: grouping, quotes, types and conditions, done right.</li>
 </ol>
 <nav class="learn-pager"><span></span><a class="next" href="database.html">Next: The bakery database</a></nav>

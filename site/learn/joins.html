@@ -29,10 +29,11 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <a href="grammar.html">15. Grammar</a></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>JOIN, LEFT JOIN and self-joins</h1>
 <p class="game-label">Game: chapters <a href="../">V</a>, <a href="../">VI</a>, <a href="../">IX</a> and <a href="../">X</a></p>
@@ -123,6 +124,7 @@
 <h2>Common mistakes</h2>
 <p>Forgetting the <code>ON</code> condition, or listing two tables separated by a comma with no condition: every row is paired with every other row, and a few thousand rows become millions. Joining on the wrong columns, such as <code>o.id = c.id</code>, which runs without error and returns nonsense. Leaving a column name unprefixed when both tables have it. Summing after a join that has duplicated rows. Filtering a left join's right-hand table in <code>WHERE</code> and losing the unmatched rows you wanted to keep.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#orders-by-town">Orders by town</a>, <a href="exercises.html#takings-per-day">Takings per day</a> and <a href="exercises.html#referred-from-afar">Referred from afar</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter V, <i>The Boarding House</i>, introduces JOIN; Chapter VI, <i>Follow the Francs</i>, chains three; Chapter IX, <i>The Trunk</i>, joins inside a CTE; Chapter X, <i>Never Seen Together</i>, practises the self-join.</p>
 <nav class="learn-pager"><a class="prev" href="group-by-having.html">Previous: GROUP BY, aggregates and HAVING</a><a class="next" href="nulls.html">Next: NULL and missing values</a></nav>
 </main>

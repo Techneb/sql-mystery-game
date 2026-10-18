@@ -29,10 +29,11 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <a href="grammar.html">15. Grammar</a></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>Dates and times stored as text or numbers</h1>
 <p class="game-label">Game: chapters <a href="../">I</a>, <a href="../">IV</a>, <a href="../">VI</a>, <a href="../">VII</a> and <a href="../">XI</a></p>
@@ -155,6 +156,7 @@
 <h2>Common mistakes</h2>
 <p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in a shape other than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#early-customers">Early customers</a> and <a href="exercises.html#busy-hours">Busy hours</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> the archives keep their dates and times in the shapes this page describes. Chapter I, <i>The Night of the 17th</i>, Chapter IV, <i>The Cab's Week</i>, and Chapter VI, <i>Follow the Francs</i>, compare dates; Chapter VII, <i>The Quietest Hour</i>, and Chapter XI, <i>The Silence</i>, compare times.</p>
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
 </main>

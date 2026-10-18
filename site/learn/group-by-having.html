@@ -29,10 +29,11 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <a href="grammar.html">15. Grammar</a></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>GROUP BY, aggregates and HAVING</h1>
 <p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
@@ -113,11 +114,12 @@
 </table>
 
 <h2>The order in which a query runs</h2>
-<p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page.</p>
+<p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page; <a href="grammar.html#order-of-execution">Order of execution</a> goes through it step by step.</p>
 
 <h2>Common mistakes</h2>
 <p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which has no single value to show (see <a href="grammar.html#group-by">The Grammar of SQL</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#the-counter-by-category">The counter by category</a>, <a href="exercises.html#orders-by-town">Orders by town</a>, <a href="exercises.html#takings-per-day">Takings per day</a> and <a href="exercises.html#busy-hours">Busy hours</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>
 <nav class="learn-pager"><a class="prev" href="dates-times.html">Previous: Dates and times stored as text or numbers</a><a class="next" href="joins.html">Next: JOIN, LEFT JOIN and self-joins</a></nav>
 </main>

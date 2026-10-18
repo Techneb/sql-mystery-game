@@ -29,10 +29,11 @@
     <a href="nulls.html">9. NULL</a>
     <a href="case-when.html">10. CASE</a>
     <a href="subqueries.html">11. Subqueries</a>
-    <a href="window-functions.html">12. Windows</a>
-    <a href="ctes.html">13. CTEs</a>
-    <a href="exercises.html">14. Exercises</a>
-    <a href="grammar.html">15. Grammar</a></nav>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>ORDER BY and LIMIT</h1>
 <p class="game-label">Game: chapter <a href="../">II</a></p>
@@ -70,7 +71,7 @@
 <tr><td>pastry</td><td>Pain au chocolat</td><td>1.6</td></tr>
 <tr><td>pastry</td><td>Croissant</td><td>1.4</td></tr>
 </table>
-<p>You can sort by a column that you do not display, and by a computed expression or an alias defined in <code>SELECT</code>. Sorting happens after the rows have been chosen, which is why aliases work here while they do not in <code>WHERE</code>.</p>
+<p>You can sort by a column that you do not display, and by a computed expression or an alias defined in <code>SELECT</code>. Sorting happens after the rows have been chosen, which is why aliases work here while they do not in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
 
 <h2>Keeping the first rows: LIMIT</h2>
 <p><code>LIMIT n</code>, written at the very end of the query, keeps only the first n rows of the result. On its own it keeps an arbitrary n rows, which is rarely useful; combined with <code>ORDER BY</code> it answers questions such as "the three most recent orders" or "the cheapest pastry". <code>OFFSET k</code> skips the first k rows before counting, which is how a website shows page two of a list.</p>
@@ -106,6 +107,7 @@
 <h2>Common mistakes</h2>
 <p>Relying on the insertion order or on the id as a stand-in for time: the row with the highest id is not always the latest event, so sort by the date itself. Forgetting <code>DESC</code> and reading the bottom of a list as if it were the top. Sorting dates stored in a form that does not sort as text, such as day/month/year. Using <code>LIMIT 1</code> without checking for ties. Sorting by a number stored as text, where <code>'10'</code> comes before <code>'9'</code>.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#the-cheap-shelf">The cheap shelf</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter II, <i>The Neighbouring Suite</i>, practises ORDER BY and LIMIT.</p>
 <nav class="learn-pager"><a class="prev" href="select-where.html">Previous: SELECT and WHERE</a><a class="next" href="like.html">Next: LIKE and text patterns</a></nav>
 </main>

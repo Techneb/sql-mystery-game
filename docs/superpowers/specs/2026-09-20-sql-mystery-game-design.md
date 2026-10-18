@@ -543,4 +543,9 @@ framework, no bundler.
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
   in passing on the GROUP BY, CTE and grammar pages today); (c) a "try it" line at the end of each construct page
   linking its exercise on `exercises.html`. Not worth taking: its INSERT/UPDATE/DELETE/CREATE lessons (the game's
-  database is read-only on purpose).
+  database is read-only on purpose). Built 2026-10-18 (all three, in our own words and bakery examples):
+  (a) `learn/set-operations.html` ("UNION, INTERSECT and EXCEPT", menu 12, between Subqueries and Windows; game
+  label XI and XII) and a fifteenth exercise, "Not on the weekend menu" (EXCEPT, Practice); (b) an "Order of
+  execution" section at the top of `grammar.html` (`#order-of-execution`), linked from the GROUP BY, ORDER BY,
+  window and CTE pages; (c) a "Try it" line on each construct page, linking exercises by their new slug ids.
+  Not built: strictCheck does not refuse a UNION of a text column with a number (PostgreSQL does; SQLite runs it).
