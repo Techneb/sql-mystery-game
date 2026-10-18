@@ -538,14 +538,16 @@ framework, no bundler.
   whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
   free, no sponsorship asked. Pending his reply. The site may show ads later (AdSense pending): if asked whether it
   earns money, say so.
-- **Handbook ideas from SQLBolt** (2026-10-18, not decided): sqlbolt.com, a free 18-lesson SQL tutorial, is a
+- ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
   in passing on the GROUP BY, CTE and grammar pages today); (c) a "try it" line at the end of each construct page
   linking its exercise on `exercises.html`. Not worth taking: its INSERT/UPDATE/DELETE/CREATE lessons (the game's
   database is read-only on purpose). Built 2026-10-18 (all three, in our own words and bakery examples):
   (a) `learn/set-operations.html` ("UNION, INTERSECT and EXCEPT", menu 12, between Subqueries and Windows; game
-  label XI and XII) and a fifteenth exercise, "Not on the weekend menu" (EXCEPT, Practice); (b) an "Order of
+  label XII only: naming XI would say its puzzle stacks ledgers, which its Hint does not) and a fifteenth exercise, "Not on the weekend menu" (EXCEPT, Practice); (b) an "Order of
   execution" section at the top of `grammar.html` (`#order-of-execution`), linked from the GROUP BY, ORDER BY,
   window and CTE pages; (c) a "Try it" line on each construct page, linking exercises by their new slug ids.
-  Not built: strictCheck does not refuse a UNION of a text column with a number (PostgreSQL does; SQLite runs it).
+  Deployed 2026-10-18 (5b51d31; 16 handbook pages), checked in Chrome on desktop in the night palette, phone width
+  not checked; resubmit the sitemap in Search Console. Not built: strictCheck does not refuse a UNION of a text
+  column with a number (PostgreSQL does; SQLite runs it).
