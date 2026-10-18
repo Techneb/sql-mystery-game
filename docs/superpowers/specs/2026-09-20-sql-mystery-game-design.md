@@ -534,3 +534,13 @@ framework, no bundler.
   screen during a session. Today these are spread over the `?admin` panel (Seasons, Settings, passphrase-gated),
   the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Designed 2026-10-10 with the owner:
   `2026-10-10-compete-admin-design.md`. In progress for the 2026-10-14 trial.
+- **Outreach** (course owner, 2026-10-18): the owner emailed Nick (softwarewithnick, a software content creator
+  whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
+  free, no sponsorship asked. Pending his reply. The site may show ads later (AdSense pending): if asked whether it
+  earns money, say so.
+- **Handbook ideas from SQLBolt** (2026-10-18, not decided): sqlbolt.com, a free 18-lesson SQL tutorial, is a
+  complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
+  `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
+  in passing on the GROUP BY, CTE and grammar pages today); (c) a "try it" line at the end of each construct page
+  linking its exercise on `exercises.html`. Not worth taking: its INSERT/UPDATE/DELETE/CREATE lessons (the game's
+  database is read-only on purpose).
