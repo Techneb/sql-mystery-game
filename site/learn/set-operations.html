@@ -36,7 +36,7 @@
     <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>UNION, INTERSECT and EXCEPT</h1>
-<p class="game-label">Game: chapters <a href="../">XI</a> and <a href="../">XII</a></p>
+<p class="game-label">Game: chapter <a href="../">XII</a></p>
 <p class="lede">A join puts tables side by side. A set operation puts two results one above the other, and keeps all their rows, the rows they share, or the rows of the first that the second lacks.</p>
 
 <h2>UNION: one list from two queries</h2>
@@ -161,7 +161,7 @@
 <p>Halves with a different number of columns, which every database refuses. Columns in a different order in each half, which runs and stacks towns under names. A text column matched with a number, which PostgreSQL refuses and SQLite quietly stacks. An <code>ORDER BY</code> at the end of the first half, which is a syntax error: the only one goes after the last half. Using <code>UNION</code> where duplicates are real events to count, or <code>UNION ALL</code> where a list of people was meant. Chaining several different operators without thinking about the order they run in: PostgreSQL works out <code>INTERSECT</code> first, SQLite reads them from left to right, so name each step in a <a href="ctes.html">CTE</a> rather than rely on either.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#not-on-the-weekend-menu">Not on the weekend menu</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter XI, <i>The Silence</i>, uses UNION ALL inside a CTE; Chapter XII, <i>Follow the Money</i>, uses it inside WITH RECURSIVE.</p>
+<p class="in-game"><b>In the game:</b> Chapter XII, <i>Follow the Money</i>, uses UNION ALL inside WITH RECURSIVE.</p>
 <nav class="learn-pager"><a class="prev" href="subqueries.html">Previous: Subqueries</a><a class="next" href="window-functions.html">Next: Window functions: RANK and LAG</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
