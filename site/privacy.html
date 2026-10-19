@@ -24,12 +24,14 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 10 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 19 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. Advertising may appear on the page's edges, outside the game, once
-  Google's review of the site is complete, and only with your consent (below). The game sets no cookies
-  and loads nothing from Google unless you allow usage statistics or advertising.</p>
+  Google's review of the site is complete, and only with your consent (below). The game page loads
+  Google Analytics for usage statistics: in Europe (the European Economic Area, the United Kingdom and
+  Switzerland) it sets no cookie and measures nothing in full unless you say Yes; elsewhere it counts visits by
+  default, and you can say No at any time.</p>
 
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
@@ -37,12 +39,21 @@
   left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
 
-  <h2>Usage statistics (only if you say Yes)</h2>
+  <h2>Usage statistics</h2>
   <p>The game page asks once: <i>Help improve the course: allow anonymous usage statistics?</i> Your answer
-  is kept in local storage (<code>ritz.consent</code>). Until you answer Yes, and whenever you answer No,
-  nothing is loaded from Google and no analytics cookie is set. You can change your mind at any time from the
-  <i>Statistics</i> link at the bottom of the game page; choosing No deletes the <code>_ga</code> cookies.</p>
-  <p>If you say Yes, the page uses <b>Google Analytics 4</b>:</p>
+  is kept in local storage (<code>ritz.consent</code>). The page cannot tell where you are, so everyone sees
+  the question; Google, which can, applies the default that fits your country (Google Consent Mode):</p>
+  <ul>
+    <li><b>In the European Economic Area, the United Kingdom and Switzerland</b>, statistics are off until
+    you say Yes. Before that, the Google Analytics script still loads and sends Google cookieless signals
+    (the page viewed and the game events below, with no cookie and no identifier tying them to you), which
+    Google uses only to estimate overall numbers.</li>
+    <li><b>Everywhere else</b>, statistics are on by default, as if you had said Yes, until you say No.</li>
+  </ul>
+  <p>Whenever you answer No, the page stops sending anything to Google Analytics, deletes the
+  <code>_ga</code> cookies, and no longer loads the script on later visits. You can change your mind at any
+  time from the <i>Statistics</i> link at the bottom of the game page.</p>
+  <p>With statistics on, the page uses <b>Google Analytics 4</b>:</p>
   <ul>
     <li>It sets the first-party cookies <code>_ga</code> and <code>_ga_&lt;id&gt;</code>, which Google keeps
     for up to 13 months by default. The collected data itself is kept for 14 months, then deleted.</li>
@@ -106,8 +117,8 @@
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
     <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
-    <li>Only if you allow usage statistics: the Google Analytics script from googletagmanager.com, and its
-    measurements sent to google-analytics.com.</li>
+    <li>Unless you have answered No to usage statistics: the Google Analytics script from googletagmanager.com,
+    and its measurements (cookieless in Europe until you say Yes) sent to google-analytics.com.</li>
     <li>Once advertising is switched on (not yet): Google's ad and consent scripts and the ads themselves,
     from Google's ad servers.</li>
   </ul>

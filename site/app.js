@@ -1562,9 +1562,10 @@ function offerCompete() {
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") joinCompete(); });
 }
 
-// --- usage statistics: Google Analytics 4, opt-in only (spec section 8) ---------------------------
+// --- usage statistics: Google Analytics 4 with Consent Mode v2 (spec section 8) ---------------------
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
-// no Statistics link, no request to Google. Nothing loads before the reader says Yes (CNIL opt-in).
+// no Statistics link, no request to Google. Owner, 2026-10-19: visitors outside the EEA, UK and Switzerland
+// are counted by default; inside, analytics stays denied (cookieless pings only) until the banner's Yes.
 export const GA_ID = "G-QG0K0D1NQZ";
 const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
@@ -1572,17 +1573,28 @@ function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { r
 function gaId() {
   return GA_ID || (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("ga")) || "";
 }
+// Google's EEA (the 27 EU states plus IS, LI, NO), with the UK and Switzerland.
+export const CONSENT_REGIONS = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT",
+  "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "GB", "CH"];
+// The two `consent default` commands, region-scoped first (Google: the more specific region wins; the
+// unscoped one covers everyone else). No ads run and Google signals and ad personalisation are off in the
+// property, so the ad fields stay denied everywhere.
+export function consentDefaults() {
+  const denied = { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" };
+  return [{ ...denied, region: CONSENT_REGIONS }, { ...denied, analytics_storage: "granted" }];
+}
 // Every analytics call goes through here. Never pass the pseudo, answers, query text or the board URL.
+// Consent Mode decides what a hit carries: full outside Europe or after a Yes, cookieless in Europe before it.
 export function track(name, params) {
-  if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function" || consent() !== "yes") return false;
+  if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function" || consent() === "no") return false;
   window.gtag("event", name, params);
   return true;
 }
 function gaLoad(id) {
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
-  window.gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" });
-  window.gtag("consent", "update", { analytics_storage: "granted" });
+  for (const d of consentDefaults()) window.gtag("consent", "default", d);
+  if (consent() === "yes") window.gtag("consent", "update", { analytics_storage: "granted" });
   window.gtag("js", new Date());
   window.gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
   const s = document.createElement("script");
@@ -1616,7 +1628,8 @@ function initConsent() {
   $("consent-yes").onclick = () => setConsent("yes");
   $("consent-no").onclick = () => setConsent("no");
   const c = consent();
-  if (c === "yes") gaLoad(id); else if (c !== "no") $("consent").hidden = false;
+  if (c !== "no") gaLoad(id);   // everyone but a No: the region defaults decide what is sent
+  if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
 }
 
 // The ad box under the schema (a native <details>: its summary is the toggle). Open by default; a student who
