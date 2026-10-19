@@ -16,7 +16,7 @@ import re
 import sqlite3
 import sys
 
-LIVE = 1   # the version database.html carries; 2 once the pages are rewritten for it (the plan's migration order)
+LIVE = 2   # the version database.html carries; 2 once the pages are rewritten for it (the plan's migration order)
 
 SCHEMA = {
     1: ["CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id));",

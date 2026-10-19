@@ -60,11 +60,15 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th><th>above_average</th></tr>
-<tr><td>Sourdough loaf</td><td>4.5</td><td>1.66</td></tr>
-<tr><td>Lemon tart</td><td>3.9</td><td>1.06</td></tr>
-<tr><td>Rye loaf</td><td>3.8</td><td>0.96</td></tr>
-<tr><td>Seeded rolls</td><td>3.8</td><td>0.96</td></tr>
-<tr><td>Carrot cake slice</td><td>3.2</td><td>0.36</td></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td><td>1.63</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td><td>1.33</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td><td>1.23</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td><td>1.03</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td><td>0.93</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td><td>0.93</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td><td>0.93</td></tr>
+<tr><td>Focaccia</td><td>3.6</td><td>0.73</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td><td>0.33</td></tr>
 </table>
 <p>The same subquery appears twice, once to filter and once to display the difference; both evaluate to the same 2.84. A scalar subquery must return at most one row and one column. With no row it gives NULL. With several rows PostgreSQL stops with an error ("more than one row returned by a subquery used as an expression"), while SQLite quietly takes the first row and carries on, which is worse: the query runs and the answer is wrong. If a subquery could ever return more than one row, it does not belong after <code>=</code> or <code>&gt;</code>.</p>
 
@@ -85,6 +89,35 @@
 <tr><td>Chloe Martin</td><td>Riverside</td></tr>
 <tr><td>David Chen</td><td>Old Town</td></tr>
 <tr><td>Emma Novak</td><td>Hillcrest</td></tr>
+<tr><td>Farid Haddad</td><td>Old Town</td></tr>
+<tr><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Daniel Moreno</td><td>Hillcrest</td></tr>
+<tr><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
+<tr><td>Quentin Schmidt</td><td>Riverside</td></tr>
+<tr><td>Wen Petrov</td><td>Old Town</td></tr>
+<tr><td>Ugo Dubois</td><td>Hillcrest</td></tr>
+<tr><td>Hassan Ivanova</td><td>Old Town</td></tr>
+<tr><td>Rosa Weber</td><td>Old Town</td></tr>
+<tr><td>Nadia Jensen</td><td>Hillcrest</td></tr>
+<tr><td>Priya Hughes</td><td>Riverside</td></tr>
+<tr><td>Oscar Nakamura</td><td>Riverside</td></tr>
+<tr><td>Jonas Eriksen</td><td>Hillcrest</td></tr>
+<tr><td>Stefan Lambert</td><td>Old Town</td></tr>
+<tr><td>Tara Rossi</td><td>Riverside</td></tr>
+<tr><td>Amira Kowalski</td><td>Old Town</td></tr>
+<tr><td>Bruno Fischer</td><td>Old Town</td></tr>
+<tr><td>Iris Costa</td><td>Old Town</td></tr>
+<tr><td>Zoe Garcia</td><td>Riverside</td></tr>
+<tr><td>Vera Bianchi</td><td>Old Town</td></tr>
+<tr><td>Yusuf Eriksen</td><td>Old Town</td></tr>
+<tr><td>Felix Bianchi</td><td>Old Town</td></tr>
+<tr><td>Lena Dubois</td><td>Hillcrest</td></tr>
+<tr><td>Greta Hughes</td><td>Riverside</td></tr>
+<tr><td>Iris Olsen</td><td>Riverside</td></tr>
+<tr><td>Lena Schmidt</td><td>Old Town</td></tr>
+<tr><td>Vera Tanaka</td><td>Old Town</td></tr>
+<tr><td>Yusuf Moreno</td><td>Old Town</td></tr>
+<tr><td>Quentin Jensen</td><td>Riverside</td></tr>
 </table>
 <p>A plain join would answer too, but it returns one row per pastry line, so a customer who bought pastries on two orders appears twice and you need <code>DISTINCT</code> to clean up. <code>IN</code> only asks a yes-or-no question about each customer, so every customer appears at most once. Choose the join when you need columns from the other tables in the result (which pastry, on which day); choose <code>IN</code> when the other tables only decide which rows to keep.</p>
 <p><code>NOT IN</code> is the opposite, with one serious trap: if the subquery's column contains a single NULL, <code>NOT IN</code> keeps no rows at all. The <a href="nulls.html">NULL page</a> shows it happening and how to avoid it.</p>
@@ -98,6 +131,9 @@
 <table class="result">
 <tr><th>name</th><th>joined</th></tr>
 <tr><td>Hugo Silva</td><td>2024-07-23</td></tr>
+<tr><td>Marco Olsen</td><td>2025-05-03</td></tr>
+<tr><td>Greta Rossi</td><td>2025-12-04</td></tr>
+<tr><td>Marco Costa</td><td>2026-01-06</td></tr>
 </table>
 <p>Read it the way it is written: keep each customer <code>c</code> for whom there does not exist an order whose <code>customer_id</code> is <code>c.id</code>. <code>NOT EXISTS</code> does the same job as the <code>LEFT JOIN ... IS NULL</code> pattern of the <a href="joins.html">JOIN page</a>, and unlike <code>NOT IN</code> it is never fooled by NULL: a NULL simply matches nothing, so it never stops a row from qualifying.</p>
 
@@ -115,8 +151,14 @@
 <tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td></tr>
 <tr><td>Rye loaf</td><td>bread</td><td>3.8</td></tr>
 <tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
+<tr><td>Focaccia</td><td>bread</td><td>3.6</td></tr>
+<tr><td>Walnut bread</td><td>bread</td><td>4.2</td></tr>
 <tr><td>Lemon tart</td><td>cake</td><td>3.9</td></tr>
+<tr><td>Cheesecake slice</td><td>cake</td><td>3.8</td></tr>
+<tr><td>Raspberry tart</td><td>cake</td><td>4.1</td></tr>
 <tr><td>Almond croissant</td><td>pastry</td><td>2.2</td></tr>
+<tr><td>Brioche</td><td>pastry</td><td>2.1</td></tr>
+<tr><td>Cinnamon roll</td><td>pastry</td><td>2.6</td></tr>
 </table>
 <p>A correlated subquery in <code>SELECT</code> computes one figure per row. Counting each customer's orders this way gives 0 for a customer who never came, with no join and no <code>COALESCE</code>: <code>COUNT</code> of no rows is 0.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>,
@@ -126,9 +168,18 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>orders</th></tr>
-<tr><td>Ben Okafor</td><td>2</td></tr>
-<tr><td>Emma Novak</td><td>2</td></tr>
+<tr><td>Ben Okafor</td><td>14</td></tr>
+<tr><td>Emma Novak</td><td>17</td></tr>
 <tr><td>Hugo Silva</td><td>0</td></tr>
+<tr><td>Daniel Moreno</td><td>16</td></tr>
+<tr><td>Kofi Tanaka</td><td>6</td></tr>
+<tr><td>Ugo Dubois</td><td>2</td></tr>
+<tr><td>Zoe Garcia</td><td>2</td></tr>
+<tr><td>Nadia Jensen</td><td>4</td></tr>
+<tr><td>Jonas Eriksen</td><td>9</td></tr>
+<tr><td>Greta Rossi</td><td>0</td></tr>
+<tr><td>Lena Dubois</td><td>4</td></tr>
+<tr><td>Marco Costa</td><td>0</td></tr>
 </table>
 <p>Always qualify the columns inside a correlated subquery. If the inner condition said <code>WHERE q.category = category</code>, the bare <code>category</code> would be read as <code>q.category</code>, the nearest table that has one, and the condition would compare each row with itself: always true, no error, wrong answer.</p>
 
@@ -140,7 +191,7 @@
       <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">order_id</span>) <span class="sql-kw">AS</span> <span class="sql-id">per_order</span>;</code></pre>
 <table class="result">
 <tr><th>orders</th><th>average_lines</th><th>most_lines</th></tr>
-<tr><td>14</td><td>1.64</td><td>2</td></tr>
+<tr><td>303</td><td>2.24</td><td>4</td></tr>
 </table>
 <p>Give the derived table an alias (<code>AS per_order</code>): PostgreSQL required one until version 16, and a name says what the step holds. The columns of the outer query are those the subquery selects, under the names it gives them, so <code>lines</code> exists out here only because the inner query wrote <code>AS lines</code>.</p>
 
@@ -159,11 +210,17 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th><th>price</th><th>category_average</th></tr>
-<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td><td>3.32</td></tr>
-<tr><td>Rye loaf</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
-<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
-<tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.3</td></tr>
-<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.73</td></tr>
+<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td><td>3.52</td></tr>
+<tr><td>Rye loaf</td><td>bread</td><td>3.8</td><td>3.52</td></tr>
+<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td><td>3.52</td></tr>
+<tr><td>Focaccia</td><td>bread</td><td>3.6</td><td>3.52</td></tr>
+<tr><td>Walnut bread</td><td>bread</td><td>4.2</td><td>3.52</td></tr>
+<tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.29</td></tr>
+<tr><td>Cheesecake slice</td><td>cake</td><td>3.8</td><td>3.29</td></tr>
+<tr><td>Raspberry tart</td><td>cake</td><td>4.1</td><td>3.29</td></tr>
+<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.9</td></tr>
+<tr><td>Brioche</td><td>pastry</td><td>2.1</td><td>1.9</td></tr>
+<tr><td>Cinnamon roll</td><td>pastry</td><td>2.6</td><td>1.9</td></tr>
 </table>
 <p>The breads average exactly 3.325, yet <code>ROUND</code> gives 3.32: <code>price</code> is a <code>REAL</code>, stored as a binary fraction, and the sum lands a hair below 3.325. Exact decimals (PostgreSQL's <code>NUMERIC</code>) would round it to 3.33.</p>
 <p>A rough guide. Use a scalar subquery for one number you compare against. Use <code>IN</code> or <code>EXISTS</code> when other tables only decide which rows to keep. Use a join when you need their columns in the result. Use a CTE as soon as a subquery grows past a few lines, appears twice, or would sit inside another one. All of them can express most questions; pick the one a reader will understand first.</p>

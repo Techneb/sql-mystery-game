@@ -959,7 +959,7 @@ test("an errored query counts as a query but is not kept in History", () => {
 
 test("handbook: every example passes the strict terminal; each wrong one is refused, its refusal written by colour_learn.mjs", () => {
   const bakery = bakerySchema(learnHtml["database.html"]);
-  assert.deepEqual(Object.keys(bakery).sort(), ["customer", "order_item", "orders", "product"]);
+  assert.deepEqual(Object.keys(bakery).sort(), ["customer", "order_item", "orders", "product", "refund", "staff"]);
   let wrong = 0;
   for (const f of learnPages) {
     assert.equal(colourPage(learnHtml[f], bakery), learnHtml[f], f + ": run node colour_learn.mjs");

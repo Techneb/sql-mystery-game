@@ -58,9 +58,11 @@
 <table class="result">
 <tr><th>category</th><th>name</th><th>price</th><th>row_number</th><th>rank</th><th>dense_rank</th></tr>
 <tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td><td>1</td><td>1</td><td>1</td></tr>
-<tr><td>bread</td><td>Rye loaf</td><td>3.8</td><td>2</td><td>2</td><td>2</td></tr>
-<tr><td>bread</td><td>Seeded rolls</td><td>3.8</td><td>3</td><td>2</td><td>2</td></tr>
-<tr><td>bread</td><td>Baguette</td><td>1.2</td><td>4</td><td>4</td><td>3</td></tr>
+<tr><td>bread</td><td>Walnut bread</td><td>4.2</td><td>2</td><td>2</td><td>2</td></tr>
+<tr><td>bread</td><td>Rye loaf</td><td>3.8</td><td>3</td><td>3</td><td>3</td></tr>
+<tr><td>bread</td><td>Seeded rolls</td><td>3.8</td><td>4</td><td>3</td><td>3</td></tr>
+<tr><td>bread</td><td>Focaccia</td><td>3.6</td><td>5</td><td>5</td><td>4</td></tr>
+<tr><td>bread</td><td>Baguette</td><td>1.2</td><td>6</td><td>6</td><td>5</td></tr>
 </table>
 <p>A window function cannot appear in <code>WHERE</code>, because windows are computed after the rows have been filtered (see <a href="grammar.html#order-of-execution">Order of execution</a>). To keep, say, only the first order of each customer, compute the number in a <a href="ctes.html">CTE</a> or a subquery, then filter on it in the outer query. This "number, then filter" pattern answers every question of the form "the first", "the latest" or "the top two" per group.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">numbered</span> <span class="sql-kw">AS</span> (
@@ -78,9 +80,38 @@
 <tr><td>2</td><td>2026-03-02</td><td>08:40</td></tr>
 <tr><td>3</td><td>2026-03-03</td><td>07:50</td></tr>
 <tr><td>4</td><td>2026-03-02</td><td>12:30</td></tr>
-<tr><td>5</td><td>2026-03-04</td><td>16:10</td></tr>
-<tr><td>6</td><td>2026-03-05</td><td>09:05</td></tr>
-<tr><td>7</td><td>2026-03-07</td><td>10:30</td></tr>
+<tr><td>5</td><td>2026-03-02</td><td>09:25</td></tr>
+<tr><td>6</td><td>2026-03-02</td><td>10:50</td></tr>
+<tr><td>7</td><td>2026-03-04</td><td>08:40</td></tr>
+<tr><td>9</td><td>2026-03-02</td><td>07:55</td></tr>
+<tr><td>10</td><td>2026-03-09</td><td>07:45</td></tr>
+<tr><td>11</td><td>2026-03-03</td><td>13:25</td></tr>
+<tr><td>12</td><td>2026-03-02</td><td>13:20</td></tr>
+<tr><td>13</td><td>2026-03-16</td><td>12:30</td></tr>
+<tr><td>14</td><td>2026-03-02</td><td>12:50</td></tr>
+<tr><td>15</td><td>2026-03-12</td><td>09:55</td></tr>
+<tr><td>16</td><td>2026-03-05</td><td>14:20</td></tr>
+<tr><td>17</td><td>2026-03-04</td><td>08:35</td></tr>
+<tr><td>18</td><td>2026-03-03</td><td>07:10</td></tr>
+<tr><td>20</td><td>2026-03-10</td><td>08:05</td></tr>
+<tr><td>21</td><td>2026-03-08</td><td>12:40</td></tr>
+<tr><td>22</td><td>2026-03-02</td><td>09:40</td></tr>
+<tr><td>23</td><td>2026-03-03</td><td>08:40</td></tr>
+<tr><td>24</td><td>2026-03-09</td><td>17:20</td></tr>
+<tr><td>25</td><td>2026-03-09</td><td>08:20</td></tr>
+<tr><td>26</td><td>2026-03-29</td><td>07:25</td></tr>
+<tr><td>27</td><td>2026-03-29</td><td>07:30</td></tr>
+<tr><td>28</td><td>2026-03-02</td><td>12:45</td></tr>
+<tr><td>29</td><td>2026-03-03</td><td>11:40</td></tr>
+<tr><td>30</td><td>2026-03-03</td><td>07:45</td></tr>
+<tr><td>32</td><td>2026-03-15</td><td>10:20</td></tr>
+<tr><td>33</td><td>2026-03-08</td><td>10:15</td></tr>
+<tr><td>34</td><td>2026-03-07</td><td>11:05</td></tr>
+<tr><td>36</td><td>2026-03-04</td><td>11:05</td></tr>
+<tr><td>37</td><td>2026-03-08</td><td>07:45</td></tr>
+<tr><td>38</td><td>2026-03-16</td><td>16:35</td></tr>
+<tr><td>39</td><td>2026-03-14</td><td>09:05</td></tr>
+<tr><td>40</td><td>2026-03-17</td><td>17:05</td></tr>
 </table>
 
 <h2>Looking at the previous row: LAG</h2>
@@ -93,11 +124,37 @@
 <table class="result">
 <tr><th>customer_id</th><th>day</th><th>previous_visit</th></tr>
 <tr><td>1</td><td>2026-03-02</td><td>NULL</td></tr>
+<tr><td>1</td><td>2026-03-02</td><td>2026-03-02</td></tr>
 <tr><td>1</td><td>2026-03-04</td><td>2026-03-02</td></tr>
+<tr><td>1</td><td>2026-03-04</td><td>2026-03-04</td></tr>
 <tr><td>1</td><td>2026-03-07</td><td>2026-03-04</td></tr>
 <tr><td>1</td><td>2026-03-08</td><td>2026-03-07</td></tr>
+<tr><td>1</td><td>2026-03-08</td><td>2026-03-08</td></tr>
+<tr><td>1</td><td>2026-03-14</td><td>2026-03-08</td></tr>
+<tr><td>1</td><td>2026-03-15</td><td>2026-03-14</td></tr>
+<tr><td>1</td><td>2026-03-16</td><td>2026-03-15</td></tr>
+<tr><td>1</td><td>2026-03-19</td><td>2026-03-16</td></tr>
+<tr><td>1</td><td>2026-03-21</td><td>2026-03-19</td></tr>
+<tr><td>1</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>1</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>1</td><td>2026-03-22</td><td>2026-03-21</td></tr>
+<tr><td>1</td><td>2026-03-23</td><td>2026-03-22</td></tr>
+<tr><td>1</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>1</td><td>2026-03-24</td><td>2026-03-23</td></tr>
+<tr><td>1</td><td>2026-03-26</td><td>2026-03-24</td></tr>
+<tr><td>1</td><td>2026-03-26</td><td>2026-03-26</td></tr>
 <tr><td>3</td><td>2026-03-03</td><td>NULL</td></tr>
-<tr><td>3</td><td>2026-03-08</td><td>2026-03-03</td></tr>
+<tr><td>3</td><td>2026-03-03</td><td>2026-03-03</td></tr>
+<tr><td>3</td><td>2026-03-05</td><td>2026-03-03</td></tr>
+<tr><td>3</td><td>2026-03-08</td><td>2026-03-05</td></tr>
+<tr><td>3</td><td>2026-03-09</td><td>2026-03-08</td></tr>
+<tr><td>3</td><td>2026-03-14</td><td>2026-03-09</td></tr>
+<tr><td>3</td><td>2026-03-15</td><td>2026-03-14</td></tr>
+<tr><td>3</td><td>2026-03-17</td><td>2026-03-15</td></tr>
+<tr><td>3</td><td>2026-03-19</td><td>2026-03-17</td></tr>
+<tr><td>3</td><td>2026-03-19</td><td>2026-03-19</td></tr>
+<tr><td>3</td><td>2026-03-24</td><td>2026-03-19</td></tr>
+<tr><td>3</td><td>2026-03-25</td><td>2026-03-24</td></tr>
 </table>
 <p>Dates written as text cannot be subtracted directly. Every order here falls in March 2026, so the day of the month is enough: <code>substr</code> cuts it out of the text and <code>CAST(... AS INTEGER)</code> turns it into a number, and the difference between two of them is a gap in days. (SQLite's <code>julianday()</code> would handle any two dates, but PostgreSQL has no such function: there you would turn the text into a real date with <code>CAST(day AS DATE)</code> and subtract.) Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">visits</span> <span class="sql-kw">AS</span> (
@@ -113,9 +170,9 @@
 <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>previous_visit</th><th>day</th><th>gap_days</th></tr>
-<tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5</td></tr>
-<tr><td>4</td><td>2026-03-02</td><td>2026-03-07</td><td>5</td></tr>
-<tr><td>5</td><td>2026-03-04</td><td>2026-03-08</td><td>4</td></tr>
+<tr><td>34</td><td>2026-03-08</td><td>2026-03-28</td><td>20</td></tr>
+<tr><td>16</td><td>2026-03-07</td><td>2026-03-22</td><td>15</td></tr>
+<tr><td>17</td><td>2026-03-09</td><td>2026-03-24</td><td>15</td></tr>
 </table>
 <p>The same technique works with times: turning each <code>HH:MM</code> value into minutes, hours times sixty plus minutes, cut out and cast the same way, gives the minutes between two times on the same day.</p>
 

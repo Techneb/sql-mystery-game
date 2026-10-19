@@ -50,7 +50,7 @@
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
 <table class="result">
 <tr><th>products</th><th>cheapest</th><th>dearest</th><th>average</th></tr>
-<tr><td>10</td><td>1.2</td><td>4.5</td><td>2.84</td></tr>
+<tr><td>20</td><td>1.2</td><td>4.5</td><td>2.87</td></tr>
 </table>
 
 <h2>One row per group: GROUP BY</h2>
@@ -61,9 +61,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th><th>average_price</th></tr>
-<tr><td>bread</td><td>4</td><td>3.32</td></tr>
-<tr><td>cake</td><td>3</td><td>3.3</td></tr>
-<tr><td>pastry</td><td>3</td><td>1.73</td></tr>
+<tr><td>bread</td><td>6</td><td>3.52</td></tr>
+<tr><td>cake</td><td>7</td><td>3.29</td></tr>
+<tr><td>pastry</td><td>7</td><td>1.9</td></tr>
 </table>
 <p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of four breads?), and the query is refused: the next section shows how. (The bread average is exactly 3.325, shown as 3.32 because <code>REAL</code> prices are binary fractions; see <a href="subqueries.html">Subqueries</a>.)</p>
 
@@ -80,9 +80,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th><th>first_alphabetically</th></tr>
-<tr><td>bread</td><td>4</td><td>Baguette</td></tr>
-<tr><td>cake</td><td>3</td><td>Carrot cake slice</td></tr>
-<tr><td>pastry</td><td>3</td><td>Almond croissant</td></tr>
+<tr><td>bread</td><td>6</td><td>Baguette</td></tr>
+<tr><td>cake</td><td>7</td><td>Carrot cake slice</td></tr>
+<tr><td>pastry</td><td>7</td><td>Almond croissant</td></tr>
 </table>
 <p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
@@ -92,13 +92,42 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>orders</th></tr>
-<tr><td>1</td><td>Alice Turner</td><td>4</td></tr>
-<tr><td>2</td><td>Ben Okafor</td><td>2</td></tr>
-<tr><td>3</td><td>Chloe Martin</td><td>2</td></tr>
-<tr><td>4</td><td>David Chen</td><td>2</td></tr>
-<tr><td>5</td><td>Emma Novak</td><td>2</td></tr>
-<tr><td>6</td><td>Farid Haddad</td><td>1</td></tr>
-<tr><td>7</td><td>Grace Lee</td><td>1</td></tr>
+<tr><td>1</td><td>Alice Turner</td><td>20</td></tr>
+<tr><td>11</td><td>Quentin Schmidt</td><td>20</td></tr>
+<tr><td>28</td><td>Vera Bianchi</td><td>20</td></tr>
+<tr><td>36</td><td>Iris Olsen</td><td>19</td></tr>
+<tr><td>5</td><td>Emma Novak</td><td>17</td></tr>
+<tr><td>4</td><td>David Chen</td><td>16</td></tr>
+<tr><td>9</td><td>Daniel Moreno</td><td>16</td></tr>
+<tr><td>2</td><td>Ben Okafor</td><td>14</td></tr>
+<tr><td>30</td><td>Felix Bianchi</td><td>14</td></tr>
+<tr><td>3</td><td>Chloe Martin</td><td>12</td></tr>
+<tr><td>7</td><td>Grace Lee</td><td>12</td></tr>
+<tr><td>12</td><td>Wen Petrov</td><td>12</td></tr>
+<tr><td>21</td><td>Jonas Eriksen</td><td>9</td></tr>
+<tr><td>39</td><td>Yusuf Moreno</td><td>9</td></tr>
+<tr><td>29</td><td>Yusuf Eriksen</td><td>8</td></tr>
+<tr><td>6</td><td>Farid Haddad</td><td>7</td></tr>
+<tr><td>18</td><td>Priya Hughes</td><td>7</td></tr>
+<tr><td>10</td><td>Kofi Tanaka</td><td>6</td></tr>
+<tr><td>15</td><td>Hassan Ivanova</td><td>6</td></tr>
+<tr><td>16</td><td>Rosa Weber</td><td>6</td></tr>
+<tr><td>24</td><td>Amira Kowalski</td><td>6</td></tr>
+<tr><td>22</td><td>Stefan Lambert</td><td>5</td></tr>
+<tr><td>23</td><td>Tara Rossi</td><td>5</td></tr>
+<tr><td>25</td><td>Bruno Fischer</td><td>5</td></tr>
+<tr><td>17</td><td>Nadia Jensen</td><td>4</td></tr>
+<tr><td>20</td><td>Oscar Nakamura</td><td>4</td></tr>
+<tr><td>32</td><td>Lena Dubois</td><td>4</td></tr>
+<tr><td>37</td><td>Lena Schmidt</td><td>4</td></tr>
+<tr><td>40</td><td>Quentin Jensen</td><td>4</td></tr>
+<tr><td>34</td><td>Greta Hughes</td><td>3</td></tr>
+<tr><td>13</td><td>Ugo Dubois</td><td>2</td></tr>
+<tr><td>14</td><td>Zoe Garcia</td><td>2</td></tr>
+<tr><td>33</td><td>Elena Nakamura</td><td>2</td></tr>
+<tr><td>26</td><td>Iris Costa</td><td>1</td></tr>
+<tr><td>27</td><td>Zoe Garcia</td><td>1</td></tr>
+<tr><td>38</td><td>Vera Tanaka</td><td>1</td></tr>
 </table>
 
 <h2>Grouping by more than one column</h2>
@@ -113,11 +142,39 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>orders</th></tr>
-<tr><td>1</td><td>4</td></tr>
-<tr><td>2</td><td>2</td></tr>
-<tr><td>3</td><td>2</td></tr>
-<tr><td>4</td><td>2</td></tr>
-<tr><td>5</td><td>2</td></tr>
+<tr><td>1</td><td>20</td></tr>
+<tr><td>11</td><td>20</td></tr>
+<tr><td>28</td><td>20</td></tr>
+<tr><td>36</td><td>19</td></tr>
+<tr><td>5</td><td>17</td></tr>
+<tr><td>4</td><td>16</td></tr>
+<tr><td>9</td><td>16</td></tr>
+<tr><td>2</td><td>14</td></tr>
+<tr><td>30</td><td>14</td></tr>
+<tr><td>3</td><td>12</td></tr>
+<tr><td>7</td><td>12</td></tr>
+<tr><td>12</td><td>12</td></tr>
+<tr><td>21</td><td>9</td></tr>
+<tr><td>39</td><td>9</td></tr>
+<tr><td>29</td><td>8</td></tr>
+<tr><td>6</td><td>7</td></tr>
+<tr><td>18</td><td>7</td></tr>
+<tr><td>10</td><td>6</td></tr>
+<tr><td>15</td><td>6</td></tr>
+<tr><td>16</td><td>6</td></tr>
+<tr><td>24</td><td>6</td></tr>
+<tr><td>22</td><td>5</td></tr>
+<tr><td>23</td><td>5</td></tr>
+<tr><td>25</td><td>5</td></tr>
+<tr><td>17</td><td>4</td></tr>
+<tr><td>20</td><td>4</td></tr>
+<tr><td>32</td><td>4</td></tr>
+<tr><td>37</td><td>4</td></tr>
+<tr><td>40</td><td>4</td></tr>
+<tr><td>34</td><td>3</td></tr>
+<tr><td>13</td><td>2</td></tr>
+<tr><td>14</td><td>2</td></tr>
+<tr><td>33</td><td>2</td></tr>
 </table>
 <p>Both clauses can appear in the same query, each doing its own job. The next example keeps only the morning orders (a row filter, so <code>WHERE</code>), groups them by day, and keeps the days with more than one morning order (a group filter, so <code>HAVING</code>).</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">morning_orders</span>
@@ -128,9 +185,30 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>morning_orders</th></tr>
-<tr><td>2026-03-02</td><td>2</td></tr>
-<tr><td>2026-03-07</td><td>2</td></tr>
-<tr><td>2026-03-08</td><td>2</td></tr>
+<tr><td>2026-03-02</td><td>6</td></tr>
+<tr><td>2026-03-03</td><td>6</td></tr>
+<tr><td>2026-03-04</td><td>8</td></tr>
+<tr><td>2026-03-05</td><td>5</td></tr>
+<tr><td>2026-03-07</td><td>8</td></tr>
+<tr><td>2026-03-08</td><td>10</td></tr>
+<tr><td>2026-03-09</td><td>6</td></tr>
+<tr><td>2026-03-10</td><td>6</td></tr>
+<tr><td>2026-03-11</td><td>9</td></tr>
+<tr><td>2026-03-12</td><td>6</td></tr>
+<tr><td>2026-03-14</td><td>7</td></tr>
+<tr><td>2026-03-15</td><td>8</td></tr>
+<tr><td>2026-03-16</td><td>10</td></tr>
+<tr><td>2026-03-17</td><td>8</td></tr>
+<tr><td>2026-03-18</td><td>8</td></tr>
+<tr><td>2026-03-19</td><td>9</td></tr>
+<tr><td>2026-03-21</td><td>11</td></tr>
+<tr><td>2026-03-22</td><td>7</td></tr>
+<tr><td>2026-03-23</td><td>6</td></tr>
+<tr><td>2026-03-24</td><td>6</td></tr>
+<tr><td>2026-03-25</td><td>5</td></tr>
+<tr><td>2026-03-26</td><td>6</td></tr>
+<tr><td>2026-03-28</td><td>7</td></tr>
+<tr><td>2026-03-29</td><td>8</td></tr>
 </table>
 
 <h2 id="having">Grammar: HAVING without GROUP BY</h2>
@@ -147,6 +225,8 @@
 <table class="result">
 <tr><th>category</th></tr>
 <tr><td>bread</td></tr>
+<tr><td>cake</td></tr>
+<tr><td>pastry</td></tr>
 </table>
 <p>A query that only selects aggregates may keep its <code>HAVING</code> without <code>GROUP BY</code>: it returns the single row of the whole table, or nothing.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
@@ -154,7 +234,7 @@
 <span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>products</th></tr>
-<tr><td>10</td></tr>
+<tr><td>20</td></tr>
 </table>
 
 <h2>Adding up quantities</h2>
@@ -166,11 +246,25 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">pieces</span> <span class="sql-kw">DESC</span>, <span class="sql-id">product_id</span>;</code></pre>
 <table class="result">
 <tr><th>product_id</th><th>pieces</th><th>lines</th></tr>
-<tr><td>1</td><td>6</td><td>4</td></tr>
-<tr><td>4</td><td>6</td><td>3</td></tr>
-<tr><td>5</td><td>5</td><td>3</td></tr>
-<tr><td>8</td><td>5</td><td>2</td></tr>
-<tr><td>7</td><td>4</td><td>3</td></tr>
+<tr><td>1</td><td>87</td><td>61</td></tr>
+<tr><td>2</td><td>67</td><td>45</td></tr>
+<tr><td>3</td><td>61</td><td>43</td></tr>
+<tr><td>12</td><td>59</td><td>44</td></tr>
+<tr><td>4</td><td>58</td><td>33</td></tr>
+<tr><td>7</td><td>58</td><td>32</td></tr>
+<tr><td>10</td><td>58</td><td>40</td></tr>
+<tr><td>13</td><td>58</td><td>39</td></tr>
+<tr><td>16</td><td>56</td><td>44</td></tr>
+<tr><td>8</td><td>52</td><td>36</td></tr>
+<tr><td>14</td><td>52</td><td>35</td></tr>
+<tr><td>17</td><td>51</td><td>33</td></tr>
+<tr><td>18</td><td>51</td><td>32</td></tr>
+<tr><td>6</td><td>49</td><td>32</td></tr>
+<tr><td>9</td><td>46</td><td>32</td></tr>
+<tr><td>5</td><td>41</td><td>28</td></tr>
+<tr><td>15</td><td>39</td><td>28</td></tr>
+<tr><td>11</td><td>38</td><td>28</td></tr>
+<tr><td>20</td><td>24</td><td>15</td></tr>
 </table>
 
 <h2 id="order-by-grouped">Grammar: ORDER BY after GROUP BY</h2>
@@ -186,9 +280,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">DESC</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th></tr>
-<tr><td>bread</td><td>4</td></tr>
-<tr><td>cake</td><td>3</td></tr>
-<tr><td>pastry</td><td>3</td></tr>
+<tr><td>bread</td><td>6</td></tr>
+<tr><td>cake</td><td>7</td></tr>
+<tr><td>pastry</td><td>7</td></tr>
 </table>
 <p>Say which price you mean: the dearest of each category here, or <code>MIN(price)</code>, or <code>AVG(price)</code>.</p>
 
@@ -204,9 +298,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th></tr>
-<tr><td>bread</td><td>Baguette, Rye loaf, Seeded rolls, Sourdough loaf</td></tr>
-<tr><td>cake</td><td>Carrot cake slice, Chocolate eclair, Lemon tart</td></tr>
-<tr><td>pastry</td><td>Almond croissant, Croissant, Pain au chocolat</td></tr>
+<tr><td>bread</td><td>Baguette, Focaccia, Rye loaf, Seeded rolls, Sourdough loaf, Walnut bread</td></tr>
+<tr><td>cake</td><td>Carrot cake slice, Cheesecake slice, Chocolate eclair, Coffee eclair, Lemon tart, Pistachio financier, Raspberry tart</td></tr>
+<tr><td>pastry</td><td>Almond croissant, Apple turnover, Brioche, Cinnamon roll, Croissant, Hot cross bun, Pain au chocolat</td></tr>
 </table>
 
 <h2>The order in which a query runs</h2>

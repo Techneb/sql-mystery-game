@@ -64,13 +64,23 @@
 <tr><th>name</th><th>price</th><th>band</th></tr>
 <tr><td>Baguette</td><td>1.2</td><td>small</td></tr>
 <tr><td>Croissant</td><td>1.4</td><td>small</td></tr>
+<tr><td>Hot cross bun</td><td>1.5</td><td>small</td></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td><td>small</td></tr>
+<tr><td>Apple turnover</td><td>1.9</td><td>small</td></tr>
+<tr><td>Brioche</td><td>2.1</td><td>medium</td></tr>
 <tr><td>Almond croissant</td><td>2.2</td><td>medium</td></tr>
+<tr><td>Pistachio financier</td><td>2.4</td><td>medium</td></tr>
+<tr><td>Cinnamon roll</td><td>2.6</td><td>medium</td></tr>
 <tr><td>Chocolate eclair</td><td>2.8</td><td>medium</td></tr>
+<tr><td>Coffee eclair</td><td>2.8</td><td>medium</td></tr>
 <tr><td>Carrot cake slice</td><td>3.2</td><td>medium</td></tr>
+<tr><td>Focaccia</td><td>3.6</td><td>large</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td><td>large</td></tr>
 <tr><td>Rye loaf</td><td>3.8</td><td>large</td></tr>
 <tr><td>Seeded rolls</td><td>3.8</td><td>large</td></tr>
 <tr><td>Lemon tart</td><td>3.9</td><td>large</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td><td>large</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td><td>large</td></tr>
 <tr><td>Sourdough loaf</td><td>4.5</td><td>large</td></tr>
 </table>
 
@@ -88,10 +98,10 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">part_of_day</span>;</code></pre>
 <table class="result">
 <tr><th>part_of_day</th><th>orders</th></tr>
-<tr><td>early</td><td>6</td></tr>
-<tr><td>afternoon</td><td>3</td></tr>
-<tr><td>morning</td><td>3</td></tr>
-<tr><td>evening</td><td>2</td></tr>
+<tr><td>early</td><td>95</td></tr>
+<tr><td>afternoon</td><td>91</td></tr>
+<tr><td>morning</td><td>81</td></tr>
+<tr><td>evening</td><td>36</td></tr>
 </table>
 <p>SQLite and PostgreSQL both let you group by the alias, as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
 <p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
@@ -107,12 +117,30 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>orders</th><th>before_noon</th><th>after_noon</th></tr>
-<tr><td>2026-03-02</td><td>3</td><td>2</td><td>1</td></tr>
-<tr><td>2026-03-03</td><td>1</td><td>1</td><td>0</td></tr>
-<tr><td>2026-03-04</td><td>2</td><td>1</td><td>1</td></tr>
-<tr><td>2026-03-05</td><td>2</td><td>1</td><td>1</td></tr>
-<tr><td>2026-03-07</td><td>3</td><td>2</td><td>1</td></tr>
-<tr><td>2026-03-08</td><td>3</td><td>2</td><td>1</td></tr>
+<tr><td>2026-03-02</td><td>13</td><td>6</td><td>7</td></tr>
+<tr><td>2026-03-03</td><td>10</td><td>6</td><td>4</td></tr>
+<tr><td>2026-03-04</td><td>10</td><td>8</td><td>2</td></tr>
+<tr><td>2026-03-05</td><td>11</td><td>5</td><td>6</td></tr>
+<tr><td>2026-03-07</td><td>14</td><td>8</td><td>6</td></tr>
+<tr><td>2026-03-08</td><td>16</td><td>10</td><td>6</td></tr>
+<tr><td>2026-03-09</td><td>12</td><td>6</td><td>6</td></tr>
+<tr><td>2026-03-10</td><td>13</td><td>6</td><td>7</td></tr>
+<tr><td>2026-03-11</td><td>10</td><td>9</td><td>1</td></tr>
+<tr><td>2026-03-12</td><td>10</td><td>6</td><td>4</td></tr>
+<tr><td>2026-03-14</td><td>15</td><td>7</td><td>8</td></tr>
+<tr><td>2026-03-15</td><td>16</td><td>8</td><td>8</td></tr>
+<tr><td>2026-03-16</td><td>13</td><td>10</td><td>3</td></tr>
+<tr><td>2026-03-17</td><td>11</td><td>8</td><td>3</td></tr>
+<tr><td>2026-03-18</td><td>12</td><td>8</td><td>4</td></tr>
+<tr><td>2026-03-19</td><td>13</td><td>9</td><td>4</td></tr>
+<tr><td>2026-03-21</td><td>15</td><td>11</td><td>4</td></tr>
+<tr><td>2026-03-22</td><td>13</td><td>7</td><td>6</td></tr>
+<tr><td>2026-03-23</td><td>12</td><td>6</td><td>6</td></tr>
+<tr><td>2026-03-24</td><td>10</td><td>6</td><td>4</td></tr>
+<tr><td>2026-03-25</td><td>13</td><td>5</td><td>8</td></tr>
+<tr><td>2026-03-26</td><td>11</td><td>6</td><td>5</td></tr>
+<tr><td>2026-03-28</td><td>14</td><td>7</td><td>7</td></tr>
+<tr><td>2026-03-29</td><td>16</td><td>8</td><td>8</td></tr>
 </table>
 <p>This is often called pivoting: values that were rows (before noon, after noon) become columns. It is a compact way to compare categories without running one query per category.</p>
 
@@ -144,6 +172,10 @@
 <tr><td>Lemon tart</td><td>dear</td></tr>
 <tr><td>Chocolate eclair</td><td>cheap</td></tr>
 <tr><td>Carrot cake slice</td><td>dear</td></tr>
+<tr><td>Cheesecake slice</td><td>dear</td></tr>
+<tr><td>Raspberry tart</td><td>dear</td></tr>
+<tr><td>Coffee eclair</td><td>cheap</td></tr>
+<tr><td>Pistachio financier</td><td>cheap</td></tr>
 </table>
 <table class="result">
 <tr><th>Instead of</th><th>Write</th></tr>

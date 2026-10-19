@@ -50,9 +50,13 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
 <tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td></tr>
 <tr><td>Carrot cake slice</td><td>3.2</td></tr>
 <tr><td>Chocolate eclair</td><td>2.8</td></tr>
+<tr><td>Coffee eclair</td><td>2.8</td></tr>
+<tr><td>Pistachio financier</td><td>2.4</td></tr>
 </table>
 
 <h2>Several sort keys</h2>
@@ -63,14 +67,24 @@
 <table class="result">
 <tr><th>category</th><th>name</th><th>price</th></tr>
 <tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td></tr>
+<tr><td>bread</td><td>Walnut bread</td><td>4.2</td></tr>
 <tr><td>bread</td><td>Rye loaf</td><td>3.8</td></tr>
 <tr><td>bread</td><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>bread</td><td>Focaccia</td><td>3.6</td></tr>
 <tr><td>bread</td><td>Baguette</td><td>1.2</td></tr>
+<tr><td>cake</td><td>Raspberry tart</td><td>4.1</td></tr>
 <tr><td>cake</td><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>cake</td><td>Cheesecake slice</td><td>3.8</td></tr>
 <tr><td>cake</td><td>Carrot cake slice</td><td>3.2</td></tr>
 <tr><td>cake</td><td>Chocolate eclair</td><td>2.8</td></tr>
+<tr><td>cake</td><td>Coffee eclair</td><td>2.8</td></tr>
+<tr><td>cake</td><td>Pistachio financier</td><td>2.4</td></tr>
+<tr><td>pastry</td><td>Cinnamon roll</td><td>2.6</td></tr>
 <tr><td>pastry</td><td>Almond croissant</td><td>2.2</td></tr>
+<tr><td>pastry</td><td>Brioche</td><td>2.1</td></tr>
+<tr><td>pastry</td><td>Apple turnover</td><td>1.9</td></tr>
 <tr><td>pastry</td><td>Pain au chocolat</td><td>1.6</td></tr>
+<tr><td>pastry</td><td>Hot cross bun</td><td>1.5</td></tr>
 <tr><td>pastry</td><td>Croissant</td><td>1.4</td></tr>
 </table>
 <p>You can sort by a column that you do not display, and by a computed expression or an alias defined in <code>SELECT</code>. Sorting happens after the rows have been chosen, which is why aliases work here while they do not in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
@@ -83,9 +97,9 @@
 <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
-<tr><td>14</td><td>1</td><td>2026-03-08</td><td>18:20</td></tr>
-<tr><td>13</td><td>5</td><td>2026-03-08</td><td>11:40</td></tr>
-<tr><td>12</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
+<tr><td>303</td><td>2</td><td>2026-03-29</td><td>17:45</td></tr>
+<tr><td>302</td><td>7</td><td>2026-03-29</td><td>16:40</td></tr>
+<tr><td>301</td><td>9</td><td>2026-03-29</td><td>16:00</td></tr>
 </table>
 <p>Here the second key matters: three orders were placed on the last day, and only the time tells them apart. Without <code>time DESC</code>, the database would be free to pick any of them in any order.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
@@ -94,8 +108,8 @@
 <span class="sql-kw">LIMIT</span> <span class="sql-num">2</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">2</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
+<tr><td>Hot cross bun</td><td>1.5</td></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td></tr>
-<tr><td>Almond croissant</td><td>2.2</td></tr>
 </table>
 <p>These are the third and fourth cheapest products: the two cheapest are skipped, the next two are kept.</p>
 
@@ -135,9 +149,9 @@
 <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">2</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
 <tr><td>Rye loaf</td><td>3.8</td></tr>
-<tr><td>Seeded rolls</td><td>3.8</td></tr>
-<tr><td>Carrot cake slice</td><td>3.2</td></tr>
 </table>
 
 <h2>Order of clauses</h2>

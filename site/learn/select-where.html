@@ -59,6 +59,16 @@
 <tr><td>Chocolate eclair</td><td>2.8</td></tr>
 <tr><td>Carrot cake slice</td><td>3.2</td></tr>
 <tr><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>Brioche</td><td>2.1</td></tr>
+<tr><td>Focaccia</td><td>3.6</td></tr>
+<tr><td>Cinnamon roll</td><td>2.6</td></tr>
+<tr><td>Apple turnover</td><td>1.9</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
+<tr><td>Coffee eclair</td><td>2.8</td></tr>
+<tr><td>Pistachio financier</td><td>2.4</td></tr>
+<tr><td>Hot cross bun</td><td>1.5</td></tr>
 </table>
 <p>The order of the columns in the result is the order you wrote them, not the order in the table.</p>
 
@@ -73,6 +83,10 @@
 <tr><td>Croissant</td><td>1.4</td><td>2.8</td></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td><td>3.2</td></tr>
 <tr><td>Almond croissant</td><td>2.2</td><td>4.4</td></tr>
+<tr><td>Brioche</td><td>2.1</td><td>4.2</td></tr>
+<tr><td>Cinnamon roll</td><td>2.6</td><td>5.2</td></tr>
+<tr><td>Apple turnover</td><td>1.9</td><td>3.8</td></tr>
+<tr><td>Hot cross bun</td><td>1.5</td><td>3.0</td></tr>
 </table>
 <p>Notice that the database reads <code>FROM</code> first, then <code>WHERE</code>, and only then <code>SELECT</code>. That is why the condition can use any column of the table, even one you do not display. The example also computes a new column, <code>price * 2</code>, and names it with <code>AS</code>: the name is an alias, which labels the column in the result and changes nothing in the table.</p>
 
@@ -89,6 +103,8 @@
 <tr><td>Lemon tart</td><td>cake</td><td>3.9</td></tr>
 <tr><td>Carrot cake slice</td><td>cake</td><td>3.2</td></tr>
 <tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
+<tr><td>Focaccia</td><td>bread</td><td>3.6</td></tr>
+<tr><td>Cheesecake slice</td><td>cake</td><td>3.8</td></tr>
 </table>
 <p>The Carrot cake slice (3.2) and the Lemon tart (3.9) sit exactly on the bounds, and both are kept.</p>
 <p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero; the <a href="dates-times.html">dates and times page</a> explains why.</p>
@@ -99,10 +115,24 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
-<tr><td>9</td><td>1</td><td>2026-03-07</td><td>07:10</td></tr>
-<tr><td>10</td><td>7</td><td>2026-03-07</td><td>10:30</td></tr>
-<tr><td>12</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
-<tr><td>13</td><td>5</td><td>2026-03-08</td><td>11:40</td></tr>
+<tr><td>45</td><td>1</td><td>2026-03-07</td><td>07:10</td></tr>
+<tr><td>46</td><td>11</td><td>2026-03-07</td><td>08:10</td></tr>
+<tr><td>47</td><td>18</td><td>2026-03-07</td><td>08:20</td></tr>
+<tr><td>48</td><td>16</td><td>2026-03-07</td><td>08:50</td></tr>
+<tr><td>49</td><td>4</td><td>2026-03-07</td><td>09:30</td></tr>
+<tr><td>50</td><td>36</td><td>2026-03-07</td><td>09:40</td></tr>
+<tr><td>51</td><td>7</td><td>2026-03-07</td><td>10:30</td></tr>
+<tr><td>52</td><td>34</td><td>2026-03-07</td><td>11:05</td></tr>
+<tr><td>59</td><td>37</td><td>2026-03-08</td><td>07:45</td></tr>
+<tr><td>60</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
+<tr><td>61</td><td>23</td><td>2026-03-08</td><td>08:30</td></tr>
+<tr><td>62</td><td>34</td><td>2026-03-08</td><td>08:40</td></tr>
+<tr><td>63</td><td>30</td><td>2026-03-08</td><td>09:00</td></tr>
+<tr><td>64</td><td>29</td><td>2026-03-08</td><td>10:00</td></tr>
+<tr><td>65</td><td>33</td><td>2026-03-08</td><td>10:15</td></tr>
+<tr><td>66</td><td>36</td><td>2026-03-08</td><td>11:10</td></tr>
+<tr><td>67</td><td>11</td><td>2026-03-08</td><td>11:15</td></tr>
+<tr><td>68</td><td>5</td><td>2026-03-08</td><td>11:40</td></tr>
 </table>
 
 <h2>Missing values: IS NULL</h2>
@@ -116,6 +146,10 @@
 <tr><td>Alice Turner</td><td>Riverside</td></tr>
 <tr><td>David Chen</td><td>Old Town</td></tr>
 <tr><td>Hugo Silva</td><td>Hillcrest</td></tr>
+<tr><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
+<tr><td>Stefan Lambert</td><td>Old Town</td></tr>
+<tr><td>Iris Costa</td><td>Old Town</td></tr>
+<tr><td>Zoe Garcia</td><td>Riverside</td></tr>
 </table>
 
 <h2>A way of working</h2>
@@ -138,6 +172,8 @@
 <tr><td>Sourdough loaf</td></tr>
 <tr><td>Rye loaf</td></tr>
 <tr><td>Seeded rolls</td></tr>
+<tr><td>Focaccia</td></tr>
+<tr><td>Walnut bread</td></tr>
 </table>
 <p>The same goes for aliases: an alias is a name, so write <code>AS total</code>, or <code>AS "Total"</code> to keep a capital or a space, never <code>AS 'total'</code>. Names are quoted with double quotes only, not with backticks or square brackets.</p>
 
@@ -171,6 +207,7 @@
 <tr><th>name</th></tr>
 <tr><td>Ben Okafor</td></tr>
 <tr><td>Chloe Martin</td></tr>
+<tr><td>Vera Bianchi</td></tr>
 </table>
 <p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>. And <code>||</code> joins text: on two numbers, as in <code>2 || 3</code>, it is refused; add them with <code>+</code>, or make one of them text first, <code>CAST(2 AS TEXT) || 3</code>.</p>
 
@@ -187,9 +224,13 @@
 <table class="result">
 <tr><th>name</th><th>double_price</th></tr>
 <tr><td>Sourdough loaf</td><td>9.0</td></tr>
+<tr><td>Walnut bread</td><td>8.4</td></tr>
+<tr><td>Raspberry tart</td><td>8.2</td></tr>
 <tr><td>Lemon tart</td><td>7.8</td></tr>
 <tr><td>Rye loaf</td><td>7.6</td></tr>
 <tr><td>Seeded rolls</td><td>7.6</td></tr>
+<tr><td>Cheesecake slice</td><td>7.6</td></tr>
+<tr><td>Focaccia</td><td>7.2</td></tr>
 </table>
 
 <h2 id="boolean">Grammar: conditions</h2>
@@ -209,6 +250,34 @@
 <tr><td>Emma Novak</td></tr>
 <tr><td>Farid Haddad</td></tr>
 <tr><td>Grace Lee</td></tr>
+<tr><td>Daniel Moreno</td></tr>
+<tr><td>Quentin Schmidt</td></tr>
+<tr><td>Wen Petrov</td></tr>
+<tr><td>Ugo Dubois</td></tr>
+<tr><td>Zoe Garcia</td></tr>
+<tr><td>Hassan Ivanova</td></tr>
+<tr><td>Rosa Weber</td></tr>
+<tr><td>Nadia Jensen</td></tr>
+<tr><td>Priya Hughes</td></tr>
+<tr><td>Marco Olsen</td></tr>
+<tr><td>Oscar Nakamura</td></tr>
+<tr><td>Jonas Eriksen</td></tr>
+<tr><td>Tara Rossi</td></tr>
+<tr><td>Amira Kowalski</td></tr>
+<tr><td>Bruno Fischer</td></tr>
+<tr><td>Vera Bianchi</td></tr>
+<tr><td>Yusuf Eriksen</td></tr>
+<tr><td>Felix Bianchi</td></tr>
+<tr><td>Greta Rossi</td></tr>
+<tr><td>Lena Dubois</td></tr>
+<tr><td>Elena Nakamura</td></tr>
+<tr><td>Greta Hughes</td></tr>
+<tr><td>Marco Costa</td></tr>
+<tr><td>Iris Olsen</td></tr>
+<tr><td>Lena Schmidt</td></tr>
+<tr><td>Vera Tanaka</td></tr>
+<tr><td>Yusuf Moreno</td></tr>
+<tr><td>Quentin Jensen</td></tr>
 </table>
 
 

@@ -52,14 +52,17 @@
     <div class="label-row"><span class="label">SCHEMA</span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"></button></div>
     <div class="erd bakery-erd" role="img" aria-label="Schema of the bakery database: customer, product, orders and order_item, their keys and the links between them">
 <!-- bakery schema: erd.py -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 346" width="480" height="346">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 402" width="480" height="402">
 <defs><symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol></defs>
-<g class="fk" data-from="order_item.product_id" data-to="product"><path class="rel" d="M401.4 218 L401.4 243.5 Q401.4 251.5 393.4 251.5 L97.3333 251.5 Q89.3333 251.5 89.3333 259.5 L89.3333 278"/><circle cx="401.4" cy="219" r="2.6"/><circle cx="89.3333" cy="277" r="2.6"/><text x="406.4" y="229">1</text><text x="94.3333" y="274">N</text></g>
-<g class="fk" data-from="order_item.order_id" data-to="orders"><path class="rel" d="M161.4 218 L161.4 236.5 Q161.4 244.5 153.4 244.5 L75.8667 244.5 Q67.8667 244.5 67.8667 252.5 L67.8667 278"/><circle cx="161.4" cy="219" r="2.6"/><circle cx="67.8667" cy="277" r="2.6"/><text x="166.4" y="229">1</text><text x="72.8667" y="274">N</text></g>
-<g class="fk" data-from="orders.customer_id" data-to="customer"><path class="rel" d="M161.4 86 L161.4 108 Q161.4 116 153.4 116 L86.6 116 Q78.6 116 78.6 124 L78.6 146"/><circle cx="161.4" cy="87" r="2.6"/><circle cx="78.6" cy="145" r="2.6"/><text x="166.4" y="97">1</text><text x="83.6" y="142">N</text></g>
+<g class="fk" data-from="order_item.product_id" data-to="product"><path class="rel" d="M401.4 232 L401.4 275 Q401.4 283 393.4 283 L337.333 283 Q329.333 283 329.333 291 L329.333 306"/><circle cx="401.4" cy="233" r="2.6"/><circle cx="329.333" cy="305" r="2.6"/><text x="406.4" y="243">1</text><text x="334.333" y="302">N</text></g>
+<g class="fk" data-from="order_item.order_id" data-to="orders"><path class="rel" d="M172.133 246 L172.133 261 Q172.133 269 180.133 269 L299.867 269 Q307.867 269 307.867 277 L307.867 306"/><circle cx="172.133" cy="247" r="2.6"/><circle cx="307.867" cy="305" r="2.6"/><text x="177.133" y="257">1</text><text x="312.867" y="302">N</text></g>
+<g class="fk" data-from="orders.staff_id" data-to="staff"><path class="rel" d="M401.4 72 L401.4 125.5 Q401.4 133.5 393.4 133.5 L97.3333 133.5 Q89.3333 133.5 89.3333 141.5 L89.3333 160"/><circle cx="401.4" cy="73" r="2.6"/><circle cx="89.3333" cy="159" r="2.6"/><text x="406.4" y="83">1</text><text x="94.3333" y="156">N</text></g>
+<g class="fk" data-from="orders.customer_id" data-to="customer"><path class="rel" d="M161.4 100 L161.4 118.5 Q161.4 126.5 153.4 126.5 L75.8667 126.5 Q67.8667 126.5 67.8667 134.5 L67.8667 160"/><circle cx="161.4" cy="101" r="2.6"/><circle cx="67.8667" cy="159" r="2.6"/><text x="166.4" y="111">1</text><text x="72.8667" y="156">N</text></g>
+<g class="fk" data-from="refund.order_id" data-to="orders"><path class="rel" d="M150.667 246 L150.667 268 Q150.667 276 142.667 276 L86.6 276 Q78.6 276 78.6 284 L78.6 306"/><circle cx="150.667" cy="247" r="2.6"/><circle cx="78.6" cy="305" r="2.6"/><text x="155.667" y="257">1</text><text x="83.6" y="302">N</text></g>
 <g class="fk" data-from="customer.referred_by" data-to="customer"><path class="rel" d="M212 79 L222 79 Q230 79 230 71 L230 31 Q230 23 222 23 L212 23"/><circle cx="213" cy="79" r="2.6"/><circle cx="213" cy="23" r="2.6"/><text x="216" y="90">N</text><text x="216" y="19">1</text></g>
+<g class="fk" data-from="staff.manager_id" data-to="staff"><path class="rel" d="M452 65 L462 65 Q470 65 470 57 L470 31 Q470 23 462 23 L452 23"/><circle cx="453" cy="65" r="2.6"/><circle cx="453" cy="23" r="2.6"/><text x="456" y="76">N</text><text x="456" y="19">1</text></g>
 <g class="table" data-table="customer" transform="translate(28,0)">
-<rect width="184" height="86" rx="4"/>
+<rect width="184" height="100" rx="4"/>
 <path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
 <text class="tname" x="6" y="12">customer</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
@@ -73,9 +76,11 @@
 <text class="type" x="178" y="69" text-anchor="end">TEXT</text>
 <use href="#erd-key" class="key fk" x="4" y="75" width="14" height="9"/>
 <text class="col" x="21" y="83">referred_by</text>
-<text class="type" x="178" y="83" text-anchor="end">INTEGER</text></g>
-<g class="table" data-table="order_item" transform="translate(28,278)">
-<rect width="184" height="58" rx="4"/>
+<text class="type" x="178" y="83" text-anchor="end">INTEGER</text>
+<text class="col" x="21" y="97">email</text>
+<text class="type" x="178" y="97" text-anchor="end">TEXT</text></g>
+<g class="table" data-table="order_item" transform="translate(268,306)">
+<rect width="184" height="72" rx="4"/>
 <path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
 <text class="tname" x="6" y="12">order_item</text>
 <use href="#erd-key" class="key fk" x="4" y="19" width="14" height="9"/>
@@ -85,9 +90,11 @@
 <text class="col" x="21" y="41">product_id</text>
 <text class="type" x="178" y="41" text-anchor="end">INTEGER</text>
 <text class="col" x="21" y="55">quantity</text>
-<text class="type" x="178" y="55" text-anchor="end">INTEGER</text></g>
-<g class="table" data-table="orders" transform="translate(28,146)">
-<rect width="184" height="72" rx="4"/>
+<text class="type" x="178" y="55" text-anchor="end">INTEGER</text>
+<text class="col" x="21" y="69">unit_price</text>
+<text class="type" x="178" y="69" text-anchor="end">REAL</text></g>
+<g class="table" data-table="orders" transform="translate(28,160)">
+<rect width="184" height="86" rx="4"/>
 <path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
 <text class="tname" x="6" y="12">orders</text>
 <use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
@@ -99,8 +106,11 @@
 <text class="col" x="21" y="55">day</text>
 <text class="type" x="178" y="55" text-anchor="end">TEXT</text>
 <text class="col" x="21" y="69">time</text>
-<text class="type" x="178" y="69" text-anchor="end">TEXT</text></g>
-<g class="table" data-table="product" transform="translate(268,146)">
+<text class="type" x="178" y="69" text-anchor="end">TEXT</text>
+<use href="#erd-key" class="key fk" x="4" y="75" width="14" height="9"/>
+<text class="col" x="21" y="83">staff_id</text>
+<text class="type" x="178" y="83" text-anchor="end">INTEGER</text></g>
+<g class="table" data-table="product" transform="translate(268,160)">
 <rect width="184" height="72" rx="4"/>
 <path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
 <text class="tname" x="6" y="12">product</text>
@@ -113,6 +123,36 @@
 <text class="type" x="178" y="55" text-anchor="end">TEXT</text>
 <text class="col" x="21" y="69">price</text>
 <text class="type" x="178" y="69" text-anchor="end">REAL</text></g>
+<g class="table" data-table="refund" transform="translate(28,306)">
+<rect width="184" height="86" rx="4"/>
+<path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
+<text class="tname" x="6" y="12">refund</text>
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="type" x="178" y="27" text-anchor="end">INTEGER</text>
+<use href="#erd-key" class="key fk" x="4" y="33" width="14" height="9"/>
+<text class="col" x="21" y="41">order_id</text>
+<text class="type" x="178" y="41" text-anchor="end">INTEGER</text>
+<text class="col" x="21" y="55">day</text>
+<text class="type" x="178" y="55" text-anchor="end">TEXT</text>
+<text class="col" x="21" y="69">amount</text>
+<text class="type" x="178" y="69" text-anchor="end">REAL</text>
+<text class="col" x="21" y="83">reason</text>
+<text class="type" x="178" y="83" text-anchor="end">TEXT</text></g>
+<g class="table" data-table="staff" transform="translate(268,0)">
+<rect width="184" height="72" rx="4"/>
+<path class="head" d="M0 16 V4 A4 4 0 0 1 4 0 H180 A4 4 0 0 1 184 4 V16 Z"/>
+<text class="tname" x="6" y="12">staff</text>
+<use href="#erd-key" class="key pk" x="4" y="19" width="14" height="9"/>
+<text class="col" x="21" y="27">id</text>
+<text class="type" x="178" y="27" text-anchor="end">INTEGER</text>
+<text class="col" x="21" y="41">name</text>
+<text class="type" x="178" y="41" text-anchor="end">TEXT</text>
+<text class="col" x="21" y="55">role</text>
+<text class="type" x="178" y="55" text-anchor="end">TEXT</text>
+<use href="#erd-key" class="key fk" x="4" y="61" width="14" height="9"/>
+<text class="col" x="21" y="69">manager_id</text>
+<text class="type" x="178" y="69" text-anchor="end">INTEGER</text></g>
 </svg>
 <!-- /bakery schema -->
 </div>
@@ -158,7 +198,9 @@
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Baguette</td><td>1.2</td></tr>
 <tr><td>Croissant</td><td>1.4</td></tr>
+<tr><td>Hot cross bun</td><td>1.5</td></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td></tr>
+<tr><td>Apple turnover</td><td>1.9</td></tr>
 </table>
 <p>The <code>id</code> after <code>price</code> breaks ties. There are none here, but a second key costs nothing and keeps the order fixed if a new product ever shares a price.</p>
 </details>
@@ -203,9 +245,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>products</th><th>dearest</th></tr>
-<tr><td>bread</td><td>4</td><td>4.5</td></tr>
-<tr><td>cake</td><td>3</td><td>3.9</td></tr>
-<tr><td>pastry</td><td>3</td><td>2.2</td></tr>
+<tr><td>bread</td><td>6</td><td>4.5</td></tr>
+<tr><td>cake</td><td>7</td><td>4.1</td></tr>
+<tr><td>pastry</td><td>7</td><td>2.6</td></tr>
 </table>
 <p>Asking for the <i>name</i> of the dearest product is a different and harder question: <code>name</code> is neither grouped nor aggregated, so it cannot simply be added to this <code>SELECT</code>. Exercise 13 shows the pattern, with a window function.</p>
 </details>
@@ -220,9 +262,9 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">town</span>;</code></pre>
 <table class="result">
 <tr><th>town</th><th>orders</th></tr>
-<tr><td>Riverside</td><td>7</td></tr>
-<tr><td>Hillcrest</td><td>4</td></tr>
-<tr><td>Old Town</td><td>3</td></tr>
+<tr><td>Old Town</td><td>120</td></tr>
+<tr><td>Riverside</td><td>109</td></tr>
+<tr><td>Hillcrest</td><td>74</td></tr>
 </table>
 <p>The town lives in <code>customer</code> and the orders in <code>orders</code>, so the join comes first and the grouping after it. Each row of the join is one order, which is why <code>COUNT(*)</code> counts orders.</p>
 </details>
@@ -237,12 +279,30 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>takings</th></tr>
-<tr><td>2026-03-02</td><td>21.0</td></tr>
-<tr><td>2026-03-03</td><td>4.2</td></tr>
-<tr><td>2026-03-04</td><td>9.5</td></tr>
-<tr><td>2026-03-05</td><td>12.1</td></tr>
-<tr><td>2026-03-07</td><td>19.1</td></tr>
-<tr><td>2026-03-08</td><td>18.8</td></tr>
+<tr><td>2026-03-02</td><td>149.5</td></tr>
+<tr><td>2026-03-03</td><td>87.6</td></tr>
+<tr><td>2026-03-04</td><td>108.0</td></tr>
+<tr><td>2026-03-05</td><td>118.7</td></tr>
+<tr><td>2026-03-07</td><td>119.4</td></tr>
+<tr><td>2026-03-08</td><td>139.8</td></tr>
+<tr><td>2026-03-09</td><td>104.0</td></tr>
+<tr><td>2026-03-10</td><td>157.6</td></tr>
+<tr><td>2026-03-11</td><td>88.6</td></tr>
+<tr><td>2026-03-12</td><td>99.6</td></tr>
+<tr><td>2026-03-14</td><td>131.8</td></tr>
+<tr><td>2026-03-15</td><td>125.5</td></tr>
+<tr><td>2026-03-16</td><td>111.5</td></tr>
+<tr><td>2026-03-17</td><td>105.5</td></tr>
+<tr><td>2026-03-18</td><td>137.1</td></tr>
+<tr><td>2026-03-19</td><td>158.1</td></tr>
+<tr><td>2026-03-21</td><td>129.2</td></tr>
+<tr><td>2026-03-22</td><td>128.6</td></tr>
+<tr><td>2026-03-23</td><td>125.8</td></tr>
+<tr><td>2026-03-24</td><td>100.7</td></tr>
+<tr><td>2026-03-25</td><td>95.5</td></tr>
+<tr><td>2026-03-26</td><td>125.5</td></tr>
+<tr><td>2026-03-28</td><td>138.2</td></tr>
+<tr><td>2026-03-29</td><td>159.0</td></tr>
 </table>
 <p>The money of a line is its quantity times the product's price, so three tables take part. The sixth of March is missing because nobody ordered that day: a group needs rows. The <a href="ctes.html">CTE page</a> builds a calendar that shows such a day with zero.</p>
 </details>
@@ -256,8 +316,18 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">hour</span>;</code></pre>
 <table class="result">
 <tr><th>hour</th><th>orders</th></tr>
-<tr><td>07</td><td>4</td></tr>
-<tr><td>08</td><td>2</td></tr>
+<tr><td>08</td><td>48</td></tr>
+<tr><td>07</td><td>47</td></tr>
+<tr><td>09</td><td>32</td></tr>
+<tr><td>10</td><td>28</td></tr>
+<tr><td>12</td><td>28</td></tr>
+<tr><td>17</td><td>27</td></tr>
+<tr><td>11</td><td>21</td></tr>
+<tr><td>16</td><td>20</td></tr>
+<tr><td>13</td><td>19</td></tr>
+<tr><td>14</td><td>14</td></tr>
+<tr><td>15</td><td>10</td></tr>
+<tr><td>18</td><td>9</td></tr>
 </table>
 <p>The hour is the first two characters of the time. Keeping it as text is fine for grouping and sorting, because every hour has two digits; a <code>CAST</code> would only be needed for arithmetic.</p>
 </details>
@@ -275,6 +345,24 @@
 <tr><td>Emma Novak</td><td>Hillcrest</td><td>Chloe Martin</td><td>Riverside</td></tr>
 <tr><td>Farid Haddad</td><td>Old Town</td><td>Emma Novak</td><td>Hillcrest</td></tr>
 <tr><td>Grace Lee</td><td>Riverside</td><td>Ben Okafor</td><td>Hillcrest</td></tr>
+<tr><td>Daniel Moreno</td><td>Hillcrest</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Quentin Schmidt</td><td>Riverside</td><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
+<tr><td>Zoe Garcia</td><td>Hillcrest</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Hassan Ivanova</td><td>Old Town</td><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>Nadia Jensen</td><td>Hillcrest</td><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>Priya Hughes</td><td>Riverside</td><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
+<tr><td>Marco Olsen</td><td>Riverside</td><td>Ben Okafor</td><td>Hillcrest</td></tr>
+<tr><td>Jonas Eriksen</td><td>Hillcrest</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Amira Kowalski</td><td>Old Town</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Vera Bianchi</td><td>Old Town</td><td>Alice Turner</td><td>Riverside</td></tr>
+<tr><td>Yusuf Eriksen</td><td>Old Town</td><td>Zoe Garcia</td><td>Riverside</td></tr>
+<tr><td>Felix Bianchi</td><td>Old Town</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
+<tr><td>Greta Rossi</td><td>Hillcrest</td><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>Lena Dubois</td><td>Hillcrest</td><td>Tara Rossi</td><td>Riverside</td></tr>
+<tr><td>Marco Costa</td><td>Hillcrest</td><td>Chloe Martin</td><td>Riverside</td></tr>
+<tr><td>Lena Schmidt</td><td>Old Town</td><td>Grace Lee</td><td>Riverside</td></tr>
+<tr><td>Vera Tanaka</td><td>Old Town</td><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
+<tr><td>Quentin Jensen</td><td>Riverside</td><td>Hassan Ivanova</td><td>Old Town</td></tr>
 </table>
 <p>The same table plays two parts under two aliases. The inner join leaves out the customers who were not referred at all, which is right here: they have no referrer whose town could differ.</p>
 </details>
@@ -290,13 +378,42 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">before_nine</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>before_nine</th><th>later</th></tr>
-<tr><td>Alice Turner</td><td>3</td><td>1</td></tr>
-<tr><td>Chloe Martin</td><td>2</td><td>0</td></tr>
-<tr><td>Ben Okafor</td><td>1</td><td>1</td></tr>
-<tr><td>David Chen</td><td>0</td><td>2</td></tr>
-<tr><td>Emma Novak</td><td>0</td><td>2</td></tr>
-<tr><td>Farid Haddad</td><td>0</td><td>1</td></tr>
-<tr><td>Grace Lee</td><td>0</td><td>1</td></tr>
+<tr><td>Alice Turner</td><td>8</td><td>12</td></tr>
+<tr><td>Iris Olsen</td><td>8</td><td>11</td></tr>
+<tr><td>Emma Novak</td><td>5</td><td>12</td></tr>
+<tr><td>Daniel Moreno</td><td>5</td><td>11</td></tr>
+<tr><td>Felix Bianchi</td><td>5</td><td>9</td></tr>
+<tr><td>Grace Lee</td><td>4</td><td>8</td></tr>
+<tr><td>Quentin Schmidt</td><td>4</td><td>16</td></tr>
+<tr><td>Wen Petrov</td><td>4</td><td>8</td></tr>
+<tr><td>Hassan Ivanova</td><td>4</td><td>2</td></tr>
+<tr><td>Ben Okafor</td><td>3</td><td>11</td></tr>
+<tr><td>Chloe Martin</td><td>3</td><td>9</td></tr>
+<tr><td>David Chen</td><td>3</td><td>13</td></tr>
+<tr><td>Priya Hughes</td><td>3</td><td>4</td></tr>
+<tr><td>Tara Rossi</td><td>3</td><td>2</td></tr>
+<tr><td>Amira Kowalski</td><td>3</td><td>3</td></tr>
+<tr><td>Bruno Fischer</td><td>3</td><td>2</td></tr>
+<tr><td>Vera Bianchi</td><td>3</td><td>17</td></tr>
+<tr><td>Kofi Tanaka</td><td>2</td><td>4</td></tr>
+<tr><td>Rosa Weber</td><td>2</td><td>4</td></tr>
+<tr><td>Nadia Jensen</td><td>2</td><td>2</td></tr>
+<tr><td>Oscar Nakamura</td><td>2</td><td>2</td></tr>
+<tr><td>Jonas Eriksen</td><td>2</td><td>7</td></tr>
+<tr><td>Lena Dubois</td><td>2</td><td>2</td></tr>
+<tr><td>Greta Hughes</td><td>2</td><td>1</td></tr>
+<tr><td>Yusuf Moreno</td><td>2</td><td>7</td></tr>
+<tr><td>Quentin Jensen</td><td>2</td><td>2</td></tr>
+<tr><td>Zoe Garcia</td><td>1</td><td>1</td></tr>
+<tr><td>Stefan Lambert</td><td>1</td><td>4</td></tr>
+<tr><td>Iris Costa</td><td>1</td><td>0</td></tr>
+<tr><td>Zoe Garcia</td><td>1</td><td>0</td></tr>
+<tr><td>Yusuf Eriksen</td><td>1</td><td>7</td></tr>
+<tr><td>Lena Schmidt</td><td>1</td><td>3</td></tr>
+<tr><td>Farid Haddad</td><td>0</td><td>7</td></tr>
+<tr><td>Ugo Dubois</td><td>0</td><td>2</td></tr>
+<tr><td>Elena Nakamura</td><td>0</td><td>2</td></tr>
+<tr><td>Vera Tanaka</td><td>0</td><td>1</td></tr>
 </table>
 <p>Each <code>CASE</code> turns an order into a 1 or a 0, and the <code>SUM</code> counts the ones. Writing the second condition as <code>&gt;= '09:00'</code> rather than <code>&gt; '09:00'</code> makes sure an order at exactly nine is counted once, in the later column.</p>
 </details>
@@ -315,11 +432,17 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>category</th><th>price</th><th>average</th></tr>
-<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td><td>3.32</td></tr>
-<tr><td>Rye loaf</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
-<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td><td>3.32</td></tr>
-<tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.3</td></tr>
-<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.73</td></tr>
+<tr><td>Sourdough loaf</td><td>bread</td><td>4.5</td><td>3.52</td></tr>
+<tr><td>Walnut bread</td><td>bread</td><td>4.2</td><td>3.52</td></tr>
+<tr><td>Rye loaf</td><td>bread</td><td>3.8</td><td>3.52</td></tr>
+<tr><td>Seeded rolls</td><td>bread</td><td>3.8</td><td>3.52</td></tr>
+<tr><td>Focaccia</td><td>bread</td><td>3.6</td><td>3.52</td></tr>
+<tr><td>Raspberry tart</td><td>cake</td><td>4.1</td><td>3.29</td></tr>
+<tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.29</td></tr>
+<tr><td>Cheesecake slice</td><td>cake</td><td>3.8</td><td>3.29</td></tr>
+<tr><td>Cinnamon roll</td><td>pastry</td><td>2.6</td><td>1.9</td></tr>
+<tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.9</td></tr>
+<tr><td>Brioche</td><td>pastry</td><td>2.1</td><td>1.9</td></tr>
 </table>
 <p>A correlated subquery in <code>WHERE</code> finds the same products, but showing the average as well would mean writing it twice. A CTE computes each category's average once and joins it like a table.</p>
 </details>
@@ -337,8 +460,7 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
-<tr><td>Carrot cake slice</td></tr>
-<tr><td>Rye loaf</td></tr>
+<tr><td>Pistachio financier</td></tr>
 </table>
 <p>Every product, minus the ones sold at the weekend. The first half reads <code>product</code> alone, so the carrot cake, which nobody bought all week, is in the answer too; a join on its own could never show it. Comparing names works because no two products share one; with a column that can repeat, compare the ids. Exercise 12 asks the same kind of question with <code>NOT EXISTS</code>.</p>
 </details>
@@ -357,10 +479,11 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Grace Lee</td></tr>
 <tr><td>Hugo Silva</td></tr>
+<tr><td>Marco Olsen</td></tr>
+<tr><td>Greta Rossi</td></tr>
+<tr><td>Marco Costa</td></tr>
+<tr><td>Vera Tanaka</td></tr>
 </table>
 <p>The tempting answer joins everything and filters <code>WHERE p.category &lt;&gt; 'bread'</code>, but that lists the customers who bought something that is not bread, which includes bread buyers who also took a croissant, and drops Hugo Silva, who bought nothing. The question is about the absence of a row, which is what <code>NOT EXISTS</code> asks.</p>
 </details>
@@ -384,9 +507,10 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>category</th><th>name</th><th>pieces</th></tr>
-<tr><td>bread</td><td>Baguette</td><td>6</td></tr>
-<tr><td>cake</td><td>Chocolate eclair</td><td>5</td></tr>
-<tr><td>pastry</td><td>Croissant</td><td>6</td></tr>
+<tr><td>bread</td><td>Baguette</td><td>87</td></tr>
+<tr><td>cake</td><td>Lemon tart</td><td>58</td></tr>
+<tr><td>pastry</td><td>Cinnamon roll</td><td>58</td></tr>
+<tr><td>pastry</td><td>Croissant</td><td>58</td></tr>
 </table>
 <p>Three steps: add up the pieces per product, rank the products within each category, keep the first. <code>RANK</code> gives tied products the same rank 1, so a tie would show both; <code>ROW_NUMBER</code> would keep just one, chosen arbitrarily. The filter has to sit outside the CTE, because a window function cannot appear in <code>WHERE</code>.</p>
 </details>
@@ -404,13 +528,273 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>previous_day</th><th>day</th></tr>
-<tr><td>5</td><td>1</td><td>2026-03-02</td><td>2026-03-04</td></tr>
-<tr><td>9</td><td>1</td><td>2026-03-04</td><td>2026-03-07</td></tr>
-<tr><td>14</td><td>1</td><td>2026-03-07</td><td>2026-03-08</td></tr>
-<tr><td>8</td><td>2</td><td>2026-03-02</td><td>2026-03-05</td></tr>
-<tr><td>12</td><td>3</td><td>2026-03-03</td><td>2026-03-08</td></tr>
-<tr><td>11</td><td>4</td><td>2026-03-02</td><td>2026-03-07</td></tr>
-<tr><td>13</td><td>5</td><td>2026-03-04</td><td>2026-03-08</td></tr>
+<tr><td>13</td><td>1</td><td>2026-03-02</td><td>2026-03-02</td></tr>
+<tr><td>24</td><td>1</td><td>2026-03-02</td><td>2026-03-04</td></tr>
+<tr><td>27</td><td>1</td><td>2026-03-04</td><td>2026-03-04</td></tr>
+<tr><td>45</td><td>1</td><td>2026-03-04</td><td>2026-03-07</td></tr>
+<tr><td>73</td><td>1</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>74</td><td>1</td><td>2026-03-08</td><td>2026-03-08</td></tr>
+<tr><td>131</td><td>1</td><td>2026-03-08</td><td>2026-03-14</td></tr>
+<tr><td>136</td><td>1</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>158</td><td>1</td><td>2026-03-15</td><td>2026-03-16</td></tr>
+<tr><td>197</td><td>1</td><td>2026-03-16</td><td>2026-03-19</td></tr>
+<tr><td>204</td><td>1</td><td>2026-03-19</td><td>2026-03-21</td></tr>
+<tr><td>211</td><td>1</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>212</td><td>1</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>222</td><td>1</td><td>2026-03-21</td><td>2026-03-22</td></tr>
+<tr><td>231</td><td>1</td><td>2026-03-22</td><td>2026-03-23</td></tr>
+<tr><td>237</td><td>1</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>244</td><td>1</td><td>2026-03-23</td><td>2026-03-24</td></tr>
+<tr><td>264</td><td>1</td><td>2026-03-24</td><td>2026-03-26</td></tr>
+<tr><td>272</td><td>1</td><td>2026-03-26</td><td>2026-03-26</td></tr>
+<tr><td>37</td><td>2</td><td>2026-03-02</td><td>2026-03-05</td></tr>
+<tr><td>43</td><td>2</td><td>2026-03-05</td><td>2026-03-05</td></tr>
+<tr><td>70</td><td>2</td><td>2026-03-05</td><td>2026-03-08</td></tr>
+<tr><td>93</td><td>2</td><td>2026-03-08</td><td>2026-03-10</td></tr>
+<tr><td>100</td><td>2</td><td>2026-03-10</td><td>2026-03-11</td></tr>
+<tr><td>128</td><td>2</td><td>2026-03-11</td><td>2026-03-14</td></tr>
+<tr><td>129</td><td>2</td><td>2026-03-14</td><td>2026-03-14</td></tr>
+<tr><td>186</td><td>2</td><td>2026-03-14</td><td>2026-03-18</td></tr>
+<tr><td>192</td><td>2</td><td>2026-03-18</td><td>2026-03-19</td></tr>
+<tr><td>226</td><td>2</td><td>2026-03-19</td><td>2026-03-22</td></tr>
+<tr><td>240</td><td>2</td><td>2026-03-22</td><td>2026-03-24</td></tr>
+<tr><td>283</td><td>2</td><td>2026-03-24</td><td>2026-03-28</td></tr>
+<tr><td>303</td><td>2</td><td>2026-03-28</td><td>2026-03-29</td></tr>
+<tr><td>22</td><td>3</td><td>2026-03-03</td><td>2026-03-03</td></tr>
+<tr><td>44</td><td>3</td><td>2026-03-03</td><td>2026-03-05</td></tr>
+<tr><td>60</td><td>3</td><td>2026-03-05</td><td>2026-03-08</td></tr>
+<tr><td>82</td><td>3</td><td>2026-03-08</td><td>2026-03-09</td></tr>
+<tr><td>130</td><td>3</td><td>2026-03-09</td><td>2026-03-14</td></tr>
+<tr><td>147</td><td>3</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>173</td><td>3</td><td>2026-03-15</td><td>2026-03-17</td></tr>
+<tr><td>188</td><td>3</td><td>2026-03-17</td><td>2026-03-19</td></tr>
+<tr><td>198</td><td>3</td><td>2026-03-19</td><td>2026-03-19</td></tr>
+<tr><td>249</td><td>3</td><td>2026-03-19</td><td>2026-03-24</td></tr>
+<tr><td>255</td><td>3</td><td>2026-03-24</td><td>2026-03-25</td></tr>
+<tr><td>23</td><td>4</td><td>2026-03-02</td><td>2026-03-03</td></tr>
+<tr><td>41</td><td>4</td><td>2026-03-03</td><td>2026-03-05</td></tr>
+<tr><td>49</td><td>4</td><td>2026-03-05</td><td>2026-03-07</td></tr>
+<tr><td>54</td><td>4</td><td>2026-03-07</td><td>2026-03-07</td></tr>
+<tr><td>89</td><td>4</td><td>2026-03-07</td><td>2026-03-10</td></tr>
+<tr><td>115</td><td>4</td><td>2026-03-10</td><td>2026-03-12</td></tr>
+<tr><td>121</td><td>4</td><td>2026-03-12</td><td>2026-03-14</td></tr>
+<tr><td>150</td><td>4</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>159</td><td>4</td><td>2026-03-15</td><td>2026-03-16</td></tr>
+<tr><td>162</td><td>4</td><td>2026-03-16</td><td>2026-03-16</td></tr>
+<tr><td>189</td><td>4</td><td>2026-03-16</td><td>2026-03-19</td></tr>
+<tr><td>201</td><td>4</td><td>2026-03-19</td><td>2026-03-21</td></tr>
+<tr><td>228</td><td>4</td><td>2026-03-21</td><td>2026-03-23</td></tr>
+<tr><td>233</td><td>4</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>239</td><td>4</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>32</td><td>5</td><td>2026-03-02</td><td>2026-03-04</td></tr>
+<tr><td>33</td><td>5</td><td>2026-03-04</td><td>2026-03-04</td></tr>
+<tr><td>68</td><td>5</td><td>2026-03-04</td><td>2026-03-08</td></tr>
+<tr><td>87</td><td>5</td><td>2026-03-08</td><td>2026-03-10</td></tr>
+<tr><td>101</td><td>5</td><td>2026-03-10</td><td>2026-03-11</td></tr>
+<tr><td>103</td><td>5</td><td>2026-03-11</td><td>2026-03-11</td></tr>
+<tr><td>106</td><td>5</td><td>2026-03-11</td><td>2026-03-11</td></tr>
+<tr><td>112</td><td>5</td><td>2026-03-11</td><td>2026-03-12</td></tr>
+<tr><td>123</td><td>5</td><td>2026-03-12</td><td>2026-03-14</td></tr>
+<tr><td>126</td><td>5</td><td>2026-03-14</td><td>2026-03-14</td></tr>
+<tr><td>157</td><td>5</td><td>2026-03-14</td><td>2026-03-16</td></tr>
+<tr><td>179</td><td>5</td><td>2026-03-16</td><td>2026-03-18</td></tr>
+<tr><td>223</td><td>5</td><td>2026-03-18</td><td>2026-03-22</td></tr>
+<tr><td>232</td><td>5</td><td>2026-03-22</td><td>2026-03-23</td></tr>
+<tr><td>271</td><td>5</td><td>2026-03-23</td><td>2026-03-26</td></tr>
+<tr><td>278</td><td>5</td><td>2026-03-26</td><td>2026-03-28</td></tr>
+<tr><td>30</td><td>6</td><td>2026-03-02</td><td>2026-03-04</td></tr>
+<tr><td>36</td><td>6</td><td>2026-03-04</td><td>2026-03-05</td></tr>
+<tr><td>149</td><td>6</td><td>2026-03-05</td><td>2026-03-15</td></tr>
+<tr><td>184</td><td>6</td><td>2026-03-15</td><td>2026-03-18</td></tr>
+<tr><td>279</td><td>6</td><td>2026-03-18</td><td>2026-03-28</td></tr>
+<tr><td>284</td><td>6</td><td>2026-03-28</td><td>2026-03-28</td></tr>
+<tr><td>51</td><td>7</td><td>2026-03-04</td><td>2026-03-07</td></tr>
+<tr><td>116</td><td>7</td><td>2026-03-07</td><td>2026-03-12</td></tr>
+<tr><td>119</td><td>7</td><td>2026-03-12</td><td>2026-03-12</td></tr>
+<tr><td>143</td><td>7</td><td>2026-03-12</td><td>2026-03-15</td></tr>
+<tr><td>156</td><td>7</td><td>2026-03-15</td><td>2026-03-16</td></tr>
+<tr><td>177</td><td>7</td><td>2026-03-16</td><td>2026-03-18</td></tr>
+<tr><td>209</td><td>7</td><td>2026-03-18</td><td>2026-03-21</td></tr>
+<tr><td>241</td><td>7</td><td>2026-03-21</td><td>2026-03-24</td></tr>
+<tr><td>247</td><td>7</td><td>2026-03-24</td><td>2026-03-24</td></tr>
+<tr><td>277</td><td>7</td><td>2026-03-24</td><td>2026-03-28</td></tr>
+<tr><td>302</td><td>7</td><td>2026-03-28</td><td>2026-03-29</td></tr>
+<tr><td>12</td><td>9</td><td>2026-03-02</td><td>2026-03-02</td></tr>
+<tr><td>99</td><td>9</td><td>2026-03-02</td><td>2026-03-10</td></tr>
+<tr><td>109</td><td>9</td><td>2026-03-10</td><td>2026-03-11</td></tr>
+<tr><td>111</td><td>9</td><td>2026-03-11</td><td>2026-03-12</td></tr>
+<tr><td>165</td><td>9</td><td>2026-03-12</td><td>2026-03-17</td></tr>
+<tr><td>183</td><td>9</td><td>2026-03-17</td><td>2026-03-18</td></tr>
+<tr><td>190</td><td>9</td><td>2026-03-18</td><td>2026-03-19</td></tr>
+<tr><td>193</td><td>9</td><td>2026-03-19</td><td>2026-03-19</td></tr>
+<tr><td>218</td><td>9</td><td>2026-03-19</td><td>2026-03-22</td></tr>
+<tr><td>235</td><td>9</td><td>2026-03-22</td><td>2026-03-23</td></tr>
+<tr><td>253</td><td>9</td><td>2026-03-23</td><td>2026-03-25</td></tr>
+<tr><td>263</td><td>9</td><td>2026-03-25</td><td>2026-03-26</td></tr>
+<tr><td>273</td><td>9</td><td>2026-03-26</td><td>2026-03-26</td></tr>
+<tr><td>296</td><td>9</td><td>2026-03-26</td><td>2026-03-29</td></tr>
+<tr><td>301</td><td>9</td><td>2026-03-29</td><td>2026-03-29</td></tr>
+<tr><td>79</td><td>10</td><td>2026-03-09</td><td>2026-03-09</td></tr>
+<tr><td>94</td><td>10</td><td>2026-03-09</td><td>2026-03-10</td></tr>
+<tr><td>117</td><td>10</td><td>2026-03-10</td><td>2026-03-12</td></tr>
+<tr><td>258</td><td>10</td><td>2026-03-12</td><td>2026-03-25</td></tr>
+<tr><td>280</td><td>10</td><td>2026-03-25</td><td>2026-03-28</td></tr>
+<tr><td>42</td><td>11</td><td>2026-03-03</td><td>2026-03-05</td></tr>
+<tr><td>46</td><td>11</td><td>2026-03-05</td><td>2026-03-07</td></tr>
+<tr><td>57</td><td>11</td><td>2026-03-07</td><td>2026-03-07</td></tr>
+<tr><td>67</td><td>11</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>90</td><td>11</td><td>2026-03-08</td><td>2026-03-10</td></tr>
+<tr><td>98</td><td>11</td><td>2026-03-10</td><td>2026-03-10</td></tr>
+<tr><td>120</td><td>11</td><td>2026-03-10</td><td>2026-03-14</td></tr>
+<tr><td>137</td><td>11</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>139</td><td>11</td><td>2026-03-15</td><td>2026-03-15</td></tr>
+<tr><td>172</td><td>11</td><td>2026-03-15</td><td>2026-03-17</td></tr>
+<tr><td>181</td><td>11</td><td>2026-03-17</td><td>2026-03-18</td></tr>
+<tr><td>202</td><td>11</td><td>2026-03-18</td><td>2026-03-21</td></tr>
+<tr><td>210</td><td>11</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>238</td><td>11</td><td>2026-03-21</td><td>2026-03-23</td></tr>
+<tr><td>262</td><td>11</td><td>2026-03-23</td><td>2026-03-25</td></tr>
+<tr><td>269</td><td>11</td><td>2026-03-25</td><td>2026-03-26</td></tr>
+<tr><td>287</td><td>11</td><td>2026-03-26</td><td>2026-03-28</td></tr>
+<tr><td>293</td><td>11</td><td>2026-03-28</td><td>2026-03-29</td></tr>
+<tr><td>300</td><td>11</td><td>2026-03-29</td><td>2026-03-29</td></tr>
+<tr><td>28</td><td>12</td><td>2026-03-02</td><td>2026-03-04</td></tr>
+<tr><td>53</td><td>12</td><td>2026-03-04</td><td>2026-03-07</td></tr>
+<tr><td>72</td><td>12</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>153</td><td>12</td><td>2026-03-08</td><td>2026-03-16</td></tr>
+<tr><td>170</td><td>12</td><td>2026-03-16</td><td>2026-03-17</td></tr>
+<tr><td>176</td><td>12</td><td>2026-03-17</td><td>2026-03-18</td></tr>
+<tr><td>180</td><td>12</td><td>2026-03-18</td><td>2026-03-18</td></tr>
+<tr><td>196</td><td>12</td><td>2026-03-18</td><td>2026-03-19</td></tr>
+<tr><td>208</td><td>12</td><td>2026-03-19</td><td>2026-03-21</td></tr>
+<tr><td>242</td><td>12</td><td>2026-03-21</td><td>2026-03-24</td></tr>
+<tr><td>252</td><td>12</td><td>2026-03-24</td><td>2026-03-25</td></tr>
+<tr><td>291</td><td>13</td><td>2026-03-16</td><td>2026-03-29</td></tr>
+<tr><td>104</td><td>14</td><td>2026-03-02</td><td>2026-03-11</td></tr>
+<tr><td>122</td><td>15</td><td>2026-03-12</td><td>2026-03-14</td></tr>
+<tr><td>148</td><td>15</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>152</td><td>15</td><td>2026-03-15</td><td>2026-03-16</td></tr>
+<tr><td>251</td><td>15</td><td>2026-03-16</td><td>2026-03-25</td></tr>
+<tr><td>276</td><td>15</td><td>2026-03-25</td><td>2026-03-28</td></tr>
+<tr><td>48</td><td>16</td><td>2026-03-05</td><td>2026-03-07</td></tr>
+<tr><td>220</td><td>16</td><td>2026-03-07</td><td>2026-03-22</td></tr>
+<tr><td>257</td><td>16</td><td>2026-03-22</td><td>2026-03-25</td></tr>
+<tr><td>266</td><td>16</td><td>2026-03-25</td><td>2026-03-26</td></tr>
+<tr><td>285</td><td>16</td><td>2026-03-26</td><td>2026-03-28</td></tr>
+<tr><td>77</td><td>17</td><td>2026-03-04</td><td>2026-03-09</td></tr>
+<tr><td>84</td><td>17</td><td>2026-03-09</td><td>2026-03-09</td></tr>
+<tr><td>248</td><td>17</td><td>2026-03-09</td><td>2026-03-24</td></tr>
+<tr><td>34</td><td>18</td><td>2026-03-03</td><td>2026-03-05</td></tr>
+<tr><td>47</td><td>18</td><td>2026-03-05</td><td>2026-03-07</td></tr>
+<tr><td>58</td><td>18</td><td>2026-03-07</td><td>2026-03-07</td></tr>
+<tr><td>96</td><td>18</td><td>2026-03-07</td><td>2026-03-10</td></tr>
+<tr><td>256</td><td>18</td><td>2026-03-10</td><td>2026-03-25</td></tr>
+<tr><td>281</td><td>18</td><td>2026-03-25</td><td>2026-03-28</td></tr>
+<tr><td>102</td><td>20</td><td>2026-03-10</td><td>2026-03-11</td></tr>
+<tr><td>108</td><td>20</td><td>2026-03-11</td><td>2026-03-11</td></tr>
+<tr><td>213</td><td>20</td><td>2026-03-11</td><td>2026-03-21</td></tr>
+<tr><td>75</td><td>21</td><td>2026-03-08</td><td>2026-03-09</td></tr>
+<tr><td>154</td><td>21</td><td>2026-03-09</td><td>2026-03-16</td></tr>
+<tr><td>160</td><td>21</td><td>2026-03-16</td><td>2026-03-16</td></tr>
+<tr><td>185</td><td>21</td><td>2026-03-16</td><td>2026-03-18</td></tr>
+<tr><td>214</td><td>21</td><td>2026-03-18</td><td>2026-03-21</td></tr>
+<tr><td>245</td><td>21</td><td>2026-03-21</td><td>2026-03-24</td></tr>
+<tr><td>268</td><td>21</td><td>2026-03-24</td><td>2026-03-26</td></tr>
+<tr><td>292</td><td>21</td><td>2026-03-26</td><td>2026-03-29</td></tr>
+<tr><td>81</td><td>22</td><td>2026-03-02</td><td>2026-03-09</td></tr>
+<tr><td>107</td><td>22</td><td>2026-03-09</td><td>2026-03-11</td></tr>
+<tr><td>135</td><td>22</td><td>2026-03-11</td><td>2026-03-15</td></tr>
+<tr><td>298</td><td>22</td><td>2026-03-15</td><td>2026-03-29</td></tr>
+<tr><td>61</td><td>23</td><td>2026-03-03</td><td>2026-03-08</td></tr>
+<tr><td>141</td><td>23</td><td>2026-03-08</td><td>2026-03-15</td></tr>
+<tr><td>221</td><td>23</td><td>2026-03-15</td><td>2026-03-22</td></tr>
+<tr><td>267</td><td>23</td><td>2026-03-22</td><td>2026-03-26</td></tr>
+<tr><td>169</td><td>24</td><td>2026-03-09</td><td>2026-03-17</td></tr>
+<tr><td>205</td><td>24</td><td>2026-03-17</td><td>2026-03-21</td></tr>
+<tr><td>260</td><td>24</td><td>2026-03-21</td><td>2026-03-25</td></tr>
+<tr><td>265</td><td>24</td><td>2026-03-25</td><td>2026-03-26</td></tr>
+<tr><td>295</td><td>24</td><td>2026-03-26</td><td>2026-03-29</td></tr>
+<tr><td>91</td><td>25</td><td>2026-03-09</td><td>2026-03-10</td></tr>
+<tr><td>127</td><td>25</td><td>2026-03-10</td><td>2026-03-14</td></tr>
+<tr><td>151</td><td>25</td><td>2026-03-14</td><td>2026-03-16</td></tr>
+<tr><td>250</td><td>25</td><td>2026-03-16</td><td>2026-03-25</td></tr>
+<tr><td>10</td><td>28</td><td>2026-03-02</td><td>2026-03-02</td></tr>
+<tr><td>18</td><td>28</td><td>2026-03-02</td><td>2026-03-03</td></tr>
+<tr><td>20</td><td>28</td><td>2026-03-03</td><td>2026-03-03</td></tr>
+<tr><td>29</td><td>28</td><td>2026-03-03</td><td>2026-03-04</td></tr>
+<tr><td>55</td><td>28</td><td>2026-03-04</td><td>2026-03-07</td></tr>
+<tr><td>83</td><td>28</td><td>2026-03-07</td><td>2026-03-09</td></tr>
+<tr><td>92</td><td>28</td><td>2026-03-09</td><td>2026-03-10</td></tr>
+<tr><td>97</td><td>28</td><td>2026-03-10</td><td>2026-03-10</td></tr>
+<tr><td>113</td><td>28</td><td>2026-03-10</td><td>2026-03-12</td></tr>
+<tr><td>124</td><td>28</td><td>2026-03-12</td><td>2026-03-14</td></tr>
+<tr><td>132</td><td>28</td><td>2026-03-14</td><td>2026-03-14</td></tr>
+<tr><td>138</td><td>28</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>166</td><td>28</td><td>2026-03-15</td><td>2026-03-17</td></tr>
+<tr><td>199</td><td>28</td><td>2026-03-17</td><td>2026-03-19</td></tr>
+<tr><td>206</td><td>28</td><td>2026-03-19</td><td>2026-03-21</td></tr>
+<tr><td>215</td><td>28</td><td>2026-03-21</td><td>2026-03-22</td></tr>
+<tr><td>246</td><td>28</td><td>2026-03-22</td><td>2026-03-24</td></tr>
+<tr><td>270</td><td>28</td><td>2026-03-24</td><td>2026-03-26</td></tr>
+<tr><td>294</td><td>28</td><td>2026-03-26</td><td>2026-03-29</td></tr>
+<tr><td>39</td><td>29</td><td>2026-03-03</td><td>2026-03-05</td></tr>
+<tr><td>64</td><td>29</td><td>2026-03-05</td><td>2026-03-08</td></tr>
+<tr><td>71</td><td>29</td><td>2026-03-08</td><td>2026-03-08</td></tr>
+<tr><td>86</td><td>29</td><td>2026-03-08</td><td>2026-03-09</td></tr>
+<tr><td>187</td><td>29</td><td>2026-03-09</td><td>2026-03-19</td></tr>
+<tr><td>194</td><td>29</td><td>2026-03-19</td><td>2026-03-19</td></tr>
+<tr><td>297</td><td>29</td><td>2026-03-19</td><td>2026-03-29</td></tr>
+<tr><td>56</td><td>30</td><td>2026-03-03</td><td>2026-03-07</td></tr>
+<tr><td>63</td><td>30</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>80</td><td>30</td><td>2026-03-08</td><td>2026-03-09</td></tr>
+<tr><td>95</td><td>30</td><td>2026-03-09</td><td>2026-03-10</td></tr>
+<tr><td>118</td><td>30</td><td>2026-03-10</td><td>2026-03-12</td></tr>
+<tr><td>133</td><td>30</td><td>2026-03-12</td><td>2026-03-14</td></tr>
+<tr><td>134</td><td>30</td><td>2026-03-14</td><td>2026-03-14</td></tr>
+<tr><td>164</td><td>30</td><td>2026-03-14</td><td>2026-03-17</td></tr>
+<tr><td>203</td><td>30</td><td>2026-03-17</td><td>2026-03-21</td></tr>
+<tr><td>217</td><td>30</td><td>2026-03-21</td><td>2026-03-22</td></tr>
+<tr><td>219</td><td>30</td><td>2026-03-22</td><td>2026-03-22</td></tr>
+<tr><td>229</td><td>30</td><td>2026-03-22</td><td>2026-03-23</td></tr>
+<tr><td>261</td><td>30</td><td>2026-03-23</td><td>2026-03-25</td></tr>
+<tr><td>167</td><td>32</td><td>2026-03-15</td><td>2026-03-17</td></tr>
+<tr><td>175</td><td>32</td><td>2026-03-17</td><td>2026-03-18</td></tr>
+<tr><td>182</td><td>32</td><td>2026-03-18</td><td>2026-03-18</td></tr>
+<tr><td>144</td><td>33</td><td>2026-03-08</td><td>2026-03-15</td></tr>
+<tr><td>62</td><td>34</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>275</td><td>34</td><td>2026-03-08</td><td>2026-03-28</td></tr>
+<tr><td>35</td><td>36</td><td>2026-03-04</td><td>2026-03-05</td></tr>
+<tr><td>38</td><td>36</td><td>2026-03-05</td><td>2026-03-05</td></tr>
+<tr><td>50</td><td>36</td><td>2026-03-05</td><td>2026-03-07</td></tr>
+<tr><td>66</td><td>36</td><td>2026-03-07</td><td>2026-03-08</td></tr>
+<tr><td>105</td><td>36</td><td>2026-03-08</td><td>2026-03-11</td></tr>
+<tr><td>110</td><td>36</td><td>2026-03-11</td><td>2026-03-12</td></tr>
+<tr><td>146</td><td>36</td><td>2026-03-12</td><td>2026-03-15</td></tr>
+<tr><td>155</td><td>36</td><td>2026-03-15</td><td>2026-03-16</td></tr>
+<tr><td>168</td><td>36</td><td>2026-03-16</td><td>2026-03-17</td></tr>
+<tr><td>195</td><td>36</td><td>2026-03-17</td><td>2026-03-19</td></tr>
+<tr><td>216</td><td>36</td><td>2026-03-19</td><td>2026-03-22</td></tr>
+<tr><td>224</td><td>36</td><td>2026-03-22</td><td>2026-03-22</td></tr>
+<tr><td>230</td><td>36</td><td>2026-03-22</td><td>2026-03-23</td></tr>
+<tr><td>234</td><td>36</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>236</td><td>36</td><td>2026-03-23</td><td>2026-03-23</td></tr>
+<tr><td>282</td><td>36</td><td>2026-03-23</td><td>2026-03-28</td></tr>
+<tr><td>290</td><td>36</td><td>2026-03-28</td><td>2026-03-29</td></tr>
+<tr><td>299</td><td>36</td><td>2026-03-29</td><td>2026-03-29</td></tr>
+<tr><td>145</td><td>37</td><td>2026-03-08</td><td>2026-03-15</td></tr>
+<tr><td>171</td><td>37</td><td>2026-03-15</td><td>2026-03-17</td></tr>
+<tr><td>254</td><td>37</td><td>2026-03-17</td><td>2026-03-25</td></tr>
+<tr><td>142</td><td>39</td><td>2026-03-14</td><td>2026-03-15</td></tr>
+<tr><td>200</td><td>39</td><td>2026-03-15</td><td>2026-03-21</td></tr>
+<tr><td>207</td><td>39</td><td>2026-03-21</td><td>2026-03-21</td></tr>
+<tr><td>225</td><td>39</td><td>2026-03-21</td><td>2026-03-22</td></tr>
+<tr><td>227</td><td>39</td><td>2026-03-22</td><td>2026-03-22</td></tr>
+<tr><td>259</td><td>39</td><td>2026-03-22</td><td>2026-03-25</td></tr>
+<tr><td>274</td><td>39</td><td>2026-03-25</td><td>2026-03-28</td></tr>
+<tr><td>286</td><td>39</td><td>2026-03-28</td><td>2026-03-28</td></tr>
+<tr><td>178</td><td>40</td><td>2026-03-17</td><td>2026-03-18</td></tr>
+<tr><td>191</td><td>40</td><td>2026-03-18</td><td>2026-03-19</td></tr>
+<tr><td>243</td><td>40</td><td>2026-03-19</td><td>2026-03-24</td></tr>
 </table>
 <p>A customer's first order has no previous row, so <code>LAG</code> returns NULL for it, and <code>IS NOT NULL</code> drops exactly those orders. Ordering the window by <code>day, time</code> rather than <code>day</code> alone keeps two orders on the same day in their real order.</p>
 </details>
@@ -431,9 +815,13 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">brought</span> <span class="sql-kw">DESC</span>, <span class="sql-id">r</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>brought</th></tr>
-<tr><td>Alice Turner</td><td>5</td></tr>
+<tr><td>Alice Turner</td><td>23</td></tr>
+<tr><td>Kofi Tanaka</td><td>7</td></tr>
+<tr><td>Zoe Garcia</td><td>3</td></tr>
 <tr><td>David Chen</td><td>0</td></tr>
 <tr><td>Hugo Silva</td><td>0</td></tr>
+<tr><td>Stefan Lambert</td><td>0</td></tr>
+<tr><td>Iris Costa</td><td>0</td></tr>
 </table>
 <p>The anchor starts one chain per walk-in, carrying the walk-in's id as <code>root_id</code>; each round adds the customers referred by the newest members and passes the same <code>root_id</code> down. Every chain contains its walk-in too, hence the <code>- 1</code>. Because the walk-ins start their own chains, a walk-in who brought nobody still appears, with 0.</p>
 </details>

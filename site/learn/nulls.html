@@ -57,6 +57,33 @@
 <tr><td>Emma Novak</td><td>3</td></tr>
 <tr><td>Farid Haddad</td><td>5</td></tr>
 <tr><td>Grace Lee</td><td>2</td></tr>
+<tr><td>Daniel Moreno</td><td>7</td></tr>
+<tr><td>Quentin Schmidt</td><td>10</td></tr>
+<tr><td>Wen Petrov</td><td>6</td></tr>
+<tr><td>Ugo Dubois</td><td>5</td></tr>
+<tr><td>Zoe Garcia</td><td>7</td></tr>
+<tr><td>Hassan Ivanova</td><td>3</td></tr>
+<tr><td>Rosa Weber</td><td>15</td></tr>
+<tr><td>Nadia Jensen</td><td>3</td></tr>
+<tr><td>Priya Hughes</td><td>10</td></tr>
+<tr><td>Marco Olsen</td><td>2</td></tr>
+<tr><td>Oscar Nakamura</td><td>18</td></tr>
+<tr><td>Jonas Eriksen</td><td>7</td></tr>
+<tr><td>Tara Rossi</td><td>3</td></tr>
+<tr><td>Amira Kowalski</td><td>7</td></tr>
+<tr><td>Bruno Fischer</td><td>15</td></tr>
+<tr><td>Yusuf Eriksen</td><td>27</td></tr>
+<tr><td>Felix Bianchi</td><td>20</td></tr>
+<tr><td>Greta Rossi</td><td>3</td></tr>
+<tr><td>Lena Dubois</td><td>23</td></tr>
+<tr><td>Elena Nakamura</td><td>18</td></tr>
+<tr><td>Greta Hughes</td><td>27</td></tr>
+<tr><td>Marco Costa</td><td>3</td></tr>
+<tr><td>Iris Olsen</td><td>34</td></tr>
+<tr><td>Lena Schmidt</td><td>7</td></tr>
+<tr><td>Vera Tanaka</td><td>10</td></tr>
+<tr><td>Yusuf Moreno</td><td>38</td></tr>
+<tr><td>Quentin Jensen</td><td>15</td></tr>
 </table>
 <p>If the walk-in customers belong in the answer, say so: <code>WHERE referred_by &lt;&gt; 1 OR referred_by IS NULL</code>. A CASE makes the three outcomes visible. Its first branch catches true, its second catches false, and whatever is left over is unknown.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
@@ -77,6 +104,38 @@
 <tr><td>Farid Haddad</td><td>no</td></tr>
 <tr><td>Grace Lee</td><td>no</td></tr>
 <tr><td>Hugo Silva</td><td>unknown</td></tr>
+<tr><td>Daniel Moreno</td><td>no</td></tr>
+<tr><td>Kofi Tanaka</td><td>unknown</td></tr>
+<tr><td>Quentin Schmidt</td><td>no</td></tr>
+<tr><td>Wen Petrov</td><td>no</td></tr>
+<tr><td>Ugo Dubois</td><td>no</td></tr>
+<tr><td>Zoe Garcia</td><td>no</td></tr>
+<tr><td>Hassan Ivanova</td><td>no</td></tr>
+<tr><td>Rosa Weber</td><td>no</td></tr>
+<tr><td>Nadia Jensen</td><td>no</td></tr>
+<tr><td>Priya Hughes</td><td>no</td></tr>
+<tr><td>Marco Olsen</td><td>no</td></tr>
+<tr><td>Oscar Nakamura</td><td>no</td></tr>
+<tr><td>Jonas Eriksen</td><td>no</td></tr>
+<tr><td>Stefan Lambert</td><td>unknown</td></tr>
+<tr><td>Tara Rossi</td><td>no</td></tr>
+<tr><td>Amira Kowalski</td><td>no</td></tr>
+<tr><td>Bruno Fischer</td><td>no</td></tr>
+<tr><td>Iris Costa</td><td>unknown</td></tr>
+<tr><td>Zoe Garcia</td><td>unknown</td></tr>
+<tr><td>Vera Bianchi</td><td>yes</td></tr>
+<tr><td>Yusuf Eriksen</td><td>no</td></tr>
+<tr><td>Felix Bianchi</td><td>no</td></tr>
+<tr><td>Greta Rossi</td><td>no</td></tr>
+<tr><td>Lena Dubois</td><td>no</td></tr>
+<tr><td>Elena Nakamura</td><td>no</td></tr>
+<tr><td>Greta Hughes</td><td>no</td></tr>
+<tr><td>Marco Costa</td><td>no</td></tr>
+<tr><td>Iris Olsen</td><td>no</td></tr>
+<tr><td>Lena Schmidt</td><td>no</td></tr>
+<tr><td>Vera Tanaka</td><td>no</td></tr>
+<tr><td>Yusuf Moreno</td><td>no</td></tr>
+<tr><td>Quentin Jensen</td><td>no</td></tr>
 </table>
 <p>Notice that <code>NOT</code> does not rescue the walk-ins: the opposite of unknown is still unknown. <code>AND</code> and <code>OR</code> follow common sense once you read unknown as "could be either":</p>
 <table class="result">
@@ -99,6 +158,25 @@
 <tr><td>Ben Okafor</td><td>Hillcrest</td></tr>
 <tr><td>Emma Novak</td><td>Hillcrest</td></tr>
 <tr><td>Farid Haddad</td><td>Old Town</td></tr>
+<tr><td>Daniel Moreno</td><td>Hillcrest</td></tr>
+<tr><td>Wen Petrov</td><td>Old Town</td></tr>
+<tr><td>Ugo Dubois</td><td>Hillcrest</td></tr>
+<tr><td>Zoe Garcia</td><td>Hillcrest</td></tr>
+<tr><td>Hassan Ivanova</td><td>Old Town</td></tr>
+<tr><td>Rosa Weber</td><td>Old Town</td></tr>
+<tr><td>Nadia Jensen</td><td>Hillcrest</td></tr>
+<tr><td>Jonas Eriksen</td><td>Hillcrest</td></tr>
+<tr><td>Amira Kowalski</td><td>Old Town</td></tr>
+<tr><td>Bruno Fischer</td><td>Old Town</td></tr>
+<tr><td>Vera Bianchi</td><td>Old Town</td></tr>
+<tr><td>Yusuf Eriksen</td><td>Old Town</td></tr>
+<tr><td>Felix Bianchi</td><td>Old Town</td></tr>
+<tr><td>Greta Rossi</td><td>Hillcrest</td></tr>
+<tr><td>Lena Dubois</td><td>Hillcrest</td></tr>
+<tr><td>Marco Costa</td><td>Hillcrest</td></tr>
+<tr><td>Lena Schmidt</td><td>Old Town</td></tr>
+<tr><td>Vera Tanaka</td><td>Old Town</td></tr>
+<tr><td>Yusuf Moreno</td><td>Old Town</td></tr>
 </table>
 
 <h2>Aggregates skip NULL</h2>
@@ -109,7 +187,7 @@
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
 <table class="result">
 <tr><th>customers</th><th>referred</th><th>referrers</th></tr>
-<tr><td>8</td><td>5</td><td>4</td></tr>
+<tr><td>40</td><td>33</td><td>14</td></tr>
 </table>
 <p>Eight customers, five of whom were referred, by four different people (customer 1 referred two). Each column answers a different question, and picking the wrong <code>COUNT</code> gives a plausible number that answers the wrong one.</p>
 <p>An aggregate over no rows at all is a special case. <code>COUNT</code> of nothing is 0, but <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> of nothing are NULL: there is no total of an empty list. Product 9 was never ordered, so the sum of its quantities is NULL, not 0.</p>
@@ -118,7 +196,7 @@
 <span class="sql-kw">WHERE</span> <span class="sql-id">product_id</span> = <span class="sql-num">9</span>;</code></pre>
 <table class="result">
 <tr><th>lines</th><th>pieces</th></tr>
-<tr><td>0</td><td>NULL</td></tr>
+<tr><td>32</td><td>46</td></tr>
 </table>
 
 <h2>Replacing NULL: COALESCE</h2>
@@ -131,9 +209,13 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>pieces</th></tr>
-<tr><td>Lemon tart</td><td>4</td></tr>
-<tr><td>Chocolate eclair</td><td>5</td></tr>
-<tr><td>Carrot cake slice</td><td>0</td></tr>
+<tr><td>Lemon tart</td><td>58</td></tr>
+<tr><td>Chocolate eclair</td><td>52</td></tr>
+<tr><td>Carrot cake slice</td><td>46</td></tr>
+<tr><td>Cheesecake slice</td><td>39</td></tr>
+<tr><td>Raspberry tart</td><td>51</td></tr>
+<tr><td>Coffee eclair</td><td>51</td></tr>
+<tr><td>Pistachio financier</td><td>0</td></tr>
 </table>
 <p>Use <code>COALESCE</code> for display, or where a NULL really means zero. Do not use it to hide NULLs that mean "unknown": replacing an unknown price by 0 before averaging pulls the average down with prices nobody ever charged. The reverse tool exists too: <code>NULLIF(a, b)</code> gives NULL when <code>a</code> equals <code>b</code>, which is how you avoid dividing by zero (<code>total / NULLIF(orders, 0)</code> is NULL instead of an error: PostgreSQL raises an error on division by zero, while SQLite already returns NULL).</p>
 
@@ -155,6 +237,7 @@
 <tr><th>name</th></tr>
 <tr><td>Ben Okafor</td></tr>
 <tr><td>Chloe Martin</td></tr>
+<tr><td>Vera Bianchi</td></tr>
 </table>
 
 <h2>NULL in joins</h2>
@@ -170,6 +253,34 @@
 <tr><td>Emma Novak</td><td>Chloe Martin</td></tr>
 <tr><td>Farid Haddad</td><td>Emma Novak</td></tr>
 <tr><td>Grace Lee</td><td>Ben Okafor</td></tr>
+<tr><td>Daniel Moreno</td><td>Grace Lee</td></tr>
+<tr><td>Quentin Schmidt</td><td>Kofi Tanaka</td></tr>
+<tr><td>Wen Petrov</td><td>Farid Haddad</td></tr>
+<tr><td>Ugo Dubois</td><td>Emma Novak</td></tr>
+<tr><td>Zoe Garcia</td><td>Grace Lee</td></tr>
+<tr><td>Hassan Ivanova</td><td>Chloe Martin</td></tr>
+<tr><td>Rosa Weber</td><td>Hassan Ivanova</td></tr>
+<tr><td>Nadia Jensen</td><td>Chloe Martin</td></tr>
+<tr><td>Priya Hughes</td><td>Kofi Tanaka</td></tr>
+<tr><td>Marco Olsen</td><td>Ben Okafor</td></tr>
+<tr><td>Oscar Nakamura</td><td>Priya Hughes</td></tr>
+<tr><td>Jonas Eriksen</td><td>Grace Lee</td></tr>
+<tr><td>Tara Rossi</td><td>Chloe Martin</td></tr>
+<tr><td>Amira Kowalski</td><td>Grace Lee</td></tr>
+<tr><td>Bruno Fischer</td><td>Hassan Ivanova</td></tr>
+<tr><td>Vera Bianchi</td><td>Alice Turner</td></tr>
+<tr><td>Yusuf Eriksen</td><td>Zoe Garcia</td></tr>
+<tr><td>Felix Bianchi</td><td>Oscar Nakamura</td></tr>
+<tr><td>Greta Rossi</td><td>Chloe Martin</td></tr>
+<tr><td>Lena Dubois</td><td>Tara Rossi</td></tr>
+<tr><td>Elena Nakamura</td><td>Priya Hughes</td></tr>
+<tr><td>Greta Hughes</td><td>Zoe Garcia</td></tr>
+<tr><td>Marco Costa</td><td>Chloe Martin</td></tr>
+<tr><td>Iris Olsen</td><td>Greta Hughes</td></tr>
+<tr><td>Lena Schmidt</td><td>Grace Lee</td></tr>
+<tr><td>Vera Tanaka</td><td>Kofi Tanaka</td></tr>
+<tr><td>Yusuf Moreno</td><td>Vera Tanaka</td></tr>
+<tr><td>Quentin Jensen</td><td>Hassan Ivanova</td></tr>
 </table>
 <p>A <code>LEFT JOIN</code> keeps the unmatched rows and fills the right-hand columns with NULL, which brings a trap of its own when you count. With a left join, <code>COUNT(*)</code> counts the padded row too, so a customer with no order still counts one; <code>COUNT(o.id)</code> counts only real orders. Compare the two columns for Hugo Silva.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">joined_rows</span>, <span class="sql-fn">COUNT</span>(<span class="sql-id">o</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
@@ -180,9 +291,18 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>joined_rows</th><th>orders</th></tr>
-<tr><td>Ben Okafor</td><td>2</td><td>2</td></tr>
-<tr><td>Emma Novak</td><td>2</td><td>2</td></tr>
+<tr><td>Ben Okafor</td><td>14</td><td>14</td></tr>
+<tr><td>Emma Novak</td><td>17</td><td>17</td></tr>
 <tr><td>Hugo Silva</td><td>1</td><td>0</td></tr>
+<tr><td>Daniel Moreno</td><td>16</td><td>16</td></tr>
+<tr><td>Kofi Tanaka</td><td>6</td><td>6</td></tr>
+<tr><td>Ugo Dubois</td><td>2</td><td>2</td></tr>
+<tr><td>Zoe Garcia</td><td>2</td><td>2</td></tr>
+<tr><td>Nadia Jensen</td><td>4</td><td>4</td></tr>
+<tr><td>Jonas Eriksen</td><td>9</td><td>9</td></tr>
+<tr><td>Greta Rossi</td><td>1</td><td>0</td></tr>
+<tr><td>Lena Dubois</td><td>4</td><td>4</td></tr>
+<tr><td>Marco Costa</td><td>1</td><td>0</td></tr>
 </table>
 
 <h2>The NOT IN trap</h2>
@@ -202,9 +322,31 @@
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>David Chen</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Grace Lee</td></tr>
 <tr><td>Hugo Silva</td></tr>
+<tr><td>Daniel Moreno</td></tr>
+<tr><td>Quentin Schmidt</td></tr>
+<tr><td>Wen Petrov</td></tr>
+<tr><td>Ugo Dubois</td></tr>
+<tr><td>Zoe Garcia</td></tr>
+<tr><td>Rosa Weber</td></tr>
+<tr><td>Nadia Jensen</td></tr>
+<tr><td>Marco Olsen</td></tr>
+<tr><td>Jonas Eriksen</td></tr>
+<tr><td>Stefan Lambert</td></tr>
+<tr><td>Amira Kowalski</td></tr>
+<tr><td>Bruno Fischer</td></tr>
+<tr><td>Iris Costa</td></tr>
+<tr><td>Vera Bianchi</td></tr>
+<tr><td>Yusuf Eriksen</td></tr>
+<tr><td>Felix Bianchi</td></tr>
+<tr><td>Greta Rossi</td></tr>
+<tr><td>Lena Dubois</td></tr>
+<tr><td>Elena Nakamura</td></tr>
+<tr><td>Marco Costa</td></tr>
+<tr><td>Iris Olsen</td></tr>
+<tr><td>Lena Schmidt</td></tr>
+<tr><td>Yusuf Moreno</td></tr>
+<tr><td>Quentin Jensen</td></tr>
 </table>
 
 <h2>NULL in sorting and grouping</h2>
@@ -215,11 +357,21 @@
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">referred_by</span> <span class="sql-id">NULLS</span> <span class="sql-id">LAST</span>;</code></pre>
 <table class="result">
 <tr><th>referred_by</th><th>customers</th></tr>
-<tr><td>1</td><td>2</td></tr>
-<tr><td>2</td><td>1</td></tr>
-<tr><td>3</td><td>1</td></tr>
-<tr><td>5</td><td>1</td></tr>
-<tr><td>NULL</td><td>3</td></tr>
+<tr><td>1</td><td>3</td></tr>
+<tr><td>2</td><td>2</td></tr>
+<tr><td>3</td><td>6</td></tr>
+<tr><td>5</td><td>2</td></tr>
+<tr><td>6</td><td>1</td></tr>
+<tr><td>7</td><td>5</td></tr>
+<tr><td>10</td><td>3</td></tr>
+<tr><td>15</td><td>3</td></tr>
+<tr><td>18</td><td>2</td></tr>
+<tr><td>20</td><td>1</td></tr>
+<tr><td>23</td><td>1</td></tr>
+<tr><td>27</td><td>2</td></tr>
+<tr><td>34</td><td>1</td></tr>
+<tr><td>38</td><td>1</td></tr>
+<tr><td>NULL</td><td>7</td></tr>
 </table>
 
 <h2>Common mistakes</h2>

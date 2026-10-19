@@ -63,6 +63,8 @@
 <tr><td>order_item</td></tr>
 <tr><td>orders</td></tr>
 <tr><td>product</td></tr>
+<tr><td>refund</td></tr>
+<tr><td>staff</td></tr>
 </table>
 <p>For the columns of one table, <code>PRAGMA table_info</code> gives their names, types, and whether each is part of the primary key. The table-valued form below can be used in a normal <code>SELECT</code>, so you can choose the columns you want to see.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">type</span>, <span class="sql-id">pk</span>
@@ -74,6 +76,7 @@
 <tr><td>customer_id</td><td>INTEGER</td><td>0</td></tr>
 <tr><td>day</td><td>TEXT</td><td>0</td></tr>
 <tr><td>time</td><td>TEXT</td><td>0</td></tr>
+<tr><td>staff_id</td><td>INTEGER</td><td>0</td></tr>
 </table>
 <p>And <code>pragma_foreign_key_list</code> lists the foreign keys of a table: which column points to which table and column.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-str">"from"</span>, <span class="sql-str">"table"</span>, <span class="sql-str">"to"</span>
@@ -93,7 +96,7 @@
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
 <table class="result">
 <tr><th>customers</th><th>with_referrer</th><th>towns</th></tr>
-<tr><td>8</td><td>5</td><td>3</td></tr>
+<tr><td>40</td><td>33</td><td>3</td></tr>
 </table>
 <p>Five minutes spent this way save an hour later. Knowing that a column can be NULL tells you to use <code>IS NULL</code>; knowing that times are text with a leading zero tells you that you can compare them as text; knowing how many rows a table holds tells you whether a result of fifty rows is a lot or a little.</p>
 
