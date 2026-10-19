@@ -587,7 +587,7 @@ framework, no bundler.
 - **Outreach** (course owner, 2026-10-18): the owner drafted an email to Nick (softwarewithnick, a software content creator
   whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
   free, no sponsorship asked; sent 2026-10-19. He replied the same day that he will probably post about it that
-  week; the owner wants ads live by then (the ads branch is up to date, AdSense approval is the blocker). The site may show ads later (AdSense pending): if asked whether it
+  week, then asked for more obvious SQL branding on the landing page (done the same evening, the owner's reply sent); the owner wants ads live by then (the ads branch is up to date, AdSense approval is the blocker). The site may show ads later (AdSense pending): if asked whether it
   earns money, say so.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
