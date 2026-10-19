@@ -1,13 +1,16 @@
-/* The Clerk's Handbook (site/learn/): article layout over ../style.css. No theme button on these pages (exercises.html alone runs a
-   script, exercises.js), so the night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
+/* The Clerk's Handbook (site/learn/): article layout over ../style.css. The night edition follows the system setting
+   until the reader presses the Day/Night button (theme.js, the game's ritz.theme key): a choice sets data-mood on <html>,
+   so "night" takes style.css's :root[data-mood="night"] tokens and "day" switches the media query below off. */
 /* a solved question's mark (exercises.html), text and colour: about 5.5:1 on the day paper, 9:1 on the night one */
 :root { --ok: #2d6a2f; }
+:root[data-mood="night"] { --ok: #8fd18f; }
 @media (prefers-color-scheme: dark) {
-  :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
+  /* the same values as style.css's :root[data-mood="night"] */
+  :root:not([data-mood="day"]) { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
     --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; --ok: #8fd18f; }
-  /* exercises.html's house ad: its night print with the night palette (the game swaps it on data-mood instead) */
-  .press-notice .day { display: none; }
-  .press-notice .night { display: block; }
+  /* exercises.html's house ad: its night print with the night palette (a night choice swaps it through style.css) */
+  :root:not([data-mood="day"]) .press-notice .day { display: none; }
+  :root:not([data-mood="day"]) .press-notice .night { display: block; }
 }
 /* the same line as the landing's .landing-foot (.muted: 13px Cormorant, middle dots, underlined links) */
 .learn-nav { margin-top: 6px; }

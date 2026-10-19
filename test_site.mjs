@@ -541,6 +541,32 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   }
 });
 
+test("landing: the handbook's header nav under the masthead, the rest of its footer in .landing-foot", () => {
+  const page = fs.readFileSync("site/index.html", "utf8");
+  const labels = (h) => [...h.matchAll(/<a href="[^"]+"(?: id="[^"]+")?>([^<]*)<\/a>/g)].map((m) => m[1]);
+  const nav = labels(one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav"));
+  const foot = labels(one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer"));
+  assert.deepEqual(labels(one(page, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "landing nav")), nav);
+  const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");
+  assert.match(landingFoot, /<span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
+  assert.deepEqual(labels(landingFoot).filter((t) => t !== "Statistics"), foot.filter((t) => !nav.includes(t)));
+});
+
+test("Day/Night button: the game's button on every handbook page, the desk and the board, theme.js draws the game's icons", () => {
+  const game = fs.readFileSync("site/index.html", "utf8");
+  const btn = one(game, /\n(<button id="btn-theme"[^\n]*<\/button>)\n/, "the game's button");
+  assert.equal(btn, `<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition">${themeButtonHtml("day")}</button>`);
+  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8") };
+  for (const [f, html] of Object.entries(pages)) {
+    assert.ok(html.includes("<body>\n" + btn + "\n"), f + ": the same button, first in the body");
+    const head = html.slice(0, html.indexOf("</head>"));
+    assert.ok(head.includes(f.startsWith("../") ? '<script src="learn/theme.js"></script>' : '<script src="theme.js"></script>'), f + ": theme.js in <head>, no defer (no flash)");
+  }
+  const js = fs.readFileSync("site/learn/theme.js", "utf8").replace(/' \+ A \+ '/g, one(themeButtonHtml("day"), /<svg class="icon moon" ([^>]*)>/, "attrs"));
+  for (const mood of ["day", "night"]) assert.ok(js.includes(one(themeButtonHtml(mood), /^(<svg[\s\S]*<\/svg>)/, mood)), mood + " icon matches app.js");
+  assert.match(js, /"ritz\.theme"/, "the game's key");
+});
+
 test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
   readingOrder.forEach((f, i) => {
     const pager = one(learnHtml[f], /<nav class="learn-pager">([\s\S]*?)<\/nav>/, f + " pager");

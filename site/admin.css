@@ -1,4 +1,4 @@
-/* The Clerk's Desk (admin.html): over ../style.css and learn/learn.css (night palette by prefers-color-scheme). */
+/* The Clerk's Desk (admin.html): over ../style.css and learn/learn.css (night palette by prefers-color-scheme or the Day/Night button, learn/theme.js). */
 .desk { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; font-size: 17px; }
 .desk .row { flex-wrap: wrap; gap: 8px 14px; margin: 10px 0; }
 .desk form.row { border-bottom: 1px solid var(--rule); padding-bottom: 10px; }
