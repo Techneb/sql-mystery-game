@@ -13,7 +13,7 @@ export const colourBlock = (inner) => highlightSql(plainSql(inner)).slice(0, -1)
 const escHtml = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 // The bakery tables as strictCheck wants them ({ table: [[column, type, pk]] }), read from database.html's script.
 export function bakerySchema(databaseHtml) {
-  const script = plainSql(databaseHtml.match(/<details class="script">[\s\S]*?<pre><code>([\s\S]*?)<\/code><\/pre>/)[1]);
+  const script = plainSql(databaseHtml.match(/<details class="script">[\s\S]*?<pre[^>]*><code>([\s\S]*?)<\/code><\/pre>/)[1]);
   return Object.fromEntries([...script.matchAll(/CREATE TABLE (\w+) \(([^;]*)\);/g)].map(([, t, cols]) =>
     [t, cols.split(/,(?![^(]*\))/).map((c) => c.trim().split(/\s+/)).map((w) => [w[0], w[1], /PRIMARY KEY/.test(w.join(" ")) ? 1 : 0])]));
 }

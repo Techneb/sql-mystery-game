@@ -282,10 +282,13 @@ def svg(conn, chapters=()):
 # written into the pages that show it, between these markers (python3 generate_db.py rebuilds it).
 BAKERY_PAGES = ("database.html", "exercises.html")
 BAKERY_MARK = re.compile(r"(<!-- bakery schema: erd.py -->\n)[\s\S]*?(<!-- /bakery schema -->)")
+# Its rows, top down (a table the database lacks is skipped): each self-reference's loop runs beside its table, out
+# of every line's way, since every line here crosses a single gap.
+BAKERY_ROWS = [["customer", "staff"], ["orders", "product"], ["refund", "order_item"]]
 
 
 def bakery_conn(database_html):
-    script = re.search(r'<details class="script">[\s\S]*?<pre><code>([\s\S]*?)</code></pre>', database_html).group(1)
+    script = re.search(r'<details class="script">[\s\S]*?<pre[^>]*><code>([\s\S]*?)</code></pre>', database_html).group(1)
     conn = sqlite3.connect(":memory:")
     conn.executescript(html.unescape(re.sub(r"<[^>]+>", "", script)))
     return conn
@@ -293,7 +296,7 @@ def bakery_conn(database_html):
 
 def bakery_svg(learn_dir):
     with open(os.path.join(learn_dir, "database.html")) as f:
-        return svg(bakery_conn(f.read()))
+        return svg(bakery_conn(f.read()), chapters=BAKERY_ROWS)
 
 
 def write_bakery(learn_dir):
