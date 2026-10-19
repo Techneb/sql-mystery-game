@@ -126,6 +126,15 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .ad-box summary.label { font: 14px/1.2 "Special Elite", monospace; letter-spacing: 2px; }
 .ad-box[open] summary { border-bottom: 1px dotted var(--rule); }
 .ad-slot { min-height: 250px; display: grid; place-items: center; }
+/* the house notice shown until AdSense approves the site (owner, 2026-10-19): a 1912 classified, off the tokens */
+.house-ad { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 16px; text-align: center; color: var(--ink); text-decoration: none; }
+.house-kicker { font-size: 13px; font-style: italic; opacity: .8; }
+.house-title { font: 900 22px/1.1 "Playfair Display", serif; }
+.house-rule { width: 60%; border-top: 3px double var(--ink); }
+.house-body { font-size: 15px; line-height: 1.35; max-width: 30ch; }
+.house-price { font: 12px/1.2 "Special Elite", monospace; letter-spacing: 1px; }
+.house-cta { margin-top: 4px; padding: 3px 12px; border: 1px solid var(--ink); border-radius: var(--r-box); font-weight: 700; letter-spacing: 1px; }
+.house-ad:hover .house-cta, .house-ad:focus-visible .house-cta { background: var(--ink); color: var(--paper); }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
 /* enlarged, its Close sits in the overlay's top-right corner (clear of the scrollbar), like the panels' Close */
 #btn-erd { width: 28px; height: 28px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
