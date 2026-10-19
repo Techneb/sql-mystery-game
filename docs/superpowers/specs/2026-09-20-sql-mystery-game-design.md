@@ -507,9 +507,13 @@ framework, no bundler.
 - **House ad when no ad fills the box** (offered 2026-10-19, owner not decided): once ads are live, a slot Google
   leaves unfilled, or an ad blocker removes, leaves an empty ADVERTISEMENTS box. Option: keep the house ad and swap
   it out only when the `<ins>` reports a filled ad (`data-ad-status="filled"`).
-- **US state privacy message (CCPA)** (flagged 2026-10-19, not handled): AdSense > Privacy & messaging also offers
-  a US state regulations message; none is set up, and the ads branch grants everything by default outside Europe.
-  Owner to decide whether to publish one (and then say so in privacy.html).
+- ~~US state privacy message (CCPA)~~ Done 2026-10-19 (owner: set it up): "US states message - alephb.uk" published
+  in AdSense > Privacy & messaging > US state regulations (opt-out, "Do Not Sell or Share My Personal Information";
+  the AlephB mark uploaded as its 5:1 logo). privacy.html on the ads branch should name it.
+- **SQL branding on the landing page** (Nick, the influencer, 2026-10-19: "your landing page should have a more
+  obvious 'SQL' type branding so people can immediately see this is a tool to learn SQL"): the landing card leads
+  with the 1912 story; make "learn SQL" obvious at first glance (headline or kicker), keeping the story. The owner
+  replied that it would be done, ideally before his post. Show options as a design canvas first.
 - **Design canvas of the ad box title** (2026-10-19): the claude.ai artifact holding options A-D (D chosen; link in
   the session's memory, not here) is kept; delete it only when the owner asks.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
