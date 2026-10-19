@@ -18,7 +18,7 @@ node --test --test-name-pattern normalise test_site.mjs                      # o
 python3 -m http.server 8000 -d site     # play at localhost:8000 (file:// fails); ?selftest checks the fixture
 ```
 
-Pages deploys `site/` on every push to `main` (`.github/workflows/pages.yml`, which first builds the five compete databases) to <https://mystery.alephb.uk> (custom domain; DNS and the alephb.uk home page are managed from the owner's Compromise project, not here). A push is a live deploy to students: the course owner approves each one.
+Pages deploys `site/` on every push to `main` (`.github/workflows/pages.yml`, which first builds the five compete databases) to <https://mystery.alephb.uk> (custom domain; DNS and the alephb.uk home page are managed from the owner's Compromise project, not here). A push is a live deploy to students: since 2026-10-19 the course owner lets Claude push without asking once the work is tested and checked (never during a timed session); say what each push contained.
 
 ## Architecture
 
@@ -152,7 +152,7 @@ Design: `docs/superpowers/specs/2026-10-10-compete-admin-design.md`. The admin p
 
 ## Status sources
 
-- Repos: this one only (`origin` = github.com/Techneb/sql-mystery-game, trunk `main`; work lands by direct push, the owner approves each one since a push is a live deploy). The alephb.uk home page and DNS live in the owner's Compromise project.
+- Repos: this one only (`origin` = github.com/Techneb/sql-mystery-game, trunk `main`; work lands by direct push, a live deploy: standing permission to push since 2026-10-19, never during a timed session). The alephb.uk home page and DNS live in the owner's Compromise project.
 - CI: `.github/workflows/pages.yml` (Deploy GitHub Pages) on every push to `main`; `gh run list --limit 5` shows the last deploys. The deploy step sometimes fails right after a successful upload ("Fetching artifact metadata failed", a GitHub-side race, 3 of 7 deploys on 2026-10-09), so the `deploy` job (separate from `build`) retries deploy-pages once after 20 s. If both tries fail, `gh run rerun <id> --failed` reruns only `deploy` (no new upload); if a rerun still reports "multiple artifacts", delete the run's `github-pages` artifacts (`gh api -X DELETE repos/Techneb/sql-mystery-game/actions/artifacts/<id>` for each) and rerun again. A push whose head commit says `[skip ci]` deploys nothing, so never put it on a branch head meant for main.
 - Backend: `apps_script.gs` runs only on Google; the owner pastes it into the Apps Script editor and deploys a new version (Deploy > Manage deployments) after every change to it, keeping the same `/exec` URL.
 - Sessions: one Mac CLI main per the global fleet rule; cloud sessions can run both suites but not the browser checks, the images or `../SQL` (see Local-only work).
