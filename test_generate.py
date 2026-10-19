@@ -1,5 +1,8 @@
 import functools
+import glob
+import html
 import json
+import re
 import random
 import unittest
 
@@ -476,6 +479,65 @@ class Erd(unittest.TestCase):
                 m = erd.BAKERY_MARK.search(f.read())
             self.assertTrue(m, page)
             self.assertEqual(m.group(0), m.group(1) + s + m.group(2), page + ": run python3 generate_db.py")
+
+
+class HandbookResults(unittest.TestCase):
+    """Every handbook query with a pasted result prints exactly what it returns (CLAUDE.md, Handbook)."""
+    PAIR = re.compile(r'<pre><code>((?:(?!</code>)[\s\S])*)</code></pre>\n<table class="result">([\s\S]*?)</table>')
+    # (page, phrase, query, value): each number the prose takes from a result, rerun.
+    # TODO Task 1.2: the reviewers' findings ("the same 2.84", database.html's counts) go here.
+    QUOTED = []
+
+    def blocks(self):
+        for f in sorted(glob.glob("site/learn/*.html")):   # any page: examples move between pages
+            with open(f) as fh:
+                text = fh.read()
+            for m in self.PAIR.finditer(text):
+                rows = [[html.unescape(c) for c in re.findall(r"<t[hd]>([^<]*)</t[hd]>", tr)]
+                        for tr in re.findall(r"<tr>([\s\S]*?)</tr>", m.group(2))]
+                yield f, html.unescape(re.sub(r"</?span[^>]*>", "", m.group(1))), rows
+
+    def conn(self, reverse=0):
+        import erd
+        with open("site/learn/database.html") as f:
+            conn = g.strict_conn(erd.bakery_conn(f.read()))
+        conn.execute("PRAGMA reverse_unordered_selects = %d" % reverse)
+        return conn
+
+    def run_all(self, reverse):
+        conn = self.conn(reverse)
+        for f, sql, rows in self.blocks():
+            cur = conn.execute(g.sqlite_sql(sql))
+            got = [[d[0] for d in cur.description]] + [["NULL" if v is None else str(v) for v in r] for r in cur.fetchall()]
+            yield f, sql, rows, got
+
+    def test_every_pasted_result_is_the_real_one(self):
+        n = 0
+        for f, sql, rows, got in self.run_all(0):
+            n += 1
+            self.assertEqual(got, rows, f + ": " + sql)
+        self.assertEqual(n, 106)   # bump when an example is added: a block the regex misses is a block unchecked
+
+    def test_printed_order_does_not_depend_on_scan_order(self):
+        for f, sql, rows, got in self.run_all(1):
+            self.assertEqual(got, rows, f + " (reversed scans): add a tie-breaker to ORDER BY: " + sql)
+
+    def test_multi_row_examples_say_their_order(self):
+        for f, sql, rows in self.blocks():
+            if len(rows) > 2 and "pragma_" not in sql:   # a pragma lists in declared order (schema.html)
+                self.assertRegex(sql, r"(?i)\bORDER BY\b", f + ": " + sql)
+
+    def test_examples_stay_short(self):
+        for f, sql, rows in self.blocks():
+            if not f.endswith("exercises.html"):   # exercises are held to 10 rows by review, not here
+                self.assertLessEqual(len(rows) - 1, 12, f + ": " + sql)
+
+    def test_numbers_quoted_in_prose(self):
+        conn = self.conn()
+        for page, phrase, sql, value in self.QUOTED:
+            with open("site/learn/" + page) as f:
+                self.assertIn(phrase, f.read(), page)
+            self.assertEqual(str(conn.execute(g.sqlite_sql(sql)).fetchone()[0]), value, page + ": " + phrase)
 
 
 class Suspects(unittest.TestCase):
