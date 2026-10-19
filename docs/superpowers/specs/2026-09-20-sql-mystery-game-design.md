@@ -622,3 +622,14 @@ framework, no bundler.
   really asks for (2, 3, 10, 13, 14), numbers within 1e-6 (`data-tolerance="0.01"` on 10, whose average the
   question does not ask to round). Solved questions get a tick, kept in `ritz.exercises`; `#<slug>` selects a
   question. The deploy versions `exercises.html`'s scripts and `exercises.js`'s `../app.js` import.
+- **Handbook chrome, grammar and exercises pass** (course owner, 2026-10-19, built on a branch for review):
+  the masthead nav keeps Game, The Clerk's Handbook and The Clerk's Desk, the footer keeps all six links
+  (learn pages and `admin.html`); the numbered menu becomes "Index . Learning chapters . Exercises . Grammar",
+  Learning chapters a `<details>` dropdown that works without JavaScript. The grammar rules move to their
+  construct pages with their anchors and wrong examples (`colour_learn.mjs` writes refusals on any page);
+  `grammar.html` is a hub (order of execution, the list of rules, other shorthands) and `STRICT_SECTIONS`
+  links each refusal to its section. `exercises.html`: How to use folded away, Warm-up / Practice /
+  Challenge buttons over the picker, a green Solved mark, a HISTORY under the terminal
+  (`ritz.exercises.history`), the game's ad box under the schema (the only ad in the handbook; privacy.html
+  says so), and the static questions hidden once the workbench is up, so a `#slug` link lands on it. Not
+  checked in a browser yet.
