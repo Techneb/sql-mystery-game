@@ -2,15 +2,15 @@
 // code, watch who joined, export the rows. Pure helpers are exported for test_site.mjs; the page wiring runs only in a
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in memory and goes to the backend as `key` (apps_script.gs compares it with ADMIN_KEY).
-import { sha256, ADMIN_PASS_SHA256, officialTime, chapterSummary, fmtTime, escapeHtml as esc } from "./shared.js";
+import { sha256, ADMIN_PASS_SHA256, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
-export const BOARD_KEY = "ritz.admin.board";
+const BOARD_KEY = "ritz.admin.board";
 export const CSV_COLUMNS = ["timestamp", "event", "team", "season", "chapter", "wrong", "queries", "clientAt", "elapsedMs"];
 
 // RFC 4180: a field with a comma, a quote or a line break goes in quotes, its quotes doubled; lines end CRLF.
-export const csvField = v => {
+const csvField = v => {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 };
@@ -22,7 +22,7 @@ export const csvFilename = name => (String(name).replace(/[\\/:*?"<>|\x00-\x1f]+
 // fits a smaller QR code); anything that could end the parameter early is encoded.
 export const studentLink = (gameUrl, id, board) =>
   gameUrl + "?season=" + encodeURIComponent(id) + "&board=" + encodeURIComponent(board).replace(/%2F/gi, "/").replace(/%3A/gi, ":");
-export const boardLink = (id, board) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(id);
+export const boardLink = (id, board) => resultsLink(board, id);
 
 // Joined and finished players per season id, from every row (doGet with no parameter).
 export function seasonCounts(rows) {

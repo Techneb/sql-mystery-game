@@ -23,11 +23,17 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <span class="current" aria-current="page">9. Windows</span>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <span class="current" aria-current="page">13. Windows</span>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>Window functions: RANK and LAG</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a> and <a href="../">XI</a></p>
@@ -53,7 +59,7 @@
 <tr><td>bread</td><td>Seeded rolls</td><td>3.8</td><td>3</td><td>2</td><td>2</td></tr>
 <tr><td>bread</td><td>Baguette</td><td>1.2</td><td>4</td><td>4</td><td>3</td></tr>
 </table>
-<p>A window function cannot appear in <code>WHERE</code>, because windows are computed after the rows have been filtered. To keep, say, only the first order of each customer, compute the number in a <a href="ctes.html">CTE</a> or a subquery, then filter on it in the outer query. This "number, then filter" pattern answers every question of the form "the first", "the latest" or "the top two" per group.</p>
+<p>A window function cannot appear in <code>WHERE</code>, because windows are computed after the rows have been filtered (see <a href="grammar.html#order-of-execution">Order of execution</a>). To keep, say, only the first order of each customer, compute the number in a <a href="ctes.html">CTE</a> or a subquery, then filter on it in the outer query. This "number, then filter" pattern answers every question of the form "the first", "the latest" or "the top two" per group.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">numbered</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>,
          <span class="sql-fn">ROW_NUMBER</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">n</span>
@@ -90,25 +96,25 @@
 <tr><td>3</td><td>2026-03-03</td><td>NULL</td></tr>
 <tr><td>3</td><td>2026-03-08</td><td>2026-03-03</td></tr>
 </table>
-<p>Dates written as text cannot be subtracted directly, but SQLite's <code>julianday()</code> turns a date into a number of days, so the difference between two of them is a gap in days. Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
+<p>Dates written as text cannot be subtracted directly. Every order here falls in March 2026, so the day of the month is enough: <code>substr</code> cuts it out of the text and <code>CAST(... AS INTEGER)</code> turns it into a number, and the difference between two of them is a gap in days. (SQLite's <code>julianday()</code> would handle any two dates, but PostgreSQL has no such function: there you would turn the text into a real date with <code>CAST(day AS DATE)</code> and subtract.) Wrapping the window in a CTE then lets you filter or sort on that gap, for instance to find the longest silence between two visits of the same customer.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">visits</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>,
          <span class="sql-fn">LAG</span>(<span class="sql-id">day</span>) <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>) <span class="sql-kw">AS</span> <span class="sql-id">previous_visit</span>
   <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 )
 <span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">previous_visit</span>, <span class="sql-id">day</span>,
-       <span class="sql-fn">julianday</span>(<span class="sql-id">day</span>) - <span class="sql-fn">julianday</span>(<span class="sql-id">previous_visit</span>) <span class="sql-kw">AS</span> <span class="sql-id">gap_days</span>
+       <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) - <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">previous_visit</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">gap_days</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">visits</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">previous_visit</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">gap_days</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>
 <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>previous_visit</th><th>day</th><th>gap_days</th></tr>
-<tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5.0</td></tr>
-<tr><td>4</td><td>2026-03-02</td><td>2026-03-07</td><td>5.0</td></tr>
-<tr><td>5</td><td>2026-03-04</td><td>2026-03-08</td><td>4.0</td></tr>
+<tr><td>3</td><td>2026-03-03</td><td>2026-03-08</td><td>5</td></tr>
+<tr><td>4</td><td>2026-03-02</td><td>2026-03-07</td><td>5</td></tr>
+<tr><td>5</td><td>2026-03-04</td><td>2026-03-08</td><td>4</td></tr>
 </table>
-<p>The same technique works with times: <code>ROUND((julianday('2000-01-01 ' || b) - julianday('2000-01-01 ' || a)) * 24 * 60)</code> gives the minutes between two <code>HH:MM</code> values on the same day; the <code>ROUND</code> removes the tiny error left by floating-point arithmetic.</p>
+<p>The same technique works with times: turning each <code>HH:MM</code> value into minutes, hours times sixty plus minutes, cut out and cast the same way, gives the minutes between two times on the same day.</p>
 
 <h2>Partitions matter</h2>
 <p>Forgetting <code>PARTITION BY</code> in a <code>LAG</code> is the classic error: the previous row then belongs to another customer, and the gap you compute is meaningless. Ask yourself, before you write the window, "previous within what?" The answer goes into <code>PARTITION BY</code>, and "previous in which order?" goes into <code>ORDER BY</code>. If the order can tie (two orders on the same day), add a second key so that "previous" is well defined.</p>
@@ -116,8 +122,9 @@
 <h2>Common mistakes</h2>
 <p>Using a window function in <code>WHERE</code> or <code>HAVING</code> instead of filtering in an outer query. Omitting <code>PARTITION BY</code>, so that the window runs across groups. Omitting the <code>ORDER BY</code> inside <code>OVER</code>, which makes <code>LAG</code> and <code>ROW_NUMBER</code> depend on an arbitrary order. Confusing the <code>ORDER BY</code> inside the window, which drives the computation, with the one at the end of the query, which only sorts the output. Choosing <code>ROW_NUMBER</code> when ties should share a place, or <code>RANK</code> when exactly one row per group is wanted.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#best-seller-of-each-category">Best seller of each category</a> and <a href="exercises.html#back-again">Back again</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, practises RANK() OVER with a CTE; Chapter XI, <i>The Silence</i>, practises LAG() OVER.</p>
-<nav class="learn-pager"><a class="prev" href="case-when.html">Previous: CASE WHEN</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
+<nav class="learn-pager"><a class="prev" href="set-operations.html">Previous: UNION, INTERSECT and EXCEPT</a><a class="next" href="ctes.html">Next: CTEs and WITH RECURSIVE</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml } from "./site/app.js";
-import { colourBlock } from "./colour_learn.mjs";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
+import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
+import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
 
@@ -217,6 +218,20 @@ test("officialTime and chapterSummary: a negative interval (an old Date row) is 
   assert.ok(h.flagged, "no elapsedMs: still flagged");
 });
 
+test("clockMs runs, then freezes at the finish or when the session closed", () => {
+  const s = { ...freshState(), startedAt: 1000 };
+  assert.equal(clockMs(s, 61000), 60000, "running");
+  assert.equal(clockMs({ ...s, stoppedAt: 31000 }, 99000), 30000, "frozen when the session closed");
+  assert.equal(clockMs({ ...s, finishedAt: 21000, stoppedAt: 31000 }, 99000), 20000, "a finish wins");
+});
+test("watchOn: the close poll runs in an open compete game until the finish or the close", () => {
+  const s = { ...freshState(), mode: "compete" };
+  assert.equal(watchOn(s, "b"), true, "open, not finished: poll");
+  assert.equal(watchOn({ ...s, finishedAt: 5 }, "b"), false, "finished: stop");
+  assert.equal(watchOn({ ...s, over: true }, "b"), false, "closed: stop");
+  assert.equal(watchOn(s, ""), false, "no board: never");
+  assert.equal(watchOn({ ...s, mode: "learn" }, "b"), false, "learn mode: never");
+});
 test("clockStart cancels the browser clock's offset with the server's now", () => {
   const meta = { openedAt: 1_000_000, now: 1_600_000 };          // the server says: opened 10 minutes ago
   assert.equal(clockStart(meta, 1_600_000), 1_000_000, "clocks agree");
@@ -318,6 +333,9 @@ test("story markup: bold and italic only, everything else escaped", () => {
   assert.ok(!richText("| <i> | x |").includes("<i>"), "table cells are escaped too");
   for (const c of data.chapters) assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in chapter " + c.n);
   for (const e of Object.values(data.endings)) assert.ok(!/\*/.test(richText(e)), "unbalanced markup in an ending");
+  if (fs.existsSync("site/season-1.json"))   // compete has its own Part I stories (story_compete), same markup rules
+    for (const c of JSON.parse(fs.readFileSync("site/season-1.json", "utf8")).chapters)
+      assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in compete chapter " + c.n);
 });
 
 test("formatSql changes only whitespace and keyword case, and is stable", () => {
@@ -387,7 +405,7 @@ test("GA_ID is empty or a GA4 measurement ID", () => {
 test("ad slot: a placeholder until AD_SLOT is filled, then one responsive AdSense unit", () => {
   assert.match(ADS_CLIENT, /^ca-pub-\d{16}$/);
   assert.match(AD_SLOT, /^(\d+)?$/);
-  assert.equal(typeof ADS_ON, "boolean");
+  assert.equal(ADS_ON, AD_SLOT !== "");   // pasting the slot id is the whole switch-on
   assert.ok(!adSlotHtml(ADS_CLIENT, "").includes("adsbygoogle"));
   assert.match(adSlotHtml(ADS_CLIENT, ""), /AD_SLOT not set/);
   const html = adSlotHtml("ca-pub-9765732642926043", "1234567890");
@@ -491,7 +509,7 @@ test("handbook: no page names a game table or a cast member", () => {
 test("handbook: every code block is already coloured by colour_learn.mjs", () => {
   let n = 0;
   for (const f of learnPages)
-    for (const [, inner] of learnHtml[f].matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)) {
+    for (const [, inner] of learnHtml[f].matchAll(/<pre(?: class="wrong")?><code>([\s\S]*?)<\/code><\/pre>/g)) {
       n++;
       assert.equal(colourBlock(inner), inner, `${f}: a code block is not coloured, run node colour_learn.mjs`);
     }
@@ -665,4 +683,205 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, the d
   for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js"]) assert.ok(yml.includes(f), f);
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
+});
+
+test("resultsLink: the season's public board, board URL and season id encoded", () => {
+  const board = "https://x.invalid/exec?a=1&b=2";
+  const u = new URL(resultsLink(board, "s1 &x"), "https://mystery.example/");
+  assert.equal(u.pathname, "/leaderboard.html");
+  assert.equal(u.searchParams.get("data"), board);
+  assert.equal(u.searchParams.get("season"), "s1 &x");
+  assert.equal(freshState().closedSeen, false, "the close pop-up shows once per close");
+});
+
+test("compete has no Suspects gallery: learn's cards would point at learn's traps", () => {
+  assert.equal(suspectsOn(freshState()), true);
+  assert.equal(suspectsOn({ ...freshState(), mode: "compete" }), false);
+});
+
+// --- The strict terminal (PostgreSQL's rules, site/app.js strictCheck) --------------------------------------
+// The plot's queries and the game schema come from generate_db.py --queries (plant_values and site/mystery.sqlite's schema, no build: fast).
+const plotDump = JSON.parse(execFileSync("python3", ["generate_db.py", "--queries"], { encoding: "utf8" }));
+const GAME = plotDump.schema;
+
+test("strict terminal: every plot query (learn and seasons 1-5, LIKE traps also as ILIKE) and solution.sql passes", () => {
+  assert.ok(plotDump.queries.length > 1000, "the dump lists the plot's queries");
+  for (const [label, q] of plotDump.queries) assert.equal(strictCheck(q, GAME, true), null, label + ": " + q);
+  const sol = fs.readFileSync("solution.sql", "utf8").split(/;\n/).map(q => q.split("\n").filter(l => !l.startsWith("--")).join("\n").trim()).filter(Boolean);
+  assert.ok(sol.length > 20);
+  for (const q of sol) assert.equal(strictCheck(q + ";", GAME, true), null, q);
+});
+
+test("strict terminal: each rule refuses its example, with PostgreSQL's error line and a handbook anchor", () => {
+  const cases = [
+    ["group-by", "SELECT dropoff, date FROM cab_ride GROUP BY dropoff", /column "cab_ride.date" must appear in the GROUP BY clause/],
+    ["group-by", "SELECT * FROM cab_ride GROUP BY dropoff", /must appear in the GROUP BY/],
+    ["group-by", "SELECT plate, COUNT(*) FROM cab_ride", /column "cab_ride.plate" must appear/],
+    ["group-by", "SELECT p.name, COUNT(*) FROM person AS p JOIN address AS a ON a.id = p.address_id GROUP BY a.street", /"p.name"/],
+    ["having", "SELECT plate FROM cab_ride HAVING COUNT(*) > 1", /must appear in the GROUP BY/],
+    ["order-by-grouped", "SELECT dropoff FROM cab_ride GROUP BY dropoff ORDER BY date", /"cab_ride.date" must appear/],
+    ["distinct-order", "SELECT DISTINCT dropoff FROM cab_ride ORDER BY date", /^for SELECT DISTINCT, ORDER BY expressions must appear in select list$/],
+    ["double-quotes", "SELECT id FROM police_report WHERE place = \"Hotel Ritz\"", /^column "Hotel Ritz" does not exist$/],
+    ["double-quotes", "SELECT \"Plate\" FROM cab_ride", /column "Plate" does not exist/],
+    ["double-quotes", "SELECT id FROM \"Cab_Ride\"", /relation "Cab_Ride" does not exist/],
+    ["double-quotes", "SELECT COUNT(*) AS 'total' FROM person", /syntax error at or near "'total'"/],
+    ["double-quotes", "SELECT `plate` FROM cab_ride", /syntax error/],
+    ["double-equals", "SELECT id FROM police_report WHERE date == 19120518", /^operator does not exist: integer == integer$/],
+    ["types", "SELECT id FROM cab_ride WHERE time < 600", /^operator does not exist: text < integer$/],
+    ["types", "SELECT id FROM police_report WHERE date = '19120518'", /^operator does not exist: integer = text$/],
+    ["types", "SELECT id FROM cab_ride WHERE plate = 752041", /text = integer/],
+    ["types", "SELECT id FROM police_report WHERE date LIKE '191205%'", /integer ~~ unknown/],
+    ["types", "SELECT id FROM police_report WHERE date ILIKE '191205%'", /integer ~~\* unknown/],
+    ["types", "SELECT SUM(plate) FROM cab_ride", /function sum\(text\) does not exist/],
+    ["types", "SELECT SUM(fare > 3) FROM cab_ride", /function sum\(boolean\) does not exist/],
+    ["types", "SELECT time + 1 FROM cab_ride", /text \+ integer/],
+    ["aliases", "SELECT fare * 2 AS f FROM cab_ride WHERE f > 10", /^column "f" does not exist$/],
+    ["aliases", "SELECT dropoff, COUNT(*) AS n FROM cab_ride GROUP BY dropoff HAVING n >= 3", /column "n" does not exist/],
+    ["aliases", "SELECT dropoff, COUNT(*) AS n FROM cab_ride GROUP BY dropoff ORDER BY n + 1", /column "n" does not exist/],
+    ["boolean", "SELECT id FROM police_report WHERE 1", /^argument of WHERE must be type boolean, not type integer$/],
+    ["boolean", "SELECT id FROM hotel_register WHERE price", /argument of WHERE/],
+    ["boolean", "SELECT id FROM cab_ride WHERE fare > 1 AND 2", /argument of AND/],
+    ["boolean", "SELECT id FROM cab_ride WHERE NOT plate", /argument of NOT must be type boolean, not type text/],
+    ["boolean", "SELECT CASE WHEN fare THEN 1 END FROM cab_ride", /argument of CASE\/WHEN/],
+    ["boolean", "SELECT c.id FROM cab_ride AS c JOIN address AS a ON 1", /argument of JOIN\/ON/],
+    ["sqlite-only", "SELECT id FROM cab_ride LIMIT 5, 10", /^LIMIT #,# syntax is not supported$/],
+    ["sqlite-only", "SELECT IFNULL(occupation, 'none') FROM person", /function ifnull\(text, text\) does not exist/],
+    ["sqlite-only", "SELECT id FROM cab_ride WHERE plate GLOB '75*'", /syntax error at or near "GLOB"/],
+    ["sqlite-only", "SELECT id FROM cab_ride WHERE plate REGEXP '75'", /syntax error/],
+    ["sqlite-only", "SELECT strftime('%Y', 'now') FROM police_report", /function strftime/],
+    ["sqlite-only", "SELECT group_concat(plate) FROM cab_ride", /function group_concat/],
+    ["sqlite-only", "SELECT fare || date FROM cab_ride", /^operator does not exist: integer \|\| integer$/],
+    ["sqlite-only", "SELECT id FROM person WHERE name = 'x' COLLATE NOCASE", /collation "nocase"/],
+    ["sqlite-only", "SELECT id FROM person WHERE occupation IS 'jeweller'", /syntax error/],
+    ["sqlite-only", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
+    ["sqlite-only", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
+    ["sqlite-only", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
+    ["double-equals", "SELECT id FROM cab_ride WHERE plate == '75' AND (", /==/],   // the parser gives up, the token scan still refuses
+  ];
+  for (const [anchor, q, re] of cases) {
+    const r = strictCheck(q, GAME);
+    assert.ok(r, "refused: " + q);
+    assert.equal(r.anchor, anchor, q);
+    assert.match(r.error, re, q);
+    assert.ok(r.why.length > 30 && /^[ -~]+$/.test(r.why + r.error), "a plain ASCII sentence: " + q);
+  }
+  assert.match(strictCheck(cases[0][1], GAME).why, /add cab_ride.date to GROUP BY/, "the why names the column");
+  const html = strictHtml(strictCheck(cases[0][1], GAME));
+  assert.match(html, /^<div class="error strict"><div class="pg-error">ERROR: column "cab_ride.date" must appear/);
+  assert.match(html, /href="learn\/grammar\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/);
+  assert.match(strictHtml({ error: "<b>", why: "<i>", anchor: "types" }), /&lt;b&gt;.*&lt;i&gt;/, "escaped");
+});
+
+test("strict terminal: every replacement a refusal or the grammar page suggests names only functions SQLite has", () => {
+  const have = new Set(JSON.parse(execFileSync("python3", ["-c",
+    "import sqlite3, json; print(json.dumps([r[0] for r in sqlite3.connect(':memory:').execute('SELECT DISTINCT name FROM pragma_function_list')]))"],
+    { encoding: "utf8" })));
+  const grammar = fs.readFileSync("site/learn/grammar.html", "utf8");
+  const writes = [...grammar.matchAll(/<tr><td>[^<]*<\/td><td>([^<]*)<\/td><\/tr>/g)].map(m => m[1]);
+  assert.ok(writes.some(w => /CASE WHEN a &gt; b/.test(w)), "the Write column is read");
+  const whys = Object.keys(SQLITE_FUNCS).map(f => strictCheck("SELECT " + f + "(fare, 3) FROM cab_ride", GAME).why);
+  whys.push(strictCheck("SELECT MAX(fare, 3) FROM cab_ride", GAME).why, strictCheck("SELECT fare::text FROM cab_ride", GAME).why);
+  for (const s of [...writes, ...whys])
+    for (const [, f] of s.replace(/^.*?: (write|use) /, "").matchAll(/\b([A-Za-z_]+)\(/g))
+      assert.ok(SQL_KEYWORDS.has(f.toLowerCase()) || have.has(f.toLowerCase()), f + "() does not run in SQLite: " + s);
+});
+
+test("strict terminal: valid PostgreSQL is never refused", () => {
+  const ok = [
+    "SELECT COUNT(*) FROM cab_ride HAVING COUNT(*) > 1",
+    "SELECT p.id, p.name, COUNT(*) FROM person AS p JOIN bank_account AS b ON b.person_id = p.id GROUP BY p.id",
+    "SELECT * FROM person GROUP BY id",
+    "SELECT dropoff, COUNT(*) AS n FROM cab_ride GROUP BY dropoff ORDER BY n DESC",
+    "SELECT dropoff AS d, COUNT(*) FROM cab_ride GROUP BY d ORDER BY 2 DESC",
+    "SELECT dropoff, COUNT(*) FROM cab_ride GROUP BY 1",
+    "SELECT plate FROM cab_ride LIMIT 3",
+    "SELECT plate FROM cab_ride WHERE plate ILIKE '75-%' AND pickup NOT ILIKE '%gare%'",
+    "SELECT \"plate\" FROM \"cab_ride\"",
+    "SELECT DISTINCT dropoff FROM cab_ride ORDER BY dropoff",
+    "SELECT DISTINCT c.dropoff FROM cab_ride AS c ORDER BY dropoff",
+    "SELECT DISTINCT * FROM suite ORDER BY floor",
+    "SELECT suite, RANK() OVER (ORDER BY COUNT(*) DESC) FROM room_service GROUP BY suite",
+    "SELECT id, SUM(amount) OVER (PARTITION BY account_id ORDER BY date) FROM bank_transaction",
+    "SELECT COALESCE(occupation, 'none') FROM person",
+    "SELECT id FROM cab_ride WHERE time < '06:00' AND (fare > 3 OR currency = 'pound')",
+    "SELECT plate || ' ' || fare FROM cab_ride",
+    "SELECT id FROM person WHERE occupation IS NOT NULL AND name IS DISTINCT FROM 'x'",
+    "SELECT a.street, (SELECT COUNT(*) FROM person AS p WHERE p.address_id = a.id) AS n FROM address AS a ORDER BY n DESC",
+    "SELECT name FROM person WHERE EXISTS (SELECT 1 FROM bank_account AS b WHERE b.person_id = person.id)",
+    "SELECT CASE WHEN fare > 5 THEN 'dear' ELSE 'cheap' END AS kind, COUNT(*) FROM cab_ride GROUP BY kind",
+    "SELECT CASE WHEN fare > 5 THEN 'dear' ELSE 'cheap' END, COUNT(*) FROM cab_ride GROUP BY CASE WHEN fare > 5 THEN 'dear' ELSE 'cheap' END",
+    "SELECT id FROM cab_ride ORDER BY id LIMIT 5 OFFSET 10",
+    "WITH x AS (SELECT dropoff, COUNT(*) AS n FROM cab_ride GROUP BY dropoff) SELECT dropoff FROM x WHERE n > 2",
+    "SELECT COUNT(*) FILTER (WHERE fare > 3) FROM cab_ride",
+    "SELECT LOWER(name) FROM person WHERE LOWER(name) LIKE '%grim%'",
+    "SELECT id FROM cab_ride WHERE CAST(substr(time, 1, 2) AS INTEGER) < 6",
+    "SELECT * FROM sqlite_master",
+    "SELECT plate FROM cab_ride UNION SELECT guest_name FROM hotel_register ORDER BY 1",
+    "SELECT name FROM person WHERE address_id IN (SELECT id FROM address WHERE number = 27)",
+    "SELECT ROUND(AVG(fare), 1) AS avg_fare FROM cab_ride",
+    "SELECT MAX(date) - MIN(date) FROM police_report",
+    "SELECT name FROM person p WHERE p.born_year > 1870",
+    "SELECT t.* FROM telegram AS t WHERE t.suite = 214",
+    "SELECT id FROM person WHERE name = 'O''Brien'; SELECT 1;",
+    "SELECT r.suite, COUNT(*) FROM room_service AS r JOIN suite AS s ON s.id = r.suite GROUP BY r.suite ORDER BY COUNT(*) DESC",
+    "SELECT 'a' = 'a' AS same",
+    "SELECT id FROM police_report WHERE TRUE",
+    "SELECT x.n FROM (SELECT COUNT(*) AS n FROM cab_ride) AS x",
+  ];
+  for (const q of ok) assert.equal(strictCheck(q, GAME, true), null, q);
+  for (const q of ["PRAGMA table_info(person)", "SELECT * FROM pragma_table_info('person')", "SELECT"])
+    assert.equal(strictCheck(q, GAME), null, "syntax the parser does not know goes to SQLite: " + q);
+});
+
+test("strict terminal: ILIKE runs as REGEXP bound to a case-insensitive LIKE, strings untouched", () => {
+  assert.equal(toSqlite("SELECT x FROM t WHERE a ILIKE '%b%' AND c NOT ilike 'ILIKE'"), "SELECT x FROM t WHERE a REGEXP '%b%' AND c NOT REGEXP 'ILIKE'");
+  assert.equal(toSqlite("SELECT 1"), "SELECT 1");
+  assert.equal(ilike("%ritz%", "Hotel RITZ"), 1);
+  assert.equal(ilike("75-_04_", "75-2041"), 1);
+  assert.equal(ilike("75-_04", "75-2041"), 0, "anchored at both ends");
+  assert.equal(ilike("a.c", "abc"), 0, "regex characters are literal");
+  assert.equal(ilike("10!%", "10%", "!"), 1);
+  assert.equal(ilike("10!%", "100", "!"), 0);
+  assert.equal(ilike(null, "x"), null);
+  assert.equal(ilike("%", "line\nbreak"), 1);
+});
+
+test("an errored query counts as a query but is not kept in History", () => {
+  const s = freshState();
+  recordQuery(s, 1, "SELECT 1", null);
+  recordQuery(s, 1, "SELECT bad", "ERROR: column \"bad\" does not exist");
+  recordQuery(s, 1, "SELECT 2\nFROM t", "no such table: t");
+  assert.equal(s.queries[1], 3);
+  assert.equal(s.totalQueries, 3);
+  assert.deepEqual(s.history, ["SELECT 1"]);
+  assert.equal(s.errorStreak, 2, "errors still feed the Typo badge");
+  assert.equal(s.lastQueryLines, 2);
+  recordQuery(s, 1, "SELECT 3", null);
+  assert.equal(s.errorStreak, 0);
+  assert.deepEqual(s.history, ["SELECT 3", "SELECT 1"]);
+  const c = { ...freshState(), mode: "compete" };
+  recordQuery(c, 2, "SELECT x", "error");
+  assert.equal(competeStats(c).queries, 1, "compete rows count it too");
+  assert.deepEqual(c.history, []);
+});
+
+test("handbook: every example passes the strict terminal; each wrong one is refused, its refusal written by colour_learn.mjs", () => {
+  const bakery = bakerySchema(learnHtml["database.html"]);
+  assert.deepEqual(Object.keys(bakery).sort(), ["customer", "order_item", "orders", "product"]);
+  let wrong = 0;
+  for (const f of learnPages) {
+    assert.equal(colourPage(learnHtml[f], bakery), learnHtml[f], f + ": run node colour_learn.mjs");
+    for (const [, cls, inner] of learnHtml[f].matchAll(/<pre( class="wrong")?><code>([\s\S]*?)<\/code><\/pre>/g)) {
+      const q = plainSql(inner);
+      if (/^\s*CREATE TABLE/.test(q)) continue;
+      if (cls) { wrong++; assert.ok(strictCheck(q, bakery), f + " wrong example refused: " + q); }
+      else assert.equal(strictCheck(q, bakery), null, f + ": " + q);
+    }
+  }
+  assert.ok(wrong >= 10);
+  const page = learnHtml["grammar.html"];
+  for (const a of Object.keys(STRICT_SECTIONS)) assert.match(page, new RegExp(`<h2 id="${a}">`), "section " + a);
+  assert.match(page, /follows PostgreSQL's rules/);
+  assert.ok(fs.readFileSync("site/index.html", "utf8").includes('class="dialect" href="learn/grammar.html"'), "the terminal's PostgreSQL label");
+  assert.equal(strictCheck("SELECT id FROM orders WHERE day = 20260302", bakery).anchor, "types", "the page's text-against-number claim");
 });

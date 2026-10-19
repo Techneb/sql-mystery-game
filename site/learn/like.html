@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LIKE and text patterns -- The Ritz Affair</title>
-<meta name="description" content="Searching text in SQL with LIKE: the percent and underscore wildcards, case rules in SQLite, NOT LIKE, and how to combine a pattern with other filters. Beginner examples with real results.">
+<meta name="description" content="Searching text in SQL with LIKE: the percent and underscore wildcards, case rules (LIKE and ILIKE), NOT LIKE, and how to combine a pattern with other filters. Beginner examples with real results.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -23,11 +23,17 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <span class="current" aria-current="page">5. LIKE</span>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>LIKE and text patterns</h1>
 <p class="game-label">Game: chapter <a href="../">III</a></p>
@@ -38,17 +44,26 @@
 <p>So <code>'Choc%'</code> means "starts with Choc", <code>'%loaf'</code> means "ends with loaf", and <code>'%croissant%'</code> means "contains croissant anywhere". The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%croissant%'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%croissant%'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Croissant</td><td>1.4</td></tr>
 <tr><td>Almond croissant</td><td>2.2</td></tr>
 </table>
-<p>Both the plain croissant and the almond croissant match, even though the word sits at the start of one name and at the end of the other, and even though one is written with a capital letter. That last point deserves its own section.</p>
+<p>Both the plain croissant and the almond croissant match, even though the word sits at the start of one name and at the end of the other, and even though one is written with a capital letter: that is what the I of <code>ILIKE</code> is for. The next section explains.</p>
 
-<h2>Case and LIKE in SQLite</h2>
-<p>In SQLite, <code>LIKE</code> ignores the difference between upper and lower case for the letters A to Z. That is convenient when people type names inconsistently, but it differs from <code>=</code>, which is case-sensitive, and from some other databases: in PostgreSQL, <code>LIKE</code> is case-sensitive and <code>ILIKE</code> is the case-insensitive version. If you need a case-sensitive pattern in SQLite, <code>GLOB</code> does that, with <code>*</code> and <code>?</code> as its wildcards.</p>
+<h2>Case: LIKE and ILIKE</h2>
+<p>The game's terminal follows PostgreSQL: <code>LIKE</code> is case-sensitive, like <code>=</code>, so <code>'%croissant%'</code> finds "Almond croissant" but not "Croissant", and <code>ILIKE</code> is the same pattern match with case ignored. Use <code>LIKE</code> when you know how the text is written, <code>ILIKE</code> when you do not. In plain SQLite, which has no <code>ILIKE</code>, write <code>lower(name) LIKE '%croissant%'</code> instead.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%croissant%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Almond croissant</td><td>2.2</td></tr>
+</table>
+<p>More on this, and on the other rules a correct query follows, in <a href="grammar.html#like-ilike">The Grammar of SQL</a>.</p>
 
 <h2>The underscore: a fixed length</h2>
 <p>The underscore is handy for codes and dates whose shape you know. The pattern <code>'2026-03-0_'</code> matches any of the first nine days of March 2026 and nothing else, because exactly one character must follow the zero. Two underscores require two characters, and so on.</p>
@@ -82,10 +97,10 @@
 <p>Read it step by step: names that contain an "o" somewhere, minus the loaves, minus the cakes.</p>
 
 <h2>Searching more than one word</h2>
-<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>'%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
+<p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>ILIKE '%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%choc%'</span> <span class="sql-kw">OR</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%tart%'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%choc%'</span> <span class="sql-kw">OR</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%tart%'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
@@ -99,10 +114,11 @@
 <p>A pattern that starts with <code>%</code> forces the database to read every row, because no index can help it find text that may begin anywhere. On a small table that does not matter. On millions of rows it does, and a pattern that begins with fixed text, such as <code>'Choc%'</code>, is much cheaper.</p>
 
 <h2>Common mistakes</h2>
-<p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> is case-insensitive in every database. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>
+<p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> ignores case: in PostgreSQL and in the game it does not, and <code>ILIKE</code> does. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#every-croissant">Every croissant</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter III, <i>A Plate in the Dark</i>, practises LIKE.</p>
-<nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
+<nav class="learn-pager"><a class="prev" href="order-by-limit.html">Previous: ORDER BY and LIMIT</a><a class="next" href="dates-times.html">Next: Dates and times stored as text or numbers</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

@@ -97,13 +97,6 @@ function admin_(data) {
   }
   s = find_(list, String(data.season || ""));
   if (!s) return {ok: false, error: "no such season"};
-  if (act === "update") {
-    if (s.state !== "created") return {ok: false, error: "only a season not yet opened can be edited"};
-    var g = fields_(data);
-    if (g.error) return g;
-    s.name = g.name; s.date = g.date; s.penalty = g.penalty;
-    return save_(list, s);
-  }
   if (act === "open") {
     if (s.state === "open") return {ok: true, season: s};
     if (s.state !== "created") return {ok: false, error: "a closed season cannot reopen"};

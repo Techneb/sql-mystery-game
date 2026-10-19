@@ -23,11 +23,17 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <span class="current" aria-current="page">8. CASE</span>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <span class="current" aria-current="page">10. CASE</span>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>CASE WHEN</h1>
 <p class="game-label">Game: chapter <a href="../">VII</a></p>
@@ -85,7 +91,7 @@
 <tr><td>morning</td><td>3</td></tr>
 <tr><td>evening</td><td>2</td></tr>
 </table>
-<p>SQLite lets you group by the alias, as here. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
+<p>SQLite and PostgreSQL both let you group by the alias, as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
 <p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
 
 <h2>Conditional counts and sums</h2>
@@ -110,8 +116,9 @@
 
 <h2>CASE in ORDER BY</h2>
 <p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-kw">CASE</span> <span class="sql-id">category</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'pastry'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'bread'</span> <span class="sql-kw">THEN</span> <span class="sql-num">2</span> <span class="sql-kw">ELSE</span> <span class="sql-num">3</span> <span class="sql-kw">END</span>;</code></pre>
 <table class="result">
 <tr><th>category</th></tr>
@@ -119,13 +126,14 @@
 <tr><td>bread</td></tr>
 <tr><td>cake</td></tr>
 </table>
-<p>This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
+<p><code>GROUP BY</code> keeps one row per category, and the <code>CASE</code> only uses the grouped column. (With <code>SELECT DISTINCT</code> instead, the sort would be an error: see <a href="grammar.html#distinct-order">DISTINCT and ORDER BY</a>.) This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
 
 <h2>Common mistakes</h2>
 <p>Forgetting <code>END</code>, which produces a confusing syntax error further down the query. Writing overlapping conditions in the wrong order, so that a broad condition placed first catches rows meant for a narrower one below it. Leaving out <code>ELSE</code> and getting NULL labels for the rows nobody thought of. Testing for NULL in the short form, where <code>WHEN NULL</code> never matches. Comparing times stored without a leading zero, where <code>'9:30'</code> sorts after <code>'12:00'</code>.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#morning-people">Morning people</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, practises CASE WHEN with GROUP BY.</p>
-<nav class="learn-pager"><a class="prev" href="joins.html">Previous: JOIN, LEFT JOIN and self-joins</a><a class="next" href="window-functions.html">Next: Window functions: RANK and LAG</a></nav>
+<nav class="learn-pager"><a class="prev" href="nulls.html">Previous: NULL and missing values</a><a class="next" href="subqueries.html">Next: Subqueries</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

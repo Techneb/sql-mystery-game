@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NULL and missing values -- The Ritz Affair</title>
+<meta name="description" content="How SQL handles missing values: what NULL means, three-valued logic (true, false, unknown), IS NULL, COUNT(*) against COUNT(column), COALESCE, NULL in joins and the NOT IN trap. A beginner&#x27;s guide with SQLite examples.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+</header>
+<nav class="learn-menu"><a href="index.html">Index</a>
+    <a href="database.html">1. Database</a>
+    <a href="schema.html">2. Schema</a>
+    <a href="select-where.html">3. SELECT</a>
+    <a href="order-by-limit.html">4. ORDER BY</a>
+    <a href="like.html">5. LIKE</a>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <span class="current" aria-current="page">9. NULL</span>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
+<main class="learn">
+<h1>NULL and missing values</h1>
+<p class="game-label">Game: chapters <a href="../">X</a> and <a href="../">XI</a></p>
+<p class="lede">Real data has holes. SQL marks a hole with NULL, and NULL follows rules of its own: most surprises in a query that "looks right" come from them.</p>
+
+<h2>What NULL means</h2>
+<p>NULL is not a value. It is the mark SQL puts in a cell when there is no value: the fact is unknown, or does not apply. It is not zero, which is a number, and it is not the empty string <code>''</code>, which is a piece of text with no letters in it. A price of 0 says "free"; a NULL price says "nobody wrote the price down".</p>
+<p>In the bakery database (see the <a href="database.html">bakery database page</a>), <code>customer.referred_by</code> holds the id of the customer who recommended the shop. Three customers walked in on their own, so their <code>referred_by</code> is NULL. The column is not wrong for them; there is simply nothing to put in it. That is the honest way to record an absence, and it is why every rule on this page exists.</p>
+
+<h2>Three answers, not two: true, false and unknown</h2>
+<p>A comparison usually answers true or false. When one side is NULL, it answers <i>unknown</i>: is an unknown referrer equal to customer 1? Nobody can say. SQL's logic therefore has three values, and the rule that matters most is short: <code>WHERE</code>, <code>HAVING</code> and <code>ON</code> keep a row only when the condition is <b>true</b>. Unknown is thrown away, exactly like false.</p>
+<p>The query below asks for the customers not referred by customer 1. It looks as if it should return everyone else, but the three customers with no referrer are missing too: for them <code>referred_by &lt;&gt; 1</code> is unknown.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> &lt;&gt; <span class="sql-num">1</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>referred_by</th></tr>
+<tr><td>Emma Novak</td><td>3</td></tr>
+<tr><td>Farid Haddad</td><td>5</td></tr>
+<tr><td>Grace Lee</td><td>2</td></tr>
+</table>
+<p>If the walk-in customers belong in the answer, say so: <code>WHERE referred_by &lt;&gt; 1 OR referred_by IS NULL</code>. A CASE makes the three outcomes visible. Its first branch catches true, its second catches false, and whatever is left over is unknown.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
+       <span class="sql-kw">CASE</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span> <span class="sql-kw">THEN</span> <span class="sql-str">'yes'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-kw">NOT</span> (<span class="sql-id">referred_by</span> = <span class="sql-num">1</span>) <span class="sql-kw">THEN</span> <span class="sql-str">'no'</span>
+         <span class="sql-kw">ELSE</span> <span class="sql-str">'unknown'</span>
+       <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">referred_by_customer_1</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>referred_by_customer_1</th></tr>
+<tr><td>Alice Turner</td><td>unknown</td></tr>
+<tr><td>Ben Okafor</td><td>yes</td></tr>
+<tr><td>Chloe Martin</td><td>yes</td></tr>
+<tr><td>David Chen</td><td>unknown</td></tr>
+<tr><td>Emma Novak</td><td>no</td></tr>
+<tr><td>Farid Haddad</td><td>no</td></tr>
+<tr><td>Grace Lee</td><td>no</td></tr>
+<tr><td>Hugo Silva</td><td>unknown</td></tr>
+</table>
+<p>Notice that <code>NOT</code> does not rescue the walk-ins: the opposite of unknown is still unknown. <code>AND</code> and <code>OR</code> follow common sense once you read unknown as "could be either":</p>
+<table class="result">
+<tr><th>a</th><th>b</th><th>a AND b</th><th>a OR b</th></tr>
+<tr><td>true</td><td>unknown</td><td>unknown</td><td>true</td></tr>
+<tr><td>false</td><td>unknown</td><td>false</td><td>unknown</td></tr>
+<tr><td>unknown</td><td>unknown</td><td>unknown</td><td>unknown</td></tr>
+</table>
+<p>False AND anything is false, whatever the unknown turns out to be; true OR anything is true. Every other mix stays unknown. Arithmetic behaves the same way: <code>price + NULL</code> is NULL, and so is <code>'Mr ' || NULL</code>.</p>
+
+<h2>Asking about NULL: IS NULL and IS NOT NULL</h2>
+<p>Because a comparison with NULL is never true, <code>referred_by = NULL</code> keeps no rows at all, even on the rows where the column is NULL. SQL has a dedicated test instead: <code>IS NULL</code>, and its opposite <code>IS NOT NULL</code>. These two always answer true or false, never unknown, so they are safe anywhere a condition goes.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">town</span> &lt;&gt; <span class="sql-str">'Riverside'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>town</th></tr>
+<tr><td>Ben Okafor</td><td>Hillcrest</td></tr>
+<tr><td>Emma Novak</td><td>Hillcrest</td></tr>
+<tr><td>Farid Haddad</td><td>Old Town</td></tr>
+</table>
+
+<h2>Aggregates skip NULL</h2>
+<p><code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts the rows where that column is not NULL. <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> also ignore NULLs: an average is taken over the known values only, not over all rows with the unknown ones treated as zero. One query shows the difference.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>,
+       <span class="sql-fn">COUNT</span>(<span class="sql-id">referred_by</span>) <span class="sql-kw">AS</span> <span class="sql-id">referred</span>,
+       <span class="sql-fn">COUNT</span>(<span class="sql-kw">DISTINCT</span> <span class="sql-id">referred_by</span>) <span class="sql-kw">AS</span> <span class="sql-id">referrers</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
+<table class="result">
+<tr><th>customers</th><th>referred</th><th>referrers</th></tr>
+<tr><td>8</td><td>5</td><td>4</td></tr>
+</table>
+<p>Eight customers, five of whom were referred, by four different people (customer 1 referred two). Each column answers a different question, and picking the wrong <code>COUNT</code> gives a plausible number that answers the wrong one.</p>
+<p>An aggregate over no rows at all is a special case. <code>COUNT</code> of nothing is 0, but <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> of nothing are NULL: there is no total of an empty list. Product 9 was never ordered, so the sum of its quantities is NULL, not 0.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">product_id</span> = <span class="sql-num">9</span>;</code></pre>
+<table class="result">
+<tr><th>lines</th><th>pieces</th></tr>
+<tr><td>0</td><td>NULL</td></tr>
+</table>
+
+<h2>Replacing NULL: COALESCE</h2>
+<p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL. It is the standard way to show a default instead of a hole, and it works in every database (SQLite's <code>IFNULL</code> does not; see <a href="grammar.html#sqlite-only">The Grammar of SQL</a>). Its most common use is turning the NULL sum of an empty group back into a zero. Here each cake is joined to its order lines with a <a href="joins.html">LEFT JOIN</a>, so the carrot cake, which nobody bought, stays in the result with NULL quantities, and <code>COALESCE</code> reports 0 pieces.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span>), <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
+<span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">product_id</span> = <span class="sql-id">p</span>.<span class="sql-id">id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">id</span>, <span class="sql-id">p</span>.<span class="sql-id">name</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">p</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>pieces</th></tr>
+<tr><td>Lemon tart</td><td>4</td></tr>
+<tr><td>Chocolate eclair</td><td>5</td></tr>
+<tr><td>Carrot cake slice</td><td>0</td></tr>
+</table>
+<p>Use <code>COALESCE</code> for display, or where a NULL really means zero. Do not use it to hide NULLs that mean "unknown": replacing an unknown price by 0 before averaging pulls the average down with prices nobody ever charged. The reverse tool exists too: <code>NULLIF(a, b)</code> gives NULL when <code>a</code> equals <code>b</code>, which is how you avoid dividing by zero (<code>total / NULLIF(orders, 0)</code> is NULL instead of an error).</p>
+
+<h2>NULL in joins</h2>
+<p>A join condition is a condition like any other, so a NULL key never matches anything, not even another NULL. Joining each customer to their referrer with an inner join silently drops the three walk-ins: five rows come back, not eight.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">newcomer</span>.<span class="sql-id">name</span>, <span class="sql-id">referrer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">newcomer</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span> <span class="sql-kw">ON</span> <span class="sql-id">referrer</span>.<span class="sql-id">id</span> = <span class="sql-id">newcomer</span>.<span class="sql-id">referred_by</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">newcomer</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>referrer</th></tr>
+<tr><td>Ben Okafor</td><td>Alice Turner</td></tr>
+<tr><td>Chloe Martin</td><td>Alice Turner</td></tr>
+<tr><td>Emma Novak</td><td>Chloe Martin</td></tr>
+<tr><td>Farid Haddad</td><td>Emma Novak</td></tr>
+<tr><td>Grace Lee</td><td>Ben Okafor</td></tr>
+</table>
+<p>A <code>LEFT JOIN</code> keeps the unmatched rows and fills the right-hand columns with NULL, which brings a trap of its own when you count. With a left join, <code>COUNT(*)</code> counts the padded row too, so a customer with no order still counts one; <code>COUNT(o.id)</code> counts only real orders. Compare the two columns for Hugo Silva.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">joined_rows</span>, <span class="sql-fn">COUNT</span>(<span class="sql-id">o</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
+<span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>joined_rows</th><th>orders</th></tr>
+<tr><td>Ben Okafor</td><td>2</td><td>2</td></tr>
+<tr><td>Emma Novak</td><td>2</td><td>2</td></tr>
+<tr><td>Hugo Silva</td><td>1</td><td>0</td></tr>
+</table>
+
+<h2>The NOT IN trap</h2>
+<p>Which customers have never referred anyone? A natural first attempt asks for the customers whose id is not in the list of referrers. It returns nothing at all.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+</table>
+<p>The list produced by the subquery contains NULL (the walk-ins' empty <code>referred_by</code>). <code>x NOT IN (1, 3, NULL)</code> means <code>x &lt;&gt; 1 AND x &lt;&gt; 3 AND x &lt;&gt; NULL</code>, and the last part is unknown for every customer, so no row is ever true. <code>IN</code> is not affected in the same way (a match is still a match), which makes the bug hard to see: the query is correct until one NULL appears in the data. Two fixes, both worth knowing: remove the NULLs from the list, or use <code>NOT EXISTS</code> (see <a href="subqueries.html">Subqueries</a>), which only asks whether a matching row exists and is never fooled by NULL.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>David Chen</td></tr>
+<tr><td>Farid Haddad</td></tr>
+<tr><td>Grace Lee</td></tr>
+<tr><td>Hugo Silva</td></tr>
+</table>
+
+<h2>NULL in sorting and grouping</h2>
+<p>For <code>GROUP BY</code> and <code>DISTINCT</code>, all NULLs are treated as one value, so the walk-ins form a single group. For sorting, databases disagree: SQLite, which runs these examples, puts NULLs first in ascending order, while PostgreSQL puts them last. When it matters, do not rely on either: say so with <code>NULLS FIRST</code> or <code>NULLS LAST</code>.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">referred_by</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">referred_by</span> <span class="sql-id">NULLS</span> <span class="sql-id">LAST</span>;</code></pre>
+<table class="result">
+<tr><th>referred_by</th><th>customers</th></tr>
+<tr><td>1</td><td>2</td></tr>
+<tr><td>2</td><td>1</td></tr>
+<tr><td>3</td><td>1</td></tr>
+<tr><td>5</td><td>1</td></tr>
+<tr><td>NULL</td><td>3</td></tr>
+</table>
+
+<h2>Common mistakes</h2>
+<p>Writing <code>= NULL</code> or <code>&lt;&gt; NULL</code> instead of <code>IS NULL</code> or <code>IS NOT NULL</code>. Forgetting that <code>&lt;&gt;</code> and <code>NOT</code> also drop the NULL rows. Using <code>COUNT(*)</code> after a left join and counting the padded rows. Using <code>NOT IN</code> on a subquery whose column can be NULL. Expecting <code>SUM</code> of nothing to be 0. Replacing an unknown value with a made-up one through <code>COALESCE</code> before a calculation. Storing the text <code>'none'</code> or <code>'N/A'</code> instead of NULL, which makes <code>IS NULL</code> miss the rows and <code>COUNT(column)</code> count them.</p>
+
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#back-again">Back again</a>, on the exercises page.</p>
+<p class="in-game"><b>In the game:</b> the archives record a missing value as NULL, like the bakery; Chapter X, <i>Never Seen Together</i>, and Chapter XI, <i>The Silence</i>, are where the rules of this page matter most.</p>
+<nav class="learn-pager"><a class="prev" href="joins.html">Previous: JOIN, LEFT JOIN and self-joins</a><a class="next" href="case-when.html">Next: CASE WHEN</a></nav>
+</main>
+<footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+</body>
+</html>

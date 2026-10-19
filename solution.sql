@@ -283,7 +283,7 @@ WHERE prev <= '02:05'
 -- Answer: 214
 
 -- 12. Follow the Money (WITH RECURSIVE) -> the person's name: Comtesse de Cagliostro
--- Add up each account's transfers to each counterparty after the theft (one hop was paid in two halves). From the shell account's 40000 francs, follow only the transfer worth 98 percent of the previous one, to the franc (a shell account's other deal that day falls away), seven hops down, then read the owner.
+-- Add up each account's transfers to each counterparty after the theft (one hop was paid in two halves). From the shell account's 40000 francs, follow only the transfer worth 98 per cent of the previous one, to the franc (a shell account's other deal that day falls away), seven hops down, then read the owner.
 -- The answer:
 WITH RECURSIVE flows AS (
   SELECT account_id, counterparty_id, SUM(amount) AS amount
@@ -292,7 +292,7 @@ WITH RECURSIVE flows AS (
     AND type = 'transfer'
   GROUP BY account_id, counterparty_id
 ), chain(account_id, amount, hop) AS (
-  SELECT 3213, 40000, 0
+  SELECT 3213, CAST(40000 AS BIGINT), 0
   UNION ALL
   SELECT f.counterparty_id, f.amount, c.hop + 1
   FROM chain AS c

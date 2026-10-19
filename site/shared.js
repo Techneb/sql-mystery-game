@@ -40,6 +40,8 @@ export function fmtTime(ms) {
 }
 
 // Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
+// The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
+export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 
 // Rows are a season's backend rows (doGet ?season=<id>: timestamp, event, team, chapter, wrong, queries, elapsedMs...);

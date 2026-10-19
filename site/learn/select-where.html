@@ -23,11 +23,17 @@
     <span class="current" aria-current="page">3. SELECT</span>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>SELECT and WHERE</h1>
 <p class="game-label">Game: chapter <a href="../">I</a></p>
@@ -82,7 +88,7 @@
 <tr><td>Carrot cake slice</td><td>cake</td><td>3.2</td></tr>
 <tr><td>Seeded rolls</td><td>bread</td><td>3.8</td></tr>
 </table>
-<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero.</p>
+<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero; the <a href="dates-times.html">dates and times page</a> explains why.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">IN</span> (<span class="sql-str">'2026-03-07'</span>, <span class="sql-str">'2026-03-08'</span>)
@@ -97,7 +103,7 @@
 </table>
 
 <h2>Missing values: IS NULL</h2>
-<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>.</p>
+<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
@@ -113,8 +119,9 @@
 <p>Start wide and narrow down. Look at a few rows of the table first, then add one condition at a time and check that each one removes what you expected. When a result is empty, remove the last condition and look at what was there before it. Reading the result after every step is faster than writing a long query and wondering why it returns nothing.</p>
 
 <h2>Common mistakes</h2>
-<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, and SQLite only falls back to treating it as text when no such column exists, which hides the mistake until the day a column of that name appears. Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
+<p>Using double quotes around text: in SQL, <code>'bread'</code> is a value, while <code>"bread"</code> is the name of a column, so <code>"bread"</code> asks for a column called bread (see <a href="grammar.html#double-quotes">The Grammar of SQL</a>). Writing <code>= NULL</code> instead of <code>IS NULL</code>. Forgetting parentheses when mixing <code>AND</code> and <code>OR</code>, which silently changes the meaning. Comparing text with the wrong case: <code>'Bread'</code> is not equal to <code>'bread'</code>. Writing a date in another form, such as <code>'5/3/2026'</code>, which compares as text and matches nothing.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#the-cheap-shelf">The cheap shelf</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter I, <i>The Night of the 17th</i>, practises SELECT and WHERE.</p>
 <nav class="learn-pager"><a class="prev" href="schema.html">Previous: Tables, keys and the schema</a><a class="next" href="order-by-limit.html">Next: ORDER BY and LIMIT</a></nav>
 </main>

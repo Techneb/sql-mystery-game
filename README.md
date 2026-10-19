@@ -57,7 +57,7 @@ The penalty per wrong answer is set per season by the teacher; the rest is in th
   a clue) sit next to the chapter title.
 - Part II is a night edition: the whole page switches once the Part II code is accepted
   (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
-  to 19 May, and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
+  to 21 May, and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
   the palette instead; the choice is kept per browser.
 - Portraits: `site/portraits/*.jpg`, six suspects plus the Comtesse, painted in colour
   after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; the landing card
@@ -77,7 +77,7 @@ The penalty per wrong answer is set per season by the teacher; the rest is in th
 |---|---|
 | `plot.py` | the plot as data: cast, chapters (text, taunts, solution and naive SQL) |
 | `generate_db.py` | planted values per seed, schema, noise, planting, self-checks, outputs |
-| `erd.py` | ERD auto-layout (FK depth layers, barycentre ordering) to inline SVG |
+| `erd.py` | ERD auto-layout to inline SVG: rows in reveal order (each chapter's new tables below the earlier ones), each line in its own lane, none crossing |
 | `test_generate.py` | `unittest` suite |
 | `solution.sql` | generated: the reference path, each chapter's discovery queries then its final query |
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |

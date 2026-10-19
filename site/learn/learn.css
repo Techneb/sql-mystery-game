@@ -14,15 +14,24 @@
 .learn code { font: 15px "Special Elite", monospace; }
 .learn pre { background: var(--term); color: var(--term-text); border-radius: var(--r-panel); padding: 10px 12px; overflow-x: auto; margin: 12px 0 6px; }
 .learn pre code { font: 14px/1.45 "Special Elite", monospace; white-space: pre; }
+/* grammar.html: a query the terminal refuses, then its refusal (written by colour_learn.mjs) */
+.learn pre.wrong { border-left: 4px solid var(--rel); }
+.learn .refusal { margin: 0 0 14px; padding: 6px 10px; border: 1px solid var(--rel); border-radius: var(--r-box); font-size: 15px; }
+.learn .refusal code { display: block; color: var(--rel); font: 13px/1.4 "Special Elite", monospace; margin-bottom: 2px; }
 .learn table.result { border-collapse: collapse; margin: 4px 0 16px; font-size: 15px; text-align: left; }
 .learn .result th { font: 700 11px "Cormorant Garamond", Georgia, serif; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--ink); padding: 2px 12px 2px 0; }
 .learn .result td { border-bottom: 1px solid var(--rule); padding: 3px 12px 3px 0; vertical-align: top; }
 .learn .in-game { border-top: 2px solid var(--ink); margin-top: 28px; padding-top: 8px; }
 .learn details.script summary { cursor: pointer; font-weight: 700; }
+/* exercises.html: each solution hidden in a <details> until opened (no JavaScript) */
+.learn .exercise { margin: 18px 0 4px; }
+.learn details.solution { margin: 0 0 12px; padding: 4px 10px; border-left: 2px solid var(--rule); }
+.learn details.solution summary { cursor: pointer; font-weight: 700; }
 .learn .toc li { margin: 4px 0; }
 /* page menu in reading order and previous/next links: copied by hand on every page, test_site.mjs checks they agree */
 .learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
 .learn .game-label { font: 700 13px/1.2 "Playfair Display", serif; font-variant: small-caps; letter-spacing: 1px; text-align: center; margin: 0 0 6px; }
+.learn .byline { text-align: center; margin: 0 0 12px; }
 .learn-menu a { color: inherit; }
 .learn-menu .current { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .learn-pager { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--rule); margin-top: 28px; padding-top: 10px; font-size: 16px; }

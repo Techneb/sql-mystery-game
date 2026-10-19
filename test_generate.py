@@ -1,9 +1,16 @@
+import functools
 import json
 import random
 import unittest
 
 import generate_db as g
 import plot
+
+
+@functools.lru_cache(maxsize=None)
+def built(seed):
+    """One build per seed for the whole run (about 20 s each), shared: never write to it, never close it."""
+    return g.build_db(seed)
 
 FIXTURE = [
     ("  Rupert Blakeney, Esq. ", "rupert blakeney"),
@@ -31,6 +38,23 @@ class Normalise(unittest.TestCase):
             self.assertEqual(g.normalise(raw), want, raw)
 
 
+class StrictSemantics(unittest.TestCase):
+    """The build checks queries as the terminal runs them: LIKE case-sensitive (PostgreSQL), ILIKE as REGEXP."""
+    def test_like_is_case_sensitive_and_ilike_is_not(self):
+        c = g.empty_db()
+        q = lambda sql: c.execute(g.sqlite_sql(sql)).fetchone()[0]
+        self.assertEqual(q("SELECT 'Hotel Ritz' LIKE '%ritz%'"), 0)
+        self.assertEqual(q("SELECT 'Hotel Ritz' ILIKE '%ritz%'"), 1)
+        self.assertEqual(q("SELECT 'Hotel Ritz' NOT ILIKE 'hotel_r%'"), 0)
+        self.assertEqual(q("SELECT '10%' ILIKE '10!%' ESCAPE '!'"), 1)
+        self.assertEqual(q("SELECT 'a.c' ILIKE 'abc'"), 0)
+        self.assertEqual(g.sqlite_sql("SELECT 1 WHERE a ILIKE 'ILIKE'"), "SELECT 1 WHERE a REGEXP 'ILIKE'")
+
+    def test_like_traps_are_also_checked_as_ilike(self):
+        self.assertEqual(g.like_variants("SELECT 1 WHERE a LIKE '%x%'"), ["SELECT 1 WHERE a LIKE '%x%'", "SELECT 1 WHERE a ILIKE '%x%'"])
+        self.assertEqual(g.like_variants("SELECT 1"), ["SELECT 1"])
+
+
 class Schema(unittest.TestCase):
     def test_tables_and_fks(self):
         conn = g.empty_db()
@@ -47,7 +71,7 @@ class Schema(unittest.TestCase):
         conn.close()
 
     def test_links_after_the_build(self):
-        conn, V = g.build_db(1912)
+        conn, V = built(1912)
         self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(), [])
         fks = {(t, r[3], r[2]) for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
                for r in conn.execute(f"PRAGMA foreign_key_list({t})")}
@@ -59,7 +83,6 @@ class Schema(unittest.TestCase):
         cast = [c["name"] for c in plot.CAST]
         self.assertEqual(conn.execute("SELECT COUNT(*) FROM guest_card g JOIN person p ON p.id = g.person_id WHERE p.name IN (%s)"
                                       % ",".join("?" * len(cast)), cast).fetchone()[0], 0)   # fun only: no card for a suspect
-        conn.close()
 
 
 class Plant(unittest.TestCase):
@@ -109,7 +132,7 @@ class Noise(unittest.TestCase):
             self.assertFalse([f for f in films if f in name.lower()], name)
 
     def test_census_surnames_stay_unambiguous(self):
-        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle"]
+        planted = [c["name"] for c in plot.CAST] + plot.COMPETE_FENCE_NAMES + plot.COMPETE_TENANT_NAMES + ["Ernest Grimaud", "Marcel Duroc", "Bertram Hobbs", "Ada Pringle", "Hippolyte Morand", "Firmin Lagarde"]
         for name in planted:
             self.assertFalse([l for l in g.LAST if name.endswith(" " + l)], name)
 
@@ -147,21 +170,11 @@ class Discovery(unittest.TestCase):
 class PartI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.conn, cls.V = g.build_db(1912)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.conn.close()
-
-    def test_each_chapter_solution_returns_exactly_the_answer(self):
-        for ch in plot.CHAPTERS[:8]:
-            rows = self.conn.execute(ch["solution"].format(**self.V)).fetchall()
-            self.assertEqual(len(rows), 1, ch["n"])
-            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key"]])), ch["n"])
+        cls.conn, cls.V = built(1912)
 
     def test_each_trap_bites(self):
         for ch in plot.CHAPTERS[:8]:
-            g.check_chapter(self.conn, self.V, ch)   # asserts naive_rows and that the naive query misses
+            g.check_chapter(self.conn, self.V, ch)   # the solution returns exactly the answer, naive_rows, and every trap misses
 
     def test_plot_is_not_on_the_first_screen(self):
         # SELECT * without WHERE must show noise first (scatter_planted), May 1912 alone must not surface the report
@@ -183,6 +196,14 @@ class PartI(unittest.TestCase):
         self.assertFalse(set(q("SELECT guest_name FROM hotel_register WHERE id >= 20000")) & planted)
         self.assertEqual(q("SELECT MAX(id) FROM telegram"), [9001])
 
+    def test_id_joins_across_tables_do_not_list_the_plot(self):
+        # a student joined police_report.id = interview.person_id (meaningless): when the hotel guests sat above the
+        # census, only the cast's ids could meet another table's, and the 4 rows were the planted interviews
+        for (t,) in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name <> 'person'").fetchall():
+            names = [n for (n,) in self.conn.execute("SELECT i.person_name FROM %s x JOIN interview i ON x.id = i.person_id" % t)]
+            planted = [n for n in names if n not in g.GUESTS]
+            self.assertLessEqual(10 * len(planted), len(names), (t, planted))
+
     def test_transcripts_write_dates_in_english(self):
         for (t,) in self.conn.execute("SELECT transcript FROM interview"):
             self.assertNotRegex(t, r"1912\d{4}")
@@ -191,17 +212,7 @@ class PartI(unittest.TestCase):
 class PartII(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.conn, cls.V = g.build_db(1912)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.conn.close()
-
-    def test_solutions(self):
-        for ch in plot.CHAPTERS[8:]:
-            rows = self.conn.execute(ch["solution"].format(**self.V)).fetchall()
-            self.assertEqual(len(rows), 1, ch["n"])
-            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key"]])), ch["n"])
+        cls.conn, cls.V = built(1912)
 
     def test_traps(self):
         for ch in plot.CHAPTERS[8:]:
@@ -228,7 +239,7 @@ class Text(unittest.TestCase):
 
 class Outputs(unittest.TestCase):
     def test_chapters_json_has_hashes_and_no_answers(self):
-        conn, V = g.build_db(1912)
+        conn, V = built(1912)
         j = g.chapters_json(V)
         self.assertEqual(len(j["chapters"]), 12)
         for ch in j["chapters"]:
@@ -253,10 +264,9 @@ class Outputs(unittest.TestCase):
             for k in ("title", "story", "objective", "telegram"):
                 for t in ("02:05", "03:10"):
                     self.assertNotIn(t, ch[k], (ch["n"], k))
-        conn.close()
 
     def test_solution_sql_runs_per_chapter(self):
-        conn, V = g.build_db(1912)
+        conn, V = built(1912)
         blocks = [b for b in g.solution_sql(V).split("\n\n") if any(not l.startswith("--") for l in b.strip().splitlines())]
         self.assertEqual(len(blocks), 13)   # twelve chapters and the Part II code
         for b in blocks:
@@ -266,23 +276,12 @@ class Outputs(unittest.TestCase):
             for s in stmts[:-1]:
                 conn.execute(s)   # discovery queries must not error
             self.assertEqual(len(conn.execute(stmts[-1]).fetchall()), 1)
-        conn.close()
 
 
 class Compete(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.conn, cls.V = g.build_db(7)   # any non-1912 seed exercises the re-seeded path
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.conn.close()
-
-    def test_each_compete_solution_returns_exactly_the_answer(self):
-        for ch in plot.CHAPTERS[:8]:
-            rows = self.conn.execute(ch["solution_compete"].format(**self.V)).fetchall()
-            self.assertEqual(len(rows), 1, ch["n"])
-            self.assertEqual(g.normalise(str(rows[0][0])), g.normalise(str(self.V[ch["answer_key_compete"]])), ch["n"])
+        cls.conn, cls.V = built(7)   # any non-1912 seed exercises the re-seeded path
 
     def test_each_compete_trap_bites(self):
         for ch in plot.CHAPTERS[:8]:
@@ -298,9 +297,16 @@ class Compete(unittest.TestCase):
         self.assertNotIn("CHAPTER IX", j["chapters"][7]["telegram"])   # compete has no chapter IX
         self.assertIn("CHAPTER IX", g.chapters_json(self.V)["chapters"][7]["telegram"])
         self.assertEqual(j["chapters"][3]["construct"], "GROUP BY / HAVING")
+        self.assertEqual(j["chapters"][5]["construct"], "JOIN x3 + GROUP BY + HAVING")   # no SUM in compete ch6
+        learn = g.chapters_json(self.V)["chapters"]
+        for c, l in zip(j["chapters"][:7], learn):   # learn telegrams point at learn traps (pounds, loupe, Ritz desk)
+            if c["n"] != 3:
+                self.assertNotEqual(c["telegram"], l["telegram"], c["n"])
+        self.assertEqual([c["title"] for c in j["chapters"] if c["title"] != learn[c["n"] - 1]["title"]],
+                         ["The Night Manager", "Below the Royal Pair", "The Busiest Hour", "The Last Order Before Dawn"])
 
     def test_season_files_carry_hashes_the_compete_solutions_match(self):
-        conn, V = g.build_db(1)
+        conn, V = built(1)
         j = g.chapters_json(V, mode="compete")
         for ch, d in zip(plot.CHAPTERS[:8], j["chapters"]):
             (val,) = conn.execute(ch["solution_compete"].format(**V)).fetchone()
@@ -309,13 +315,49 @@ class Compete(unittest.TestCase):
             self.assertNotIn(g.normalise(str(val)), json.dumps(j["chapters"][ch["n"] - 1]).lower(), ch["n"])
         self.assertEqual(j["normalise_fixture"], g.FIXTURE)   # ?selftest still checks the normaliser
         self.assertEqual(g.SEASONS, 5)
-        conn.close()
+
+    def test_compete_stories_ship_and_give_nothing_away(self):
+        j = g.chapters_json(self.V, mode="compete")
+        for ch, out in zip(plot.CHAPTERS[:8], j["chapters"]):
+            self.assertEqual(out["story"], ch["story_compete"].format(**self.V), ch["n"])   # the season file carries it
+            ch["story_compete"].encode("ascii")
+        self.assertIn("Hippolyte Morand", j["chapters"][0]["story"])   # a named witness, not a role
+        for seed in range(1, 21):
+            V = g.plant_values(seed)
+            planted = [v for k, v in V.items() if (k.startswith("compete_") or k == "ortega_suite")
+                       and k != "compete_fence_number"]   # a bare 12 is ch7's clock; compete_fence_address covers it
+            for ch in plot.CHAPTERS[:8]:
+                text = " %s " % g.normalise(ch["story_compete"].format(**V))
+                for v in planted + [V[ch["answer_key_compete"]]]:
+                    self.assertNotIn(" %s " % g.normalise(str(v)), text, (seed, ch["n"], v))
+
+    def test_compete_solutions_differ_structurally_from_learn(self):
+        # owner, 2026-10-10: a learn query with new WHERE values must not solve a compete chapter. With every literal
+        # (string, number) blanked out, no compete solution reads like its learn solution.
+        import re
+        skeleton = lambda sql: " ".join(re.sub(r"\b\d+\b", "?", re.sub(r"'(?:[^']|'')*'", "?", sql)).lower().split())
+        for ch in plot.CHAPTERS[:8]:
+            learn, compete = skeleton(ch["solution"].format(**self.V)), skeleton(ch["solution_compete"].format(**self.V))
+            self.assertNotEqual(learn, compete, ch["n"])
+        # each compete shape, and not its learn twin: the window and the exclusion, the offset past a tie, distinct
+        # days, the interview join, equal halves, the busiest box, the last order before dawn
+        shapes = {1: "between ? and ? and type <> ?", 2: "limit ? offset ?", 4: "count(distinct date) >= ?",
+                  5: "join interview", 6: "min(t.amount) = max(t.amount)", 7: "order by count(*) desc", 8: "order by time desc"}
+        for ch in plot.CHAPTERS[:8]:
+            if ch["n"] in shapes:
+                self.assertIn(shapes[ch["n"]], skeleton(ch["solution_compete"].format(**self.V)), ch["n"])
+                self.assertNotIn(shapes[ch["n"]], skeleton(ch["solution"].format(**self.V)), ch["n"])
+        pattern = re.search(r"LIKE '([^']*)'", plot.CHAPTERS[2]["solution_compete"].format(**self.V)).group(1)
+        self.assertIn("_", pattern)   # ch3: single-figure wildcards, where learn has a prefix and %
+        self.assertNotIn("%", pattern)
+        self.assertIn("%", plot.CHAPTERS[2]["solution"])
 
     def test_compete_values_vary_by_season(self):
         v7, v8 = g.plant_values(7), g.plant_values(8)
         self.assertNotEqual(v7["compete_plate"], v8["compete_plate"])
         self.assertNotEqual(v7["compete_shell_account"], v8["compete_shell_account"])
         self.assertNotEqual(v7["compete_fence_name"], v8["compete_fence_name"])
+        self.assertEqual(len({g.plant_values(s)["compete_fence_name"] for s in range(1, g.SEASONS + 1)}), g.SEASONS)   # one fence per season
 
     def test_compete_telegram_id_never_collides_with_night_telegram_id(self):
         # seed 232462 drew the same value for both before Task 2 Step 1's redraw loop was added
@@ -338,7 +380,7 @@ class Compete(unittest.TestCase):
 class Erd(unittest.TestCase):
     def test_rows_follow_reveal_order(self):
         import erd
-        conn, V = g.build_db(1912)
+        conn, V = built(1912)
         tables, fks = erd.read_schema(conn)
         pos = erd.layout(tables, fks, [ch["tables"] for ch in plot.CHAPTERS])
         seen = []
@@ -351,7 +393,6 @@ class Erd(unittest.TestCase):
         self.assertEqual(pos[a][2], pos[b][2])   # chapter 1's two tables share a row
         for t, _, ref in fks:   # never a line between two tables of one row
             self.assertNotEqual(pos[t][2], pos[ref][2], t)
-        conn.close()
 
     def test_svg_draws_every_table_and_key(self):
         import erd
@@ -367,9 +408,23 @@ class Erd(unittest.TestCase):
         s.encode("ascii")
         conn.close()
 
+    def test_every_column_shows_its_type_right_aligned(self):
+        import erd, re
+        conn, V = built(1912)
+        tables, _ = erd.read_schema(conn)
+        s = erd.svg(conn, [ch["tables"] for ch in plot.CHAPTERS])
+        for t, cols in tables.items():
+            block = s.split('data-table="%s"' % t)[1].split("</g>")[0]
+            types = re.findall(r'<text class="type" x="(\d+)" y="\d+" text-anchor="end">(\w+)</text>', block)
+            self.assertEqual([typ for _, typ in types], [typ for _, typ, _, _ in cols], t)
+            self.assertTrue(all(typ for _, typ, _, _ in cols), t)   # every column declares a type
+            self.assertEqual({int(x) for x, _ in types}, {erd.W - 6}, t)
+            for c, typ, _, _ in cols:   # name and type never meet (widths measured in Chrome, rounded up)
+                self.assertLessEqual(21 + erd.NAME_PX * len(c) + 8 + erd.TYPE_PX * len(typ), erd.W - 6, "%s.%s" % (t, c))
+
     def test_lines_clear_every_table(self):
         import erd
-        conn, V = g.build_db(1912)
+        conn, V = built(1912)
         tables, fks = erd.read_schema(conn)
         pos = erd.layout(tables, fks, [ch["tables"] for ch in plot.CHAPTERS])
         for e in erd.fk_paths(tables, fks, pos):
@@ -391,7 +446,6 @@ class Erd(unittest.TestCase):
         paths = erd.fk_paths(tables, fks, pos)
         self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
-        conn.close()
 
 
 class Suspects(unittest.TestCase):
@@ -430,10 +484,8 @@ class ChapterSeven(unittest.TestCase):
 class Board(unittest.TestCase):
     def test_every_card_says_what_its_answer_is(self):
         for mode, seed in (("learn", 1912), ("compete", 7)):
-            conn, V = g.build_db(seed)
-            for ch in g.chapters_json(V, mode)["chapters"]:
+            for ch in g.chapters_json(built(seed)[1], mode)["chapters"]:
                 self.assertTrue(ch["board"], (mode, ch["n"]))
-            conn.close()
 
 
 class SolutionSql(unittest.TestCase):

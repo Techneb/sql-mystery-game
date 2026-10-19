@@ -23,11 +23,17 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <span class="current" aria-current="page">10. CTEs</span></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <span class="current" aria-current="page">14. CTEs</span>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>CTEs and WITH RECURSIVE</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a>, <a href="../">IX</a> and <a href="../">XII</a></p>
@@ -82,7 +88,7 @@
 <tr><td>Emma Novak</td><td>2</td><td>8.05</td></tr>
 </table>
 <p>To debug such a query, replace the final <code>SELECT</code> with <code>SELECT * FROM order_total</code> and look at the intermediate result. Then do the same with the next step. A mistake usually shows up at the first step whose rows look wrong.</p>
-<p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code>.</p>
+<p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
 
 <h2>WITH RECURSIVE: following a chain</h2>
 <p>Some questions have no fixed number of steps. "Who referred this customer's referrer, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
@@ -133,10 +139,11 @@
 <p>The left join keeps the day on which nobody ordered, with a count of zero; grouping the <code>orders</code> table alone would simply have skipped it.</p>
 
 <h2>Common mistakes</h2>
-<p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE generation &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates. Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
+<p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE generation &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates (see <a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>). Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
 
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#above-their-category">Above their category</a> and <a href="exercises.html#word-of-mouth">Word of mouth</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
-<nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a></nav>
+<nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a><a class="next" href="exercises.html">Next: SQL exercises with solutions</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 </body>

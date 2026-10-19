@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="google-adsense-account" content="ca-pub-9765732642926043">
+<meta name="google-site-verification" content="-fqcYQMOruZhkzUQeJUjfuQjdxXKDeeu0F8gQ8ASH3Y">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Ritz Affair</title>
 <meta name="description" content="The Ritz Affair: a free browser detective game that teaches SQL. Paris, 1912, twelve chapters, a stolen sapphire, no install and no account.">
@@ -61,7 +62,7 @@
       </table>
       <p>After chapter VIII the paper switches to its night edition: Part II follows the case after dark through four more chapters and new tables.</p>
       <p>In compete mode a teacher hands out a season link; each player picks a pseudo, the teacher starts every clock at once, and a class leaderboard ranks everyone by time.</p>
-      <p>The story borrows Arsene Lupin and Ganimard from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate. For the SQL itself, <a href="learn/">The Clerk's Handbook</a> explains every construct the chapters use, on a separate example database.</p>
+      <p>The story borrows Arsene Lupin, Ganimard, the Comtesse de Cagliostro and the names Sernine and Velmont from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate. For the SQL itself, <a href="learn/">The Clerk's Handbook</a> explains every construct the chapters use, on a separate example database.</p>
     </details>
     <p class="muted landing-foot">A game by <a href="https://alephb.uk">AlephB</a> &middot; <a href="learn/">The Clerk's Handbook</a> &middot; <a href="privacy.html">Privacy notice</a> &middot; <a href="admin.html">The Clerk's Desk</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="mailto:contact@alephb.uk">Contact</a></p>
   </div>
@@ -92,7 +93,7 @@
   </aside>
 
   <section class="col-terminal">
-    <div class="label-row"><span class="label">TERMINAL</span><span class="muted">Ctrl+Enter to run, Ctrl+F to format, Shift+Tab to leave the box</span></div>
+    <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Ctrl+F to format, Shift+Tab to leave the box</span><a class="dialect" href="learn/grammar.html" target="_blank" rel="noopener" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
     <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" aria-label="SQL query" placeholder="SELECT * FROM police_report WHERE ..."></textarea></div>
     <div class="row"><button id="btn-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="run-info" class="muted" aria-live="polite"></span></div>
     <div id="results" class="results" aria-live="polite"></div>
@@ -131,6 +132,12 @@
   <div class="label">A NEW OBJECTIVE</div><h2>PART II<br>The case is not closed</h2>
   <p>Lupin mentioned a Chapter IX. Somewhere in the archives a telegram is addressed to a curious clerk; its code, typed in the answer box...</p>
   <button autofocus>To the archives</button>
+</form></dialog>
+<dialog id="closed" class="part2"><form method="dialog">
+  <div class="label">COMPETE</div><h2>THE SESSION IS OVER</h2>
+  <p>The teacher has closed the session. Your time is recorded up to this point.</p>
+  <p class="closed-time"></p>
+  <a class="btn" target="_blank" rel="noopener">See the results</a> <button class="quiet" autofocus>Keep reading</button>
 </form></dialog>
 <div id="badges" class="suspects" hidden></div>
 <dialog id="passgate" class="part2"><form method="dialog">

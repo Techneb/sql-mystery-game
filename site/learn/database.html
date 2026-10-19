@@ -23,11 +23,17 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>The bakery database</h1>
 <p class="lede">Every example in this handbook runs on this one small, invented database, so you only have to learn its tables once.</p>
@@ -68,7 +74,7 @@
 <tr><td>1</td><td>4</td><td>1</td></tr>
 <tr><td>2</td><td>2</td><td>1</td></tr>
 </table>
-<p>The full database is eight customers, ten products, fourteen orders and twenty-three order lines. To run the examples yourself, paste this script into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below.</p>
+<p>The full database is eight customers, ten products, fourteen orders and twenty-three order lines. To run the examples yourself, paste this script into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below. The examples follow the rules of this site's terminal, which plain SQLite relaxes in one place: there <code>LIKE</code> ignores case and <code>ILIKE</code> does not exist, so write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>.</p>
 <details class="script"><summary>The bakery database as a SQLite script</summary>
 <pre><code><span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">customer</span> (<span class="sql-id">id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">PRIMARY</span> <span class="sql-id">KEY</span>, <span class="sql-id">name</span> <span class="sql-id">TEXT</span>, <span class="sql-id">town</span> <span class="sql-id">TEXT</span>, <span class="sql-id">joined</span> <span class="sql-id">TEXT</span>, <span class="sql-id">referred_by</span> <span class="sql-id">INTEGER</span> <span class="sql-id">REFERENCES</span> <span class="sql-fn">customer</span>(<span class="sql-id">id</span>));
 <span class="sql-kw">CREATE</span> <span class="sql-kw">TABLE</span> <span class="sql-fn">product</span> (<span class="sql-id">id</span> <span class="sql-id">INTEGER</span> <span class="sql-id">PRIMARY</span> <span class="sql-id">KEY</span>, <span class="sql-id">name</span> <span class="sql-id">TEXT</span>, <span class="sql-id">category</span> <span class="sql-id">TEXT</span>, <span class="sql-id">price</span> <span class="sql-id">REAL</span>);

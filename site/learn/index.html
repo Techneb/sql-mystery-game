@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Clerk's Handbook -- The Ritz Affair</title>
-<meta name="description" content="A free SQL handbook for beginners: SELECT, WHERE, ORDER BY, LIKE, GROUP BY, JOIN, CASE, window functions and recursive CTEs, explained in plain English on one small example database you can run yourself.">
+<meta name="description" content="A free SQL handbook for beginners: SELECT, WHERE, ORDER BY, LIKE, dates, GROUP BY, JOIN, NULL, CASE, subqueries, UNION, window functions and recursive CTEs, explained in plain English on one small example database you can run yourself, with graded exercises and solutions.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -23,25 +23,38 @@
     <a href="select-where.html">3. SELECT</a>
     <a href="order-by-limit.html">4. ORDER BY</a>
     <a href="like.html">5. LIKE</a>
-    <a href="group-by-having.html">6. GROUP BY</a>
-    <a href="joins.html">7. JOIN</a>
-    <a href="case-when.html">8. CASE</a>
-    <a href="window-functions.html">9. Windows</a>
-    <a href="ctes.html">10. CTEs</a></nav>
+    <a href="dates-times.html">6. Dates</a>
+    <a href="group-by-having.html">7. GROUP BY</a>
+    <a href="joins.html">8. JOIN</a>
+    <a href="nulls.html">9. NULL</a>
+    <a href="case-when.html">10. CASE</a>
+    <a href="subqueries.html">11. Subqueries</a>
+    <a href="set-operations.html">12. UNION</a>
+    <a href="window-functions.html">13. Windows</a>
+    <a href="ctes.html">14. CTEs</a>
+    <a href="exercises.html">15. Exercises</a>
+    <a href="grammar.html">16. Grammar</a></nav>
 <main class="learn">
 <h1>The Clerk's Handbook</h1>
-<p class="lede">Plain-English pages on the SQL that <a href="../">The Ritz Affair</a> practises, for a first SQL course. Every example runs in SQLite on a small bakery database, never the game's archives, so nothing here gives a chapter away.</p>
+<p class="muted byline">By <a href="https://alephb.uk/">AlephB</a></p>
+<p class="lede">Plain-English pages on the SQL that <a href="../">The Ritz Affair</a> practises, for a first SQL course. Every example runs on a small bakery database, never the game's archives, so nothing here gives a chapter away. The game's terminal follows PostgreSQL's rules; the last page, <a href="grammar.html">The Grammar of SQL</a>, sums them up.</p>
 <ol class="toc">
 <li><a href="database.html">The bakery database</a>: the example data, with a script to recreate it.</li>
 <li><a href="schema.html">Tables, keys and the schema</a>: keys, relationships, exploring a database.</li>
 <li><a href="select-where.html">SELECT and WHERE</a>: choosing columns and filtering rows.</li>
 <li><a href="order-by-limit.html">ORDER BY and LIMIT</a>: sorting and keeping the top rows.</li>
 <li><a href="like.html">LIKE and text patterns</a>: searching text with wildcards.</li>
+<li><a href="dates-times.html">Dates and times stored as text or numbers</a>: comparing, ranges, substr and CAST, and why ISO dates sort.</li>
 <li><a href="group-by-having.html">GROUP BY, aggregates and HAVING</a>: counting and summing per group.</li>
 <li><a href="joins.html">JOIN, LEFT JOIN and self-joins</a>: combining tables and finding what is missing.</li>
+<li><a href="nulls.html">NULL and missing values</a>: three-valued logic, COUNT, COALESCE and the NOT IN trap.</li>
 <li><a href="case-when.html">CASE WHEN</a>: labels, buckets and conditional counts.</li>
+<li><a href="subqueries.html">Subqueries</a>: scalar, IN, EXISTS, correlated and derived tables.</li>
+<li><a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>: stacking two results, the rows they share, the rows one lacks.</li>
 <li><a href="window-functions.html">Window functions: RANK and LAG</a>: ranking rows and comparing with the previous one.</li>
 <li><a href="ctes.html">CTEs and WITH RECURSIVE</a>: named steps and following chains.</li>
+<li><a href="exercises.html">SQL exercises with solutions</a>: fifteen graded questions with hidden solutions.</li>
+<li><a href="grammar.html">The Grammar of SQL</a>: grouping, quotes, types and conditions, done right.</li>
 </ol>
 <nav class="learn-pager"><span></span><a class="next" href="database.html">Next: The bakery database</a></nav>
 </main>
