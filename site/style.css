@@ -121,8 +121,10 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .erd { background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); overflow: auto; max-height: 55vh; position: relative; }
 /* The ad box under the schema: a <details>, its summary the toggle (open by default). */
 .ad-box { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); }
-.ad-box summary { cursor: pointer; padding: 6px 10px; list-style-position: inside; }
-.ad-box[open] summary { border-bottom: 1px solid var(--rule); }
+.ad-box summary { cursor: pointer; padding: 7px 10px; list-style-position: inside; }
+/* typewritten title, option D (owner, 2026-10-19); the wording stays one of AdSense's two permitted labels */
+.ad-box summary.label { font: 14px/1.2 "Special Elite", monospace; letter-spacing: 2px; }
+.ad-box[open] summary { border-bottom: 1px dotted var(--rule); }
 .ad-slot { min-height: 250px; display: grid; place-items: center; }
 .erd.large { position: fixed; inset: 16px; z-index: 15; max-height: none; }
 /* enlarged, its Close sits in the overlay's top-right corner (clear of the scrollbar), like the panels' Close */
