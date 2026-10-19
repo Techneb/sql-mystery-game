@@ -482,9 +482,11 @@ framework, no bundler.
   (an influencer, Nick, will post about the site the week of 2026-10-19): requested 2026-10-19 after that day's
   fixes, site now "in preparation". Same day in AdSense: Auto ads confirmed off; the European regulations message
   (published 2026-10-09 for alephb.uk, privacy link alephb.uk/privacy.html, which links the game's page) kept;
-  Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Open decision:
-  outside the EEA/UK/CH nobody sees Google's message, so with ADS_ON GA stays denied there; a region-scoped granted
-  default would count those visitors.
+  Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Decided (owner,
+  2026-10-19, before Nick's post): Consent Mode region defaults, everything denied in the EEA, UK and Switzerland
+  until a Yes (cookieless pings, Advanced mode), analytics granted elsewhere by default (the gtag script now loads
+  for everyone but a No; `consentDefaults()` in `app.js`); once ads are live, the ad fields are granted by default
+  outside Europe too (branch `claude/ads-switch-on`), Google's message updating the European default.
   **Left, once AdSense approves the site (email to the owner).** Prepared 2026-10-10 on branch `claude/ads-switch-on`
   (4 commits, not merged, pushed to origin; it predates the strict terminal and handbook pages 11-16, so it needs
   main merged in, and its "Privacy notice" link label carried to the new pages, before use). Its own spec diff holds
