@@ -1562,21 +1562,23 @@ function offerCompete() {
   $("team").addEventListener("keydown", e => { if (e.key === "Enter") joinCompete(); });
 }
 
-// --- usage statistics (Google Analytics 4) and advertising (AdSense), opt-in only (spec section 8) ------
+// --- usage statistics (Google Analytics 4) and advertising (AdSense), Consent Mode v2 (spec section 8) ---
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
-// no Statistics link, no request to Google. Nothing loads before the reader says Yes (CNIL opt-in).
+// no Statistics link, no request to Google. Owner, 2026-10-19: visitors outside the EEA, UK and Switzerland
+// are counted by default (and, with ads on, see ads under the granted default); inside, everything stays
+// denied (cookieless pings only) until the reader's Yes (the banner, or Google's message with ads on).
 export const GA_ID = "G-QG0K0D1NQZ";
 // AdSense. Approval day is one edit: paste the display ad unit's data-ad-slot (AdSense > Ads > By ad unit, digits
 // only) into AD_SLOT; ADS_ON follows it.
 // ADS_ON switches the consent path below: off, the home-made banner (#consent) asks about statistics; on, Google's
-// certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both.
+// certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both, in Europe only.
 // ?ads=1 previews the ads-on path on localhost (Google serves no ad and no message there).
 export const ADS_CLIENT = "ca-pub-9765732642926043";
 export const AD_SLOT = "";
 export const ADS_ON = AD_SLOT !== "";
 const ADS_KEY = "ritz.ads";
-const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ADS_ON false only)
-let statsGranted = false;             // ADS_ON: Google's message granted analytics_storage
+const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ads off only)
+let statsRefused = false;             // ads on: Google's message reports analytics_storage DENIED
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
 function adsOn() {
   return ADS_ON || (["localhost", "127.0.0.1"].includes(location.hostname) && !!new URLSearchParams(location.search).get("ads"));
@@ -1585,23 +1587,37 @@ function adsOn() {
 function gaId() {
   return GA_ID || (["localhost", "127.0.0.1"].includes(location.hostname) && new URLSearchParams(location.search).get("ga")) || "";
 }
+// Google's EEA (the 27 EU states plus IS, LI, NO), with the UK and Switzerland: where Google's message shows.
+export const CONSENT_REGIONS = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT",
+  "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "GB", "CH"];
+// The two `consent default` commands, region-scoped first (Google: the more specific region wins; the unscoped
+// one covers everyone else). Ads off: the ad fields stay denied everywhere (no ads run; Google signals and ad
+// personalisation are off in the GA property). Ads on: outside Europe nobody is asked, so the granted default
+// stands for ads too (owner, 2026-10-19); in Europe tags wait up to 500 ms for Google's message to update it.
+export function consentDefaults(ads) {
+  const denied = { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" };
+  const g = ads ? "granted" : "denied";
+  return [{ ...denied, region: CONSENT_REGIONS, ...(ads ? { wait_for_update: 500 } : {}) },
+    { ad_storage: g, ad_user_data: g, ad_personalization: g, analytics_storage: "granted" }];
+}
 // Every analytics call goes through here. Never pass the pseudo, answers, query text or the board URL.
+// Consent Mode decides what a hit carries: full outside Europe or after a Yes, cookieless in Europe before it.
 export function track(name, params) {
   if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function") return false;
-  if (ADS_ON ? !statsGranted : consent() !== "yes") return false;
+  if (ADS_ON ? statsRefused : consent() === "no") return false;
   window.gtag("event", name, params);
   return true;
 }
-// Consent Mode v2: everything denied until the reader says otherwise. Must run before gtag.js or adsbygoogle.js loads.
+// Must run before gtag.js or adsbygoogle.js loads.
 function gtagDefaults() {
   if (window.gtag) return;
   window.dataLayer = window.dataLayer || [];
   window.gtag = function () { window.dataLayer.push(arguments); };
-  window.gtag("consent", "default", { ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied", analytics_storage: "denied" });
+  for (const d of consentDefaults(adsOn())) window.gtag("consent", "default", d);
 }
 function gaLoad(id) {
   gtagDefaults();
-  if (!adsOn()) window.gtag("consent", "update", { analytics_storage: "granted" });   // ads on: Google's message did it
+  if (!adsOn() && consent() === "yes") window.gtag("consent", "update", { analytics_storage: "granted" });   // ads on: Google's message updates
   window.gtag("js", new Date());
   window.gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
   const s = document.createElement("script");
@@ -1624,7 +1640,7 @@ function setConsent(v) {
   try { localStorage.setItem(CONSENT_KEY, v); } catch {}
   $("consent").hidden = true;
   window["ga-disable-" + id] = v !== "yes";   // honoured by gtag.js: no more hits, cookieless pings included
-  if (v === "yes") { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "granted" }); else gaLoad(id); }
+  if (v === "yes") { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "granted" }); else gaLoad(id); }   // gaLoad reads the stored yes
   else { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "denied" }); dropGaCookies(); }
 }
 function initConsent() {
@@ -1636,13 +1652,15 @@ function initConsent() {
   $("consent-yes").onclick = () => setConsent("yes");
   $("consent-no").onclick = () => setConsent("no");
   const c = consent();
-  if (c === "yes") gaLoad(id); else if (c !== "no") $("consent").hidden = false;
+  if (c !== "no") gaLoad(id);   // everyone but a No: the region defaults decide what is sent
+  if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
 }
-// Ads on: Google's consent message replaces the banner. The page only sets the Consent Mode defaults (all denied,
-// gtagDefaults); once consent mode is enabled for the message (AdSense > Privacy & messaging > European
+// Ads on: Google's consent message replaces the banner. The page sets the Consent Mode region defaults
+// (gtagDefaults); once consent mode is enabled for the message (AdSense > Privacy & messaging > European
 // regulations > Settings), Google's CMP itself updates the consent state (ad_storage, ad_user_data,
 // ad_personalization, analytics_storage) with the reader's choice, for readers shown the message (EEA, UK,
-// Switzerland); elsewhere nothing updates it, so the defaults stand and GA never loads. Sources:
+// Switzerland); elsewhere nothing updates it and the granted default stands. GA loads at once for everyone:
+// it never waits on the message, so a visitor who is never asked is still counted. Sources:
 // https://support.google.com/adsense/answer/16088460 (Google's CMP launches support for consent mode),
 // https://developers.google.com/funding-choices/fc-api-docs (googlefc: CONSENT_MODE_DATA_READY,
 // getGoogleConsentModeValues, showRevocationMessage), https://support.google.com/adsense/answer/10959060
@@ -1656,14 +1674,15 @@ function initGoogleConsent(id) {
   $("btn-stats").onclick = e => { e.preventDefault(); window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage()); };
   $("stats-link").hidden = false;
   if (!id) return;
+  gaLoad(id);
+  // Only an explicit DENIED (ConsentModePurposeStatusEnum 2) stops GA: outside Europe the status is not
+  // GRANTED either (no message), and the granted default must keep counting there.
   // ponytail: assumes CONSENT_MODE_DATA_READY fires again after a revocation; if not, the CMP's own consent
   // update still stops GA's cookies, and the _ga cookies go on the next page load.
   window.googlefc.callbackQueue.push({ CONSENT_MODE_DATA_READY: () => {
-    const granted = window.googlefc.getGoogleConsentModeValues().analyticsStoragePurposeConsentStatus === 1;   // ConsentModePurposeStatusEnum.GRANTED
-    window["ga-disable-" + id] = !granted;
-    if (granted && !statsGranted) gaLoad(id);
-    if (!granted) dropGaCookies();
-    statsGranted = granted;
+    statsRefused = window.googlefc.getGoogleConsentModeValues().analyticsStoragePurposeConsentStatus === 2;
+    window["ga-disable-" + id] = statsRefused;
+    if (statsRefused) dropGaCookies();
   } });
 }
 

@@ -430,7 +430,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03; refused 2026-10-11, re-review to request about mid-November, see below): ads may come later. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below): ads may come later. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
@@ -478,16 +478,24 @@ framework, no bundler.
   (results checked cell by cell, no spoilers) and its fixes shipped: no promise that the examples run in
   PostgreSQL (plain SQLite needs `lower() LIKE` for ILIKE), the quoted-number refusal named as the terminal's own
   rule, no CTE on the dates page, exercises reordered by difficulty with each one's expected row count, a "By AlephB"
-  byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. Next: wait 3-4 weeks (indexing, real visits), then request the
-  AdSense re-review, about mid-November.
+  byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. The owner brought the re-review forward
+  (an influencer, Nick, will post about the site the week of 2026-10-19): requested 2026-10-19 after that day's
+  fixes, site now "in preparation". Same day in AdSense: Auto ads confirmed off; the European regulations message
+  (published 2026-10-09 for alephb.uk, privacy link alephb.uk/privacy.html, which links the game's page) kept;
+  Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Decided (owner,
+  2026-10-19, before Nick's post): Consent Mode region defaults, everything denied in the EEA, UK and Switzerland
+  until a Yes (cookieless pings, Advanced mode), analytics granted elsewhere by default (the gtag script loads
+  for everyone but a No; `consentDefaults()` in `app.js`, on main since that day); once ads are live, the ad fields
+  are granted by default outside Europe too, Google's message updating the European default.
   **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged; main merged in 2026-10-19, and the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
   and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.ad-slot` with a
-  responsive unit, keeps Consent Mode all denied by default and hands consent to Google's message (GA4 loads only once
-  it grants analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
+  responsive unit, sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
+  elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message (GA4 loads at once
+  for everyone and stops only on an explicit DENIED for analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
   privacy.html is written for that state. Approval-day checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
   a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) AdSense >
   Privacy & messaging > European regulations > Settings: enable the consent mode flags (ads and analytics storage),
-  without which GA never loads; (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
+  without which European visitors' choices never reach GA or the ads; (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
   and phone width in Chrome; (6) confirm Google's consent message appears on the live site (from an EEA connection,
   in a private window) and that the footer link reopens it; (7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
@@ -551,7 +559,8 @@ framework, no bundler.
   `site/leaderboard.html`, live before the trial.
 - **Outreach** (course owner, 2026-10-18): the owner drafted an email to Nick (softwarewithnick, a software content creator
   whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
-  free, no sponsorship asked; sent 2026-10-19. Pending his reply. The site may show ads later (AdSense pending): if asked whether it
+  free, no sponsorship asked; sent 2026-10-19. He replied the same day that he will probably post about it that
+  week; the owner wants ads live by then (the ads branch is up to date, AdSense approval is the blocker). The site may show ads later (AdSense pending): if asked whether it
   earns money, say so.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /

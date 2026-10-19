@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -378,19 +378,34 @@ test("suspects appear when met, and their notes when their chapter is reached", 
 });
 
 
-test("track sends nothing without consent and gtag", () => {
+test("consent defaults: Europe denied; elsewhere analytics, and ads once they run", () => {
+  assert.equal(CONSENT_REGIONS.length, 32);   // 27 EU + IS, LI, NO + GB, CH
+  const ads = ["ad_storage", "ad_user_data", "ad_personalization"];
+  for (const on of [false, true]) {
+    const [eu, rest] = consentDefaults(on);
+    assert.ok(["FR", "DE", "IE", "NO", "IS", "LI", "GB", "CH"].every(r => eu.region.includes(r)));
+    assert.ok(!eu.region.includes("US") && !("region" in rest));
+    for (const k of [...ads, "analytics_storage"]) assert.equal(eu[k], "denied");
+    assert.equal(rest.analytics_storage, "granted");
+    for (const k of ads) assert.equal(rest[k], on ? "granted" : "denied");
+    assert.equal(eu.wait_for_update, on ? 500 : undefined);   // Google's message is async; the banner's Yes is not awaited
+  }
+});
+
+test("track sends nothing after a No or without gtag", () => {
   assert.equal(track("chapter_open", { chapter: 1, mode: "learn" }), false);   // node: no window
   const calls = [], store = {};
   globalThis.window = { gtag: (...a) => calls.push(a) };
   const ls = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
   Object.defineProperty(globalThis, "localStorage", { configurable: true, value: { getItem: k => store[k] ?? null } });
   try {
-    assert.equal(track("badge", { name: "x" }), false);   // not answered
+    assert.equal(track("badge", { name: "x" }), true);   // not answered: Consent Mode's defaults decide
     store["ritz.consent"] = "no";
-    assert.equal(track("badge", { name: "x" }), false);
+    assert.equal(track("badge", { name: "x" }), ADS_ON);   // ads on: Google's message, not the banner, decides
     store["ritz.consent"] = "yes";
     assert.equal(track("badge", { name: "x" }), true);
-    assert.deepEqual(calls, [["event", "badge", { name: "x" }]]);
+    assert.equal(calls.length, ADS_ON ? 3 : 2);
+    assert.deepEqual(calls[0], ["event", "badge", { name: "x" }]);
     delete window.gtag;
     assert.equal(track("badge", { name: "x" }), false);   // consent but gtag.js never set up
   } finally {

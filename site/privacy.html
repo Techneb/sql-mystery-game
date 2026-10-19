@@ -28,9 +28,10 @@
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. The page shows advertising from Google AdSense in one box beside the
-  game, under the schema, never inside a chapter. When you first visit, Google's consent message asks
-  whether Google and its partners may use cookies and your data for advertising and for usage statistics
-  (below). The game itself sets no cookies.</p>
+  game, under the schema, never inside a chapter. In the European Economic Area, the United Kingdom and
+  Switzerland, Google's consent message asks on your first visit whether Google and its partners may use
+  cookies and your data for advertising and for usage statistics; elsewhere both are on by default and you
+  can opt out (below). The game itself sets no cookies.</p>
 
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
@@ -38,23 +39,31 @@
   left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
 
-  <h2>Your consent: Google's consent message</h2>
-  <p>On your first visit, a message from Google (Google's certified consent management platform,
-  served by the AdSense script) asks for your consent to advertising and usage statistics, with
-  buttons to accept or refuse and a way to manage each purpose. Google keeps your
-  choice in its own cookies on this site. Until you choose, and whenever you refuse, the page tells
-  Google's tags that every purpose is denied (Google Consent Mode: ad storage, ad user data, ad
-  personalisation and analytics storage all start as denied).</p>
+  <h2>Your consent</h2>
+  <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user
+  data, ad personalisation and analytics storage), and Google applies the one that fits your country:</p>
+  <ul>
+    <li><b>In the European Economic Area, the United Kingdom and Switzerland</b>, every purpose starts as
+    denied. On your first visit a message from Google (Google's certified consent management platform,
+    served by the AdSense script) asks for your consent to advertising and usage statistics, with buttons
+    to accept or refuse and a way to manage each purpose. Google keeps your choice in its own cookies on
+    this site. Until you choose, and whenever you refuse, every purpose stays denied.</li>
+    <li><b>Everywhere else</b>, no message is shown and every purpose starts as granted: usage statistics
+    are counted and the ads may be personalised, until you opt out.</li>
+  </ul>
   <p>You can change your mind at any time: the <i>Privacy and cookie settings</i> link at the bottom of
-  the game's front page reopens Google's message. If you withdraw consent to statistics, the page deletes
-  the <code>_ga</code> cookies.</p>
-  <p>Visitors outside the European Economic Area, the United Kingdom and Switzerland are not shown the
-  message: for them every purpose stays denied, usage statistics never load, and the ads shown are not
-  personalised.</p>
+  the game's front page reopens Google's message where it applies. If you withdraw consent to statistics,
+  the page stops sending them and deletes the <code>_ga</code> cookies. Outside Europe, opt out of
+  personalised ads in Google's <a href="https://www.google.com/settings/ads">Ads Settings</a> (more below),
+  and of statistics with Google's
+  <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics opt-out add-on</a> or your browser's
+  tracking protection.</p>
 
-  <h2>Usage statistics (only with your consent)</h2>
-  <p>Only if you consent to usage statistics (analytics storage) in Google's message does the page load
-  <b>Google Analytics 4</b>:</p>
+  <h2>Usage statistics</h2>
+  <p>The page loads <b>Google Analytics 4</b> on every visit. In Europe, until you consent to usage
+  statistics in Google's message, it sets no cookie and sends only cookieless signals (the page viewed and
+  the game events below, with no identifier tying them to you), which Google uses to estimate overall
+  numbers. With statistics on (your consent in Europe, the default elsewhere):</p>
   <ul>
     <li>It sets the first-party cookies <code>_ga</code> and <code>_ga_&lt;id&gt;</code>, which Google keeps
     for up to 13 months by default. The collected data itself is kept for 14 months, then deleted.</li>
@@ -81,9 +90,10 @@
   AdSense script loads on every visit, because it also carries Google's consent message; what it may do
   depends on your choice:</p>
   <ul>
-    <li>If you consent, Google and its partners may set and read advertising cookies and use data about
-    your visits to this site and other sites to show <b>personalised ads</b>, and measure them.</li>
-    <li>If you refuse, or are not asked, you see <b>non-personalised ads</b>, chosen from the page's
+    <li>If you consent, or by default outside the European Economic Area, the United Kingdom and Switzerland,
+    Google and its partners may set and read advertising cookies and use data about your visits to this site
+    and other sites to show <b>personalised ads</b>, and measure them.</li>
+    <li>If you refuse in Google's message, or opt out in Ads Settings, you see <b>non-personalised ads</b>, chosen from the page's
     content and your approximate location rather than your browsing; Google may still use cookies or
     similar identifiers for frequency capping, aggregated reporting and fighting fraud and abuse, as
     its policies allow, or show no ad at all.</li>
@@ -95,8 +105,9 @@
     <a href="https://www.google.com/settings/ads">Ads Settings</a>, or opt out of other vendors' use of
     cookies for personalised advertising at <a href="https://www.aboutads.info">www.aboutads.info</a>.</li>
   </ul>
-  <p>To withdraw or change your advertising consent, use the <i>Privacy and cookie settings</i> link at
-  the bottom of the game's front page, which reopens Google's message. How Google uses data from sites
+  <p>To withdraw or change your advertising consent in Europe, use the <i>Privacy and cookie settings</i> link at
+  the bottom of the game's front page, which reopens Google's message; elsewhere, use Google's Ads Settings
+  or aboutads.info above. How Google uses data from sites
   that use its services: <a href="https://policies.google.com/technologies/partner-sites">policies.google.com/technologies/partner-sites</a>.</p>
 
   <h2>Compete</h2>
@@ -126,9 +137,9 @@
     <li>On every visit: Google's AdSense and consent scripts from pagead2.googlesyndication.com and
     fundingchoicesmessages.google.com, and the ads themselves from Google's ad servers, including
     googleads.g.doubleclick.net and tpc.googlesyndication.com; these see
-    your IP address, and with your consent set advertising cookies.</li>
-    <li>Only if you consent to usage statistics: the Google Analytics script from googletagmanager.com,
-    and its measurements sent to google-analytics.com.</li>
+    your IP address, and with your consent (by default outside Europe) set advertising cookies.</li>
+    <li>On every visit: the Google Analytics script from googletagmanager.com, and its measurements sent
+    to google-analytics.com (cookieless in Europe until you consent, none once you refuse).</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>
