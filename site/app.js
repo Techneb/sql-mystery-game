@@ -1576,7 +1576,6 @@ export const GA_ID = "G-QG0K0D1NQZ";
 export const ADS_CLIENT = "ca-pub-9765732642926043";
 export const AD_SLOT = "";
 export const ADS_ON = AD_SLOT !== "";
-const ADS_KEY = "ritz.ads";
 const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ads off only)
 let statsRefused = false;             // ads on: Google's message reports analytics_storage DENIED
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
@@ -1687,7 +1686,7 @@ function initGoogleConsent(id) {
 }
 
 // The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
-// Open by default; a student who closes it keeps it closed (per browser, ADS_KEY). Hidden unless adsOn().
+// Open on every visit; closing it lasts until the next page load (owner, 2026-10-19). Hidden unless adsOn().
 export function adSlotHtml(client, slot) {
   if (!slot) return '<span class="muted">Ad space (AD_SLOT not set)</span>';
   return '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + slot +
@@ -1696,9 +1695,7 @@ export function adSlotHtml(client, slot) {
 function initAds() {
   const box = $("ad-box");
   if (!adsOn()) return;
-  try { if (localStorage.getItem(ADS_KEY) === "closed") box.open = false; } catch {}
   box.hidden = false;
-  box.addEventListener("toggle", () => { try { localStorage.setItem(ADS_KEY, box.open ? "open" : "closed"); } catch {} });
   // adsbygoogle.js also serves Google's consent message, so it loads even before a slot exists.
   const s = document.createElement("script");
   s.async = true; s.crossOrigin = "anonymous";
