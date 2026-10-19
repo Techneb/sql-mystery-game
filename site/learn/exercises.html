@@ -40,11 +40,15 @@
 <main class="learn">
 <h1>SQL exercises with solutions</h1>
 <p class="game-label">Game: practice for every <a href="../">chapter</a></p>
-<p class="lede">Reading about SQL is not the same as writing it. Fifteen questions on the bakery database, from a first filter to a recursive chain, each with a worked solution kept out of sight until you want it.</p>
 
-<details class="howto"><summary>How to use this page</summary>
-<p>The terminal on this page runs your queries on the bakery database, by the same rules as the game's: choose a question, write your query, press Run, and the page says whether your result answers it (same rows, whatever the column names; in the order asked when the question asks for one). The buttons above the question list choose a level. It remembers, in this browser only, the questions you have solved and the queries you ran (the History under the terminal; click one to put it back in the box). You can also create the database with the script on the <a href="database.html">bakery database page</a> (any SQLite tool will do; every solution below also passes this site's terminal. In plain SQLite, write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>). Read a question, write your query, run it, and only then open the solution to compare. Many questions have several correct answers; if your result has the same rows, your query is right, even if it reads differently. Every solution ends with an <code>ORDER BY</code> that fixes the order of its rows, so that yours can be compared line by line.</p>
-<p>The exercises come in three grades. <b>Warm-up</b> uses one table at a time. <b>Practice</b> joins tables, groups rows and builds a first two-step query or stacks two results. <b>Challenge</b> needs more careful reasoning: the absence of a row, window functions or a recursive CTE. Each one names the handbook page that covers what it needs. Each also says how many rows a correct answer returns.</p>
+<details class="howto"><summary class="label">HOW TO USE THIS PAGE</summary>
+<ol>
+<li>Pick a level, <b>Warm-up</b>, <b>Practice</b> or <b>Challenge</b>, then a question from the list.</li>
+<li>Write your query in the terminal and press <b>Run</b> (Ctrl+Enter; Ctrl+F tidies the layout). The schema shows the tables and their keys; its button enlarges it.</li>
+<li>The page checks every result: the same rows and values as the solution, whatever you name the columns. Order counts only when the question asks for one. A solved question gets a tick, kept in this browser.</li>
+<li>Stuck? <b>Show solution</b> opens the worked answer. A refused query says why and links to the rule it broke: the terminal follows PostgreSQL's rules.</li>
+<li>To work elsewhere, the <a href="database.html">bakery database page</a> has the script that recreates the data in any SQLite tool (write <code>lower(name) LIKE</code> there instead of <code>ILIKE</code>).</li>
+</ol>
 </details>
 
 <section id="workbench" class="workbench" hidden aria-label="Exercise terminal">

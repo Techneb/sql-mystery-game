@@ -1072,7 +1072,7 @@ test("exercises: the level shown first and the question each level button select
   const levels = [...page.matchAll(/<h2>([^<]*)<\/h2>\n<p class="exercise"/g)].map((m) => m[1]);
   assert.deepEqual(levels, ["Warm-up", "Practice", "Challenge"], "each level heading opens its questions");
   assert.match(page, /<div id="ex-static">\n<h2>Warm-up<\/h2>/, "the static questions, hidden by the script only");
-  assert.match(page, /<details class="howto"><summary>How to use this page<\/summary>/, "closed by default");
+  assert.match(page, /<details class="howto"><summary class="label">HOW TO USE THIS PAGE<\/summary>/, "closed by default, titled like HISTORY");
   assert.ok(page.indexOf('class="howto"') < page.indexOf('id="workbench"'), "above the workbench in the HTML, read without JavaScript");
   const js = fs.readFileSync(LEARN + "exercises.js", "utf8");
   assert.match(js, /bench\.querySelector\("\.ex-history"\)\.after\(howto\)/, "the script moves it under History");

@@ -67,7 +67,7 @@
 .learn > .erd-legend { justify-content: center; }
 /* exercises.html with JavaScript (exercises.js): the game's three columns, schema / terminal / question, wider
    than the article; on a phone the question first, then the terminal, the schema last */
-.learn .workbench { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr) minmax(0, 360px); gap: 16px; align-items: start;
+.learn .workbench { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr) minmax(0, 340px); gap: 16px; align-items: start;
   width: min(1400px, calc(100vw - 32px)); font-size: 16px;
   /* centred on the window by margin, never by transform: a transform would trap the enlarged schema's fixed overlay */
   margin: 20px 0 28px calc(50% - min(700px, 50vw - 16px)); }
@@ -93,10 +93,11 @@
 .toc-card b { display: block; font: 700 19px/1.25 "Playfair Display", serif; margin-bottom: 4px; text-decoration: underline; text-underline-offset: 3px; }
 .toc-card:hover, .toc-card:focus-visible { border-color: var(--accent); }
 .wb-terminal details.howto { margin: 16px 0 0; }
-.wb-terminal details.howto summary { font-size: 16px; }
 .bakery-erd.large { display: flex; align-items: center; justify-content: center; padding: 24px; }
 .bakery-erd.large svg { width: 100%; height: 100%; max-width: 1100px; max-height: calc(100vh - 80px); }
-.learn details.howto summary { cursor: pointer; font: 700 20px/1.2 "Playfair Display", serif; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.learn details.howto summary { cursor: pointer; }   /* a .label, like HISTORY */
+.learn details.howto ol { margin: 8px 0 0; padding-left: 1.3em; }
+.learn details.howto li { margin: 0 0 6px; }
 .ex-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
 .ex-levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .ex-solved { color: var(--ok); font-weight: 700; font-size: 14px; }
