@@ -1565,8 +1565,9 @@ function offerCompete() {
 // --- usage statistics (Google Analytics 4) and advertising (AdSense), Consent Mode v2 (spec section 8) ---
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
 // no Statistics link, no request to Google. Owner, 2026-10-19: visitors outside the EEA, UK and Switzerland
-// are counted by default (and, with ads on, see ads under the granted default); inside, everything stays
-// denied (cookieless pings only) until the reader's Yes (the banner, or Google's message with ads on).
+// are counted by default (and, with ads on, see ads under the granted default). Inside, with ads off, nothing is
+// sent before the banner's Yes (GA is not loaded: the browser's time zone stands in for the region); with ads on,
+// Google's certified message asks and everything stays denied (cookieless pings only) until its Yes.
 export const GA_ID = "G-QG0K0D1NQZ";
 // AdSense. Approval day is one edit: paste the display ad unit's data-ad-slot (AdSense > Ads > By ad unit, digits
 // only) into AD_SLOT; ADS_ON follows it.
@@ -1599,8 +1600,14 @@ export function consentDefaults(ads) {
   return [{ ...denied, region: CONSENT_REGIONS, ...(ads ? { wait_for_update: 500 } : {}) },
     { ad_storage: g, ad_user_data: g, ad_personalization: g, analytics_storage: "granted" }];
 }
+// A European time zone (or an unknown one) waits for the banner's Yes. Europe/ also covers non-EEA countries
+// (Russia, Turkey, Ukraine): a wrong guess only leaves a visitor uncounted, never counted without being asked.
+export function europeanZone(tz) {
+  return !tz || /^(Europe|Arctic)\//.test(tz) || /^Atlantic\/(Reykjavik|Canary|Madeira|Azores|Faroe|Faeroe)$/.test(tz);
+}
+function timeZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return ""; } }
 // Every analytics call goes through here. Never pass the pseudo, answers, query text or the board URL.
-// Consent Mode decides what a hit carries: full outside Europe or after a Yes, cookieless in Europe before it.
+// GA is loaded only after a Yes or outside Europe's time zones, and Consent Mode decides what a hit carries.
 export function track(name, params) {
   if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function") return false;
   if (ADS_ON ? statsRefused : consent() === "no") return false;
@@ -1651,7 +1658,7 @@ function initConsent() {
   $("consent-yes").onclick = () => setConsent("yes");
   $("consent-no").onclick = () => setConsent("no");
   const c = consent();
-  if (c !== "no") gaLoad(id);   // everyone but a No: the region defaults decide what is sent
+  if (c === "yes" || (!c && !europeanZone(timeZone()))) gaLoad(id);   // Europe waits for the Yes
   if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
 }
 // Ads on: Google's consent message replaces the banner. The page sets the Consent Mode region defaults
