@@ -1695,21 +1695,46 @@ function initGoogleConsent(id) {
 // The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
 // Open on every visit; closing it lasts until the next page load (owner, 2026-10-19). Hidden unless adsOn().
 export function adSlotHtml(client, slot) {
-  if (!slot) return '<span class="muted">Ad space (AD_SLOT not set)</span>';
   return '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + slot +
     '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+}
+// Ads go live before approval with the house ad as fallback (owner, 2026-10-19): Google's ad shows only once its
+// <ins> reads data-ad-status="filled"; "unfilled", a script that fails to load (ad blockers) or nothing filled
+// with a height after AD_WAIT_MS brings the house ad back. "wait" keeps trying.
+export const AD_WAIT_MS = 4000;
+export function adOutcome({ status, height, elapsed, failed }) {
+  if (failed || status === "unfilled") return "house";
+  if (status === "filled" && height > 0) return "ad";
+  return elapsed >= AD_WAIT_MS ? "house" : "wait";
 }
 function initAds() {
   const box = $("press-box");
   if (!adsOn()) return;
   box.hidden = false;
-  // adsbygoogle.js also serves Google's consent message, so it loads even before a slot exists.
+  // adsbygoogle.js also serves Google's consent message, so it loads even without a slot (the ?ads=1 preview).
   const s = document.createElement("script");
   s.async = true; s.crossOrigin = "anonymous";
   s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
+  let failed = false, check = () => {};
+  s.onerror = () => { failed = true; check(); };
+  if (AD_SLOT) {
+    // The house ad stays in the DOM, hidden while Google's ad is tried beside it (the slot keeps its min-height).
+    const slot = box.querySelector(".press-slot"), house = slot.querySelector(".press-notice");
+    slot.insertAdjacentHTML("beforeend", adSlotHtml(ADS_CLIENT, AD_SLOT));
+    const ins = slot.querySelector("ins.adsbygoogle"), t0 = Date.now();
+    house.hidden = true;
+    const obs = new MutationObserver(() => check());
+    const timer = setTimeout(() => check(), AD_WAIT_MS);
+    check = () => {
+      const v = adOutcome({ status: ins.dataset.adStatus, height: ins.offsetHeight, elapsed: Date.now() - t0, failed });
+      if (v === "wait") return;
+      obs.disconnect(); clearTimeout(timer);
+      if (v === "house") { ins.remove(); house.hidden = false; }
+    };
+    obs.observe(ins, { attributes: true, attributeFilter: ["data-ad-status"] });
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { failed = true; check(); }
+  }
   document.head.appendChild(s);
-  box.querySelector(".press-slot").innerHTML = adSlotHtml(ADS_CLIENT, AD_SLOT);
-  if (AD_SLOT) (window.adsbygoogle = window.adsbygoogle || []).push({});
 }
 
 // Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is

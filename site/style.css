@@ -128,6 +128,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .press-slot { min-height: 250px; display: grid; place-items: center; }
 /* the house ad shown until AdSense approves the site (owner, 2026-10-19): one engraved 1912 advertisement, all of it the link */
 .press-notice { display: block; width: 100%; padding: 8px; }
+.press-notice[hidden] { display: none; }
 .press-notice img { display: block; width: 100%; height: auto; }
 /* its night print (cream on navy, drawn as a positive, not an inverted day ad) swaps in with the night edition */
 .press-notice .night, :root[data-mood="night"] .press-notice .day { display: none; }

@@ -445,8 +445,12 @@ framework, no bundler.
   the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
   messages. The ad box exists: a `<details id="press-box">` under the schema, open on every visit (closing
-  it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a static
-  house notice for the handbook until approval (owner), titled ADVERTISEMENTS in the typewriter face (option D).
+  it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a house ad
+  for the handbook, and keeps it whenever no ad fills the box (owner): `site/handbook-ad.jpg`, a 1912 engraved advertisement with Ganimard (night
+  print `handbook-ad-night.jpg`, swapped in by `data-mood`), the whole picture a link to `learn/` (OpenGen originals
+  in `assets-source/ad/`). It is titled ADVERTISEMENTS in the typewriter face over a dotted rule (option D of a design
+  canvas; AdSense permits only "Advertisements" or "Sponsored Links" as the label), and its names are neutral
+  (`#press-box`, `.press-slot`, `.press-notice`) since ad blockers hid the old `.ad-box`/`.ad-slot`/`.house-ad`.
   **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
   local) found the reviewed URL alephb.uk showing a crawler 48 words and the game about 70 words of prose. Shipped the same
   day: the game's `<meta name="description">`, a closed "About this game" `<details>` on the landing card (347 words:
@@ -469,7 +473,7 @@ framework, no bundler.
   **2026-10-11: refused** for "Contenu a faible valeur informative" (low-value content) on alephb.uk (ads.txt
   authorised), seen in AdSense > Sites on 2026-10-16 (account signed in as the AlephB address, not the owner's
   personal one). Google's criteria: substantial unique value, a consistent web presence, and real user interest.
-  A re-review can be requested from that page once fixed; not requested yet.
+  A re-review can be requested from that page once fixed (requested 2026-10-19, below).
   2026-10-16: Search Console set up under the owner's personal Google account: URL-prefix properties
   https://mystery.alephb.uk/ and https://alephb.uk/, both verified by the same `google-site-verification` meta tag
   (keep it on both home pages); the game's sitemap.xml read, 14 pages. alephb.uk's home page links Play, About the game
@@ -485,25 +489,41 @@ framework, no bundler.
   (published 2026-10-09 for alephb.uk, privacy link alephb.uk/privacy.html, which links the game's page) kept;
   Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Decided (owner,
   2026-10-19, before Nick's post): Consent Mode region defaults, everything denied in the EEA, UK and Switzerland
-  until a Yes (cookieless pings, Advanced mode), analytics granted elsewhere by default (the gtag script loads
-  for everyone but a No; `consentDefaults()` in `app.js`, on main since that day); once ads are live, the ad fields
-  are granted by default outside Europe too, Google's message updating the European default.
+  until a Yes, analytics granted elsewhere by default (`consentDefaults()` in `app.js`); with ads off, the gtag
+  script loads only after a Yes or when the browser's time zone is outside Europe (`europeanZone`), so nothing
+  leaves a European browser before a Yes (the owner chose this over cookieless pings from Europe: same ads, no
+  CNIL grey zone for the Paris students); once ads are live, the ad fields are granted by default outside Europe
+  too, Google's message updating the European default.
+  **Decided (owner, 2026-10-19): ads go live before approval, with the house ad as fallback.** Whenever Google
+  does not fill the slot, the box shows the engraved handbook ad again: `initAds` adds the `<ins>` beside the
+  house ad (hidden while the ad is tried, the slot keeping its 250 px min-height) and `adOutcome` (pure, tested)
+  decides: Google's ad shows only once the `<ins>` reads `data-ad-status="filled"` with a height; `unfilled`
+  (watched by a MutationObserver), an `adsbygoogle.js` that fails to load (ad blockers) or nothing filled after
+  `AD_WAIT_MS` (4 s) removes the `<ins>` and brings the house ad back.
   **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged; main merged in 2026-10-19, and the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
-  and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.press-slot` with a
-  responsive unit, sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
+  and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, tries a
+  responsive unit in `.press-slot` (house-ad fallback above), sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
   elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message (GA4 loads at once
   for everyone and stops only on an explicit DENIED for analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
-  privacy.html is written for that state. Approval-day checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
-  a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) AdSense >
-  Privacy & messaging > European regulations > Settings: enable the consent mode flags (ads and analytics storage),
-  without which European visitors' choices never reach GA or the ads; (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
-  and phone width in Chrome; (6) confirm Google's consent message appears on the live site (from an EEA connection,
+  privacy.html is written for that state. Switch-on checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
+  a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) ~~AdSense >
+  Privacy & messaging > European regulations > Settings: the consent mode flags (ads and analytics storage),
+  without which European visitors' choices never reach GA or the ads~~ (done: the owner turned Consent Mode on for
+  advertising and analytics in AdSense on 2026-10-19); (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
+  and phone width in Chrome, and that the house ad comes back with an ad blocker on; (6) confirm Google's consent message appears on the live site (from an EEA connection,
   in a private window) and that the footer link reopens it; (7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
   2026-10-10); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
   rename rather than drop the game's own link, Google requires the second title verbatim): ~~rename the handbook's
   nav and footer "Privacy" links to "Privacy notice" too~~ (done on the branch 2026-10-10, with admin.html, after main's
   compete v2 was merged into it).
+- ~~House ad when no ad fills the box~~ (offered 2026-10-19; decided the same day, built on the ads branch: see
+  above).
+- **US state privacy message (CCPA)** (flagged 2026-10-19, not handled): AdSense > Privacy & messaging also offers
+  a US state regulations message; none is set up, and the ads branch grants everything by default outside Europe.
+  Owner to decide whether to publish one (and then say so in privacy.html).
+- **Design canvas of the ad box title** (2026-10-19): the claude.ai artifact holding options A-D (D chosen; link in
+  the session's memory, not here) is kept; delete it only when the owner asks.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small

@@ -46,7 +46,7 @@ The page is fully static: no server, no environment variables.
 
 The penalty per wrong answer is set per season by the teacher; the rest is in the code.
 
-- `RANKS` in `site/app.js` sets the query thresholds for each rank; tune after the first class. The rank
+- `RANKS` in `site/app.js` sets the query thresholds for each rank (45 / 70 / 110, tuned 2026-10-19 from the class trial's GA4 query counts). The rank
   counts queries only.
 - `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
 - `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.

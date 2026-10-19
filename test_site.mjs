@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -418,17 +418,29 @@ test("GA_ID is empty or a GA4 measurement ID", () => {
   assert.match(GA_ID, /^(G-[A-Z0-9]+)?$/);
 });
 
-test("ad slot: a placeholder until AD_SLOT is filled, then one responsive AdSense unit", () => {
+test("ad slot: one responsive AdSense unit once AD_SLOT is filled", () => {
   assert.match(ADS_CLIENT, /^ca-pub-\d{16}$/);
   assert.match(AD_SLOT, /^(\d+)?$/);
   assert.equal(ADS_ON, AD_SLOT !== "");   // pasting the slot id is the whole switch-on
-  assert.ok(!adSlotHtml(ADS_CLIENT, "").includes("adsbygoogle"));
-  assert.match(adSlotHtml(ADS_CLIENT, ""), /AD_SLOT not set/);
   const html = adSlotHtml("ca-pub-9765732642926043", "1234567890");
   assert.match(html, /^<ins class="adsbygoogle" style="display:block" /);
   assert.match(html, /data-ad-client="ca-pub-9765732642926043"/);
   assert.match(html, /data-ad-slot="1234567890"/);
   assert.match(html, /data-ad-format="auto" data-full-width-responsive="true"><\/ins>$/);
+});
+
+test("ad box: Google's ad only once filled, else the house ad comes back", () => {
+  const at = (o) => adOutcome({ status: undefined, height: 0, elapsed: 0, failed: false, ...o });
+  assert.equal(at({}), "wait");
+  assert.equal(at({ status: "filled", height: 250 }), "ad");
+  assert.equal(at({ status: "filled", height: 0 }), "wait");                     // filled but not laid out yet
+  assert.equal(at({ status: "filled", height: 0, elapsed: AD_WAIT_MS }), "house");
+  assert.equal(at({ status: "unfilled" }), "house");                             // Google had no ad (or no approval)
+  assert.equal(at({ failed: true }), "house");                                   // script blocked or offline
+  assert.equal(at({ failed: true, status: "filled", height: 250 }), "house");
+  assert.equal(at({ elapsed: AD_WAIT_MS - 1 }), "wait");
+  assert.equal(at({ elapsed: AD_WAIT_MS }), "house");                            // nothing came back in time
+  assert.ok(AD_WAIT_MS >= 3000 && AD_WAIT_MS <= 6000);
 });
 
 test("a comma join with nothing to match is refused before it can hang the page", () => {
