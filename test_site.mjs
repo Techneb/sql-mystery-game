@@ -501,7 +501,11 @@ const LEARN = "site/learn/";
 const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
 const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
 // the index lists its pages in three groups (chapters, exercises, grammar), in reading order
-const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1].matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1])];
+// Reading order (the pagers): the chapters list, then the exercises card, then grammar, whatever order the index shows its groups in.
+const tocGroups = learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1];
+const tocLinks = (html) => [...html.matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1]);
+const chapterLinks = tocLinks(tocGroups.match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1]);
+const readingOrder = ["index.html", ...chapterLinks, ...tocLinks(tocGroups).filter((h) => !chapterLinks.includes(h))];
 const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
 const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
