@@ -15,25 +15,27 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../admin.html">The Clerk's Desk</a></nav>
 </header>
-<nav class="learn-menu"><a href="index.html">Index</a>
-    <a href="database.html">1. Database</a>
-    <a href="schema.html">2. Schema</a>
-    <a href="select-where.html">3. SELECT</a>
-    <a href="order-by-limit.html">4. ORDER BY</a>
-    <span class="current" aria-current="page">5. LIKE</span>
-    <a href="dates-times.html">6. Dates</a>
-    <a href="group-by-having.html">7. GROUP BY</a>
-    <a href="joins.html">8. JOIN</a>
-    <a href="nulls.html">9. NULL</a>
-    <a href="case-when.html">10. CASE</a>
-    <a href="subqueries.html">11. Subqueries</a>
-    <a href="set-operations.html">12. UNION</a>
-    <a href="window-functions.html">13. Windows</a>
-    <a href="ctes.html">14. CTEs</a>
-    <a href="exercises.html">15. Exercises</a>
-    <a href="grammar.html">16. Grammar</a></nav>
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary class="current">Learning chapters: 5. LIKE</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+    <li><span class="current" aria-current="page">5. LIKE</span></li>
+    <li><a href="dates-times.html">6. Dates</a></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <a href="grammar.html">Grammar</a></nav>
 <main class="learn">
 <h1>LIKE and text patterns</h1>
 <p class="game-label">Game: chapter <a href="../">III</a></p>
@@ -63,7 +65,31 @@
 <tr><th>name</th><th>price</th></tr>
 <tr><td>Almond croissant</td><td>2.2</td></tr>
 </table>
-<p>More on this, and on the other rules a correct query follows, in <a href="grammar.html#like-ilike">The Grammar of SQL</a>.</p>
+
+<h2 id="like-ilike">Grammar: LIKE and ILIKE</h2>
+<p>Patterns are written with <code>LIKE</code>, or <code>ILIKE</code> to ignore case, and nothing else: <code>GLOB</code> and <code>REGEXP</code> are not standard SQL, and neither is <code>COLLATE NOCASE</code>. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">GLOB</span> <span class="sql-str">'C*'</span>;</code></pre>
+<div class="refusal"><code>ERROR: syntax error at or near "GLOB"</code> GLOB is not standard SQL: match patterns with LIKE (case-sensitive, % for any run of characters, _ for one) or ILIKE (the same, ignoring case).</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'C%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Croissant</td></tr>
+<tr><td>Chocolate eclair</td></tr>
+<tr><td>Carrot cake slice</td></tr>
+</table>
+<p>The others, with what to write instead:</p>
+<table class="result">
+<tr><th>Instead of</th><th>Write</th></tr>
+<tr><td>x GLOB 'A*'</td><td>x LIKE 'A%'</td></tr>
+<tr><td>x REGEXP ...</td><td>LIKE or ILIKE</td></tr>
+<tr><td>INSTR(text, part)</td><td>text LIKE '%part%'</td></tr>
+<tr><td>x = 'a' COLLATE NOCASE</td><td>lower(x) = 'a', or x ILIKE 'a'</td></tr>
+</table>
 
 <h2>The underscore: a fixed length</h2>
 <p>The underscore is handy for codes and dates whose shape you know. The pattern <code>'2026-03-0_'</code> matches any of the first nine days of March 2026 and nothing else, because exactly one character must follow the zero. Two underscores require two characters, and so on.</p>

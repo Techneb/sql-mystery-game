@@ -15,30 +15,32 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../admin.html">The Clerk's Desk</a></nav>
 </header>
-<nav class="learn-menu"><a href="index.html">Index</a>
-    <a href="database.html">1. Database</a>
-    <a href="schema.html">2. Schema</a>
-    <a href="select-where.html">3. SELECT</a>
-    <a href="order-by-limit.html">4. ORDER BY</a>
-    <a href="like.html">5. LIKE</a>
-    <a href="dates-times.html">6. Dates</a>
-    <a href="group-by-having.html">7. GROUP BY</a>
-    <a href="joins.html">8. JOIN</a>
-    <a href="nulls.html">9. NULL</a>
-    <a href="case-when.html">10. CASE</a>
-    <a href="subqueries.html">11. Subqueries</a>
-    <a href="set-operations.html">12. UNION</a>
-    <a href="window-functions.html">13. Windows</a>
-    <a href="ctes.html">14. CTEs</a>
-    <a href="exercises.html">15. Exercises</a>
-    <span class="current" aria-current="page">16. Grammar</span></nav>
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary>Learning chapters</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+    <li><a href="like.html">5. LIKE</a></li>
+    <li><a href="dates-times.html">6. Dates</a></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <span class="current" aria-current="page">Grammar</span></nav>
 <main class="learn">
 <h1>The Grammar of SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
 <p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
-<p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one does not run, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. Each section below shows a query that breaks a rule, the terminal's answer, and the correct version, on the <a href="database.html">bakery database</a>.</p>
+<p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one does not run, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. This page gives the order in which a query is worked out, from which most of the rules follow, then lists every rule with a link to the page that explains it, with examples on the <a href="database.html">bakery database</a>.</p>
 
 <h2 id="order-of-execution">Order of execution</h2>
 <p>A query is written starting with <code>SELECT</code>, but it is not worked out in that order. Logically, the database takes the clauses in this order, and each step sees only what the step before it produced:</p>
@@ -53,252 +55,36 @@
 <tr><td>7</td><td>ORDER BY</td><td>sorts the result</td></tr>
 <tr><td>8</td><td>LIMIT and OFFSET</td><td>keeps a slice of the sorted rows</td></tr>
 </table>
-<p>Most of the rules on this page follow from that order. An alias is a name given at step 5, so <code>WHERE</code> and <code>HAVING</code>, at steps 2 and 4, run before it exists and cannot use it (see <a href="#aliases">Aliases in WHERE and HAVING</a>), while <code>ORDER BY</code>, at step 7, can. A window function is computed at step 5 too, which is why it cannot be filtered in <code>WHERE</code>: compute it in a <a href="ctes.html">CTE</a> and filter outside. After step 3 each row is a group, so steps 4 to 7 may only use grouped columns and aggregates, plus, in <code>ORDER BY</code>, the result's own column names. And <code>LIMIT</code> comes last, so it keeps the first rows of the sorted result, never a sample taken before sorting. With <a href="set-operations.html">UNION, INTERSECT or EXCEPT</a>, each half runs steps 1 to 6 on its own, the two results are combined, and the one <code>ORDER BY</code> and <code>LIMIT</code> apply to the combination. The database may take shortcuts when it actually runs a query, but the result is always the one this order gives.</p>
+<p>Most of the rules on this page follow from that order. An alias is a name given at step 5, so <code>WHERE</code> and <code>HAVING</code>, at steps 2 and 4, run before it exists and cannot use it (see <a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>), while <code>ORDER BY</code>, at step 7, can. A window function is computed at step 5 too, which is why it cannot be filtered in <code>WHERE</code>: compute it in a <a href="ctes.html">CTE</a> and filter outside. After step 3 each row is a group, so steps 4 to 7 may only use grouped columns and aggregates, plus, in <code>ORDER BY</code>, the result's own column names. And <code>LIMIT</code> comes last, so it keeps the first rows of the sorted result, never a sample taken before sorting. With <a href="set-operations.html">UNION, INTERSECT or EXCEPT</a>, each half runs steps 1 to 6 on its own, the two results are combined, and the one <code>ORDER BY</code> and <code>LIMIT</code> apply to the combination. The database may take shortcuts when it actually runs a query, but the result is always the one this order gives.</p>
 
-<h2 id="group-by">GROUP BY: grouped or aggregated</h2>
-<p>After <code>GROUP BY</code>, each row of the result stands for a whole group. A column in <code>SELECT</code> must therefore be one of the grouped columns, or sit inside an aggregate such as <code>COUNT</code>, <code>SUM</code>, <code>MIN</code> or <code>MAX</code>: anything else has several values inside one group, and no single one of them to show.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*)
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
-<div class="refusal"><code>ERROR: column "product.name" must appear in the GROUP BY clause or be used in an aggregate function</code> Each row of the result is one group, and product.name can hold several values inside a group: add product.name to GROUP BY, or wrap it in an aggregate such as MAX(product.name).</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">MIN</span>(<span class="sql-id">name</span>) <span class="sql-kw">AS</span> <span class="sql-id">first_alphabetically</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
-<table class="result">
-<tr><th>category</th><th>products</th><th>first_alphabetically</th></tr>
-<tr><td>bread</td><td>4</td><td>Baguette</td></tr>
-<tr><td>cake</td><td>3</td><td>Carrot cake slice</td></tr>
-<tr><td>pastry</td><td>3</td><td>Almond croissant</td></tr>
-</table>
-<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>. One exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
-<span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
-<table class="result">
-<tr><th>id</th><th>name</th><th>orders</th></tr>
-<tr><td>1</td><td>Alice Turner</td><td>4</td></tr>
-<tr><td>2</td><td>Ben Okafor</td><td>2</td></tr>
-<tr><td>3</td><td>Chloe Martin</td><td>2</td></tr>
-</table>
+<h2 id="the-rules">The rules, and where each is explained</h2>
+<p>Each rule sits on the page of the construct it belongs to, with a query that breaks it, the terminal's answer, and the correct version. The terminal's own error messages link to the same sections.</p>
+<ul class="toc">
+<li><a href="select-where.html#double-quotes">Double quotes</a>: 'text' is a value, "name" a name, and a quoted name keeps its case.</li>
+<li><a href="select-where.html#double-equals">One equals sign</a>: SQL compares with =, never ==.</li>
+<li><a href="select-where.html#types">Types</a>: a number against a number, text against text, || on text.</li>
+<li><a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>: a SELECT name does not exist there yet.</li>
+<li><a href="select-where.html#boolean">Conditions</a>: WHERE, HAVING, ON and WHEN need something true or false.</li>
+<li><a href="order-by-limit.html#distinct-order">DISTINCT and ORDER BY</a>: sort by what was selected.</li>
+<li><a href="order-by-limit.html#limit-offset">LIMIT and OFFSET</a>: LIMIT 3 OFFSET 2, not LIMIT 2, 3.</li>
+<li><a href="like.html#like-ilike">LIKE and ILIKE</a>: the only pattern matches, case-sensitive or not.</li>
+<li><a href="dates-times.html#date-functions">Dates, substr and CAST</a>: comparisons and substr, not strftime, LEFT or ::.</li>
+<li><a href="group-by-having.html#group-by">GROUP BY</a>: every column grouped or aggregated.</li>
+<li><a href="group-by-having.html#having">HAVING without GROUP BY</a>: aggregates only.</li>
+<li><a href="group-by-having.html#order-by-grouped">ORDER BY after GROUP BY</a>: grouped columns, aggregates or aliases.</li>
+<li><a href="group-by-having.html#group-concat">string_agg and SUM</a>: not GROUP_CONCAT or TOTAL.</li>
+<li><a href="nulls.html#coalesce">COALESCE and IS</a>: not IFNULL; IS only with NULL, TRUE or FALSE.</li>
+<li><a href="case-when.html#iif">CASE, not IIF</a>: and no MAX or MIN of two values.</li>
+<li><a href="#sqlite-only">Other shorthands</a>: below.</li>
+</ul>
 
-<h2 id="having">HAVING without GROUP BY</h2>
-<p><code>HAVING</code> filters groups. Without <code>GROUP BY</code>, the whole table is one group, so only aggregates make sense in it: a plain column has no single value.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>;</code></pre>
-<div class="refusal"><code>ERROR: column "product.category" must appear in the GROUP BY clause or be used in an aggregate function</code> HAVING without GROUP BY makes the whole table one group, so product.category can only appear inside an aggregate: add GROUP BY product.category, or move a row condition to WHERE.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
-<table class="result">
-<tr><th>category</th></tr>
-<tr><td>bread</td></tr>
-</table>
-<p>A query that only selects aggregates may keep its <code>HAVING</code> without <code>GROUP BY</code>: it returns the single row of the whole table, or nothing.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>;</code></pre>
-<table class="result">
-<tr><th>products</th></tr>
-<tr><td>10</td></tr>
-</table>
-
-<h2 id="order-by-grouped">ORDER BY after GROUP BY</h2>
-<p>Sorting happens after grouping, so <code>ORDER BY</code> follows the same rule as <code>SELECT</code>: a grouped column, an aggregate, or an alias from the <code>SELECT</code> list.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>;</code></pre>
-<div class="refusal"><code>ERROR: column "product.price" must appear in the GROUP BY clause or be used in an aggregate function</code> After GROUP BY each row is a group, so ORDER BY can only use grouped columns, aggregates or SELECT aliases: sort by MAX(product.price), or add product.price to GROUP BY.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">DESC</span>;</code></pre>
-<table class="result">
-<tr><th>category</th><th>products</th></tr>
-<tr><td>bread</td><td>4</td></tr>
-<tr><td>cake</td><td>3</td></tr>
-<tr><td>pastry</td><td>3</td></tr>
-</table>
-<p>Say which price you mean: the dearest of each category here, or <code>MIN(price)</code>, or <code>AVG(price)</code>.</p>
-
-<h2 id="distinct-order">DISTINCT and ORDER BY</h2>
-<p><code>SELECT DISTINCT</code> removes repeated rows before the sort, so the sort can only use what was selected.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>;</code></pre>
-<div class="refusal"><code>ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list</code> DISTINCT removes repeated rows before sorting, so price is gone by then: add it to the SELECT list, or sort by a column you selected.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-fn">MIN</span>(<span class="sql-id">price</span>);</code></pre>
-<table class="result">
-<tr><th>category</th></tr>
-<tr><td>bread</td></tr>
-<tr><td>pastry</td></tr>
-<tr><td>cake</td></tr>
-</table>
-<p><code>GROUP BY</code> also keeps one row per category, and it lets you sort the categories by an aggregate, here their cheapest product.</p>
-
-<h2 id="double-quotes">Double quotes</h2>
-<p>Single quotes make a text value: <code>'bread'</code>. Double quotes make a name, of a column or a table: <code>"category"</code>. So <code>"bread"</code> asks for a column called bread, and there is none. Names in double quotes also keep their exact case, so <code>"Category"</code> is not <code>category</code>.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">"bread"</span>;</code></pre>
-<div class="refusal"><code>ERROR: column "bread" does not exist</code> "bread" in double quotes is the name of a column, and there is none: a text value takes single quotes, 'bread'.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'bread'</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-<tr><td>Baguette</td></tr>
-<tr><td>Sourdough loaf</td></tr>
-<tr><td>Rye loaf</td></tr>
-<tr><td>Seeded rolls</td></tr>
-</table>
-<p>The same goes for aliases: an alias is a name, so write <code>AS total</code>, or <code>AS "Total"</code> to keep a capital or a space, never <code>AS 'total'</code>. Names are quoted with double quotes only, not with backticks or square brackets.</p>
-
-<h2 id="double-equals">One equals sign</h2>
-<p>SQL compares with a single <code>=</code>. The double <code>==</code> belongs to programming languages, not to SQL.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> == <span class="sql-num">4</span>;</code></pre>
-<div class="refusal"><code>ERROR: operator does not exist: integer == integer</code> SQL compares with a single equals sign: write id = 4.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">4</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-<tr><td>Croissant</td></tr>
-</table>
-<p>Not equal is <code>&lt;&gt;</code> or <code>!=</code>; both are accepted.</p>
-
-<h2 id="types">Types</h2>
-<p>Every column has a type, written in the schema: whole numbers (<code>INTEGER</code>), text (<code>TEXT</code>). A number is compared with a number, text with text; a comparison of two different kinds is an error. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
-<p>The example below is this terminal's own rule, not PostgreSQL's: PostgreSQL would read the quoted <code>'1'</code> as the number 1 and run the query. The terminal refuses it on purpose, so that a number is always written as a number and its type shows in the query.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-str">'1'</span>;</code></pre>
-<div class="refusal"><code>ERROR: operator does not exist: integer = text</code> referred_by holds numbers and '1' is quoted text: drop the quotes, as in referred_by = 1.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Chloe Martin</td></tr>
-</table>
-<p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>.</p>
-
-<h2 id="aliases">Aliases in WHERE and HAVING</h2>
-<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists (see <a href="#order-of-execution">Order of execution</a>), so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">double_price</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">double_price</span> &gt; <span class="sql-num">7</span>;</code></pre>
-<div class="refusal"><code>ERROR: column "double_price" does not exist</code> double_price is a name given in SELECT, and WHERE is worked out before SELECT, so the name does not exist there yet: repeat the expression itself, price * 2.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">double_price</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> * <span class="sql-num">2</span> &gt; <span class="sql-num">7</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">double_price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>;</code></pre>
-<table class="result">
-<tr><th>name</th><th>double_price</th></tr>
-<tr><td>Sourdough loaf</td><td>9.0</td></tr>
-<tr><td>Lemon tart</td><td>7.8</td></tr>
-<tr><td>Rye loaf</td><td>7.6</td></tr>
-<tr><td>Seeded rolls</td><td>7.6</td></tr>
-</table>
-
-<h2 id="boolean">Conditions</h2>
-<p><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and each <code>WHEN</code> of a <code>CASE</code> need a condition, something true or false. A bare column such as <code>WHERE referred_by</code> is a value, not a condition: write the comparison out. The same holds for each side of <code>AND</code> and <code>OR</code>, and for <code>NOT</code>.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span>;</code></pre>
-<div class="refusal"><code>ERROR: argument of WHERE must be type boolean, not type integer</code> WHERE needs a condition that is true or false, and referred_by is a number: compare it with something, as in referred_by = ... or referred_by IS NOT NULL.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Grace Lee</td></tr>
-</table>
-
-<h2 id="sqlite-only">Standard syntax</h2>
-<p>The terminal runs the forms that PostgreSQL and SQLite share; a shorthand that only one of them knows is refused. Write these instead:</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">2</span>, <span class="sql-num">3</span>;</code></pre>
-<div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 2, 3 is not standard SQL: write LIMIT 3 OFFSET 2 (the row count first, then how many rows to skip).</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">2</span>;</code></pre>
-<table class="result">
-<tr><th>name</th><th>price</th></tr>
-<tr><td>Rye loaf</td><td>3.8</td></tr>
-<tr><td>Seeded rolls</td><td>3.8</td></tr>
-<tr><td>Carrot cake slice</td><td>3.2</td></tr>
-</table>
-<p>The others, with what to write instead:</p>
+<h2 id="sqlite-only">Other shorthands</h2>
+<p>A few more functions are not standard SQL either. Write these instead:</p>
 <table class="result">
 <tr><th>Instead of</th><th>Write</th></tr>
-<tr><td>LIMIT 2, 3</td><td>LIMIT 3 OFFSET 2</td></tr>
-<tr><td>IFNULL(a, b)</td><td>COALESCE(a, b)</td></tr>
-<tr><td>IIF(c, a, b)</td><td>CASE WHEN c THEN a ELSE b END</td></tr>
-<tr><td>x GLOB 'A*'</td><td>x LIKE 'A%'</td></tr>
-<tr><td>x REGEXP ...</td><td>LIKE or ILIKE</td></tr>
-<tr><td>GROUP_CONCAT(x)</td><td>string_agg(x, ', ')</td></tr>
-<tr><td>INSTR(text, part)</td><td>text LIKE '%part%'</td></tr>
-<tr><td>strftime, julianday, datetime</td><td>compare the date text (d &gt;= '2024-06-01'), or substr(d, 1, 7)</td></tr>
-<tr><td>MAX(a, b), MIN(a, b)</td><td>CASE WHEN a &gt; b THEN a ELSE b END, CASE WHEN a &lt; b THEN a ELSE b END</td></tr>
-<tr><td>LEFT(t, n), RIGHT(t, n)</td><td>substr(t, 1, n), substr(t, length(t) - n + 1)</td></tr>
-<tr><td>x::integer</td><td>CAST(x AS INTEGER)</td></tr>
-<tr><td>2 || 3 (two numbers)</td><td>2 + 3, or CAST(2 AS TEXT) || 3</td></tr>
-<tr><td>x IS 5</td><td>x = 5, or x IS NOT DISTINCT FROM 5</td></tr>
-<tr><td>x = 'a' COLLATE NOCASE</td><td>lower(x) = 'a', or x ILIKE 'a'</td></tr>
-<tr><td>`name`, [name]</td><td>"name", or the bare name</td></tr>
-</table>
-<p><code>COALESCE</code>, for example, gives the first value that is not NULL:</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-id">referred_by</span>, <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
-<table class="result">
-<tr><th>name</th><th>referrer</th></tr>
-<tr><td>Alice Turner</td><td>0</td></tr>
-<tr><td>Ben Okafor</td><td>1</td></tr>
-<tr><td>Chloe Martin</td><td>1</td></tr>
-</table>
-
-<h2 id="like-ilike">LIKE and ILIKE</h2>
-<p><code>LIKE</code> is case-sensitive: a capital letter in the data must be a capital in the pattern. Nothing is wrong with the query below, but a pattern in the wrong case quietly finds nothing.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'croissant%'</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-</table>
-<p><code>ILIKE</code> is the same match with case ignored.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'croissant%'</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
-<table class="result">
-<tr><th>name</th></tr>
-<tr><td>Croissant</td></tr>
+<tr><td>printf(...)</td><td>format(...)</td></tr>
+<tr><td>randomblob(n)</td><td>random()</td></tr>
+<tr><td>likely(c), unlikely(c)</td><td>the condition c alone</td></tr>
 </table>
 
 <p class="in-game"><b>In the game:</b> every chapter's terminal follows these rules, in both the investigation and the timed sessions.</p>

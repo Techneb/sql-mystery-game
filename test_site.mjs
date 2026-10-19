@@ -6,7 +6,7 @@ import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
-import { sameResult, sameValue, checkOptions, tablesIn } from "./site/learn/exercises.js";
+import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -507,18 +507,31 @@ const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(
 test("handbook: every page carries the same masthead nav, footer and chapter menu, only the current item differs", () => {
   assert.deepEqual([...readingOrder].sort(), learnPages, "the index's table of contents lists every page once");
   const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
+  const foot = one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer");
+  const links = (h) => [...h.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)].map((m) => m[2]);
+  assert.deepEqual(links(nav), ["Game", "The Clerk's Handbook", "The Clerk's Desk"], "the header keeps the three destinations");
+  assert.deepEqual(links(foot), ["Game", "The Clerk's Handbook", "Privacy notice", "The Clerk's Desk", "AlephB", "Contact"], "the footer holds the rest too");
+  const admin = fs.readFileSync("site/admin.html", "utf8");
+  assert.deepEqual(links(one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav")), links(nav), "the admin page's header");
+  assert.deepEqual(links(one(admin, /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "admin footer")), links(foot), "the admin page's footer");
+  const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html"].includes(f));
   const linked = (f) => {
     const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
-    assert.equal((menu.match(/class="current"/g) || []).length, 1, f + ": one current item");
-    return menu.replace(/<span class="current" aria-current="page">([^<]*)<\/span>/, `<a href="${f}">$1</a>`);
+    const cur = [...menu.matchAll(/<span class="current" aria-current="page">([^<]*)<\/span>/g)];
+    assert.equal(cur.length, 1, f + ": one current item");
+    assert.equal((menu.match(/class="current"/g) || []).length, chapters.includes(f) ? 2 : 1, f + ": Learning chapters is current on a learning page only");
+    if (chapters.includes(f)) assert.ok(menu.includes(`<summary class="current">Learning chapters: ${cur[0][1]}</summary>`), f + " summary names the page");
+    return menu.replace(cur[0][0], `<a href="${f}">${cur[0][1]}</a>`).replace(/<summary class="current">[^<]*<\/summary>/, "<summary>Learning chapters</summary>");
   };
   const ref = linked("index.html");
+  assert.match(ref, /<details class="learn-chapters"><summary>Learning chapters<\/summary><ol>/, "a native disclosure, no script needed");
   const items = [...ref.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)];
-  assert.deepEqual(items.map((m) => m[1]), readingOrder, "menu in table of contents order");
-  items.slice(1).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "menu numbered 1 to 10: " + m[2]));
+  assert.deepEqual(items.map((m) => m[1]), ["index.html", ...chapters, "exercises.html", "grammar.html"], "menu in table of contents order");
+  assert.deepEqual(items.map((m) => m[2]).filter((t) => !/^\d/.test(t)), ["Index", "Exercises", "Grammar"]);
+  items.slice(1, -2).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "chapters numbered from 1: " + m[2]));
   for (const f of learnPages) {
     assert.equal(one(learnHtml[f], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, f + " nav"), nav, f + " nav");
-    assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), nav, f + " footer");
+    assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), foot, f + " footer");
     assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
   }
 });
@@ -800,18 +813,18 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
     ["boolean", "SELECT id FROM cab_ride WHERE NOT plate", /argument of NOT must be type boolean, not type text/],
     ["boolean", "SELECT CASE WHEN fare THEN 1 END FROM cab_ride", /argument of CASE\/WHEN/],
     ["boolean", "SELECT c.id FROM cab_ride AS c JOIN address AS a ON 1", /argument of JOIN\/ON/],
-    ["sqlite-only", "SELECT id FROM cab_ride LIMIT 5, 10", /^LIMIT #,# syntax is not supported$/],
-    ["sqlite-only", "SELECT IFNULL(occupation, 'none') FROM person", /function ifnull\(text, text\) does not exist/],
-    ["sqlite-only", "SELECT id FROM cab_ride WHERE plate GLOB '75*'", /syntax error at or near "GLOB"/],
-    ["sqlite-only", "SELECT id FROM cab_ride WHERE plate REGEXP '75'", /syntax error/],
-    ["sqlite-only", "SELECT strftime('%Y', 'now') FROM police_report", /function strftime/],
-    ["sqlite-only", "SELECT group_concat(plate) FROM cab_ride", /function group_concat/],
-    ["sqlite-only", "SELECT fare || date FROM cab_ride", /^operator does not exist: integer \|\| integer$/],
-    ["sqlite-only", "SELECT id FROM person WHERE name = 'x' COLLATE NOCASE", /collation "nocase"/],
-    ["sqlite-only", "SELECT id FROM person WHERE occupation IS 'jeweller'", /syntax error/],
-    ["sqlite-only", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
-    ["sqlite-only", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
-    ["sqlite-only", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
+    ["limit-offset", "SELECT id FROM cab_ride LIMIT 5, 10", /^LIMIT #,# syntax is not supported$/],
+    ["coalesce", "SELECT IFNULL(occupation, 'none') FROM person", /function ifnull\(text, text\) does not exist/],
+    ["like-ilike", "SELECT id FROM cab_ride WHERE plate GLOB '75*'", /syntax error at or near "GLOB"/],
+    ["like-ilike", "SELECT id FROM cab_ride WHERE plate REGEXP '75'", /syntax error/],
+    ["date-functions", "SELECT strftime('%Y', 'now') FROM police_report", /function strftime/],
+    ["group-concat", "SELECT group_concat(plate) FROM cab_ride", /function group_concat/],
+    ["types", "SELECT fare || date FROM cab_ride", /^operator does not exist: integer \|\| integer$/],
+    ["like-ilike", "SELECT id FROM person WHERE name = 'x' COLLATE NOCASE", /collation "nocase"/],
+    ["coalesce", "SELECT id FROM person WHERE occupation IS 'jeweller'", /syntax error/],
+    ["iif", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
+    ["date-functions", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
+    ["date-functions", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
     ["types", "SELECT plate FROM cab_ride UNION SELECT fare FROM cab_ride", /^UNION types text and integer cannot be matched$/],
     ["types", "SELECT id, plate FROM cab_ride INTERSECT SELECT id, date FROM police_report", /^INTERSECT types text and integer cannot be matched$/],
     ["types", "SELECT fare FROM cab_ride EXCEPT SELECT plate FROM cab_ride", /^EXCEPT types integer and text cannot be matched$/],
@@ -827,7 +840,7 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
   assert.match(strictCheck(cases[0][1], GAME).why, /add cab_ride.date to GROUP BY/, "the why names the column");
   const html = strictHtml(strictCheck(cases[0][1], GAME));
   assert.match(html, /^<div class="error strict"><div class="pg-error">ERROR: column "cab_ride.date" must appear/);
-  assert.match(html, /href="learn\/grammar\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/);
+  assert.match(html, /href="learn\/group-by-having\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/);
   assert.match(strictHtml({ error: "<b>", why: "<i>", anchor: "types" }), /&lt;b&gt;.*&lt;i&gt;/, "escaped");
 });
 
@@ -835,7 +848,7 @@ test("strict terminal: every replacement a refusal or the grammar page suggests 
   const have = new Set(JSON.parse(execFileSync("python3", ["-c",
     "import sqlite3, json; print(json.dumps([r[0] for r in sqlite3.connect(':memory:').execute('SELECT DISTINCT name FROM pragma_function_list')]))"],
     { encoding: "utf8" })));
-  const grammar = fs.readFileSync("site/learn/grammar.html", "utf8");
+  const grammar = learnPages.map((f) => fs.readFileSync(LEARN + f, "utf8")).join("\n");
   const writes = [...grammar.matchAll(/<tr><td>[^<]*<\/td><td>([^<]*)<\/td><\/tr>/g)].map(m => m[1]);
   assert.ok(writes.some(w => /CASE WHEN a &gt; b/.test(w)), "the Write column is read");
   const whys = Object.keys(SQLITE_FUNCS).map(f => strictCheck("SELECT " + f + "(fare, 3) FROM cab_ride", GAME).why);
@@ -945,8 +958,17 @@ test("handbook: every example passes the strict terminal; each wrong one is refu
   }
   assert.ok(wrong >= 10);
   const page = learnHtml["grammar.html"];
-  for (const a of Object.keys(STRICT_SECTIONS)) assert.match(page, new RegExp(`<h2 id="${a}">`), "section " + a);
+  for (const [a, [f]] of Object.entries(STRICT_SECTIONS)) {
+    assert.match(learnHtml[f + ".html"], new RegExp(`<h2 id="${a}">`), "section " + a + " on " + f);
+    assert.ok(page.includes(f === "grammar" ? `href="#${a}"` : `href="${f}.html#${a}"`), "the grammar hub lists " + a);
+  }
   assert.match(page, /follows PostgreSQL's rules/);
+  assert.match(page, /<h2 id="order-of-execution">/);
+  const ids = learnPages.flatMap((f) => [...learnHtml[f].matchAll(/ id="([\w-]+)"/g)].map((m) => m[1]));
+  for (const a of Object.keys(STRICT_SECTIONS)) assert.equal(ids.filter((i) => i === a).length, 1, a + " is unique across the handbook");
+  for (const f of learnPages)   // every in-handbook anchor link lands on an id
+    for (const [, p, a] of learnHtml[f].matchAll(/href="([\w-]*\.html)?#([\w-]+)"/g))
+      assert.match(learnHtml[p || f], new RegExp(` id="${a}"`), f + " links " + (p || "") + "#" + a);
   assert.ok(fs.readFileSync("site/index.html", "utf8").includes('class="dialect" href="learn/grammar.html"'), "the terminal's PostgreSQL label");
   assert.equal(strictCheck("SELECT id FROM orders WHERE day = 20260302", bakery).anchor, "types", "the page's text-against-number claim");
 });
@@ -1016,6 +1038,30 @@ test("exercises: every Try it link names a question; the page keeps its static c
   assert.match(page, /<section id="workbench" class="workbench" hidden/, "the interactive part shows only once the script runs");
   assert.match(page, /<script type="module" src="exercises\.js"><\/script>/);
   assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
-  assert.match(strictHtml(strictCheck("SELECT name FROM product WHERE price == 2", bakerySchema(learnHtml["database.html"])), "grammar.html"), /href="grammar\.html#[\w-]+"/);
+  assert.match(strictHtml(strictCheck("SELECT name FROM product WHERE price == 2", bakerySchema(learnHtml["database.html"])), ""), /href="select-where\.html#double-equals"/);
   assert.doesNotMatch(page + fs.readFileSync("site/learn/exercises.js", "utf8"), /[^\n -~]/, "pure ASCII");
+});
+
+test("exercises: the level shown first and the question each level button selects", () => {
+  const items = [["a", "Warm-up"], ["b", "Warm-up"], ["c", "Practice"], ["d", "Challenge"], ["e", "Challenge"]].map(([slug, level]) => ({ slug, level }));
+  assert.equal(startLevel(items, [], null), "Warm-up");
+  assert.equal(startLevel(items, ["a", "b"], null), "Practice", "the first level with a question left");
+  assert.equal(startLevel(items, [], "d"), "Challenge", "the linked question's level wins");
+  assert.equal(startLevel(items, ["a", "b", "c", "d", "e"], null), "Warm-up", "all solved: the first level");
+  assert.equal(levelPick(items, "Challenge", ["d"]).slug, "e", "its first unsolved question");
+  assert.equal(levelPick(items, "Warm-up", ["a", "b"]).slug, "a", "all solved: its first question");
+  const page = learnHtml["exercises.html"];
+  const levels = [...page.matchAll(/<h2>([^<]*)<\/h2>\n<p class="exercise"/g)].map((m) => m[1]);
+  assert.deepEqual(levels, ["Warm-up", "Practice", "Challenge"], "each level heading opens its questions");
+  assert.match(page, /<div id="ex-static">\n<h2>Warm-up<\/h2>/, "the static questions, hidden by the script only");
+  assert.match(page, /<details class="howto"><summary>How to use this page<\/summary>/, "closed by default");
+  assert.match(page, /<span id="ex-solved" class="ex-solved" hidden>&#x2713; Solved<\/span>/);
+  assert.match(page, /<details class="ex-history"><summary class="label">HISTORY<\/summary><ol id="history"><\/ol><\/details>/);
+  // the game's ad box under the bakery schema, the house ad linking the handbook; no other handbook page has one
+  const box = (h) => one(h, /(<details id="press-box"[\s\S]*?<\/details>)/, "ad box");
+  assert.equal(box(page).replace(/\.\.\/handbook-ad/g, "handbook-ad").replace('href="./"', 'href="learn/" target="_blank" rel="noopener"').replace(/<!--[\s\S]*?-->\s*/g, ""),
+    box(fs.readFileSync("site/index.html", "utf8")), "the same box as the game's");
+  assert.ok(page.indexOf('id="press-box"') > page.indexOf("<!-- /bakery schema -->") && page.indexOf('id="press-box"') < page.indexOf('<div class="wb-terminal">'), "under the schema");
+  for (const f of learnPages) if (f !== "exercises.html") assert.doesNotMatch(learnHtml[f], /press-box|adsbygoogle/, f + " carries no ad");
+  assert.match(fs.readFileSync("site/privacy.html", "utf8"), /ritz\.exercises\.history/);
 });

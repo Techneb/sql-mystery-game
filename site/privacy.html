@@ -24,11 +24,12 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 19 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 20 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. The page shows advertising from Google AdSense in one box beside the
-  game, under the schema, never inside a chapter. In the European Economic Area, the United Kingdom and
+  game, under the schema, never inside a chapter, and in one box under the schema of the handbook's
+  exercises page. In the European Economic Area, the United Kingdom and
   Switzerland, Google's consent message asks on your first visit whether Google and its partners may use
   cookies and your data for advertising and for usage statistics, once Google has made it active for this
   site; until then, and whenever it cannot load, the game asks its own question about usage statistics.
@@ -40,8 +41,9 @@
   left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
   <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
-  questions you have solved is kept in its local storage (<code>ritz.exercises</code>), never sent. It loads
-  no advertising and no statistics script.</p>
+  questions you have solved and its own query history are kept in its local storage (<code>ritz.exercises</code>,
+  <code>ritz.exercises.history</code>, separate from the game's), never sent. It loads no statistics script; it
+  carries the same advertising box as the game (see Advertising). No other handbook page loads any script.</p>
 
   <h2>Your consent</h2>
   <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user
@@ -103,7 +105,7 @@
 
   <h2>Advertising</h2>
   <p>The page loads Google AdSense, which shows ads in one box beside the game, under the schema, never
-  inside a chapter; when no ad is served (none available, or the ad is blocked), the box shows the
+  inside a chapter, and in the same box under the schema of the handbook's exercises page; when no ad is served (none available, or the ad is blocked), the box shows the
   site's own advertisement for its handbook instead, an image loaded from this site. You can fold the box away
   until the next visit (nothing is stored). The
   AdSense script loads on every visit, because it also carries Google's consent message; what it may do

@@ -15,25 +15,27 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../admin.html">The Clerk's Desk</a></nav>
 </header>
-<nav class="learn-menu"><a href="index.html">Index</a>
-    <a href="database.html">1. Database</a>
-    <a href="schema.html">2. Schema</a>
-    <a href="select-where.html">3. SELECT</a>
-    <span class="current" aria-current="page">4. ORDER BY</span>
-    <a href="like.html">5. LIKE</a>
-    <a href="dates-times.html">6. Dates</a>
-    <a href="group-by-having.html">7. GROUP BY</a>
-    <a href="joins.html">8. JOIN</a>
-    <a href="nulls.html">9. NULL</a>
-    <a href="case-when.html">10. CASE</a>
-    <a href="subqueries.html">11. Subqueries</a>
-    <a href="set-operations.html">12. UNION</a>
-    <a href="window-functions.html">13. Windows</a>
-    <a href="ctes.html">14. CTEs</a>
-    <a href="exercises.html">15. Exercises</a>
-    <a href="grammar.html">16. Grammar</a></nav>
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary class="current">Learning chapters: 4. ORDER BY</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><span class="current" aria-current="page">4. ORDER BY</span></li>
+    <li><a href="like.html">5. LIKE</a></li>
+    <li><a href="dates-times.html">6. Dates</a></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <a href="grammar.html">Grammar</a></nav>
 <main class="learn">
 <h1>ORDER BY and LIMIT</h1>
 <p class="game-label">Game: chapter <a href="../">II</a></p>
@@ -100,6 +102,43 @@
 <h2>Ties and LIMIT</h2>
 <p>Be careful when the value you sort by can tie at the edge of the limit. If two products both cost the same and you ask for <code>LIMIT 1</code>, you get one of them, and which one is not defined. When the question is "which product is the cheapest", it is worth checking whether the second row has the same price as the first: drop the limit, or raise it to five, and read the top of the list with your own eyes. Adding a second sort key, such as the name or the id, at least makes the answer the same every time you run it.</p>
 <p>NULL values also need a thought: in SQLite they sort before every other value in ascending order, and after them in descending order. If a column can be missing, the top of a sorted list may be full of NULLs rather than of the smallest real values; filter them out with <code>WHERE ... IS NOT NULL</code> when they do not belong in the answer.</p>
+
+<h2 id="distinct-order">Grammar: DISTINCT and ORDER BY</h2>
+<p>A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own, and the query after it is the correct version.</p>
+<p><code>SELECT DISTINCT</code> removes repeated rows before the sort, so the sort can only use what was selected.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>;</code></pre>
+<div class="refusal"><code>ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list</code> DISTINCT removes repeated rows before sorting, so price is gone by then: add it to the SELECT list, or sort by a column you selected.</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-fn">MIN</span>(<span class="sql-id">price</span>);</code></pre>
+<table class="result">
+<tr><th>category</th></tr>
+<tr><td>bread</td></tr>
+<tr><td>pastry</td></tr>
+<tr><td>cake</td></tr>
+</table>
+<p><code>GROUP BY</code> also keeps one row per category, and it lets you sort the categories by an aggregate, here their cheapest product (see <a href="group-by-having.html">GROUP BY</a>).</p>
+
+<h2 id="limit-offset">Grammar: LIMIT and OFFSET</h2>
+<p>Skipping rows is written with <code>OFFSET</code>, after the row count. The short form with a comma, which puts the skipped rows first, is not standard SQL.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">2</span>, <span class="sql-num">3</span>;</code></pre>
+<div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 2, 3 is not standard SQL: write LIMIT 3 OFFSET 2 (the row count first, then how many rows to skip).</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">2</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Rye loaf</td><td>3.8</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td></tr>
+</table>
 
 <h2>Order of clauses</h2>
 <p>The clauses always come in the same order: <code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Putting <code>LIMIT</code> before <code>ORDER BY</code> is a syntax error, and writing <code>ORDER BY</code> before <code>WHERE</code> is too. Later pages add <code>GROUP BY</code> and <code>HAVING</code>, which sit between <code>WHERE</code> and <code>ORDER BY</code>.</p>

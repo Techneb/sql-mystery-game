@@ -1,8 +1,13 @@
 /* The Clerk's Handbook (site/learn/): article layout over ../style.css. No theme button on these pages (exercises.html alone runs a
    script, exercises.js), so the night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
+/* a solved question's mark (exercises.html), text and colour: about 5.5:1 on the day paper, 9:1 on the night one */
+:root { --ok: #2d6a2f; }
 @media (prefers-color-scheme: dark) {
   :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
-    --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
+    --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; --ok: #8fd18f; }
+  /* exercises.html's house ad: its night print with the night palette (the game swaps it on data-mood instead) */
+  .press-notice .day { display: none; }
+  .press-notice .night { display: block; }
 }
 /* the same line as the landing's .landing-foot (.muted: 13px Cormorant, middle dots, underlined links) */
 .learn-nav { margin-top: 6px; }
@@ -14,7 +19,7 @@
 .learn code { font: 15px "Special Elite", monospace; }
 .learn pre { background: var(--term); color: var(--term-text); border-radius: var(--r-panel); padding: 10px 12px; overflow-x: auto; margin: 12px 0 6px; }
 .learn pre code { font: 14px/1.45 "Special Elite", monospace; white-space: pre; }
-/* grammar.html: a query the terminal refuses, then its refusal (written by colour_learn.mjs) */
+/* any learn page: a query the terminal refuses, then its refusal (written by colour_learn.mjs) */
 .learn pre.wrong { border-left: 4px solid var(--rel); }
 .learn .refusal { margin: 0 0 14px; padding: 6px 10px; border: 1px solid var(--rel); border-radius: var(--r-box); font-size: 15px; }
 .learn .refusal code { display: block; color: var(--rel); font: 13px/1.4 "Special Elite", monospace; margin-bottom: 2px; }
@@ -28,8 +33,19 @@
 .learn details.solution { margin: 0 0 12px; padding: 4px 10px; border-left: 2px solid var(--rule); }
 .learn details.solution summary { cursor: pointer; font-weight: 700; }
 .learn .toc li { margin: 4px 0; }
-/* page menu in reading order and previous/next links: copied by hand on every page, test_site.mjs checks they agree */
-.learn-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
+/* page menu (Index . Learning chapters . Exercises . Grammar) and previous/next links: copied by hand on every page,
+   test_site.mjs checks they agree. Learning chapters is a native <details> dropdown, so it works without JavaScript. */
+.learn-menu { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 8px; font: 13px "Special Elite", monospace; padding: 8px 16px; border-bottom: 1px solid var(--rule); }
+.learn-chapters { position: relative; }
+.learn-chapters summary { cursor: pointer; list-style: none; }
+.learn-chapters summary::-webkit-details-marker { display: none; }
+.learn-chapters summary::after { content: " \25BE"; }
+.learn-chapters[open] summary::after { content: " \25B4"; }
+.learn-chapters summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.learn-chapters ol { position: absolute; z-index: 10; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); min-width: 13em; margin: 0; padding: 6px 0;
+  list-style: none; text-align: left; background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); box-shadow: 0 4px 10px rgba(0, 0, 0, .18); }
+.learn-chapters li > * { display: block; padding: 4px 14px; white-space: nowrap; }
+.learn-chapters li a:hover, .learn-chapters li a:focus-visible { background: var(--shade); }
 .learn .game-label { font: 700 13px/1.2 "Playfair Display", serif; font-variant: small-caps; letter-spacing: 1px; text-align: center; margin: 0 0 6px; }
 .learn .byline { text-align: center; margin: 0 0 12px; }
 /* the index's painted vignette (a book, pen and inkwell; decorative, alt=""), transparent so both palettes work */
@@ -67,3 +83,12 @@
   .learn .workbench { grid-template-columns: minmax(0, 1fr); }
   .wb-question { order: 1; } .wb-terminal { order: 2; } .wb-schema { order: 3; }
 }
+/* exercises.html: How to use this page, closed; the level buttons; the solved mark; History under the terminal */
+.learn details.howto { margin: 24px 0 8px; }
+.learn details.howto summary { cursor: pointer; font: 700 20px/1.2 "Playfair Display", serif; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.ex-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.ex-levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.ex-solved { color: var(--ok); font-weight: 700; font-size: 14px; }
+.ex-solved[hidden] { display: none; }
+.ex-history { margin-top: 10px; }
+.ex-history summary { cursor: pointer; }

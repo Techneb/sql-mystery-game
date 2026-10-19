@@ -15,25 +15,27 @@
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
-  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../privacy.html">Privacy notice</a> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></nav>
+  <nav class="learn-nav muted"><a href="../">Game</a> &middot; <a href="index.html">The Clerk's Handbook</a> &middot; <a href="../admin.html">The Clerk's Desk</a></nav>
 </header>
-<nav class="learn-menu"><a href="index.html">Index</a>
-    <a href="database.html">1. Database</a>
-    <a href="schema.html">2. Schema</a>
-    <a href="select-where.html">3. SELECT</a>
-    <a href="order-by-limit.html">4. ORDER BY</a>
-    <a href="like.html">5. LIKE</a>
-    <span class="current" aria-current="page">6. Dates</span>
-    <a href="group-by-having.html">7. GROUP BY</a>
-    <a href="joins.html">8. JOIN</a>
-    <a href="nulls.html">9. NULL</a>
-    <a href="case-when.html">10. CASE</a>
-    <a href="subqueries.html">11. Subqueries</a>
-    <a href="set-operations.html">12. UNION</a>
-    <a href="window-functions.html">13. Windows</a>
-    <a href="ctes.html">14. CTEs</a>
-    <a href="exercises.html">15. Exercises</a>
-    <a href="grammar.html">16. Grammar</a></nav>
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary class="current">Learning chapters: 6. Dates</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+    <li><a href="like.html">5. LIKE</a></li>
+    <li><span class="current" aria-current="page">6. Dates</span></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <a href="grammar.html">Grammar</a></nav>
 <main class="learn">
 <h1>Dates and times stored as text or numbers</h1>
 <p class="game-label">Game: chapters <a href="../">I</a>, <a href="../">IV</a>, <a href="../">VI</a>, <a href="../">VII</a> and <a href="../">XI</a></p>
@@ -92,7 +94,7 @@
 </table>
 <p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code>, which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a half-open range, <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>: <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss everything after midnight, because <code>'2026-03-05 17:45'</code> sorts after <code>'2026-03-05'</code>.</p>
 
-<h2>Taking a date apart: substr</h2>
+<h2 id="taking-apart">Taking a date apart: substr</h2>
 <p>A fixed format means each part sits at a fixed position, so <code>substr(text, start, length)</code> cuts it out (positions count from 1). In an ISO date the year is characters 1 to 4, the year and month 1 to 7, the day 9 and 10; in a time the hour is 1 and 2, the minutes 4 and 5. Here the first seven characters give the month each customer joined.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">joined</span>, <span class="sql-fn">substr</span>(<span class="sql-id">joined</span>, <span class="sql-num">1</span>, <span class="sql-num">7</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -139,7 +141,7 @@
 </table>
 
 <h2>Dates stored as numbers</h2>
-<p>Some systems store a date as the integer <code>YYYYMMDD</code>: 5 March 2026 is <code>20260305</code>. Larger units sit in the higher digits, so numeric order is calendar order and comparisons work exactly as with ISO text, without quotes this time: the value is a number, and a number is compared with a number (see <a href="grammar.html#types">Types</a>). Integer division and the remainder take it apart: <code>d / 10000</code> is the year, <code>d / 100 % 100</code> the month, <code>d % 100</code> the day. Here it is applied to a number written in the query, to show the arithmetic; <code>CAST(replace(day, '-', '') AS INTEGER)</code> would turn an ISO text date into such a number.</p>
+<p>Some systems store a date as the integer <code>YYYYMMDD</code>: 5 March 2026 is <code>20260305</code>. Larger units sit in the higher digits, so numeric order is calendar order and comparisons work exactly as with ISO text, without quotes this time: the value is a number, and a number is compared with a number (see <a href="select-where.html#types">Types</a>). Integer division and the remainder take it apart: <code>d / 10000</code> is the year, <code>d / 100 % 100</code> the month, <code>d % 100</code> the day. Here it is applied to a number written in the query, to show the arithmetic; <code>CAST(replace(day, '-', '') AS INTEGER)</code> would turn an ISO text date into such a number.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-num">20260305</span> / <span class="sql-num">10000</span> <span class="sql-kw">AS</span> <span class="sql-id">year</span>, <span class="sql-num">20260305</span> / <span class="sql-num">100</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">month</span>, <span class="sql-num">20260305</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">day_of_month</span>;</code></pre>
 <table class="result">
 <tr><th>year</th><th>month</th><th>day_of_month</th></tr>
@@ -152,6 +154,19 @@
 <tr><td>1</td><td>70</td></tr>
 </table>
 <p>A range such as "the first week of March" is still easy to write (<code>d BETWEEN 20260301 AND 20260307</code>); "seven days after a given date" is not, because the end of a month gets in the way. Real date arithmetic needs the database's own date functions, and those differ from one database to the next (SQLite's <code>date()</code> and <code>julianday()</code>, PostgreSQL's <code>DATE</code> type and intervals). For the comparisons, ranges and parts on this page, plain text and integer operations are enough, and they behave the same everywhere.</p>
+
+<h2 id="date-functions">Grammar: dates, substr and CAST</h2>
+<p>Everything on this page is done with comparisons of the date text, <code>substr</code> and <code>CAST</code>, which every database knows. Date functions such as <code>strftime</code> differ from one database to the next and are not standard SQL. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-fn">strftime</span>(<span class="sql-str">'%m'</span>, <span class="sql-id">joined</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
+<div class="refusal"><code>ERROR: function strftime(text, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= '1912-01-01', or substr(d, 1, 7) for its year and month instead.</div>
+<p>Write <code>substr(joined, 6, 2)</code> instead, as in <a href="#taking-apart">Taking a date apart</a>. The others, with what to write instead:</p>
+<table class="result">
+<tr><th>Instead of</th><th>Write</th></tr>
+<tr><td>strftime, julianday, datetime</td><td>compare the date text (d &gt;= '2024-06-01'), or substr(d, 1, 7)</td></tr>
+<tr><td>LEFT(t, n), RIGHT(t, n)</td><td>substr(t, 1, n), substr(t, length(t) - n + 1)</td></tr>
+<tr><td>x::integer</td><td>CAST(x AS INTEGER)</td></tr>
+</table>
 
 <h2>Common mistakes</h2>
 <p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in a shape other than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>

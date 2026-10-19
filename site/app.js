@@ -257,15 +257,19 @@ export function cartesian(sql) {
   const body = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
   return /\bfrom\s+[a-z_][a-z0-9_]*(?:\s+(?:as\s+)?[a-z_][a-z0-9_]*)?\s*,\s*[a-z_]/i.test(body) && !/\b(?:where|on|using)\b/i.test(body);
 }
-// --- Strict terminal: PostgreSQL is the yardstick (learn/grammar.html) --------------------------------------
+// --- Strict terminal: PostgreSQL is the yardstick (learn/grammar.html, the hub of the rules) --------------------------------------
 // strictCheck parses a query with the schema in hand and refuses what PostgreSQL would reject but SQLite runs
 // anyway: ungrouped columns, aliases in WHERE, "text" in double quotes, ==, mixed types, a WHERE that is not a
 // condition, SQLite-only syntax. A refusal is { error, why, anchor }; null means run it. Anything the parser does
 // not know is let through (SQLite still reports its own errors): a false refusal is the worst bug here.
-const STRICT_PAGE = "learn/grammar.html";
-export const STRICT_SECTIONS = { "group-by": "GROUP BY", "having": "HAVING without GROUP BY", "order-by-grouped": "ORDER BY after GROUP BY",
-  "distinct-order": "DISTINCT and ORDER BY", "double-quotes": "Double quotes", "double-equals": "One equals sign", "types": "Types",
-  "aliases": "Aliases in WHERE and HAVING", "boolean": "Conditions", "sqlite-only": "Standard syntax", "like-ilike": "LIKE and ILIKE" };
+// Each refusal's anchor -> [the learn page whose section explains it, the link's label]; grammar.html lists them all.
+export const STRICT_SECTIONS = { "group-by": ["group-by-having", "GROUP BY"], "having": ["group-by-having", "HAVING without GROUP BY"],
+  "order-by-grouped": ["group-by-having", "ORDER BY after GROUP BY"], "group-concat": ["group-by-having", "string_agg and SUM"],
+  "distinct-order": ["order-by-limit", "DISTINCT and ORDER BY"], "limit-offset": ["order-by-limit", "LIMIT and OFFSET"],
+  "double-quotes": ["select-where", "Double quotes"], "double-equals": ["select-where", "One equals sign"], "types": ["select-where", "Types"],
+  "aliases": ["select-where", "Aliases in WHERE and HAVING"], "boolean": ["select-where", "Conditions"],
+  "like-ilike": ["like", "LIKE and ILIKE"], "coalesce": ["nulls", "COALESCE and IS"], "date-functions": ["dates-times", "Dates, substr and CAST"],
+  "iif": ["case-when", "CASE, not IIF"], "sqlite-only": ["grammar", "Other shorthands"] };
 const RESERVED = new Set(("select from where group by having order limit offset union intersect except join inner left right full outer " +
   "cross natural on using as and or not in is null like ilike glob regexp match between case when then else end with recursive " +
   "distinct all exists cast over partition window asc desc values collate escape true false filter isnull notnull").split(" "));
@@ -278,6 +282,9 @@ export const SQLITE_FUNCS = { ifnull: "COALESCE(a, b)", iif: "CASE WHEN ... THEN
   left: "substr(text, 1, n)", right: "substr(text, length(text) - n + 1)", printf: "format()", total: "SUM(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
   changes: "nothing like it", total_changes: "nothing like it", likely: "the condition alone",
   unlikely: "the condition alone", likelihood: "the condition alone" };
+// the section of the handbook that explains each one (STRICT_SECTIONS); the rest are on grammar.html
+const FUNC_ANCHOR = { ifnull: "coalesce", group_concat: "group-concat", total: "group-concat", iif: "iif", instr: "like-ilike",
+  strftime: "date-functions", julianday: "date-functions", datetime: "date-functions", unixepoch: "date-functions", left: "date-functions", right: "date-functions" };
 const PG_TYPE = { int: "integer", num: "numeric", text: "text", bool: "boolean", str: "text" };
 const pgT = t => PG_TYPE[t] || "unknown";
 const isNum = t => t === "int" || t === "num";
@@ -347,7 +354,7 @@ function parseSql(src, toks) {
       if (eat(",")) {
         const b = expr();
         refuse("LIMIT #,# syntax is not supported", "LIMIT " + a.text + ", " + b.text + " is not standard SQL: write LIMIT " + b.text +
-          " OFFSET " + a.text + " (the row count first, then how many rows to skip).", "sqlite-only");
+          " OFFSET " + a.text + " (the row count first, then how many rows to skip).", "limit-offset");
       }
       q.limit = a;
       if (eat("offset")) q.offset = expr();
@@ -455,7 +462,7 @@ function parseSql(src, toks) {
         if (eat("distinct")) { need("from"); l = mk(s, { k: "cmp", op: "IS DISTINCT FROM", l, r: otherExpr() }); continue; }
         const v = peek().v;
         refuse('syntax error at or near "' + v + '"', "IS only goes with NULL, TRUE or FALSE: write = " + v + " to compare with " + v +
-          ", or IS NOT DISTINCT FROM " + v + " if NULLs must match too.", "sqlite-only");
+          ", or IS NOT DISTINCT FROM " + v + " if NULLs must match too.", "coalesce");
       }
       if (eat("isnull") || eat("notnull")) { l = mk(s, { k: "is", l }); continue; }
       const save = i; eat("not");
@@ -468,7 +475,7 @@ function parseSql(src, toks) {
       if (["like", "ilike", "glob", "regexp", "match"].includes(peek().lv) && peek().t === "word") {
         const op = next().v;
         if (!/^i?like$/i.test(op)) refuse('syntax error at or near "' + op + '"', op.toUpperCase() + " is not standard SQL: match patterns with LIKE " +
-          "(case-sensitive, % for any run of characters, _ for one) or ILIKE (the same, ignoring case).", "sqlite-only");
+          "(case-sensitive, % for any run of characters, _ for one) or ILIKE (the same, ignoring case).", "like-ilike");
         const r = otherExpr(); let esc = null;
         if (eat("escape")) esc = otherExpr();
         l = mk(s, { k: "like", op: op.toUpperCase(), l, r, esc }); continue;
@@ -488,11 +495,11 @@ function parseSql(src, toks) {
     while (eat("collate")) {
       const c = ident(true);
       if (!c.q && ["nocase", "rtrim", "binary"].includes(c.name)) refuse('collation "' + c.name + '" for encoding "UTF8" does not exist',
-        "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "sqlite-only");
+        "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "like-ilike");
       e = mk(s, { k: "collate", e });
     }
     if (eat("::")) { const x = src.slice(e.from, e.to), t = peek().t === "word" ? next().v : "INTEGER"; refuse('syntax error at or near "::"',
-      x + "::" + t + " is a PostgreSQL shorthand the terminal does not run: write CAST(" + x + " AS " + t.toUpperCase() + ").", "sqlite-only"); }
+      x + "::" + t + " is a PostgreSQL shorthand the terminal does not run: write CAST(" + x + " AS " + t.toUpperCase() + ").", "date-functions"); }
     return e;
   }
   function typeName() { const parts = []; while (peek().t === "word") parts.push(next().lv); if (eat("(")) while (!eat(")")) next(); return parts.join(" "); }
@@ -628,7 +635,7 @@ function analyse(stmts, schema, src) {
       case "concat": {
         const a = T(n.l, cx), b = T(n.r, cx);
         if ((isNum(a) || a === "bool") && (isNum(b) || b === "bool")) refuse("operator does not exist: " + pgT(a) + " || " + pgT(b),
-          "|| joins text, and " + text(n.l) + " and " + text(n.r) + " are both numbers: add them with +, or make one of them text first, as in CAST(" + text(n.l) + " AS TEXT) || ...", "sqlite-only");
+          "|| joins text, and " + text(n.l) + " and " + text(n.r) + " are both numbers: add them with +, or make one of them text first, as in CAST(" + text(n.l) + " AS TEXT) || ...", "types");
         return "text";
       }
       case "cmp": {
@@ -694,10 +701,10 @@ function analyse(stmts, schema, src) {
     if (n.aggOrder) n.aggOrder.forEach(o => T(o.e, cx));
     if (n.over) { n.over.partition.forEach(e => T(e, cx)); n.over.order.forEach(o => T(o.e, cx)); }
     const sig = n.name + "(" + a.map(pgT).join(", ") + ")";
-    if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", "sqlite-only");
+    if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", FUNC_ANCHOR[n.name] || "sqlite-only");
     if ((n.name === "min" || n.name === "max") && n.args.length > 1) refuse("function " + sig + " does not exist",
       "With several arguments " + n.name + "() is not standard SQL: write " + (n.args.length === 2 ? "CASE WHEN " + text(n.args[0]) +
-      (n.name === "max" ? " > " : " < ") + text(n.args[1]) + " THEN " + text(n.args[0]) + " ELSE " + text(n.args[1]) + " END" : "CASE WHEN ... THEN ... ELSE ... END") + ".", "sqlite-only");
+      (n.name === "max" ? " > " : " < ") + text(n.args[1]) + " THEN " + text(n.args[0]) + " ELSE " + text(n.args[1]) + " END" : "CASE WHEN ... THEN ... ELSE ... END") + ".", "iif");
     if ((n.name === "sum" || n.name === "avg") && (a[0] === "text" || a[0] === "bool")) refuse("function " + sig + " does not exist", a[0] === "bool"
       ? text(n.args[0]) + " is a condition (true or false), not a number: count where it holds with SUM(CASE WHEN " + text(n.args[0]) + " THEN 1 ELSE 0 END)."
       : n.name.toUpperCase() + " works on numbers, and " + text(n.args[0]) + " is text: use COUNT, MIN or MAX on text, or convert digits with CAST(... AS INTEGER).", "types");
@@ -842,9 +849,9 @@ function strictScan(toks, src) {
     if (x.v === "==") refuse("operator does not exist: ==", "SQL compares with a single equals sign: write = instead of ==.", "double-equals");
     if (x.t === "bq") refuse('syntax error at or near "' + x.v[0] + '"', "SQL quotes a name with double quotes, not backticks or square brackets.", "double-quotes");
     if (x.t === "word" && nx.v === "(" && Object.hasOwn(SQLITE_FUNCS, x.lv) && (toks[i - 1] || {}).v !== ".")
-      refuse("function " + x.lv + " does not exist", x.lv + "() is not standard SQL: use " + SQLITE_FUNCS[x.lv] + " instead.", "sqlite-only");
+      refuse("function " + x.lv + " does not exist", x.lv + "() is not standard SQL: use " + SQLITE_FUNCS[x.lv] + " instead.", FUNC_ANCHOR[x.lv] || "sqlite-only");
     if (x.t === "word" && ["glob", "regexp"].includes(x.lv)) refuse('syntax error at or near "' + x.v + '"',
-      x.v.toUpperCase() + " is not standard SQL: match patterns with LIKE or ILIKE.", "sqlite-only");
+      x.v.toUpperCase() + " is not standard SQL: match patterns with LIKE or ILIKE.", "like-ilike");
   }
   return src;
 }
@@ -881,9 +888,10 @@ export function ilike(pattern, value, escape) {
   }
   return new RegExp("^" + re + "$", "i").test(String(value)) ? 1 : 0;
 }
-export function strictHtml(r, page = STRICT_PAGE) {   // page: the grammar page as the caller links it (learn/exercises.js: grammar.html)
-  return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + page + "#" + r.anchor +
-    '" target="_blank" rel="noopener">Grammar: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
+export function strictHtml(r, base = "learn/") {   // base: the handbook folder as the caller links it (learn/exercises.js: "")
+  const [page, label] = STRICT_SECTIONS[r.anchor];
+  return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + base + page + ".html#" + r.anchor +
+    '" target="_blank" rel="noopener">Grammar: ' + esc(label) + "</a></div>";
 }
 
 export function pushHistory(state, sql) {
@@ -958,7 +966,7 @@ function showTelegram(text) {
   $("telegram").textContent = text || "";
 }
 // Click or keyboard (Enter, Space) on an element that is not a <button>.
-function btnLike(el, fn) {
+export function btnLike(el, fn) {
   el.tabIndex = 0; el.setAttribute("role", "button");
   el.onclick = fn;
   el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(e); } };
@@ -1763,7 +1771,7 @@ function initGoogleConsent(id) {
   };
 }
 
-// The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
+// The ad box under the schema (a native <details>: its summary is the toggle), here and on learn/exercises.html only.
 // Open on every visit; closing it lasts until the next page load (owner, 2026-10-19). Hidden unless adsOn().
 export function adSlotHtml(client, slot) {
   return '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + slot +
@@ -1778,9 +1786,11 @@ export function adOutcome({ status, height, elapsed, failed }) {
   if (status === "filled" && height > 0) return "ad";
   return elapsed >= AD_WAIT_MS ? "house" : "wait";
 }
-function initAds() {
+// Also run by learn/exercises.js, the one handbook page with the ad box (owner, 2026-10-19): the page needs a #press-box.
+export function initAds() {
   const box = $("press-box");
   if (!adsOn()) return;
+  gtagDefaults();   // Consent Mode defaults before adsbygoogle.js (the game also sets them for GA; set once)
   box.hidden = false;
   // adsbygoogle.js also serves Google's consent message, so it loads even without a slot (the ?ads=1 preview).
   const s = document.createElement("script");
