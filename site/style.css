@@ -45,6 +45,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 #landing[hidden] { display: none; }
 .landing-card { max-width: 640px; margin: auto; text-align: center; border: 2px solid var(--ink); border-radius: var(--r-card); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0 0; padding-top: 12px; border-top: 3px double var(--ink); }
+/* a red band above the masthead says what the game is at first glance (Nick's feedback, owner chose option A, 2026-10-19) */
+.landing-band { margin: -24px -24px 16px; padding: 7px 10px; background: var(--red); color: #fffdf5; border-radius: calc(var(--r-card) - 2px) calc(var(--r-card) - 2px) 0 0; font: 14px/1.2 "Special Elite", monospace; letter-spacing: 2px; }
 .landing-photo { margin: 14px 0 16px; }
 .landing-photo img { display: block; width: 100%; height: auto; border: 1px solid var(--ink); border-radius: var(--r-panel); }
 .landing-photo figcaption { font: italic 400 15px/1.3 "Cormorant Garamond", Georgia, serif; margin-top: 4px; text-align: left; }
@@ -277,6 +279,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
   .mast-sub { letter-spacing: 1px; font-size: 10px; }   /* the bold numeral widened the line: keep it on one line at 430 px */
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
+  .landing-band { margin: -16px -16px 12px; }
 }
 .landing-story b, .landing-kicker b { font-weight: 700; }
 /* Part II ending: Lupin's photograph of the Blue Star (site/blue-star.jpg), set below the text like a news photo */

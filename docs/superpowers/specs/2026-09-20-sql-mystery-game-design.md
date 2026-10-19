@@ -522,7 +522,9 @@ framework, no bundler.
 - ~~US state privacy message (CCPA)~~ Done 2026-10-19 (owner: set it up): "US states message - alephb.uk" published
   in AdSense > Privacy & messaging > US state regulations (opt-out, "Do Not Sell or Share My Personal Information";
   the AlephB mark uploaded as its 5:1 logo). privacy.html on the ads branch should name it.
-- **SQL branding on the landing page** (Nick, the influencer, 2026-10-19: "your landing page should have a more
+- ~~SQL branding on the landing page~~ Done 2026-10-19 (owner chose option A of four on a design canvas: a red
+  band "A FREE GAME TO LEARN SQL" above the masthead, `.landing-band`; options B subtitle, C stamp and query, D band
+  and subtitle were not taken) (Nick, the influencer, 2026-10-19: "your landing page should have a more
   obvious 'SQL' type branding so people can immediately see this is a tool to learn SQL"): the landing card leads
   with the 1912 story; make "learn SQL" obvious at first glance (headline or kicker), keeping the story. The owner
   replied that it would be done, ideally before his post. Show options as a design canvas first.
