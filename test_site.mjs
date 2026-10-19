@@ -743,6 +743,9 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
     ["sqlite-only", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
     ["sqlite-only", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
     ["sqlite-only", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
+    ["types", "SELECT plate FROM cab_ride UNION SELECT fare FROM cab_ride", /^UNION types text and integer cannot be matched$/],
+    ["types", "SELECT id, plate FROM cab_ride INTERSECT SELECT id, date FROM police_report", /^INTERSECT types text and integer cannot be matched$/],
+    ["types", "SELECT fare FROM cab_ride EXCEPT SELECT plate FROM cab_ride", /^EXCEPT types integer and text cannot be matched$/],
     ["double-equals", "SELECT id FROM cab_ride WHERE plate == '75' AND (", /==/],   // the parser gives up, the token scan still refuses
   ];
   for (const [anchor, q, re] of cases) {
@@ -814,6 +817,12 @@ test("strict terminal: valid PostgreSQL is never refused", () => {
     "SELECT 'a' = 'a' AS same",
     "SELECT id FROM police_report WHERE TRUE",
     "SELECT x.n FROM (SELECT COUNT(*) AS n FROM cab_ride) AS x",
+    "SELECT plate, fare FROM cab_ride UNION ALL SELECT guest_name, price FROM hotel_register",
+    "SELECT plate FROM cab_ride UNION SELECT NULL",
+    "SELECT fare FROM cab_ride UNION SELECT AVG(fare) FROM cab_ride",
+    "SELECT fare FROM cab_ride UNION SELECT '3'",
+    "WITH s AS (SELECT suite, time FROM lift_log UNION ALL SELECT suite, time FROM room_service) SELECT suite, COUNT(*) FROM s GROUP BY suite",
+    "WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 5) SELECT x FROM n",
   ];
   for (const q of ok) assert.equal(strictCheck(q, GAME, true), null, q);
   for (const q of ["PRAGMA table_info(person)", "SELECT * FROM pragma_table_info('person')", "SELECT"])

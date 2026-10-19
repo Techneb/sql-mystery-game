@@ -557,5 +557,6 @@ framework, no bundler.
   window and CTE pages; (c) a "Try it" line on each construct page, linking exercises by their new slug ids.
   Deployed 2026-10-18 (5b51d31; 16 handbook pages), checked in Chrome on desktop in the night palette and at 390 px
   (2026-10-19, no overflow); Search Console had re-read the sitemap (19 pages) and indexing of the new page was
-  requested 2026-10-19. Not built: strictCheck does not refuse a UNION of a text
-  column with a number (PostgreSQL does; SQLite runs it).
+  requested 2026-10-19. Built 2026-10-19: strictCheck refuses a UNION, INTERSECT or
+  EXCEPT that puts a text column against a number in one position (PostgreSQL's "UNION types text and
+  integer cannot be matched"; SQLite runs it); NULL, quoted literals and unknown types pass.

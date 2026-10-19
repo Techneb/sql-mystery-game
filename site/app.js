@@ -349,9 +349,9 @@ function parseSql(src, toks) {
     return q;
   }
   function compound() {
-    const parts = [core()];
-    while (is("union") || is("intersect") || is("except")) { i++; eat("all") || eat("distinct"); parts.push(core()); }
-    return { k: "compound", parts };
+    const parts = [core()], ops = [];
+    while (is("union") || is("intersect") || is("except")) { ops.push(next().v.toUpperCase()); eat("all") || eat("distinct"); parts.push(core()); }
+    return { k: "compound", parts, ops };
   }
   function core() {
     if (eat("(")) { const q = query(); need(")"); return { k: "paren", q }; }
@@ -711,7 +711,7 @@ function analyse(stmts, schema, src) {
   // One SELECT (or VALUES): returns its output columns [{name, type}] or null when unknown.
   function select(c, outer, ctes, order) {
     if (c.k === "paren") return query(c.q, outer, ctes);
-    if (c.k === "values") { const cx = { scope: { rvs: [], parent: outer }, ctes, clause: "VALUES" }; const t = c.rows.map(r => r.map(e => T(e, cx))); return t[0].map((ty, j) => ({ name: "column" + (j + 1), type: ty === "str" ? "text" : ty })); }
+    if (c.k === "values") { const cx = { scope: { rvs: [], parent: outer }, ctes, clause: "VALUES" }; const t = c.rows.map(r => r.map(e => T(e, cx))); return t[0].map((ty, j) => ({ name: "column" + (j + 1), type: ty === "str" ? "text" : ty, str: ty === "str" })); }
     const scope = { rvs: [], parent: outer }, ons = [];
     const addFrom = f => {
       if (f.k === "join") { addFrom(f.l); addFrom(f.r); if (f.on) ons.push(f.on); return; }
@@ -799,7 +799,7 @@ function analyse(stmts, schema, src) {
     }
     if (c.cols.some(r => r.star && !scope.rvs.filter(rv => r.star === true || rv.name === r.star.name).every(rv => rv.cols))) return null;
     return c.cols.flatMap((r, j) => (r.star ? scope.rvs.filter(rv => r.star === true || rv.name === r.star.name).flatMap(rv => [...rv.cols.values()].map(x => ({ name: x.name, type: x.type })))
-      : [{ name: outNames[j], type: types[j] === "str" ? "text" : types[j] === "null" ? null : types[j] }]));
+      : [{ name: outNames[j], type: types[j] === "str" ? "text" : types[j] === "null" ? null : types[j], str: types[j] === "str" }]));
   }
   function query(q, outer, ctes) {
     ctes = new Map(ctes);
@@ -811,7 +811,18 @@ function analyse(stmts, schema, src) {
     }
     const parts = q.body.parts, single = parts.length === 1;
     const out = select(parts[0], outer, ctes, single ? q.order : null);
-    for (const p of parts.slice(1)) select(p, outer, ctes, null);
+    // A quoted literal is PostgreSQL's "unknown" (it takes the other side's type), so only a certain text against a number is refused.
+    parts.slice(1).forEach((p, k) => {
+      const more = select(p, outer, ctes, null);
+      if (out && more) out.forEach((a, j) => {
+        const b = more[j], txt = x => x.type === "text" && !x.str;
+        if (b && ((txt(a) && isNum(b.type)) || (isNum(a.type) && txt(b)))) {
+          const col = (x, which) => "column " + (j + 1) + " of the " + which + " SELECT" + (x.name ? " (" + x.name + ")" : "") + " is " + pgT(x.type);
+          refuse(q.body.ops[k] + " types " + pgT(a.type) + " and " + pgT(b.type) + " cannot be matched", col(a, "first").replace(/^c/, "C") + " but " +
+            col(b, ["second", "third", "fourth", "fifth"][k] || k + 2 + "th") + ": each column must hold the same type in every SELECT, so line the columns up, or convert one with CAST(... AS ...).", "types");
+        }
+      });
+    });
     for (const e of [q.limit, q.offset]) if (e) T(e, { scope: { rvs: [], parent: outer }, ctes, clause: "LIMIT" });
     return out;
   }
