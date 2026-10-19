@@ -1700,7 +1700,7 @@ export function adSlotHtml(client, slot) {
     '" data-ad-format="auto" data-full-width-responsive="true"></ins>';
 }
 function initAds() {
-  const box = $("ad-box");
+  const box = $("press-box");
   if (!adsOn()) return;
   box.hidden = false;
   // adsbygoogle.js also serves Google's consent message, so it loads even before a slot exists.
@@ -1708,7 +1708,7 @@ function initAds() {
   s.async = true; s.crossOrigin = "anonymous";
   s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
   document.head.appendChild(s);
-  box.querySelector(".ad-slot").innerHTML = adSlotHtml(ADS_CLIENT, AD_SLOT);
+  box.querySelector(".press-slot").innerHTML = adSlotHtml(ADS_CLIENT, AD_SLOT);
   if (AD_SLOT) (window.adsbygoogle = window.adsbygoogle || []).push({});
 }
 

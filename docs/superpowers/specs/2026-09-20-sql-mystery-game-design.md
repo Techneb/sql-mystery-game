@@ -444,7 +444,7 @@ framework, no bundler.
   domain `alephb.uk` (subdomains included); verification meta tag on both `alephb.uk` (alephb-site repo) and
   the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
-  messages. The ad box exists: a `<details id="ad-box">` under the schema, open on every visit (closing
+  messages. The ad box exists: a `<details id="press-box">` under the schema, open on every visit (closing
   it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a static
   house notice for the handbook until approval (owner), titled ADVERTISEMENTS in the typewriter face (option D).
   **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
@@ -489,7 +489,7 @@ framework, no bundler.
   for everyone but a No; `consentDefaults()` in `app.js`, on main since that day); once ads are live, the ad fields
   are granted by default outside Europe too, Google's message updating the European default.
   **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged; main merged in 2026-10-19, and the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
-  and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.ad-slot` with a
+  and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, fills `.press-slot` with a
   responsive unit, sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
   elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message (GA4 loads at once
   for everyone and stops only on an explicit DENIED for analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
