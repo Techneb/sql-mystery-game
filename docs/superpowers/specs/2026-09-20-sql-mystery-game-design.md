@@ -445,8 +445,12 @@ framework, no bundler.
   the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
   messages. The ad box exists: a `<details id="press-box">` under the schema, open on every visit (closing
-  it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a static
-  house notice for the handbook until approval (owner), titled ADVERTISEMENTS in the typewriter face (option D).
+  it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a house ad
+  for the handbook until approval (owner): `site/handbook-ad.jpg`, a 1912 engraved advertisement with Ganimard (night
+  print `handbook-ad-night.jpg`, swapped in by `data-mood`), the whole picture a link to `learn/` (OpenGen originals
+  in `assets-source/ad/`). It is titled ADVERTISEMENTS in the typewriter face over a dotted rule (option D of a design
+  canvas; AdSense permits only "Advertisements" or "Sponsored Links" as the label), and its names are neutral
+  (`#press-box`, `.press-slot`, `.press-notice`) since ad blockers hid the old `.ad-box`/`.ad-slot`/`.house-ad`.
   **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
   local) found the reviewed URL alephb.uk showing a crawler 48 words and the game about 70 words of prose. Shipped the same
   day: the game's `<meta name="description">`, a closed "About this game" `<details>` on the landing card (347 words:
@@ -469,7 +473,7 @@ framework, no bundler.
   **2026-10-11: refused** for "Contenu a faible valeur informative" (low-value content) on alephb.uk (ads.txt
   authorised), seen in AdSense > Sites on 2026-10-16 (account signed in as the AlephB address, not the owner's
   personal one). Google's criteria: substantial unique value, a consistent web presence, and real user interest.
-  A re-review can be requested from that page once fixed; not requested yet.
+  A re-review can be requested from that page once fixed (requested 2026-10-19, below).
   2026-10-16: Search Console set up under the owner's personal Google account: URL-prefix properties
   https://mystery.alephb.uk/ and https://alephb.uk/, both verified by the same `google-site-verification` meta tag
   (keep it on both home pages); the game's sitemap.xml read, 14 pages. alephb.uk's home page links Play, About the game
@@ -490,15 +494,24 @@ framework, no bundler.
   leaves a European browser before a Yes (the owner chose this over cookieless pings from Europe: same ads, no
   CNIL grey zone for the Paris students); once ads are live, the ad fields are granted by default
   outside Europe too (branch `claude/ads-switch-on`), Google's message updating the European default.
-  **Left, once AdSense approves the site (email to the owner).** Prepared 2026-10-10 on branch `claude/ads-switch-on`
-  (4 commits, not merged, pushed to origin; it predates the strict terminal and handbook pages 11-16, so it needs
-  main merged in, and its "Privacy notice" link label carried to the new pages, before use). Its own spec diff holds
-  an eight-step approval-day checklist that replaces the list below once merged. Without the branch: (a) load `adsbygoogle.js` with the client
-  id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
-  it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
-  340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.press-slot`; (c) `ADS_ON = true`;
-  (d) privacy.html: an advertising section (AdSense cookies, personalised vs non-personalised ads, the
-  consent message, how to withdraw); (e) check day, night and phone width in Chrome, then push.
+  **Status 2026-10-19 (evening): waiting for Google.** The verdict comes by email to the AlephB account and its
+  timing is Google's; until then the box shows the house ad (also if Nick's post comes first). The switch-on is
+  prepared on branch `claude/ads-switch-on` (pushed, not merged; main is merged into it after every main commit,
+  last on 1ae59bc): `ADS_ON` is `AD_SLOT !== ""`, and its own copy of this entry holds the eight-step approval-day
+  checklist that replaces this paragraph on merge (create a responsive display unit and paste its slot id; Auto ads
+  stay off; consent mode flags in the European regulations settings, turned on 2026-10-19; merge into main, a live
+  deploy the owner approves; check day, night and phone width in Chrome; see Google's message from an EEA private
+  window and the footer link reopen it; point the message's privacy URL at the game's privacy.html; footer "Privacy
+  notice . Privacy and cookie settings"). The merge will conflict in this paragraph and in CLAUDE.md's privacy,
+  Analytics and Ads lines: keep the branch's ads-on wording and carry over what main added since.
+- **House ad when no ad fills the box** (offered 2026-10-19, owner not decided): once ads are live, a slot Google
+  leaves unfilled, or an ad blocker removes, leaves an empty ADVERTISEMENTS box. Option: keep the house ad and swap
+  it out only when the `<ins>` reports a filled ad (`data-ad-status="filled"`).
+- **US state privacy message (CCPA)** (flagged 2026-10-19, not handled): AdSense > Privacy & messaging also offers
+  a US state regulations message; none is set up, and the ads branch grants everything by default outside Europe.
+  Owner to decide whether to publish one (and then say so in privacy.html).
+- **Design canvas of the ad box title** (2026-10-19): the claude.ai artifact holding options A-D (D chosen; link in
+  the session's memory, not here) is kept; delete it only when the owner asks.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
