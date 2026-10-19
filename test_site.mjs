@@ -419,7 +419,7 @@ test("ads on: Google's message governs only once its CMP is live, else the banne
   assert.equal(cmpLive(null), false);
   assert.equal(cmpLive({ cmpStatus: null, gdprApplies: null }), false);
   assert.equal(cmpLive({ cmpStatus: "stub", gdprApplies: undefined }), false);
-  assert.equal(cmpLive({ cmpStatus: "loaded", gdprApplies: true }), true);
+  assert.equal(cmpLive({ cmpStatus: "loaded", gdprApplies: true }), false);   // loaded but silent: the live site before approval
   assert.equal(cmpLive({ cmpStatus: "loaded", gdprApplies: false }), true);   // outside the GDPR: Google decides not to ask
   for (const e of ["cmpuishown", "tcloaded", "useractioncomplete"]) assert.equal(cmpLive({ eventStatus: e }), true, e);
   assert.equal(consentPath({}), "wait");

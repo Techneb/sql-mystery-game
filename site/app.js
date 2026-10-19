@@ -1676,11 +1676,13 @@ function initConsent() {
 // gets CMP_WAIT_MS after the ads script loads (none after it fails); not live by then, the game's own banner
 // asks, as with ads off. If Google's message turns up later it takes over and the banner is hidden.
 export const CMP_WAIT_MS = 3000;
-// A TCF v2.2 callback from a live CMP: it says whether GDPR applies, or is showing or has used its message.
+// A TCF v2.2 callback from a live CMP: it is showing or has used its message, or GDPR does not apply. A CMP that
+// is merely "loaded" with GDPR applying is not live: before AdSense approves the site Google loads it and shows
+// nothing (seen on the live site from the UK, 2026-10-19), and our banner must ask instead.
 export function cmpLive(tc) {
   if (!tc) return false;
   if (["cmpuishown", "tcloaded", "useractioncomplete"].includes(tc.eventStatus)) return true;
-  return tc.cmpStatus === "loaded" && typeof tc.gdprApplies === "boolean";
+  return tc.cmpStatus === "loaded" && tc.gdprApplies === false;
 }
 // "google" | "own" | "wait" (not decided yet).
 export function consentPath({ live, failed, waited }) {
@@ -1743,8 +1745,10 @@ function initGoogleConsent(id) {
   // ponytail: assumes CONSENT_MODE_DATA_READY fires again after a revocation; the TCF listener covers it otherwise.
   window.googlefc.callbackQueue.push({ CONSENT_API_READY: hookTcf, CONSENT_MODE_DATA_READY: () => {
     const values = window.googlefc.getGoogleConsentModeValues && window.googlefc.getGoogleConsentModeValues();
+    const stats = googleStats({ modeStatus: values && values.analyticsStoragePurposeConsentStatus });
+    if (stats === "unknown") return;   // no answer from Google's message yet: not a sign that it is showing
     decide({ live: true });
-    apply(googleStats({ modeStatus: values && values.analyticsStoragePurposeConsentStatus }));
+    apply(stats);
   } });
   cmpDone = (failed) => {
     if (failed) return decide({ failed: true });
