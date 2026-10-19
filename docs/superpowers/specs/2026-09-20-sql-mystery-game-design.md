@@ -511,9 +511,9 @@ framework, no bundler.
   without which European visitors' choices never reach GA or the ads~~ (done: the owner turned Consent Mode on for
   advertising and analytics in AdSense on 2026-10-19); (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
   and phone width in Chrome, and that the house ad comes back with an ad blocker on; (6) confirm Google's consent message appears on the live site (from an EEA connection,
-  in a private window) and that the footer link reopens it; (7) in AdSense > Privacy & messaging, point the consent
+  in a private window) and that the footer link reopens it; ~~(7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
-  2026-10-10); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
+  2026-10-10)~~ (done 2026-10-19, republished; ad unit "Ritz Affair - under the schema" = `AD_SLOT` 1774964634); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
   rename rather than drop the game's own link, Google requires the second title verbatim): ~~rename the handbook's
   nav and footer "Privacy" links to "Privacy notice" too~~ (done on the branch 2026-10-10, with admin.html, after main's
   compete v2 was merged into it).
