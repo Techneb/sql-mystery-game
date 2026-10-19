@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -401,10 +401,10 @@ test("track sends nothing after a No or without gtag", () => {
   try {
     assert.equal(track("badge", { name: "x" }), true);   // not answered: Consent Mode's defaults decide
     store["ritz.consent"] = "no";
-    assert.equal(track("badge", { name: "x" }), ADS_ON);   // ads on: Google's message, not the banner, decides
+    assert.equal(track("badge", { name: "x" }), false);   // the banner governs until Google's message is live
     store["ritz.consent"] = "yes";
     assert.equal(track("badge", { name: "x" }), true);
-    assert.equal(calls.length, ADS_ON ? 3 : 2);
+    assert.equal(calls.length, 2);
     assert.deepEqual(calls[0], ["event", "badge", { name: "x" }]);
     delete window.gtag;
     assert.equal(track("badge", { name: "x" }), false);   // consent but gtag.js never set up
@@ -412,6 +412,28 @@ test("track sends nothing after a No or without gtag", () => {
     delete globalThis.window;
     if (ls) Object.defineProperty(globalThis, "localStorage", ls); else delete globalThis.localStorage;
   }
+});
+
+test("ads on: Google's message governs only once its CMP is live, else the banner asks", () => {
+  // The 2026-10-19 state before AdSense approval: __tcfapi answers, but nothing is loaded.
+  assert.equal(cmpLive(null), false);
+  assert.equal(cmpLive({ cmpStatus: null, gdprApplies: null }), false);
+  assert.equal(cmpLive({ cmpStatus: "stub", gdprApplies: undefined }), false);
+  assert.equal(cmpLive({ cmpStatus: "loaded", gdprApplies: true }), true);
+  assert.equal(cmpLive({ cmpStatus: "loaded", gdprApplies: false }), true);   // outside the GDPR: Google decides not to ask
+  for (const e of ["cmpuishown", "tcloaded", "useractioncomplete"]) assert.equal(cmpLive({ eventStatus: e }), true, e);
+  assert.equal(consentPath({}), "wait");
+  assert.equal(consentPath({ waited: true }), "own");     // CMP_WAIT_MS passed after the ads script loaded
+  assert.equal(consentPath({ failed: true }), "own");     // ads script blocked: no wait
+  assert.equal(consentPath({ live: true, waited: true }), "google");
+  assert.equal(CMP_WAIT_MS, 3000);
+  assert.equal(googleStats({ modeStatus: 1 }), "granted");
+  assert.equal(googleStats({ modeStatus: 2 }), "denied");
+  assert.equal(googleStats({ modeStatus: 0 }), "unknown");
+  assert.equal(googleStats({ tc: { gdprApplies: true, eventStatus: "cmpuishown" } }), "unknown");   // not answered yet
+  assert.equal(googleStats({ tc: { gdprApplies: true, eventStatus: "useractioncomplete", purpose: { consents: { 1: true } } } }), "granted");
+  assert.equal(googleStats({ tc: { gdprApplies: true, eventStatus: "tcloaded", purpose: { consents: {} } } }), "denied");
+  assert.equal(googleStats({ tc: { gdprApplies: false, eventStatus: "tcloaded" } }), "unknown");
 });
 
 test("GA_ID is empty or a GA4 measurement ID", () => {

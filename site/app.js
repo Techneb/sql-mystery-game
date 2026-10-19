@@ -1566,18 +1566,19 @@ function offerCompete() {
 // The course owner's GA4 measurement ID ("G-...", public by nature, may be committed). Empty: no banner,
 // no Statistics link, no request to Google. Owner, 2026-10-19: visitors outside the EEA, UK and Switzerland
 // are counted by default (and, with ads on, see ads under the granted default). Inside, with ads off, nothing is
-// sent before the banner's Yes (GA is not loaded: the browser's time zone stands in for the region); with ads on,
-// Google's certified message asks and everything stays denied (cookieless pings only) until its Yes.
+// sent before a Yes (GA is not loaded: the browser's time zone stands in for the region): the banner's Yes, or with
+// ads on, the Yes of Google's certified message once its CMP is live (else the banner asks, see initGoogleConsent).
 export const GA_ID = "G-QG0K0D1NQZ";
 // AdSense. Approval day is one edit: paste the display ad unit's data-ad-slot (AdSense > Ads > By ad unit, digits
 // only) into AD_SLOT; ADS_ON follows it.
 // ADS_ON switches the consent path below: off, the home-made banner (#consent) asks about statistics; on, Google's
-// certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both, in Europe only.
-// ?ads=1 previews the ads-on path on localhost (Google serves no ad and no message there).
+// certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both, in Europe only,
+// when its CMP is live, and the banner stands in while it is not.
+// ?ads=1 previews the ads-on path on localhost (Google serves no ad and no message there: the banner asks after 3 s).
 export const ADS_CLIENT = "ca-pub-9765732642926043";
 export const AD_SLOT = "1774964634";   // "Ritz Affair - under the schema", responsive display unit (2026-10-19)
 export const ADS_ON = AD_SLOT !== "";
-const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ads off only)
+const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (unless Google's message governs)
 let statsRefused = false;             // ads on: Google's message reports analytics_storage DENIED
 function consent() { try { return localStorage.getItem(CONSENT_KEY); } catch { return null; } }
 function adsOn() {
@@ -1610,7 +1611,7 @@ function timeZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZ
 // GA is loaded only after a Yes or outside Europe's time zones, and Consent Mode decides what a hit carries.
 export function track(name, params) {
   if (noPersist || typeof window === "undefined" || typeof window.gtag !== "function") return false;
-  if (ADS_ON ? statsRefused : consent() === "no") return false;
+  if (cmpPath === "google" ? statsRefused : consent() === "no") return false;
   window.gtag("event", name, params);
   return true;
 }
@@ -1621,9 +1622,12 @@ function gtagDefaults() {
   window.gtag = function () { window.dataLayer.push(arguments); };
   for (const d of consentDefaults(adsOn())) window.gtag("consent", "default", d);
 }
+let gaLoaded = false;
 function gaLoad(id) {
+  if (gaLoaded) return;
+  gaLoaded = true;
   gtagDefaults();
-  if (!adsOn() && consent() === "yes") window.gtag("consent", "update", { analytics_storage: "granted" });   // ads on: Google's message updates
+  if (cmpPath !== "google" && consent() === "yes") window.gtag("consent", "update", { analytics_storage: "granted" });   // Google's message updates its own
   window.gtag("js", new Date());
   window.gtag("config", id, { allow_google_signals: false, allow_ad_personalization_signals: false });
   const s = document.createElement("script");
@@ -1646,50 +1650,107 @@ function setConsent(v) {
   try { localStorage.setItem(CONSENT_KEY, v); } catch {}
   $("consent").hidden = true;
   window["ga-disable-" + id] = v !== "yes";   // honoured by gtag.js: no more hits, cookieless pings included
-  if (v === "yes") { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "granted" }); else gaLoad(id); }   // gaLoad reads the stored yes
+  if (v === "yes") { if (gaLoaded) window.gtag("consent", "update", { analytics_storage: "granted" }); else gaLoad(id); }   // gaLoad reads the stored yes
   else { if (window.gtag) window.gtag("consent", "update", { analytics_storage: "denied" }); dropGaCookies(); }
 }
-function initConsent() {
-  const id = gaId();
-  if (adsOn()) return initGoogleConsent(id);
-  if (!id) return;
-  $("stats-link").hidden = false;
-  $("btn-stats").onclick = e => { e.preventDefault(); $("consent").hidden = false; $("consent-yes").focus(); };
+function openBanner() { $("consent").hidden = false; $("consent-yes").focus(); }
+// The game's own question (#consent): the only one with ads off, the fallback with ads on.
+function ownConsent(id) {
   $("consent-yes").onclick = () => setConsent("yes");
   $("consent-no").onclick = () => setConsent("no");
   const c = consent();
   if (c === "yes" || (!c && !europeanZone(timeZone()))) gaLoad(id);   // Europe waits for the Yes
   if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
 }
-// Ads on: Google's consent message replaces the banner. The page sets the Consent Mode region defaults
-// (gtagDefaults); once consent mode is enabled for the message (AdSense > Privacy & messaging > European
-// regulations > Settings), Google's CMP itself updates the consent state (ad_storage, ad_user_data,
-// ad_personalization, analytics_storage) with the reader's choice, for readers shown the message (EEA, UK,
-// Switzerland); elsewhere nothing updates it and the granted default stands. GA loads at once for everyone:
-// it never waits on the message, so a visitor who is never asked is still counted. Sources:
-// https://support.google.com/adsense/answer/16088460 (Google's CMP launches support for consent mode),
-// https://developers.google.com/funding-choices/fc-api-docs (googlefc: CONSENT_MODE_DATA_READY,
-// getGoogleConsentModeValues, showRevocationMessage), https://support.google.com/adsense/answer/10959060
-// (revocation link), https://developers.google.com/tag-platform/security/guides/consent (defaults).
+function initConsent() {
+  const id = gaId();
+  if (adsOn()) return initGoogleConsent(id);
+  if (!id) return;
+  $("stats-link").hidden = false;
+  $("btn-stats").onclick = e => { e.preventDefault(); openBanner(); };
+  ownConsent(id);
+}
+// Ads on: which question governs (owner, 2026-10-19). Google's message (AdSense > Privacy & messaging, served by
+// adsbygoogle.js) governs once its CMP is live. Until AdSense approves the site it loads but stays inactive
+// (getConsentStatus() UNKNOWN, TCF cmpStatus null, no message), and a blocked script never answers. So the CMP
+// gets CMP_WAIT_MS after the ads script loads (none after it fails); not live by then, the game's own banner
+// asks, as with ads off. If Google's message turns up later it takes over and the banner is hidden.
+export const CMP_WAIT_MS = 3000;
+// A TCF v2.2 callback from a live CMP: it says whether GDPR applies, or is showing or has used its message.
+export function cmpLive(tc) {
+  if (!tc) return false;
+  if (["cmpuishown", "tcloaded", "useractioncomplete"].includes(tc.eventStatus)) return true;
+  return tc.cmpStatus === "loaded" && typeof tc.gdprApplies === "boolean";
+}
+// "google" | "own" | "wait" (not decided yet).
+export function consentPath({ live, failed, waited }) {
+  if (live) return "google";
+  return failed || waited ? "own" : "wait";
+}
+// Google's answer on statistics: Consent Mode's analytics status (ConsentModePurposeStatusEnum, 1 GRANTED,
+// 2 DENIED) or the TC data's purpose 1 (storage) once the reader has a TC string; else "unknown".
+export function googleStats({ modeStatus, tc }) {
+  if (modeStatus === 1) return "granted";
+  if (modeStatus === 2) return "denied";
+  if (tc && tc.gdprApplies === true && ["tcloaded", "useractioncomplete"].includes(tc.eventStatus))
+    return tc.purpose && tc.purpose.consents && tc.purpose.consents[1] ? "granted" : "denied";
+  return "unknown";
+}
+let cmpPath = "";         // ads on: "" until decided, then "google" or "own"; ads off: stays ""
+let cmpDone = () => {};   // initAds reports the ads script's load or error here
+// Sources: https://developers.google.com/funding-choices/fc-api-docs (googlefc: CONSENT_API_READY,
+// CONSENT_MODE_DATA_READY, getGoogleConsentModeValues, showRevocationMessage), https://support.google.com/adsense/answer/16088460
+// (Google's CMP and consent mode), https://support.google.com/adsense/answer/10959060 (revocation link),
+// https://developers.google.com/tag-platform/security/guides/consent (defaults), IAB TCF v2.2 CMP API (__tcfapi).
 function initGoogleConsent(id) {
   gtagDefaults();
   window.googlefc = window.googlefc || {};
   window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
   // Google asks for a revocation link titled "Privacy and cookie settings" at the bottom of the site.
   $("btn-stats").textContent = "Privacy and cookie settings";
-  $("btn-stats").onclick = e => { e.preventDefault(); window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage()); };
+  $("btn-stats").onclick = e => {
+    e.preventDefault();
+    if (cmpPath === "google") window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage());
+    else openBanner();
+  };
   $("stats-link").hidden = false;
   if (!id) return;
-  gaLoad(id);
-  // Only an explicit DENIED (ConsentModePurposeStatusEnum 2) stops GA: outside Europe the status is not
-  // GRANTED either (no message), and the granted default must keep counting there.
-  // ponytail: assumes CONSENT_MODE_DATA_READY fires again after a revocation; if not, the CMP's own consent
-  // update still stops GA's cookies, and the _ga cookies go on the next page load.
-  window.googlefc.callbackQueue.push({ CONSENT_MODE_DATA_READY: () => {
-    statsRefused = window.googlefc.getGoogleConsentModeValues().analyticsStoragePurposeConsentStatus === 2;
+  if (!europeanZone(timeZone()) && consent() !== "no") gaLoad(id);   // the granted default outside Europe; Europe waits for a Yes
+  const decide = (o) => {
+    const v = consentPath(o);
+    if (v === "wait" || v === cmpPath || (v === "own" && cmpPath)) return;   // google may follow own, never the reverse
+    cmpPath = v;
+    if (v === "own") return ownConsent(id);
+    $("consent").hidden = true;   // never both questions at once
+  };
+  const apply = (stats) => {
+    if (cmpPath !== "google" || stats === "unknown") return;
+    statsRefused = stats === "denied";
     window["ga-disable-" + id] = statsRefused;
-    if (statsRefused) dropGaCookies();
+    if (statsRefused) { window.gtag("consent", "update", { analytics_storage: "denied" }); dropGaCookies(); }
+    else { gaLoad(id); window.gtag("consent", "update", { analytics_storage: "granted" }); }
+  };
+  let hooked = false;
+  const hookTcf = () => {
+    if (hooked || typeof window.__tcfapi !== "function") return;
+    hooked = true;
+    window.__tcfapi("addEventListener", 2, (tc, ok) => {
+      if (!ok || !cmpLive(tc)) return;
+      decide({ live: true });
+      apply(googleStats({ tc }));
+    });
+  };
+  // ponytail: assumes CONSENT_MODE_DATA_READY fires again after a revocation; the TCF listener covers it otherwise.
+  window.googlefc.callbackQueue.push({ CONSENT_API_READY: hookTcf, CONSENT_MODE_DATA_READY: () => {
+    const values = window.googlefc.getGoogleConsentModeValues && window.googlefc.getGoogleConsentModeValues();
+    decide({ live: true });
+    apply(googleStats({ modeStatus: values && values.analyticsStoragePurposeConsentStatus }));
   } });
+  cmpDone = (failed) => {
+    if (failed) return decide({ failed: true });
+    hookTcf();
+    setTimeout(() => decide({ waited: true }), CMP_WAIT_MS);
+  };
 }
 
 // The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
@@ -1716,7 +1777,8 @@ function initAds() {
   s.async = true; s.crossOrigin = "anonymous";
   s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
   let failed = false, check = () => {};
-  s.onerror = () => { failed = true; check(); };
+  s.onerror = () => { failed = true; check(); cmpDone(true); };
+  s.onload = () => cmpDone(false);
   if (AD_SLOT) {
     // The house ad stays in the DOM, hidden while Google's ad is tried beside it (the slot keeps its min-height).
     const slot = box.querySelector(".press-slot"), house = slot.querySelector(".press-notice");

@@ -30,8 +30,9 @@
   included, runs in your browser. The page shows advertising from Google AdSense in one box beside the
   game, under the schema, never inside a chapter. In the European Economic Area, the United Kingdom and
   Switzerland, Google's consent message asks on your first visit whether Google and its partners may use
-  cookies and your data for advertising and for usage statistics; elsewhere both are on by default and you
-  can opt out (below). The game itself sets no cookies.</p>
+  cookies and your data for advertising and for usage statistics, once Google has made it active for this
+  site; until then, and whenever it cannot load, the game asks its own question about usage statistics.
+  Elsewhere both are on by default and you can opt out (below). The game itself sets no cookies.</p>
 
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
@@ -48,22 +49,35 @@
     served by the AdSense script) asks for your consent to advertising and usage statistics, with buttons
     to accept or refuse and a way to manage each purpose. Google keeps your choice in its own cookies on
     this site. Until you choose, and whenever you refuse, every purpose stays denied.</li>
-    <li><b>Everywhere else</b>, no message is shown and every purpose starts as granted: usage statistics
-    are counted and the ads may be personalised, until you opt out.</li>
+    <li><b>Everywhere else</b>, no message from Google is shown and every purpose starts as granted: usage
+    statistics are counted and the ads may be personalised, until you opt out.</li>
   </ul>
+  <p>Google shows its message only once it has made it active for this site, and the AdSense script may be
+  blocked. So the page waits up to 3 seconds after that script loads (not at all if it fails): if Google's
+  message is not active by then, a short question from the game itself, at the bottom of the page, asks
+  every visitor who has not answered it yet whether to allow anonymous usage statistics (Yes or No). Your
+  answer is kept in your browser's local storage (<code>ritz.consent</code>). It covers statistics only:
+  in Europe the advertising purposes then stay denied. If Google's message appears later, it replaces the
+  game's question and decides from then on; the two are never shown together.</p>
+  <p><b>From a browser set to a European time zone</b> (the page cannot see your country, so the time zone
+  stands in for it), nothing is sent to Google Analytics before a Yes, in Google's message or in the game's
+  question: its script is not even loaded.</p>
   <p>You can change your mind at any time: the <i>Privacy and cookie settings</i> link at the bottom of
-  the game's front page reopens Google's message where it applies. If you withdraw consent to statistics,
-  the page stops sending them and deletes the <code>_ga</code> cookies. Outside Europe, opt out of
+  the game's front page reopens Google's message where it applies, or the game's question while that one
+  asks. If you withdraw consent to statistics, the page stops sending them and deletes the
+  <code>_ga</code> cookies. Outside Europe, opt out of
   personalised ads in Google's <a href="https://www.google.com/settings/ads">Ads Settings</a> (more below),
   and of statistics with Google's
   <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics opt-out add-on</a> or your browser's
   tracking protection.</p>
 
   <h2>Usage statistics</h2>
-  <p>The page loads <b>Google Analytics 4</b> on every visit. In Europe, until you consent to usage
-  statistics in Google's message, it sets no cookie and sends only cookieless signals (the page viewed and
-  the game events below, with no identifier tying them to you), which Google uses to estimate overall
-  numbers. With statistics on (your consent in Europe, the default elsewhere):</p>
+  <p>The page loads <b>Google Analytics 4</b> at once outside Europe's time zones. In a European time
+  zone it is loaded only after your Yes (above), so until then nothing at all reaches Google Analytics. If
+  your time zone is outside Europe but Google places you in Europe, the analytics default there is denied:
+  until you consent it sets no cookie and sends only cookieless signals (the page viewed and the game
+  events below, with no identifier tying them to you), which Google uses to estimate overall numbers.
+  With statistics on (your Yes in Europe, the default elsewhere):</p>
   <ul>
     <li>It sets the first-party cookies <code>_ga</code> and <code>_ga_&lt;id&gt;</code>, which Google keeps
     for up to 13 months by default. The collected data itself is kept for 14 months, then deleted.</li>
@@ -95,7 +109,8 @@
     <li>If you consent, or by default outside the European Economic Area, the United Kingdom and Switzerland,
     Google and its partners may set and read advertising cookies and use data about your visits to this site
     and other sites to show <b>personalised ads</b>, and measure them.</li>
-    <li>If you refuse in Google's message, or opt out in Ads Settings, you see <b>non-personalised ads</b>, chosen from the page's
+    <li>If you refuse in Google's message, or opt out in Ads Settings, or in Europe while the game's own
+    question stands in for Google's message, you see <b>non-personalised ads</b>, chosen from the page's
     content and your approximate location rather than your browsing; Google may still use cookies or
     similar identifiers for frequency capping, aggregated reporting and fighting fraud and abuse, as
     its policies allow, or show no ad at all.</li>
@@ -141,8 +156,9 @@
     fundingchoicesmessages.google.com, and the ads themselves from Google's ad servers, including
     googleads.g.doubleclick.net and tpc.googlesyndication.com; these see
     your IP address, and with your consent (by default outside Europe) set advertising cookies.</li>
-    <li>On every visit: the Google Analytics script from googletagmanager.com, and its measurements sent
-    to google-analytics.com (cookieless in Europe until you consent, none once you refuse).</li>
+    <li>Outside Europe's time zones on every visit, in them only after your Yes: the Google Analytics
+    script from googletagmanager.com, and its measurements sent to google-analytics.com (none once you
+    refuse).</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>

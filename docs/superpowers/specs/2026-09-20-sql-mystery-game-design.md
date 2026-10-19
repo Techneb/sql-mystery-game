@@ -503,8 +503,12 @@ framework, no bundler.
   **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged; main merged in 2026-10-19, and the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
   and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, tries a
   responsive unit in `.press-slot` (house-ad fallback above), sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
-  elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message (GA4 loads at once
-  for everyone and stops only on an explicit DENIED for analytics_storage; the footer link becomes "Privacy and cookie settings" and reopens the message);
+  elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message; the footer link becomes "Privacy and cookie settings" and reopens the message.
+  **Decided (owner, 2026-10-19): nothing leaves a European browser before a Yes with ads on too.** Google's CMP
+  loads but stays inactive before approval (seen that day from the UK: no message, consent status UNKNOWN), so the
+  page uses Google's message only once its CMP is live within 3 s of the ads script and falls back to the game's own
+  banner otherwise, and GA4 never loads in a European time zone before a Yes from whichever asks (the rule and its
+  signals: CLAUDE.md, Ads);
   privacy.html is written for that state. Switch-on checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
   a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) ~~AdSense >
   Privacy & messaging > European regulations > Settings: the consent mode flags (ads and analytics storage),
