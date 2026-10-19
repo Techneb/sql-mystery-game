@@ -152,9 +152,11 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 | Clean Sweep | Part I with zero hints |
 | Ganimard | all 12 chapters |
 
-- **Rank** (learning mode, end of Part I, from queries + hints; thresholds are one constant, to tune
-  after the first class): <= 25 queries and 0 hints: *Ganimard himself*; <= 40 and <= 3: *Chief
-  Inspector*; <= 60 and <= 6: *Inspector*; else *Constable*. Part II ranked separately.
+- **Rank** (learning mode, end of Part I, from queries; thresholds are one constant, `RANKS`): <= 45
+  queries: *Ganimard himself*; <= 70: *Chief Inspector*; <= 110: *Inspector*; else *Constable*. Tuned
+  2026-10-19 from the trial (GA4 `chapter_solve`, consenting players only: mean queries per solve, ch1-8,
+  9.5 / 22.4 / 15.7 / 7.6 / 6.5 / 4.9 / 7.9 / 7.3, about 82 for Part I, 14 players solving ch1 and 6 ch8;
+  played before errors counted as queries, so set generously). Was 25 / 40 / 60. Part II ranked separately.
 - **Certificate**: `@media print` stylesheet, one page: pair names (typed at the end), rank, badges,
   chapters solved, date, in the newspaper style.
 - **Notepad**: a `textarea` in the right column, autosaved to `localStorage`, printed on the certificate.
@@ -317,8 +319,8 @@ framework, no bundler.
   table), ch3's interview no longer reads as if the valet were at the Opera (a second 75-2 cab leaves Vendome that
   night), the schema shows each column's type, and an outside editor's English and coherence pass was applied
   (compete ch2 now has Ganimard's "Lupin has no friends, clerk, only names").
-  **Still open (phase 4):** tune `RANKS` (constants in `site/app.js`) from the trial's real query counts, read from
-  the admin page's per-chapter summary table.
+  `RANKS` tuned 2026-10-19 from the trial's GA4 query counts (the trial ran in learn mode, so the compete
+  backend holds none; see section 3, Rank). Phase 4 is done.
 
 ## 8. Backlog (not scheduled)
 

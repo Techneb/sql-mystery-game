@@ -1044,7 +1044,7 @@ function award(list) {
   if (list.length) save(state);
 }
 
-const RANKS = [[25, "Ganimard himself"], [40, "Chief Inspector"], [60, "Inspector"], [Infinity, "Constable"]];  // tune after the first class
+const RANKS = [[45, "Ganimard himself"], [70, "Chief Inspector"], [110, "Inspector"], [Infinity, "Constable"]];  // from the 2026-10 trial (spec, Rank)
 export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 
 // Seconds per wrong answer on the board; a compete game takes its season record's penalty.

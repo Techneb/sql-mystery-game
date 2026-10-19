@@ -128,11 +128,12 @@ test("badges fire on the right query shapes and only once", () => {
 });
 
 test("rank thresholds", () => {
-  assert.equal(rank(25), "Ganimard himself");
-  assert.equal(rank(26), "Chief Inspector");
-  assert.equal(rank(40), "Chief Inspector");
-  assert.equal(rank(41), "Inspector");
-  assert.equal(rank(61), "Constable");
+  assert.equal(rank(45), "Ganimard himself");
+  assert.equal(rank(46), "Chief Inspector");
+  assert.equal(rank(70), "Chief Inspector");
+  assert.equal(rank(71), "Inspector");
+  assert.equal(rank(110), "Inspector");
+  assert.equal(rank(111), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12 });
 });
