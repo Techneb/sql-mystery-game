@@ -444,7 +444,7 @@ framework, no bundler.
   domain `alephb.uk` (subdomains included); verification meta tag on both `alephb.uk` (alephb-site repo) and
   the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
-  messages. The ad box exists: a `<details id="ad-box">` under the schema, open on every visit (closing
+  messages. The ad box exists: a `<details id="press-box">` under the schema, open on every visit (closing
   it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`); hidden until 2026-10-19, it now shows a static
   house notice for the handbook until approval (owner), titled ADVERTISEMENTS in the typewriter face (option D).
   **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
@@ -496,7 +496,7 @@ framework, no bundler.
   an eight-step approval-day checklist that replaces the list below once merged. Without the branch: (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
-  340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.ad-slot`; (c) `ADS_ON = true`;
+  340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.press-slot`; (c) `ADS_ON = true`;
   (d) privacy.html: an advertising section (AdSense cookies, personalised vs non-personalised ads, the
   consent message, how to withdraw); (e) check day, night and phone width in Chrome, then push.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
