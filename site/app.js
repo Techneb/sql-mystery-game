@@ -1,6 +1,6 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
 import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime, resultsLink } from "./shared.js";
-export { normalise, sha256, teamKey, STOP_WORDS, fmtTime, resultsLink } from "./shared.js";
+export { normalise, sha256, teamKey, STOP_WORDS, fmtTime, resultsLink, escapeHtml } from "./shared.js";
 
 export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
@@ -92,10 +92,7 @@ async function loadDb(stem) {
   const buf = await (await fetch(stem + ".sqlite" + VERSION)).arrayBuffer();
   if (db) db.close();
   db = new SQL.Database(new Uint8Array(buf));
-  db.run("PRAGMA query_only = 1");   // DROP/UPDATE/DELETE fail with "attempt to write a readonly database" instead of silently breaking the chapter
-  db.run("PRAGMA case_sensitive_like = ON");   // LIKE as in PostgreSQL; ILIKE runs as REGEXP (toSqlite), bound to ilike()
-  // One registration for both arities (x REGEXP p, and with ESCAPE): sql.js takes nArg from the function's length, -1 = any.
-  db.create_function("regexp", Object.defineProperty((p, v, e) => ilike(p, v, e), "length", { value: -1 }));
+  terminalDb(db);
   const v = db.exec("SELECT sqlite_version()")[0].values[0][0];
   if (v.split(".").map(Number) < [3, 39]) console.warn("SQLite " + v + " is older than 3.39; RIGHT JOIN will fail");
   tableSizes = {};
@@ -104,6 +101,15 @@ async function loadDb(stem) {
     tableSizes[t] = db.exec("SELECT COUNT(*) FROM " + t)[0].values[0][0];
     schema[t] = db.exec("PRAGMA table_info(" + t + ")")[0].values.map(r => [r[1], r[2], r[5]]);   // name, declared type, pk
   }
+}
+
+// The terminal's database settings, shared with the handbook's exercises page (learn/exercises.js).
+export function terminalDb(db) {
+  db.run("PRAGMA query_only = 1");   // DROP/UPDATE/DELETE fail with "attempt to write a readonly database" instead of silently breaking the chapter
+  db.run("PRAGMA case_sensitive_like = ON");   // LIKE as in PostgreSQL; ILIKE runs as REGEXP (toSqlite), bound to ilike()
+  // One registration for both arities (x REGEXP p, and with ESCAPE): sql.js takes nArg from the function's length, -1 = any.
+  db.create_function("regexp", Object.defineProperty((p, v, e) => ilike(p, v, e), "length", { value: -1 }));
+  return db;
 }
 
 // After a correct answer the solved chapter stays on screen (telegram, answer) until the clerk presses
@@ -875,8 +881,8 @@ export function ilike(pattern, value, escape) {
   }
   return new RegExp("^" + re + "$", "i").test(String(value)) ? 1 : 0;
 }
-export function strictHtml(r) {
-  return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + STRICT_PAGE + "#" + r.anchor +
+export function strictHtml(r, page = STRICT_PAGE) {   // page: the grammar page as the caller links it (learn/exercises.js: grammar.html)
+  return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + page + "#" + r.anchor +
     '" target="_blank" rel="noopener">Grammar: ' + esc(STRICT_SECTIONS[r.anchor]) + "</a></div>";
 }
 
@@ -2043,4 +2049,4 @@ async function boot() {
   }
 }
 
-if (typeof document !== "undefined") boot();
+if (typeof document !== "undefined" && document.getElementById("landing")) boot();   // the game page only: learn/exercises.js imports this module too

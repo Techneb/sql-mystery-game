@@ -447,6 +447,36 @@ class Erd(unittest.TestCase):
         self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
 
+    def test_bakery_schema_follows_the_same_rules_and_is_current(self):
+        import erd
+        with open("site/learn/database.html") as f:
+            conn = erd.bakery_conn(f.read())
+        tables, fks = erd.read_schema(conn)
+        self.assertEqual(sorted(tables), ["customer", "order_item", "orders", "product"])
+        pos = erd.layout(tables, fks)
+        paths = erd.fk_paths(tables, fks, pos)
+        self.assertEqual(len(paths), 3)   # customer.referred_by is a loop beside its table, drawn by svg()
+        for e in paths:
+            self.assertNotEqual(pos[e["t"]][2], pos[e["ref"]][2], e["t"])
+            for name, (_, x, y, w, h) in pos.items():
+                for px, py in e["points"]:
+                    self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (e["t"], e["col"], name))
+        self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
+        for t, cols in tables.items():
+            for c, typ, _, _ in cols:
+                self.assertTrue(typ, "%s.%s" % (t, c))
+                self.assertLessEqual(21 + erd.NAME_PX * len(c) + 8 + erd.TYPE_PX * len(typ), erd.W - 6, "%s.%s" % (t, c))
+        _, x, y, w, _ = pos["customer"]   # the loop needs the slot to the right of customer free
+        self.assertFalse(any(px > x + w and py == y for (_, px, py, _, _) in pos.values()))
+        s = erd.svg(conn)
+        self.assertEqual(s.count('class="fk"'), 4)
+        s.encode("ascii")
+        for page in erd.BAKERY_PAGES:   # the pages carry the current drawing: python3 generate_db.py rewrites it
+            with open("site/learn/" + page) as f:
+                m = erd.BAKERY_MARK.search(f.read())
+            self.assertTrue(m, page)
+            self.assertEqual(m.group(0), m.group(1) + s + m.group(2), page + ": run python3 generate_db.py")
+
 
 class Suspects(unittest.TestCase):
     def test_notes_never_give_away_the_chapter_being_played(self):

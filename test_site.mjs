@@ -6,6 +6,7 @@ import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
+import { sameResult, sameValue, checkOptions, tablesIn } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -730,7 +731,12 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, the d
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
   const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
-  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js"]) assert.ok(yml.includes(f), f);
+  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
+  // every module importing app.js, shared.js or qr.js is one the deploy versions
+  const importers = ["site", "site/learn"].flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".js")).map((f) => d + "/" + f))
+    .filter((f) => /from "\.\.?\/(app|shared|qr)\.js"/.test(fs.readFileSync(f, "utf8")));
+  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/leaderboard.js", "site/learn/exercises.js"]);
+  for (const f of importers) assert.ok(yml.includes(f), f + " is versioned by the deploy");
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
@@ -950,4 +956,66 @@ test("europeanZone: Europe's time zones wait for the banner's Yes, the rest are 
     assert.equal(europeanZone(tz), true, tz);
   for (const tz of ["America/New_York", "Asia/Kolkata", "Africa/Casablanca", "Atlantic/Bermuda", "Australia/Sydney"])
     assert.equal(europeanZone(tz), false, tz);
+});
+
+// --- The handbook's interactive exercises (site/learn/exercises.js) -------------------------------------------
+// Each solution run on the bakery database by Python's sqlite3 with the terminal's semantics (generate_db.strict_conn),
+// as the page runs it in sql.js, then checked the way the page checks a student's result.
+const EX_RE = /<p class="exercise" id="([^"]+)"([^>]*)>[\s\S]*?Expected: (\d+) rows?\.<\/p>\n<details class="solution"><summary>Solution<\/summary>\n<pre><code>([\s\S]*?)<\/code><\/pre>\n<table class="result">([\s\S]*?)<\/table>/g;
+const exercises = [...learnHtml["exercises.html"].matchAll(EX_RE)].map(([, slug, attrs, rows, code, table]) => {
+  const dataset = Object.fromEntries([...attrs.matchAll(/data-(\w+)(?:="([^"]*)")?/g)].map(([, k, v]) => [k, v ?? ""]));
+  const cells = (tag, tr) => [...tr.matchAll(new RegExp(`<${tag}>([^<]*)</${tag}>`, "g"))].map((m) => unentity(m[1]));
+  const trs = [...table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
+  return { slug, opts: checkOptions(dataset), rows: Number(rows), sql: plainSql(code),
+    page: { columns: cells("th", trs[0]), values: trs.slice(1).map((tr) => cells("td", tr).map((v) => (v === "NULL" ? null : v))) } };
+});
+const exRun = JSON.parse(execFileSync("python3", ["-c", `
+import sys, json, erd, generate_db as g
+conn = g.strict_conn(erd.bakery_conn(open("site/learn/database.html").read()))
+out = []
+for q in json.load(sys.stdin):
+    cur = conn.execute(g.sqlite_sql(q))
+    out.append({"columns": [d[0] for d in cur.description], "values": [list(r) for r in cur.fetchall()]})
+print(json.dumps(out))`], { input: JSON.stringify(exercises.map((e) => e.sql)), encoding: "utf8" }));
+
+test("exercises: each solution's result marks its own question solved, and no other one", () => {
+  assert.equal(exercises.length, 15);
+  exercises.forEach((e, i) => {
+    const res = exRun[i];
+    assert.equal(res.values.length, e.rows, e.slug + ": the expected row count");
+    assert.ok(sameResult(e.page, res, e.opts), e.slug + ": the page's printed result is the real one");
+    exercises.forEach((o, j) => assert.equal(sameResult(res, exRun[j], o.opts), i === j, `${e.slug} result against ${o.slug}`));
+    assert.ok(tablesIn(e.sql, Object.keys(bakerySchema(learnHtml["database.html"]))).length >= 1, e.slug);
+    const flipped = { ...res, values: [...res.values].reverse() };
+    if (res.values.length > 1) assert.equal(sameResult(flipped, res, e.opts), !e.opts.ordered, e.slug + ": row order counts only when asked");
+    assert.equal(sameResult({ ...res, values: res.values.slice(1) }, res, e.opts), false, e.slug + ": a missing row");
+    const wider = { columns: ["x", ...res.columns].reverse(), values: res.values.map((r) => ["junk", ...r].reverse()) };
+    assert.ok(sameResult(wider, res, e.opts), e.slug + ": extra columns, other order, other names");
+  });
+});
+
+test("exercises: the order rule, the needed columns, the number tolerance", () => {
+  assert.deepEqual(checkOptions({}), { ordered: false, need: null, tol: 1e-6 });
+  assert.deepEqual(checkOptions({ ordered: "", need: "0,3", tolerance: "0.01" }), { ordered: true, need: [0, 3], tol: 0.01 });
+  assert.ok(sameValue(7, "07") && sameValue(4.5, "4.50") && sameValue(21, 21.000000000000004) && sameValue(null, undefined));
+  assert.ok(!sameValue(null, 0) && !sameValue("a", "A") && !sameValue(3.33, 3.32));
+  assert.ok(sameValue(3.325, 3.32, 0.01) && sameValue(3.33, 3.32, 0.01) && !sameValue(3.34, 3.32, 0.01));
+  const sol = { columns: ["id", "name"], values: [[4, "Croissant"], [6, "Almond croissant"]] };
+  assert.ok(sameResult({ columns: ["name"], values: [["Almond croissant"], ["Croissant"]] }, sol, { need: [1] }), "only the name is asked");
+  assert.ok(!sameResult({ columns: ["name"], values: [["Almond croissant"], ["Croissant"]] }, sol), "the id too, by default");
+  assert.ok(sameResult(null, { columns: ["a"], values: [] }) && !sameResult(null, sol));
+  assert.deepEqual(tablesIn("SELECT 1 FROM orders o JOIN order_item oi ON 1 ORDER BY 1", ["customer", "order_item", "orders", "product"]), ["order_item", "orders"]);
+});
+
+test("exercises: every Try it link names a question; the page keeps its static content and loads its module", () => {
+  const ids = exercises.map((e) => e.slug);
+  for (const f of learnPages)
+    for (const [, slug] of learnHtml[f].matchAll(/exercises\.html#([\w-]+)/g)) assert.ok(ids.includes(slug), f + " links " + slug);
+  const page = learnHtml["exercises.html"];
+  assert.equal((page.match(/<details class="solution">/g) || []).length, 15);
+  assert.match(page, /<section id="workbench" class="workbench" hidden/, "the interactive part shows only once the script runs");
+  assert.match(page, /<script type="module" src="exercises\.js"><\/script>/);
+  assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
+  assert.match(strictHtml(strictCheck("SELECT name FROM product WHERE price == 2", bakerySchema(learnHtml["database.html"])), "grammar.html"), /href="grammar\.html#[\w-]+"/);
+  assert.doesNotMatch(page + fs.readFileSync("site/learn/exercises.js", "utf8"), /[^\n -~]/, "pure ASCII");
 });

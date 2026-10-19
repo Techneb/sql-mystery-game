@@ -6,7 +6,11 @@ runs in the gaps between rows and the gutters beside and between the columns, ne
 overlaps another line. Keys are drawn as icons (gold: primary, silver: foreign),
 and each line carries its cardinality: a dot at each end, with N on the many side and 1 on the one side.
 """
+import html
 import itertools
+import os
+import re
+import sqlite3
 
 W, GAP, LAYER_H, ROW, HEAD = 184, 56, 60, 14, 16   # W fits the longest name + type row (dropoff_address_id INTEGER)
 NAME_PX, TYPE_PX = 6.0, 5.6   # px per character of a column name (10 px Special Elite) and of its type (9 px), rounded up
@@ -84,7 +88,7 @@ def fk_paths(tables, fks, pos):
         bands[y] = max(bands.get(y, 0), y + h)
     tops = sorted(bands)
     row = lambda t: tops.index(pos[t][2])
-    edges = list(fks)
+    edges = [e for e in fks if e[0] != e[2]]   # a table that refers to itself gets a loop beside it (svg)
     up = {e: row(e[0]) < row(e[2]) for e in edges}   # the child sits above its parent (revealed first)
     ga = {e: row(e[2]) - up[e] for e in edges}         # the gap beside the parent: below it, or above it when up
     gb = {e: row(e[0]) - (not up[e]) for e in edges}   # the gap beside the child: above it, or below it when up
@@ -247,6 +251,17 @@ def svg(conn, chapters=()):
              '<text x="%g" y="%g">1</text>' % (ex + 5, ey + (11 if u > 0 else -4)),
              '<text x="%g" y="%g">%s</text>' % (sx + 5, sy - (4 if u > 0 else -11), "N" if many else "1")]
         out.append("".join(g) + "</g>")
+    for t, col, _ in [e for e in fks if e[0] == e[2]]:   # a self-reference: a loop off the right edge, fk row to pk row
+        _, x, y, w, _ = pos[t]
+        mid = lambda i: y + HEAD + ROW * i + ROW / 2
+        names = [c[0] for c in tables[t]]
+        y1, y2 = mid(names.index(col)), mid(next(i for i, c in enumerate(tables[t]) if c[2]))
+        many = cardinality(conn, t, col) == "N"
+        out.append("".join(['<g class="fk" data-from="%s.%s" data-to="%s">' % (t, col, t),
+                            '<path class="rel" d="%s"/>' % rounded([(x + w, y1), (x + w + 18, y1), (x + w + 18, y2), (x + w, y2)], 8),
+                            '<circle cx="%g" cy="%g" r="2.6"/>' % (x + w + 1, y1), '<circle cx="%g" cy="%g" r="2.6"/>' % (x + w + 1, y2),
+                            '<text x="%g" y="%g">%s</text>' % (x + w + 4, y1 + 11, "N" if many else "1"),
+                            '<text x="%g" y="%g">1</text>' % (x + w + 4, y2 - 4), "</g>"]))
     for t, cols in tables.items():
         _, x, y, w, h = pos[t]
         g = ['<g class="table" data-table="%s" transform="translate(%d,%d)">' % (t, x, y),
@@ -261,3 +276,33 @@ def svg(conn, chapters=()):
             g.append('<text class="type" x="%d" y="%d" text-anchor="end">%s</text>' % (w - 6, base - 3, typ))
         out.append("\n".join(g) + "</g>")
     return "\n".join(out) + "\n</svg>\n"
+
+
+# The Clerk's Handbook's bakery database (site/learn/database.html's script): its schema, drawn the same way, is
+# written into the pages that show it, between these markers (python3 generate_db.py rebuilds it).
+BAKERY_PAGES = ("database.html", "exercises.html")
+BAKERY_MARK = re.compile(r"(<!-- bakery schema: erd.py -->\n)[\s\S]*?(<!-- /bakery schema -->)")
+
+
+def bakery_conn(database_html):
+    script = re.search(r'<details class="script">[\s\S]*?<pre><code>([\s\S]*?)</code></pre>', database_html).group(1)
+    conn = sqlite3.connect(":memory:")
+    conn.executescript(html.unescape(re.sub(r"<[^>]+>", "", script)))
+    return conn
+
+
+def bakery_svg(learn_dir):
+    with open(os.path.join(learn_dir, "database.html")) as f:
+        return svg(bakery_conn(f.read()))
+
+
+def write_bakery(learn_dir):
+    s = bakery_svg(learn_dir)
+    for page in BAKERY_PAGES:
+        path = os.path.join(learn_dir, page)
+        with open(path) as f:
+            text = f.read()
+        new = BAKERY_MARK.sub(lambda m: m.group(1) + s + m.group(2), text)
+        if new != text:
+            with open(path, "w") as f:
+                f.write(new)

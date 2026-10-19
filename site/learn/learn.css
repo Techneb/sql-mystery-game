@@ -1,5 +1,5 @@
-/* The Clerk's Handbook (site/learn/): article layout over ../style.css. No JavaScript on these pages, so the
-   night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
+/* The Clerk's Handbook (site/learn/): article layout over ../style.css. No theme button on these pages (exercises.html alone runs a
+   script, exercises.js), so the night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
 @media (prefers-color-scheme: dark) {
   :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
     --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
@@ -43,4 +43,27 @@
   .learn { font-size: 17px; }
   .learn h1 { font-size: 26px; }
   .learn table.result { display: block; overflow-x: auto; }
+}
+/* the bakery schema (erd.py, inlined by generate_db.py) in the game's look (style.css .erd), scaled to its box */
+.bakery-erd { max-height: none; padding: 6px; }
+.bakery-erd svg { width: 100%; max-width: 480px; }
+.learn > .bakery-erd { max-width: 480px; margin: 12px auto 0; }
+.learn > .erd-legend { justify-content: center; }
+/* exercises.html with JavaScript (exercises.js): the game's three columns, schema / terminal / question, wider
+   than the article; on a phone the question first, then the terminal, the schema last */
+.learn .workbench { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr) minmax(0, 360px); gap: 16px; align-items: start;
+  width: min(1400px, calc(100vw - 32px)); margin: 20px 0 28px 50%; transform: translateX(-50%); font-size: 16px; }
+.learn .workbench[hidden] { display: none; }
+.learn .editor pre.sql-hl { margin: 0; padding: 8px 10px; background: none; border-radius: 0; overflow: hidden; }   /* not .learn pre: it sits exactly under the textarea */
+.learn .workbench #sql { min-height: 140px; }
+.wb-question select { width: 100%; font: 15px "Special Elite", monospace; padding: 4px 6px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--r-box); }
+.wb-question .exercise { margin: 10px 0 6px; }
+#ex-tables { font-size: 14px; margin: 4px 0; }
+#ex-run svg { vertical-align: -3px; margin-right: 5px; }
+.ex-status { margin: 8px 0; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r-box); }
+.ex-status.solved { border: 2px solid var(--accent); font-weight: 700; }
+.ex-status.wrong { border-color: var(--rel); }
+@media (max-width: 900px) {
+  .learn .workbench { grid-template-columns: minmax(0, 1fr); }
+  .wb-question { order: 1; } .wb-terminal { order: 2; } .wb-schema { order: 3; }
 }

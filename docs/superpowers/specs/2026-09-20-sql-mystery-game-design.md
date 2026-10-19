@@ -608,3 +608,17 @@ framework, no bundler.
   requested 2026-10-19. Built 2026-10-19: strictCheck refuses a UNION, INTERSECT or
   EXCEPT that puts a text column against a number in one position (PostgreSQL's "UNION types text and
   integer cannot be matched"; SQLite runs it); NULL, quoted literals and unknown types pass.
+- **Bakery schema and interactive exercises** (owner, 2026-10-19). Built on a branch, not deployed yet (browser
+  check in Chrome pending): `erd.py` draws the bakery database too (`bakery_conn` reads `learn/database.html`'s
+  script; a table that refers to itself, `customer.referred_by`, gets a loop beside it), and `python3
+  generate_db.py` inlines the svg between `<!-- bakery schema: erd.py -->` markers in `database.html` and
+  `exercises.html` (a unittest checks the lines, the widths and that the pages carry the current drawing).
+  `exercises.html` keeps its fifteen static questions and solutions; `learn/exercises.js` (the handbook's only
+  script) adds a workbench above them: schema, terminal (sql.js, the game's `strictCheck`, `cartesian`,
+  `terminalDb`'s query_only and LIKE settings, `highlightSql`, Ctrl+Enter, Ctrl+F, refusals linking
+  `grammar.html#<anchor>`) and a question picker that checks every result against every solution run in the
+  browser: same rows (count and values as a multiset; in order only for `data-ordered` questions, 1, 2, 5 and 7),
+  column names and order ignored, extra columns allowed, `data-need` naming the solution columns a question
+  really asks for (2, 3, 10, 13, 14), numbers within 1e-6 (`data-tolerance="0.01"` on 10, whose average the
+  question does not ask to round). Solved questions get a tick, kept in `ritz.exercises`; `#<slug>` selects a
+  question. The deploy versions `exercises.html`'s scripts and `exercises.js`'s `../app.js` import.
