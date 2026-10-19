@@ -39,6 +39,9 @@
   (<code>ritz.learn</code>, <code>ritz.compete</code>, <code>ritz.theme</code>) so you can pick up where you
   left off. Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
+  <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
+  questions you have solved is kept in its local storage (<code>ritz.exercises</code>), never sent. It loads
+  no advertising and no statistics script.</p>
 
   <h2>Your consent</h2>
   <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user
@@ -151,7 +154,7 @@
   <h2>What the page loads from elsewhere</h2>
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
-    <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
+    <li>Fonts come from Google Fonts, and the SQL engine (sql.js, for the game and the handbook's exercises page) from cdnjs; both see your IP address when your browser fetches them.</li>
     <li>On every visit: Google's AdSense and consent scripts from pagead2.googlesyndication.com and
     fundingchoicesmessages.google.com, and the ads themselves from Google's ad servers, including
     googleads.g.doubleclick.net and tpc.googlesyndication.com; these see

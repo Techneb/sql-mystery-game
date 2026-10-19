@@ -42,6 +42,11 @@ jobs:
           v="${GITHUB_SHA::7}"
           sed -i -E "s#(src|href)=\"(app\.js|admin\.js|leaderboard\.js|style\.css|admin\.css|learn/learn\.css)\"#\1=\"\2?v=$v\"#g" site/index.html site/privacy.html site/admin.html site/leaderboard.html
           sed -i -E "s#from \"\./(shared|qr)\.js\"#from \"./\1.js?v=$v\"#g" site/app.js site/admin.js site/leaderboard.js
+          # The handbook's exercises page runs exercises.js, which imports app.js (and through it shared.js).
+          sed -i -E "s#(src|href)=\"(exercises\.js|learn\.css|\.\./style\.css)\"#\1=\"\2?v=$v\"#g" site/learn/exercises.html
+          sed -i -E "s#from \"\.\./app\.js\"#from \"../app.js?v=$v\"#g" site/learn/exercises.js
+          grep -q "exercises.js?v=$v" site/learn/exercises.html
+          grep -q "app.js?v=$v" site/learn/exercises.js
           grep -q "app.js?v=$v" site/index.html
           grep -q "admin.js?v=$v" site/admin.html
           grep -q "leaderboard.js?v=$v" site/leaderboard.html

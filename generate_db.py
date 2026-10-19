@@ -1249,6 +1249,7 @@ def write_outputs(conn, V, site_dir="site", mode="learn"):
             f.write(solution_sql(V))
         with open(os.path.join(site_dir, "schema.svg"), "w") as f:
             f.write(erd.svg(conn, chapters=[ch["tables"] for ch in plot.CHAPTERS]))
+        erd.write_bakery(os.path.join(site_dir, "learn"))   # the handbook's own schema, inlined in its pages
         corr = os.path.join("..", "SQL", "3-Corrections", "8. Correction SQL Mystery Game.sql")
         if os.path.isdir(os.path.dirname(corr)):
             with open(corr, "w") as f:
