@@ -548,6 +548,7 @@ framework, no bundler.
   label XII only: naming XI would say its puzzle stacks ledgers, which its Hint does not) and a fifteenth exercise, "Not on the weekend menu" (EXCEPT, Practice); (b) an "Order of
   execution" section at the top of `grammar.html` (`#order-of-execution`), linked from the GROUP BY, ORDER BY,
   window and CTE pages; (c) a "Try it" line on each construct page, linking exercises by their new slug ids.
-  Deployed 2026-10-18 (5b51d31; 16 handbook pages), checked in Chrome on desktop in the night palette, phone width
-  not checked; resubmit the sitemap in Search Console. Not built: strictCheck does not refuse a UNION of a text
+  Deployed 2026-10-18 (5b51d31; 16 handbook pages), checked in Chrome on desktop in the night palette and at 390 px
+  (2026-10-19, no overflow); Search Console had re-read the sitemap (19 pages) and indexing of the new page was
+  requested 2026-10-19. Not built: strictCheck does not refuse a UNION of a text
   column with a number (PostgreSQL does; SQLite runs it).
