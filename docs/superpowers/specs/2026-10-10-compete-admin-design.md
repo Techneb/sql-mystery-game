@@ -3,8 +3,8 @@
 Status (2026-10-19): built and live. Work plan steps 1 to 4 (sections 2 to 6, then the structural variants of
 section 8 that the rehearsal called for) were merged into main on 2026-10-10 (branches `claude/compete-v2` and
 `claude/compete-variants`, nothing left on either); the repository secrets are gone; the class trial was played and
-its student reports fixed 2026-10-15/16. Left, step 5: tune `RANKS` from the summary table, and the owner deletes the
-unused Script Properties (the old `HASHES_*` and settings ones) in the Apps Script editor. A season
+its student reports fixed 2026-10-15/16. Step 5 done 2026-10-19: `RANKS` tuned (from GA4, the trial being
+played in learn mode) and the unused Script Properties deleted by the owner. A season
 is never edited: a wrong one is closed and created again (the unused `update` action was removed, 2026-10-16).
 Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
 whose newest season is oldest; pseudos and season ids are written to the Sheet as text (a leading apostrophe),
@@ -157,7 +157,7 @@ headline), `?data=<exec url>&season=<id>`, polling rows and meta every 10 s:
 3. Admin page and board.
 4. Rehearsal on the live site (2026-10-12): the owner as two or three students, the main session on the admin
    page and the board. Fixes 2026-10-13; freeze.
-5. After the trial (open): tune `RANKS` from the summary table (phase 4), delete the unused Script Properties.
+5. After the trial (done 2026-10-19): tune `RANKS` (phase 4; from GA4, the trial ran in learn mode), delete the unused Script Properties.
 
 ## 8. Structural variants (owner, 2026-10-10)
 

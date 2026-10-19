@@ -430,7 +430,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03; refused 2026-10-11, re-review to request about mid-November, see below): ads may come later. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below): ads may come later. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
@@ -478,8 +478,13 @@ framework, no bundler.
   (results checked cell by cell, no spoilers) and its fixes shipped: no promise that the examples run in
   PostgreSQL (plain SQLite needs `lower() LIKE` for ILIKE), the quoted-number refusal named as the terminal's own
   rule, no CTE on the dates page, exercises reordered by difficulty with each one's expected row count, a "By AlephB"
-  byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. Next: wait 3-4 weeks (indexing, real visits), then request the
-  AdSense re-review, about mid-November.
+  byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. The owner brought the re-review forward
+  (an influencer, Nick, will post about the site the week of 2026-10-19): requested 2026-10-19 after that day's
+  fixes, site now "in preparation". Same day in AdSense: Auto ads confirmed off; the European regulations message
+  (published 2026-10-09 for alephb.uk, privacy link alephb.uk/privacy.html, which links the game's page) kept;
+  Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Open decision:
+  outside the EEA/UK/CH nobody sees Google's message, so with ADS_ON GA stays denied there; a region-scoped granted
+  default would count those visitors.
   **Left, once AdSense approves the site (email to the owner).** Prepared 2026-10-10 on branch `claude/ads-switch-on`
   (4 commits, not merged, pushed to origin; it predates the strict terminal and handbook pages 11-16, so it needs
   main merged in, and its "Privacy notice" link label carried to the new pages, before use). Its own spec diff holds
