@@ -42,9 +42,10 @@
 <p class="game-label">Game: practice for every <a href="../">chapter</a></p>
 <p class="lede">Reading about SQL is not the same as writing it. Fifteen questions on the bakery database, from a first filter to a recursive chain, each with a worked solution kept out of sight until you want it.</p>
 
-<h2>How to use this page</h2>
-<p>The terminal below runs your queries on the bakery database, by the same rules as the game's: choose a question, write your query, press Run, and the page says whether your result answers it (same rows, whatever the column names; in the order asked when the question asks for one). It remembers, in this browser only, the questions you have solved. You can also create the database with the script on the <a href="database.html">bakery database page</a> (any SQLite tool will do; every solution below also passes this site's terminal. In plain SQLite, write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>). Read a question, write your query, run it, and only then open the solution to compare. Many questions have several correct answers; if your result has the same rows, your query is right, even if it reads differently. Every solution ends with an <code>ORDER BY</code> that fixes the order of its rows, so that yours can be compared line by line.</p>
+<details class="howto"><summary>How to use this page</summary>
+<p>The terminal below runs your queries on the bakery database, by the same rules as the game's: choose a question, write your query, press Run, and the page says whether your result answers it (same rows, whatever the column names; in the order asked when the question asks for one). The buttons above the question list choose a level. It remembers, in this browser only, the questions you have solved and the queries you ran (the History under the terminal; click one to put it back in the box). You can also create the database with the script on the <a href="database.html">bakery database page</a> (any SQLite tool will do; every solution below also passes this site's terminal. In plain SQLite, write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>). Read a question, write your query, run it, and only then open the solution to compare. Many questions have several correct answers; if your result has the same rows, your query is right, even if it reads differently. Every solution ends with an <code>ORDER BY</code> that fixes the order of its rows, so that yours can be compared line by line.</p>
 <p>The exercises come in three grades. <b>Warm-up</b> uses one table at a time. <b>Practice</b> joins tables, groups rows and builds a first two-step query or stacks two results. <b>Challenge</b> needs more careful reasoning: the absence of a row, window functions or a recursive CTE. Each one names the handbook page that covers what it needs. Each also says how many rows a correct answer returns.</p>
+</details>
 
 <section id="workbench" class="workbench" hidden aria-label="Exercise terminal">
   <div class="wb-schema">
@@ -120,15 +121,24 @@
       <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
       <span><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">N</text></svg>one-to-many</span>
     </p>
+    <!-- The game's ad box (index.html), the only one in the handbook (owner, 2026-10-19); exercises.js runs app.js's initAds. -->
+    <details id="press-box" class="press-box" open>
+      <summary class="label">ADVERTISEMENTS</summary>
+      <div class="press-slot">
+        <a class="press-notice" href="./"><img class="day" src="../handbook-ad.jpg" width="880" height="659" loading="lazy" alt="The Clerk's Handbook: every query the Inspector expects of you. From SELECT to WITH RECURSIVE. Fifteen graded exercises, answers enclosed. Free of charge. Open it now."><img class="night" src="../handbook-ad-night.jpg" width="880" height="659" loading="lazy" alt=""></a>
+      </div>
+    </details>
   </div>
   <div class="wb-terminal">
     <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Ctrl+F to format</span><a class="dialect" href="grammar.html" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
     <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" aria-label="SQL query" placeholder="SELECT * FROM product"></textarea></div>
     <div class="row"><button id="ex-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="ex-info" class="muted" aria-live="polite">Loading the SQL engine...</span></div>
     <div id="ex-results" class="results" aria-live="polite"></div>
+    <details class="ex-history"><summary class="label">HISTORY</summary><ol id="history"></ol></details>
   </div>
   <div class="wb-question">
-    <div class="label-row"><label class="label" for="ex-pick">QUESTION</label></div>
+    <div class="label-row"><label class="label" for="ex-pick">QUESTION</label><span id="ex-solved" class="ex-solved" hidden>&#x2713; Solved</span></div>
+    <div id="ex-levels" class="ex-levels" role="group" aria-label="Level"></div>
     <select id="ex-pick"></select>
     <div id="ex-question"></div>
     <p id="ex-tables" class="muted"></p>
@@ -136,6 +146,7 @@
   </div>
 </section>
 
+<div id="ex-static">
 <h2>Warm-up</h2>
 <p class="exercise" id="the-cheap-shelf" data-ordered><b>1. The cheap shelf.</b> List the name and price of every product that costs less than 2, cheapest first. (<a href="select-where.html">SELECT and WHERE</a>, <a href="order-by-limit.html">ORDER BY</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
@@ -426,6 +437,7 @@
 </table>
 <p>The anchor starts one chain per walk-in, carrying the walk-in's id as <code>root_id</code>; each round adds the customers referred by the newest members and passes the same <code>root_id</code> down. Every chain contains its walk-in too, hence the <code>- 1</code>. Because the walk-ins start their own chains, a walk-in who brought nobody still appears, with 0.</p>
 </details>
+</div>
 
 <p class="in-game"><b>In the game:</b> every chapter asks a question like these, on a larger archive and with one answer to find; the <a href="../">first chapter</a> needs only the warm-up.</p>
 <nav class="learn-pager"><a class="prev" href="ctes.html">Previous: CTEs and WITH RECURSIVE</a><a class="next" href="grammar.html">Next: The Grammar of SQL</a></nav>

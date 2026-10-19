@@ -966,7 +966,7 @@ function showTelegram(text) {
   $("telegram").textContent = text || "";
 }
 // Click or keyboard (Enter, Space) on an element that is not a <button>.
-function btnLike(el, fn) {
+export function btnLike(el, fn) {
   el.tabIndex = 0; el.setAttribute("role", "button");
   el.onclick = fn;
   el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(e); } };
@@ -1771,7 +1771,7 @@ function initGoogleConsent(id) {
   };
 }
 
-// The ad box under the schema (a native <details>: its summary is the toggle), the only place an ad appears.
+// The ad box under the schema (a native <details>: its summary is the toggle), here and on learn/exercises.html only.
 // Open on every visit; closing it lasts until the next page load (owner, 2026-10-19). Hidden unless adsOn().
 export function adSlotHtml(client, slot) {
   return '<ins class="adsbygoogle" style="display:block" data-ad-client="' + client + '" data-ad-slot="' + slot +
@@ -1786,9 +1786,11 @@ export function adOutcome({ status, height, elapsed, failed }) {
   if (status === "filled" && height > 0) return "ad";
   return elapsed >= AD_WAIT_MS ? "house" : "wait";
 }
-function initAds() {
+// Also run by learn/exercises.js, the one handbook page with the ad box (owner, 2026-10-19): the page needs a #press-box.
+export function initAds() {
   const box = $("press-box");
   if (!adsOn()) return;
+  gtagDefaults();   // Consent Mode defaults before adsbygoogle.js (the game also sets them for GA; set once)
   box.hidden = false;
   // adsbygoogle.js also serves Google's consent message, so it loads even without a slot (the ?ads=1 preview).
   const s = document.createElement("script");

@@ -1,8 +1,13 @@
 /* The Clerk's Handbook (site/learn/): article layout over ../style.css. No theme button on these pages (exercises.html alone runs a
    script, exercises.js), so the night edition follows the system setting instead of ritz.theme: same values as :root[data-mood="night"]. */
+/* a solved question's mark (exercises.html), text and colour: about 5.5:1 on the day paper, 9:1 on the night one */
+:root { --ok: #2d6a2f; }
 @media (prefers-color-scheme: dark) {
   :root { --rel: #e0806f; --paper: #131820; --ink: #e6dfcb; --card: #1d2531; --rule: #33404f; --shade: #232c39; --term: #0a0e14; --term-text: #9fc0ee; --accent: #3f6fb5;
-    --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; }
+    --sql-kw: #f0c46e; --sql-fn: #b9a8f2; --sql-str: #9fd69c; --sql-num: #e7a0c6; --sql-com: #8a98aa; --ok: #8fd18f; }
+  /* exercises.html's house ad: its night print with the night palette (the game swaps it on data-mood instead) */
+  .press-notice .day { display: none; }
+  .press-notice .night { display: block; }
 }
 /* the same line as the landing's .landing-foot (.muted: 13px Cormorant, middle dots, underlined links) */
 .learn-nav { margin-top: 6px; }
@@ -78,3 +83,12 @@
   .learn .workbench { grid-template-columns: minmax(0, 1fr); }
   .wb-question { order: 1; } .wb-terminal { order: 2; } .wb-schema { order: 3; }
 }
+/* exercises.html: How to use this page, closed; the level buttons; the solved mark; History under the terminal */
+.learn details.howto { margin: 24px 0 8px; }
+.learn details.howto summary { cursor: pointer; font: 700 20px/1.2 "Playfair Display", serif; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.ex-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.ex-levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.ex-solved { color: var(--ok); font-weight: 700; font-size: 14px; }
+.ex-solved[hidden] { display: none; }
+.ex-history { margin-top: 10px; }
+.ex-history summary { cursor: pointer; }

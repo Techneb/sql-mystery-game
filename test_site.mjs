@@ -6,7 +6,7 @@ import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
-import { sameResult, sameValue, checkOptions, tablesIn } from "./site/learn/exercises.js";
+import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -1040,4 +1040,28 @@ test("exercises: every Try it link names a question; the page keeps its static c
   assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
   assert.match(strictHtml(strictCheck("SELECT name FROM product WHERE price == 2", bakerySchema(learnHtml["database.html"])), ""), /href="select-where\.html#double-equals"/);
   assert.doesNotMatch(page + fs.readFileSync("site/learn/exercises.js", "utf8"), /[^\n -~]/, "pure ASCII");
+});
+
+test("exercises: the level shown first and the question each level button selects", () => {
+  const items = [["a", "Warm-up"], ["b", "Warm-up"], ["c", "Practice"], ["d", "Challenge"], ["e", "Challenge"]].map(([slug, level]) => ({ slug, level }));
+  assert.equal(startLevel(items, [], null), "Warm-up");
+  assert.equal(startLevel(items, ["a", "b"], null), "Practice", "the first level with a question left");
+  assert.equal(startLevel(items, [], "d"), "Challenge", "the linked question's level wins");
+  assert.equal(startLevel(items, ["a", "b", "c", "d", "e"], null), "Warm-up", "all solved: the first level");
+  assert.equal(levelPick(items, "Challenge", ["d"]).slug, "e", "its first unsolved question");
+  assert.equal(levelPick(items, "Warm-up", ["a", "b"]).slug, "a", "all solved: its first question");
+  const page = learnHtml["exercises.html"];
+  const levels = [...page.matchAll(/<h2>([^<]*)<\/h2>\n<p class="exercise"/g)].map((m) => m[1]);
+  assert.deepEqual(levels, ["Warm-up", "Practice", "Challenge"], "each level heading opens its questions");
+  assert.match(page, /<div id="ex-static">\n<h2>Warm-up<\/h2>/, "the static questions, hidden by the script only");
+  assert.match(page, /<details class="howto"><summary>How to use this page<\/summary>/, "closed by default");
+  assert.match(page, /<span id="ex-solved" class="ex-solved" hidden>&#x2713; Solved<\/span>/);
+  assert.match(page, /<details class="ex-history"><summary class="label">HISTORY<\/summary><ol id="history"><\/ol><\/details>/);
+  // the game's ad box under the bakery schema, the house ad linking the handbook; no other handbook page has one
+  const box = (h) => one(h, /(<details id="press-box"[\s\S]*?<\/details>)/, "ad box");
+  assert.equal(box(page).replace(/\.\.\/handbook-ad/g, "handbook-ad").replace('href="./"', 'href="learn/" target="_blank" rel="noopener"').replace(/<!--[\s\S]*?-->\s*/g, ""),
+    box(fs.readFileSync("site/index.html", "utf8")), "the same box as the game's");
+  assert.ok(page.indexOf('id="press-box"') > page.indexOf("<!-- /bakery schema -->") && page.indexOf('id="press-box"') < page.indexOf('<div class="wb-terminal">'), "under the schema");
+  for (const f of learnPages) if (f !== "exercises.html") assert.doesNotMatch(learnHtml[f], /press-box|adsbygoogle/, f + " carries no ad");
+  assert.match(fs.readFileSync("site/privacy.html", "utf8"), /ritz\.exercises\.history/);
 });
