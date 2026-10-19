@@ -1619,17 +1619,14 @@ function initConsent() {
   if (c === "yes") gaLoad(id); else if (c !== "no") $("consent").hidden = false;
 }
 
-// The ad box under the schema (a native <details>: its summary is the toggle). Open by default; a student who
-// closes it keeps it closed (per browser, ADS_KEY). Hidden until ads go live (ADS_ON, after AdSense approval
+// The ad box under the schema (a native <details>: its summary is the toggle). Open on every visit (owner,
+// 2026-10-19: closing it lasts until the next page load, nothing is remembered). Hidden until ads go live (ADS_ON, after AdSense approval
 // and Google's consent message); ?ads=1 previews it on localhost.
 const ADS_ON = false;
-const ADS_KEY = "ritz.ads";
 function initAds() {
   const box = $("ad-box"), local = ["localhost", "127.0.0.1"].includes(location.hostname);
   if (!ADS_ON && !(local && new URLSearchParams(location.search).get("ads"))) return;
-  try { if (localStorage.getItem(ADS_KEY) === "closed") box.open = false; } catch {}
   box.hidden = false;
-  box.addEventListener("toggle", () => { try { localStorage.setItem(ADS_KEY, box.open ? "open" : "closed"); } catch {} });
 }
 
 // Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is

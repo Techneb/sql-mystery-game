@@ -444,8 +444,8 @@ framework, no bundler.
   domain `alephb.uk` (subdomains included); verification meta tag on both `alephb.uk` (alephb-site repo) and
   the game; `https://alephb.uk/ads.txt` live; review requested; Google's certified consent message (GDPR,
   Accept and Refuse buttons, privacy URL the game's privacy.html) created in AdSense > Confidentialite et
-  messages. The ad box exists: a `<details id="ad-box">` under the schema, open by default, closed state
-  remembered per browser (`ritz.ads`), hidden until `ADS_ON` in `site/app.js` (preview: `localhost:8000/?ads=1`).
+  messages. The ad box exists: a `<details id="ad-box">` under the schema, open on every visit (closing
+  it is not remembered, owner 2026-10-19; it once was, in `ritz.ads`), hidden until `ADS_ON` in `site/app.js` (preview: `localhost:8000/?ads=1`).
   **2026-10-09, while the review is pending:** a read-only readiness check (`docs/audits/2026-10-09-adsense-readiness.md`,
   local) found the reviewed URL alephb.uk showing a crawler 48 words and the game about 70 words of prose. Shipped the same
   day: the game's `<meta name="description">`, a closed "About this game" `<details>` on the landing card (347 words:
