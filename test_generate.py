@@ -459,34 +459,81 @@ class Erd(unittest.TestCase):
         self.assertIn(erd.cardinality(conn, "person", "address_id"), "N")
 
     def test_bakery_schema_follows_the_same_rules_and_is_current(self):
+        import bakery
         import erd
         with open("site/learn/database.html") as f:
-            conn = erd.bakery_conn(f.read())
-        tables, fks = erd.read_schema(conn)
-        self.assertEqual(sorted(tables), ["customer", "order_item", "orders", "product"])
-        pos = erd.layout(tables, fks)
-        paths = erd.fk_paths(tables, fks, pos)
-        self.assertEqual(len(paths), 3)   # customer.referred_by is a loop beside its table, drawn by svg()
-        for e in paths:
-            self.assertNotEqual(pos[e["t"]][2], pos[e["ref"]][2], e["t"])
-            for name, (_, x, y, w, h) in pos.items():
-                for px, py in e["points"]:
-                    self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (e["t"], e["col"], name))
-        self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
-        for t, cols in tables.items():
-            for c, typ, _, _ in cols:
-                self.assertTrue(typ, "%s.%s" % (t, c))
-                self.assertLessEqual(21 + erd.NAME_PX * len(c) + 8 + erd.TYPE_PX * len(typ), erd.W - 6, "%s.%s" % (t, c))
-        _, x, y, w, _ = pos["customer"]   # the loop needs the slot to the right of customer free
-        self.assertFalse(any(px > x + w and py == y for (_, px, py, _, _) in pos.values()))
-        s = erd.svg(conn)
-        self.assertEqual(s.count('class="fk"'), 4)
-        s.encode("ascii")
+            live = erd.bakery_conn(f.read())
+        for conn, names in ((live, None), (bakery.conn(2), ["customer", "order_item", "orders", "product", "refund", "staff"])):
+            tables, fks = erd.read_schema(conn)
+            if names:
+                self.assertEqual(sorted(tables), names)
+            loops = [t for t, _, ref in fks if t == ref]   # a self-reference is a loop beside its table, drawn by svg()
+            pos = erd.layout(tables, fks, erd.BAKERY_ROWS)
+            paths = erd.fk_paths(tables, fks, pos)
+            self.assertEqual(len(paths), len(fks) - len(loops))
+            for e in paths:
+                self.assertNotEqual(pos[e["t"]][2], pos[e["ref"]][2], e["t"])
+                for name, (_, x, y, w, h) in pos.items():
+                    for px, py in e["points"]:
+                        self.assertFalse(x < px < x + w and y + 1 < py < y + h - 1, "%s.%s line crosses %s" % (e["t"], e["col"], name))
+                        if name in loops:   # nor the loop beside it
+                            self.assertFalse(x + w <= px <= x + w + 24 and y <= py <= y + h, "%s.%s line crosses %s's loop" % (e["t"], e["col"], name))
+            self.assertEqual(erd.crossings([(e, [e["end"]] + [b for _, b in e["segments"]]) for e in paths]), 0)
+            for t, cols in tables.items():
+                for c, typ, _, _ in cols:
+                    self.assertTrue(typ, "%s.%s" % (t, c))
+                    self.assertLessEqual(21 + erd.NAME_PX * len(c) + 8 + erd.TYPE_PX * len(typ), erd.W - 6, "%s.%s" % (t, c))
+            s = erd.svg(conn, chapters=erd.BAKERY_ROWS)
+            self.assertEqual(s.count('class="fk"'), len(fks))
+            s.encode("ascii")
+        s = erd.svg(live, chapters=erd.BAKERY_ROWS)
         for page in erd.BAKERY_PAGES:   # the pages carry the current drawing: python3 generate_db.py rewrites it
             with open("site/learn/" + page) as f:
                 m = erd.BAKERY_MARK.search(f.read())
             self.assertTrue(m, page)
             self.assertEqual(m.group(0), m.group(1) + s + m.group(2), page + ": run python3 generate_db.py")
+
+
+class Bakery(unittest.TestCase):
+    """bakery.py: the handbook's database, v2 seeded and deterministic, every planted case present (bakery.check)."""
+    def test_v2_is_deterministic(self):
+        import bakery
+        import hashlib
+        self.assertEqual(bakery.script(2), bakery.script(2))
+        # pinned: a change here changes every pasted result; rerun bakery.py --paste and reread the pages
+        self.assertEqual(hashlib.sha256(bakery.script(2).encode()).hexdigest(),
+                         "469dbc1cdd7cea49f54016e8faca81a913048785019581af06d9b25ec1e1e647")
+
+    def test_every_planted_case_is_in_the_data(self):
+        import bakery
+        bakery.check(1)
+        bakery.check(2)   # raises on the first planted case missing
+
+    def test_the_page_carries_the_live_script_and_counts(self):
+        import bakery
+        with open("site/learn/database.html") as f:
+            page = f.read()
+        self.assertEqual(html.unescape(bakery.SCRIPT_MARK.search(page).group(0)).count(bakery.script(bakery.LIVE)), 1,
+                         "run python3 generate_db.py")
+        self.assertIn(bakery.counts(bakery.LIVE), page)
+        self.assertNotIn("<span", bakery.SCRIPT_MARK.search(page).group(0), "the script block stays plain")
+
+    def test_paste_rewrites_a_stale_table(self):
+        import bakery
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            with open("site/learn/database.html") as f:
+                db = f.read()
+            with open(os.path.join(d, "database.html"), "w") as f:
+                f.write(db)
+            page = os.path.join(d, "p.html")
+            with open(page, "w") as f:
+                f.write('<pre><code>SELECT name FROM product WHERE id &lt; 3 ORDER BY id;</code></pre>\n<table class="result">\n<tr><th>x</th></tr>\n</table>')
+            self.assertEqual(bakery.paste([page], d), [page])
+            with open(page) as f:
+                self.assertIn('<table class="result">\n<tr><th>name</th></tr>\n<tr><td>Baguette</td></tr>\n<tr><td>Sourdough loaf</td></tr>\n</table>', f.read())
+            self.assertEqual(bakery.paste([page], d), [])   # idempotent
 
 
 class HandbookResults(unittest.TestCase):
@@ -523,12 +570,14 @@ class HandbookResults(unittest.TestCase):
         n = 0
         for f, sql, rows, got in self.run_all(0):
             n += 1
-            self.assertEqual(got, rows, f + ": " + sql)
+            with self.subTest(f):   # every stale page listed, not just the first
+                self.assertEqual(got, rows, f + ": run python3 bakery.py --paste " + f.split("/")[-1] + ": " + sql)
         self.assertEqual(n, 107)   # bump when an example is added: a block the regex misses is a block unchecked
 
     def test_printed_order_does_not_depend_on_scan_order(self):
         for f, sql, rows, got in self.run_all(1):
-            self.assertEqual(got, rows, f + " (reversed scans): add a tie-breaker to ORDER BY: " + sql)
+            with self.subTest(f):
+                self.assertEqual(got, rows, f + " (reversed scans): add a tie-breaker to ORDER BY: " + sql)
 
     def test_multi_row_examples_say_their_order(self):
         for f, sql, rows in self.blocks():
@@ -538,7 +587,8 @@ class HandbookResults(unittest.TestCase):
     def test_examples_stay_short(self):
         for f, sql, rows in self.blocks():
             if not f.endswith("exercises.html"):   # exercises are held to 10 rows by review, not here
-                self.assertLessEqual(len(rows) - 1, 12, f + ": " + sql)
+                with self.subTest(f):
+                    self.assertLessEqual(len(rows) - 1, 12, f + ": " + sql)
 
     def test_numbers_quoted_in_prose(self):
         conn = self.conn()
