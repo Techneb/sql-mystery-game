@@ -268,9 +268,9 @@ framework, no bundler.
    **Done.** Content and backend PR #5 (2026-09-22; compete objectives given the same multi-query
    treatment as learn mode); the in-game button, clock and event posting 2026-09-22
    (`2026-09-22-plan-4-compete-button.md`, played end to end in Chromium against a stand-in Apps
-   Script). Every deploy builds seasons 1-20 (2026-09-29, replacing `seasons.txt`); the `?admin` panel's Seasons
-   section shows which are used and copies the `?season=N&board=<url>` share link;
-   without a link, Compete asks for the season number.
+   Script). Since 2026-10-10 (compete v2, `2026-10-10-compete-admin-design.md`, merged and live): every deploy
+   builds five databases, seasons are records the teacher creates, opens and closes on `site/admin.html`, and
+   `site/leaderboard.html` is the projector board; the 1-20 seasons and the `?admin` Seasons section are gone.
 4. **Publish**: GitHub Pages, course-folder ties, README, one class trial, tune rank thresholds and
    hints from where students got stuck. **GitHub Pages live** since 2026-09-22 at
    <https://techneb.github.io/sql-mystery-game/>, at <https://mystery.alephb.uk/> since 2026-09-29 (custom domain;
@@ -279,7 +279,7 @@ framework, no bundler.
    `../SQL/0-SQL.md` links the game, `../SQL/BACKLOG - SQL Mystery Game.md` is marked superseded, and
    `../SQL/3-Corrections/8. Correction SQL Mystery Game.sql` regenerates automatically whenever
    `generate_db.py` runs on a machine with that folder present (it is not a git repo, so this is
-   local-only, not tracked here). Still open: a class trial and tuning `RANKS`/badges from it (live, from the admin panel's Settings).
+   local-only, not tracked here). The class trial took place (see below); what is left is at the end of this phase.
    2026-09-30: the course owner played chapters 1-2 as a student; the review was applied (bare objectives,
    English dates in statements, planted rows scattered, funnier noise, fitted schema, SQL colouring, Next
    chapter button, Badges panel, Day/Night edition button, formatted stories), then a ponytail audit
@@ -297,8 +297,8 @@ framework, no bundler.
    comma-join guard is enough). Compete stays honour-based against a student who posts a rival's start first.
    2026-10-09: the OpenGen source clips and uncropped originals moved from `~/Downloads` to the gitignored
    `assets-source/` in the repo (Mac only). 2026-10-10: a regression playthrough of chapters 1-12 on the live site
-  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial: students played the game (reported 2026-10-15); the
-  compete and admin design for it is `2026-10-10-compete-admin-design.md`. Still open: `RANKS` from real query counts.
+  (laptop width, both editions, the Part I and Part II endings) found nothing. Class trial (planned for 2026-10-14): students played the game, their reports came in 2026-10-15;
+  the compete and admin design for it is `2026-10-10-compete-admin-design.md`.
   2026-10-16: the strict terminal (owner's decision: PostgreSQL is the yardstick, always on in learn and compete).
   `strictCheck` in `site/app.js` refuses, before sql.js runs it, what PostgreSQL would reject (ungrouped columns,
   HAVING and ORDER BY after grouping, DISTINCT with an unselected sort, double-quoted text, `==`, type clashes,
@@ -316,7 +316,9 @@ framework, no bundler.
   join no longer lists only the planted witnesses (guests trade census ids with the noise; a test covers every
   table), ch3's interview no longer reads as if the valet were at the Opera (a second 75-2 cab leaves Vendome that
   night), the schema shows each column's type, and an outside editor's English and coherence pass was applied
-  (compete ch2 now has Ganimard's "Lupin has no friends, clerk, only names"). Still open: `RANKS` from real query counts.
+  (compete ch2 now has Ganimard's "Lupin has no friends, clerk, only names").
+  **Still open (phase 4):** tune `RANKS` (constants in `site/app.js`) from the trial's real query counts, read from
+  the admin page's per-chapter summary table.
 
 ## 8. Backlog (not scheduled)
 
@@ -333,7 +335,7 @@ framework, no bundler.
     `--term-text`, `--accent`), so everything already styled off those tokens shifts for free; `body`
     gets an 0.8s transition so the switch reads as a crossfade. Set once, in `applyMood()`, the moment
     the Part II code is accepted, and re-applied on every boot/resume so a reload keeps the mood.
-  - **Masthead date** advances to 19 May for Part II (also in `applyMood()`).
+  - **Masthead date** advances for Part II (also in `applyMood()`; 21 May 1912 in the code today).
   - **Case board: kept the existing cards**, did not build the pinboard. The board's entries are not
     uniformly people (an account number, an address, a telegram id have no portrait), so a
     photo-per-suspect pinboard would need an answer-type-to-icon system the data doesn't support
@@ -391,7 +393,7 @@ framework, no bundler.
   link (`?season=N&board=<url>`), or is typed when there is no link; there is no picker listing which
   seasons exist, since one class plays one season and the teacher already knows which.
 
-- **Usage analytics** (course owner, 2026-09-30: how much the site is used, which chapters, how long a
+- ~~Usage analytics~~ (course owner, 2026-09-30: how much the site is used, which chapters, how long a
   chapter takes). **Built and live 2026-10-03** (property `G-QG0K0D1NQZ`; banner, Consent Mode v2, the four
   events below, privacy.html rewritten; the owner chose 14-month retention and granular location, and
   registered the custom definitions; the school agreed). **Chosen route: Google Analytics 4** (course owner, same day). Notes for
@@ -426,7 +428,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03; waiting for AdSense approval, see Status below): ads may come later. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; refused 2026-10-11, re-review to request about mid-November, see below): ads may come later. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
@@ -476,7 +478,10 @@ framework, no bundler.
   rule, no CTE on the dates page, exercises reordered by difficulty with each one's expected row count, a "By AlephB"
   byline on the handbook index (no date, owner), and alephb.uk's Ritz page privacy line completed. Next: wait 3-4 weeks (indexing, real visits), then request the
   AdSense re-review, about mid-November.
-  **Left, once AdSense approves the site (email to the owner):** (a) load `adsbygoogle.js` with the client
+  **Left, once AdSense approves the site (email to the owner).** Prepared 2026-10-10 on branch `claude/ads-switch-on`
+  (4 commits, not merged, pushed to origin; it predates the strict terminal and handbook pages 11-16, so it needs
+  main merged in, and its "Privacy notice" link label carried to the new pages, before use). Its own spec diff holds
+  an eight-step approval-day checklist that replaces the list below once merged. Without the branch: (a) load `adsbygoogle.js` with the client
   id and Google's consent message, and remove the home-made GA banner (`initConsent`, `#consent`) in favour of
   it, keeping GA behind Consent Mode; (b) create a display ad unit in AdSense (responsive, fits the
   340-440 px schema column) and put its `<ins class="adsbygoogle">` in `.ad-slot`; (c) `ADS_ON = true`;
@@ -507,7 +512,7 @@ framework, no bundler.
   Playfair; the Enlarge button icon-only; Badges and Suspects buttons with icons beside their text. Decided (owner, 2026-10-09): chapters 4, 10 and 12 reveal no new table, so nothing is
   outlined or scrolled to there, and it stays that way: the schema never points at the tables a solution uses,
   finding the right table is part of the work.
-- **Closing videos for Part I and Part II** (course owner, 2026-10-02): write the generation prompts for a short
+- ~~Closing videos for Part I and Part II~~ (course owner, 2026-10-02): write the generation prompts for a short
   video (or a sequence of still images, cross-faded) in the portraits' Lavery style, one to close each part.
   Part I: the boat train at the Gare du Nord, 20 May 1912, Ganimard's hand on Blakeney's shoulder, the empty
   velvet case, the train pulling out (it would sit at the top of the Chapter VIII extra edition, `showExtra`).
@@ -518,22 +523,24 @@ framework, no bundler.
   **Done 2026-10-03:** both films are live (`site/video/part1.*`, 29 s; `part2.*`, 41 s), narrated, with
   dialogue and burned-in subtitles; the arrests are shown (Blakeney handcuffed, the Comtesse led away). See
   `docs/mockups/video-part1.md` and `video-part2.md`.
-- **Chapter icons as images** (course owner, 2026-10-02): replace the twelve single-line SVG props (`PROPS` in
+- ~~Chapter icons as images~~ (course owner, 2026-10-02): replace the twelve single-line SVG props (`PROPS` in
   `site/app.js`, e.g. chapter 8's bottle and glass) with small images generated the same way as the portraits
   (OpenGen, Nano Banana Pro, the Lavery style frame as reference), one per chapter, transparent or on the
   paper colour, legible at the chapter header's size and in the night edition. **Done 2026-10-03:** made by
   the owner from `docs/mockups/chapter-icon-prompts.md`, background cut to transparency, `site/icons/chNN.png`;
   `PROPS` removed.
-- **Compete mode simplification** (course owner, 2026-10-10): brainstorm before the class trial how to simplify
+- ~~Compete mode simplification~~ (course owner, 2026-10-10): brainstorm before the class trial how to simplify
   compete mode (today: a teacher's `?season=N&board=<Apps Script URL>` link, the Apps Script backend with its
   Script Properties and posted hashes, the admin panel's Seasons and Settings, the leaderboard page, the start
   token and the honour-based start). Designed 2026-10-10 with the owner: `2026-10-10-compete-admin-design.md`
-  (that document supersedes section 4 where they differ). In progress for the 2026-10-14 trial.
-- **Admin space** (course owner, 2026-10-10): one teacher-facing place to manage seasons (create, share, close),
+  (that document supersedes section 4 where they differ). **Done 2026-10-10** (merged into main and live
+  before the trial).
+- ~~Admin space~~ (course owner, 2026-10-10): one teacher-facing place to manage seasons (create, share, close),
   read the compete data from the Google Sheet behind the Apps Script, and show a live leaderboard on the classroom
   screen during a session. Today these are spread over the `?admin` panel (Seasons, Settings, passphrase-gated),
   the standalone `leaderboard.html` (one season, polled) and the Sheet itself. Designed 2026-10-10 with the owner:
-  `2026-10-10-compete-admin-design.md`. In progress for the 2026-10-14 trial.
+  `2026-10-10-compete-admin-design.md`. **Done 2026-10-10**: `site/admin.html` ("The Clerk's Desk") and
+  `site/leaderboard.html`, live before the trial.
 - **Outreach** (course owner, 2026-10-18): the owner drafted an email to Nick (softwarewithnick, a software content creator
   whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
   free, no sponsorship asked; sent 2026-10-19. Pending his reply. The site may show ads later (AdSense pending): if asked whether it
