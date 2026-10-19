@@ -430,7 +430,7 @@ framework, no bundler.
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below): ads may come later. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below): ads live since 2026-10-19 (bdd594a: `AD_SLOT` set, house-ad fallback until Google fills the slot), verdict pending. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone
@@ -528,7 +528,7 @@ framework, no bundler.
   obvious 'SQL' type branding so people can immediately see this is a tool to learn SQL"): the landing card leads
   with the 1912 story; make "learn SQL" obvious at first glance (headline or kicker), keeping the story. The owner
   replied that it would be done, ideally before his post. Show options as a design canvas first.
-- **Design canvas of the ad box title** (2026-10-19): the claude.ai artifact holding options A-D (D chosen; link in
+- **Design canvases** (2026-10-19): the ad box title (options A-D, D chosen) and the landing SQL band (A-D, A chosen); links in
   the session's memory, not here) is kept; delete it only when the owner asks.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
