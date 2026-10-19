@@ -1639,15 +1639,6 @@ function initConsent() {
   if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
 }
 
-// The ad box under the schema (a native <details>: its summary is the toggle). Open on every visit (owner,
-// 2026-10-19: closing it lasts until the next page load, nothing is remembered). Hidden until ads go live (ADS_ON, after AdSense approval
-// and Google's consent message); ?ads=1 previews it on localhost.
-const ADS_ON = false;
-function initAds() {
-  const box = $("ad-box"), local = ["localhost", "127.0.0.1"].includes(location.hostname);
-  if (!ADS_ON && !(local && new URLSearchParams(location.search).get("ads"))) return;
-  box.hidden = false;
-}
 
 // Part II mood: dark palette + a later masthead date (see style.css's [data-mood="night"]). The palette is
 // the reader's choice once they press the Day/Night edition button (per browser, THEME_KEY); until then
@@ -1747,7 +1738,6 @@ function enterGame() {
 async function boot() {
   $("btn-theme").onclick = toggleTheme;
   initConsent();
-  initAds();
   applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
   seasonId = params.get("season") || "";
