@@ -30,8 +30,8 @@
   included, runs in your browser. Advertising may appear on the page's edges, outside the game, once
   Google's review of the site is complete, and only with your consent (below). The game page loads
   Google Analytics for usage statistics: in Europe (the European Economic Area, the United Kingdom and
-  Switzerland) it sets no cookie and measures nothing in full unless you say Yes; elsewhere it counts visits by
-  default, and you can say No at any time.</p>
+  Switzerland) it sends nothing unless you say Yes; elsewhere it counts visits by default, and you can say
+  No at any time.</p>
 
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
@@ -41,14 +41,14 @@
 
   <h2>Usage statistics</h2>
   <p>The game page asks once: <i>Help improve the course: allow anonymous usage statistics?</i> Your answer
-  is kept in local storage (<code>ritz.consent</code>). The page cannot tell where you are, so everyone sees
-  the question; Google, which can, applies the default that fits your country (Google Consent Mode):</p>
+  is kept in local storage (<code>ritz.consent</code>). The page does not know where you are, so everyone sees
+  the question; it only reads your browser's time zone, which never leaves your browser:</p>
   <ul>
-    <li><b>In the European Economic Area, the United Kingdom and Switzerland</b>, statistics are off until
-    you say Yes. Before that, the Google Analytics script still loads and sends Google cookieless signals
-    (the page viewed and the game events below, with no cookie and no identifier tying them to you), which
-    Google uses only to estimate overall numbers.</li>
-    <li><b>Everywhere else</b>, statistics are on by default, as if you had said Yes, until you say No.</li>
+    <li><b>With a European time zone</b> (or none), statistics are off until you say Yes: the Google
+    Analytics script is not even loaded, so nothing is sent.</li>
+    <li><b>With any other time zone</b>, statistics are on by default, as if you had said Yes, until you say
+    No. As a second safeguard, Google itself keeps statistics off for visitors it places in the European
+    Economic Area, the United Kingdom or Switzerland (Google Consent Mode) until they say Yes.</li>
   </ul>
   <p>Whenever you answer No, the page stops sending anything to Google Analytics, deletes the
   <code>_ga</code> cookies, and no longer loads the script on later visits. You can change your mind at any
@@ -117,8 +117,8 @@
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
     <li>Fonts come from Google Fonts, and the SQL engine (sql.js) from cdnjs; both see your IP address when your browser fetches them.</li>
-    <li>Unless you have answered No to usage statistics: the Google Analytics script from googletagmanager.com,
-    and its measurements (cookieless in Europe until you say Yes) sent to google-analytics.com.</li>
+    <li>After a Yes to usage statistics, or by default outside Europe's time zones until you answer No: the
+    Google Analytics script from googletagmanager.com, and its measurements sent to google-analytics.com.</li>
     <li>Once advertising is switched on (not yet): Google's ad and consent scripts and the ads themselves,
     from Google's ad servers.</li>
   </ul>

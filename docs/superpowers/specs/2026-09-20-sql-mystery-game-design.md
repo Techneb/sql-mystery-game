@@ -484,8 +484,10 @@ framework, no bundler.
   (published 2026-10-09 for alephb.uk, privacy link alephb.uk/privacy.html, which links the game's page) kept;
   Consent Mode turned on for advertising and for analytics. The school agreed to ads (2026-10-19). Decided (owner,
   2026-10-19, before Nick's post): Consent Mode region defaults, everything denied in the EEA, UK and Switzerland
-  until a Yes (cookieless pings, Advanced mode), analytics granted elsewhere by default (the gtag script now loads
-  for everyone but a No; `consentDefaults()` in `app.js`); once ads are live, the ad fields are granted by default
+  until a Yes, analytics granted elsewhere by default (`consentDefaults()` in `app.js`); with ads off, the gtag
+  script loads only after a Yes or when the browser's time zone is outside Europe (`europeanZone`), so nothing
+  leaves a European browser before a Yes (the owner chose this over cookieless pings from Europe: same ads, no
+  CNIL grey zone for the Paris students); once ads are live, the ad fields are granted by default
   outside Europe too (branch `claude/ads-switch-on`), Google's message updating the European default.
   **Left, once AdSense approves the site (email to the owner).** Prepared 2026-10-10 on branch `claude/ads-switch-on`
   (4 commits, not merged, pushed to origin; it predates the strict terminal and handbook pages 11-16, so it needs

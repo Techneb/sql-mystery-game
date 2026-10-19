@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, europeanZone, CONSENT_REGIONS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -891,4 +891,11 @@ test("handbook: every example passes the strict terminal; each wrong one is refu
   assert.match(page, /follows PostgreSQL's rules/);
   assert.ok(fs.readFileSync("site/index.html", "utf8").includes('class="dialect" href="learn/grammar.html"'), "the terminal's PostgreSQL label");
   assert.equal(strictCheck("SELECT id FROM orders WHERE day = 20260302", bakery).anchor, "types", "the page's text-against-number claim");
+});
+
+test("europeanZone: Europe's time zones wait for the banner's Yes, the rest are counted at once", () => {
+  for (const tz of ["Europe/Paris", "Europe/London", "Atlantic/Reykjavik", "Atlantic/Canary", "Arctic/Longyearbyen", "", undefined])
+    assert.equal(europeanZone(tz), true, tz);
+  for (const tz of ["America/New_York", "Asia/Kolkata", "Africa/Casablanca", "Atlantic/Bermuda", "Australia/Sydney"])
+    assert.equal(europeanZone(tz), false, tz);
 });
