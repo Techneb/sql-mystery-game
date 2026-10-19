@@ -500,7 +500,8 @@ test("mastheadChapterHtml: only the current chapter's numeral is bold", () => {
 const LEARN = "site/learn/";
 const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
 const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
-const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1].matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1])];
+// the index lists its pages in three groups (chapters, exercises, grammar), in reading order
+const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1].matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1])];
 const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
 const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
@@ -823,8 +824,8 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
     ["like-ilike", "SELECT id FROM person WHERE name = 'x' COLLATE NOCASE", /collation "nocase"/],
     ["coalesce", "SELECT id FROM person WHERE occupation IS 'jeweller'", /syntax error/],
     ["iif", "SELECT MAX(fare, 3) FROM cab_ride", /function max\(integer, integer\)/],
-    ["date-functions", "SELECT fare::text FROM cab_ride", /syntax error at or near "::"/],
-    ["date-functions", "SELECT left(plate, 2) FROM cab_ride", /function left\(text, integer\)/],
+    ["date-functions", "SELECT date(date, '+1 day') FROM police_report", /^function date\(integer, text\) does not exist$/],
+    ["date-functions", "SELECT time(time, '+1 hour') FROM cab_ride", /function time\(text, text\)/],
     ["types", "SELECT plate FROM cab_ride UNION SELECT fare FROM cab_ride", /^UNION types text and integer cannot be matched$/],
     ["types", "SELECT id, plate FROM cab_ride INTERSECT SELECT id, date FROM police_report", /^INTERSECT types text and integer cannot be matched$/],
     ["types", "SELECT fare FROM cab_ride EXCEPT SELECT plate FROM cab_ride", /^EXCEPT types integer and text cannot be matched$/],
@@ -852,7 +853,7 @@ test("strict terminal: every replacement a refusal or the grammar page suggests 
   const writes = [...grammar.matchAll(/<tr><td>[^<]*<\/td><td>([^<]*)<\/td><\/tr>/g)].map(m => m[1]);
   assert.ok(writes.some(w => /CASE WHEN a &gt; b/.test(w)), "the Write column is read");
   const whys = Object.keys(SQLITE_FUNCS).map(f => strictCheck("SELECT " + f + "(fare, 3) FROM cab_ride", GAME).why);
-  whys.push(strictCheck("SELECT MAX(fare, 3) FROM cab_ride", GAME).why, strictCheck("SELECT fare::text FROM cab_ride", GAME).why);
+  whys.push(strictCheck("SELECT MAX(fare, 3) FROM cab_ride", GAME).why, strictCheck("SELECT date(plate, '+1 day') FROM cab_ride", GAME).why);
   for (const s of [...writes, ...whys])
     for (const [, f] of s.replace(/^.*?: (write|use) /, "").matchAll(/\b([A-Za-z_]+)\(/g))
       assert.ok(SQL_KEYWORDS.has(f.toLowerCase()) || have.has(f.toLowerCase()), f + "() does not run in SQLite: " + s);
@@ -905,6 +906,9 @@ test("strict terminal: valid PostgreSQL is never refused", () => {
     "SELECT fare FROM cab_ride UNION SELECT '3'",
     "WITH s AS (SELECT suite, time FROM lift_log UNION ALL SELECT suite, time FROM room_service) SELECT suite, COUNT(*) FROM s GROUP BY suite",
     "WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n WHERE x < 5) SELECT x FROM n",
+    "SELECT LEFT(plate, 2), RIGHT(plate, 4) FROM cab_ride WHERE LEFT(plate, 3) = '75-'",
+    "SELECT fare::text, plate::integer + 1, (fare * 2)::numeric(6, 2) AS f FROM cab_ride WHERE time::text < '06:00'",
+    "SELECT date('1912-05-18'), id FROM police_report",
   ];
   for (const q of ok) assert.equal(strictCheck(q, GAME, true), null, q);
   for (const q of ["PRAGMA table_info(person)", "SELECT * FROM pragma_table_info('person')", "SELECT"])
@@ -914,6 +918,16 @@ test("strict terminal: valid PostgreSQL is never refused", () => {
 test("strict terminal: ILIKE runs as REGEXP bound to a case-insensitive LIKE, strings untouched", () => {
   assert.equal(toSqlite("SELECT x FROM t WHERE a ILIKE '%b%' AND c NOT ilike 'ILIKE'"), "SELECT x FROM t WHERE a REGEXP '%b%' AND c NOT REGEXP 'ILIKE'");
   assert.equal(toSqlite("SELECT 1"), "SELECT 1");
+  assert.equal(toSqlite("SELECT LEFT(name, 3), right(name, n + 1) FROM t LEFT JOIN u ON 1 = 1 -- left(x, 1) 'a::b'"),
+    "SELECT substr(name, 1, 3), substr(name, -(n + 1), n + 1) FROM t LEFT JOIN u ON 1 = 1 -- left(x, 1) 'a::b'");
+  assert.equal(toSqlite("SELECT '7'::int, (a + b)::text, p.price::numeric(5, 2), a::int::text, COUNT(*)::text, x::double precision, 'a::b'"),
+    "SELECT CAST('7' AS INTEGER), CAST((a + b) AS TEXT), CAST(p.price AS NUMERIC), CAST(CAST(a AS INTEGER) AS TEXT), CAST(COUNT(*) AS TEXT), CAST(x AS REAL), 'a::b'");
+  // the translation runs, gives PostgreSQL's answers, and generate_db.sqlite_sql writes the same SQLite
+  const q = "SELECT LEFT('Croissant', 3), RIGHT('Croissant', 4), RIGHT('Croissant', 0), RIGHT('Bun', 9), '7'::int + 1, '2.5'::numeric * 2, 12::text || 'x', '2026-03-05'::date";
+  const got = execFileSync("python3", ["-c", "import sqlite3, sys, json, generate_db as g; assert g.sqlite_sql(sys.argv[1]) == sys.argv[2]; " +
+    "print(json.dumps(sqlite3.connect(':memory:').execute(sys.argv[2]).fetchall()))", q, toSqlite(q)], { encoding: "utf8" });
+  assert.deepEqual(JSON.parse(got), [["Cro", "sant", "", "Bun", 8, 5.0, "12x", "2026-03-05"]]);
+  assert.equal(strictCheck(q, GAME, true), null, "accepted");
   assert.equal(ilike("%ritz%", "Hotel RITZ"), 1);
   assert.equal(ilike("75-_04_", "75-2041"), 1);
   assert.equal(ilike("75-_04", "75-2041"), 0, "anchored at both ends");
@@ -1055,6 +1069,14 @@ test("exercises: the level shown first and the question each level button select
   assert.deepEqual(levels, ["Warm-up", "Practice", "Challenge"], "each level heading opens its questions");
   assert.match(page, /<div id="ex-static">\n<h2>Warm-up<\/h2>/, "the static questions, hidden by the script only");
   assert.match(page, /<details class="howto"><summary>How to use this page<\/summary>/, "closed by default");
+  assert.ok(page.indexOf('class="howto"') < page.indexOf('id="workbench"'), "above the workbench in the HTML, read without JavaScript");
+  const js = fs.readFileSync(LEARN + "exercises.js", "utf8");
+  assert.match(js, /bench\.querySelector\("\.ex-history"\)\.after\(howto\)/, "the script moves it under History");
+  assert.match(page, /<p id="ex-status" class="ex-status" aria-live="polite" hidden><\/p>/, "no empty frame");
+  assert.doesNotMatch(js, /Run a query: the result is checked here|Solved\. Your result matched|Solved\. That is the answer/, "the solved mark says it alone");
+  assert.match(page, /<span class="label">SCHEMA<\/span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><\/button>/);
+  assert.match(js, /erdButtonHtml\(large\)/, "the game's Enlarge/Close icon");
+  assert.doesNotMatch(page, /class="in-game"/, "no In the game line on the exercises page (owner, 2026-10-20)");
   assert.match(page, /<span id="ex-solved" class="ex-solved" hidden>&#x2713; Solved<\/span>/);
   assert.match(page, /<details class="ex-history"><summary class="label">HISTORY<\/summary><ol id="history"><\/ol><\/details>/);
   // the game's ad box under the bakery schema, the house ad linking the handbook; no other handbook page has one

@@ -279,12 +279,12 @@ const AGGS = new Set("count sum avg min max total group_concat string_agg array_
 const DATE_TEXT = "a comparison of the date text, as in d >= '1912-01-01', or substr(d, 1, 7) for its year and month";
 export const SQLITE_FUNCS = { ifnull: "COALESCE(a, b)", iif: "CASE WHEN ... THEN ... ELSE ... END", group_concat: "string_agg(x, ', ')",
   instr: "text LIKE '%part%'", strftime: DATE_TEXT, julianday: DATE_TEXT, datetime: DATE_TEXT, unixepoch: DATE_TEXT,
-  left: "substr(text, 1, n)", right: "substr(text, length(text) - n + 1)", printf: "format()", total: "SUM(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
+  printf: "format()", total: "SUM(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
   changes: "nothing like it", total_changes: "nothing like it", likely: "the condition alone",
   unlikely: "the condition alone", likelihood: "the condition alone" };
 // the section of the handbook that explains each one (STRICT_SECTIONS); the rest are on grammar.html
 const FUNC_ANCHOR = { ifnull: "coalesce", group_concat: "group-concat", total: "group-concat", iif: "iif", instr: "like-ilike",
-  strftime: "date-functions", julianday: "date-functions", datetime: "date-functions", unixepoch: "date-functions", left: "date-functions", right: "date-functions" };
+  strftime: "date-functions", julianday: "date-functions", datetime: "date-functions", unixepoch: "date-functions" };
 const PG_TYPE = { int: "integer", num: "numeric", text: "text", bool: "boolean", str: "text" };
 const pgT = t => PG_TYPE[t] || "unknown";
 const isNum = t => t === "int" || t === "num";
@@ -498,8 +498,7 @@ function parseSql(src, toks) {
         "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "like-ilike");
       e = mk(s, { k: "collate", e });
     }
-    if (eat("::")) { const x = src.slice(e.from, e.to), t = peek().t === "word" ? next().v : "INTEGER"; refuse('syntax error at or near "::"',
-      x + "::" + t + " is a PostgreSQL shorthand the terminal does not run: write CAST(" + x + " AS " + t.toUpperCase() + ").", "date-functions"); }
+    while (eat("::")) { const type = castType(toks, i, t => { i = t; }); if (!type) throw UNSUPPORTED; e = mk(s, { k: "cast", e, type }); }
     return e;
   }
   function typeName() { const parts = []; while (peek().t === "word") parts.push(next().lv); if (eat("(")) while (!eat(")")) next(); return parts.join(" "); }
@@ -702,6 +701,8 @@ function analyse(stmts, schema, src) {
     if (n.over) { n.over.partition.forEach(e => T(e, cx)); n.over.order.forEach(o => T(o.e, cx)); }
     const sig = n.name + "(" + a.map(pgT).join(", ") + ")";
     if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", FUNC_ANCHOR[n.name] || "sqlite-only");
+    if ((n.name === "date" || n.name === "time") && n.args.length > 1) refuse("function " + sig + " does not exist",
+      n.name + "() with a modifier is not standard SQL: use " + DATE_TEXT + " instead.", "date-functions");
     if ((n.name === "min" || n.name === "max") && n.args.length > 1) refuse("function " + sig + " does not exist",
       "With several arguments " + n.name + "() is not standard SQL: write " + (n.args.length === 2 ? "CASE WHEN " + text(n.args[0]) +
       (n.name === "max" ? " > " : " < ") + text(n.args[1]) + " THEN " + text(n.args[0]) + " ELSE " + text(n.args[1]) + " END" : "CASE WHEN ... THEN ... ELSE ... END") + ".", "iif");
@@ -715,7 +716,7 @@ function analyse(stmts, schema, src) {
       case "round": return a.length > 1 || first !== "int" ? "num" : "int";
       case "sum": case "abs": case "min": case "max": case "lag": case "lead": case "first_value": case "last_value": case "nth_value": return first;
       case "coalesce": case "nullif": return a.map(t => (t === "str" ? "text" : t)).find(t => t && t !== "null") || null;
-      case "lower": case "upper": case "trim": case "ltrim": case "rtrim": case "btrim": case "replace": case "substr": case "substring": case "concat":
+      case "lower": case "upper": case "trim": case "ltrim": case "rtrim": case "btrim": case "replace": case "substr": case "substring": case "concat": case "left": case "right":
       case "string_agg": case "format": return "text";
     }
     return null;
@@ -807,7 +808,7 @@ function analyse(stmts, schema, src) {
         let v = o.e; while (v.k === "paren") v = v.e;
         if (selected.has(exprKey(v)) || (v.k === "col" && (!v.res || !v.res.rv || starred.has(v.res.rv.id)))) continue;
         refuse("for SELECT DISTINCT, ORDER BY expressions must appear in select list", "DISTINCT removes repeated rows before sorting, so " + text(o.e) +
-          " is gone by then: add it to the SELECT list, or sort by a column you selected.", "distinct-order");
+          " is gone by then: sort by a column you selected, or use GROUP BY and sort by an aggregate such as MIN(" + text(o.e) + ").", "distinct-order");
       }
     }
     if (c.cols.some(r => r.star && !scope.rvs.filter(rv => r.star === true || rv.name === r.star.name).every(rv => rv.cols))) return null;
@@ -872,8 +873,68 @@ export function strictCheck(sql, schema, debug = false) {
     return null;
   }
 }
-// ILIKE runs as REGEXP, which loadDb binds to ilike() (LIKE itself is case-sensitive there, as in PostgreSQL).
+// The type after x:: (one word, "double precision", "character varying", an optional (p, s)): returns its name and
+// calls done(index after it), or null.
+const SQLITE_TYPE = { int: "INTEGER", integer: "INTEGER", int2: "INTEGER", int4: "INTEGER", int8: "INTEGER", smallint: "INTEGER", bigint: "INTEGER",
+  real: "REAL", float: "REAL", float4: "REAL", float8: "REAL", "double precision": "REAL", numeric: "NUMERIC", decimal: "NUMERIC",
+  text: "TEXT", varchar: "TEXT", char: "TEXT", character: "TEXT", "character varying": "TEXT", date: "TEXT", time: "TEXT", timestamp: "TEXT" };
+function castType(toks, i, done) {
+  if ((toks[i] || {}).t !== "word") return null;
+  let name = toks[i++].lv;
+  if ((name === "double" && (toks[i] || {}).lv === "precision") || (name === "character" && (toks[i] || {}).lv === "varying")) name += " " + toks[i++].lv;
+  if ((toks[i] || {}).v === "(") { while (i < toks.length && toks[i].v !== ")") i++; if (i++ >= toks.length) return null; }
+  done(i);
+  return name;
+}
+// The index of the "(" that closes at toks[c], or of the ")" that the "(" at toks[o] opens; -1 when unbalanced.
+function matchParen(toks, k, step) {
+  for (let d = 0; k >= 0 && k < toks.length; k += step) {
+    if (toks[k].v === "(") d += step; else if (toks[k].v === ")") d -= step;
+    if (d === 0) return k;
+  }
+  return -1;
+}
+// One PostgreSQL form SQLite lacks, the leftmost, rewritten on tokens (strings and comments untouched); null when none is left.
+function rewriteOne(sql, toks) {
+  for (let i = 0; i < toks.length; i++) {
+    const x = toks[i], prev = toks[i - 1] || {};
+    if (x.v === "::") {
+      let s = i - 1;
+      if (s < 0) continue;
+      if (toks[s].v === ")") {   // (expr), f(...), CAST(...), f(...) OVER (...) / FILTER (...)
+        for (;;) {
+          s = matchParen(toks, s, -1);
+          if (s < 0) break;
+          const w = toks[s - 1] || {};
+          if (w.t !== "word") break;
+          if ((w.lv === "over" || w.lv === "filter") && (toks[s - 2] || {}).v === ")") { s -= 2; continue; }
+          if (!RESERVED.has(w.lv) || ["cast", "left", "right", "exists"].includes(w.lv)) s--;
+          break;
+        }
+        if (s < 0) continue;
+      } else if (!["word", "qid", "str", "num"].includes(toks[s].t)) continue;
+      else if ((toks[s - 1] || {}).v === "." && ["word", "qid"].includes((toks[s - 2] || {}).t)) s -= 2;
+      let end = -1;
+      const type = castType(toks, i + 1, t => { end = t; });
+      if (!type) continue;
+      return sql.slice(0, toks[s].pos) + "CAST(" + sql.slice(toks[s].pos, prev.end) + " AS " + (SQLITE_TYPE[type] || type.toUpperCase()) + ")" + sql.slice(toks[end - 1].end);
+    }
+    if (x.t === "word" && (x.lv === "left" || x.lv === "right") && (toks[i + 1] || {}).v === "(" && prev.v !== ".") {
+      const c = matchParen(toks, i + 1, 1), commas = [];
+      for (let k = i + 2, d = 0; k < c; k++) { const v = toks[k].v; if (v === "(") d++; else if (v === ")") d--; else if (v === "," && d === 0) commas.push(k); }
+      if (c < 0 || commas.length !== 1) continue;
+      const a = sql.slice(toks[i + 2].pos, toks[commas[0] - 1].end), n = sql.slice(toks[commas[0] + 1].pos, toks[c - 1].end);
+      // ponytail: a negative n (PostgreSQL: all but the last/first |n|) gives '' here; add it if a page ever needs it.
+      return sql.slice(0, x.pos) + (x.lv === "left" ? "substr(" + a + ", 1, " + n + ")" : "substr(" + a + ", -(" + n + "), " + n + ")") + sql.slice(toks[c].end);
+    }
+  }
+  return null;
+}
+// What the terminal hands sql.js: LEFT(x, n) -> substr(x, 1, n), RIGHT(x, n) -> substr(x, -(n), n) (n = 0 gives ''),
+// x::type -> CAST(x AS type) (date and time stay text), and ILIKE -> REGEXP, which loadDb binds to ilike() (LIKE itself
+// is case-sensitive there, as in PostgreSQL). generate_db.sqlite_sql does the same.
 export function toSqlite(sql) {
+  for (let r; (r = rewriteOne(sql, sqlTokens(sql))) !== null;) sql = r;
   let out = "", last = 0;
   for (const t of sqlTokens(sql)) if (t.t === "word" && t.lv === "ilike") { out += sql.slice(last, t.pos) + "REGEXP"; last = t.end; }
   return out + sql.slice(last);

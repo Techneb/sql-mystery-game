@@ -53,6 +53,14 @@ class StrictSemantics(unittest.TestCase):
         self.assertEqual(q("SELECT 'a.c' ILIKE 'abc'"), 0)
         self.assertEqual(g.sqlite_sql("SELECT 1 WHERE a ILIKE 'ILIKE'"), "SELECT 1 WHERE a REGEXP 'ILIKE'")
 
+    def test_left_right_and_cast_shorthand_run_as_in_postgresql(self):
+        c = g.empty_db()
+        row = c.execute(g.sqlite_sql("SELECT LEFT('Croissant', 3), RIGHT('Croissant', 4), RIGHT('Croissant', 0), "
+                                     "RIGHT('Bun', 9), '7'::int, (1 + 2)::text, '2.5'::numeric * 2, '2026-03-05'::date")).fetchone()
+        self.assertEqual(row, ("Cro", "sant", "", "Bun", 7, "3", 5.0, "2026-03-05"))
+        self.assertEqual(g.sqlite_sql("SELECT a::int::text FROM t LEFT JOIN u ON 1 = 1 -- left(x, 1) 'a::b'"),
+                         "SELECT CAST(CAST(a AS INTEGER) AS TEXT) FROM t LEFT JOIN u ON 1 = 1 -- left(x, 1) 'a::b'")
+
     def test_like_traps_are_also_checked_as_ilike(self):
         self.assertEqual(g.like_variants("SELECT 1 WHERE a LIKE '%x%'"), ["SELECT 1 WHERE a LIKE '%x%'", "SELECT 1 WHERE a ILIKE '%x%'"])
         self.assertEqual(g.like_variants("SELECT 1"), ["SELECT 1"])
@@ -524,7 +532,7 @@ class HandbookResults(unittest.TestCase):
 
     def test_multi_row_examples_say_their_order(self):
         for f, sql, rows in self.blocks():
-            if len(rows) > 2 and "pragma_" not in sql:   # a pragma lists in declared order (schema.html)
+            if len(rows) > 2:
                 self.assertRegex(sql, r"(?i)\bORDER BY\b", f + ": " + sql)
 
     def test_examples_stay_short(self):

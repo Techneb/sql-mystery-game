@@ -65,7 +65,7 @@
 <tr><td>cake</td><td>3</td><td>3.3</td></tr>
 <tr><td>pastry</td><td>3</td><td>1.73</td></tr>
 </table>
-<p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of four breads?), and the query is refused: the next section shows how.</p>
+<p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of four breads?), and the query is refused: the next section shows how. (The bread average is exactly 3.325, shown as 3.32 because <code>REAL</code> prices are binary fractions; see <a href="subqueries.html">Subqueries</a>.)</p>
 
 <h2 id="group-by">Grammar: grouped or aggregated</h2>
 <p>A column in <code>SELECT</code> that is neither grouped nor inside an aggregate has several values inside one group, and no single one of them to show, so the query is refused.</p>
@@ -84,18 +84,21 @@
 <tr><td>cake</td><td>3</td><td>Carrot cake slice</td></tr>
 <tr><td>pastry</td><td>3</td><td>Almond croissant</td></tr>
 </table>
-<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>. One exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
+<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>orders</th></tr>
 <tr><td>1</td><td>Alice Turner</td><td>4</td></tr>
 <tr><td>2</td><td>Ben Okafor</td><td>2</td></tr>
 <tr><td>3</td><td>Chloe Martin</td><td>2</td></tr>
+<tr><td>4</td><td>David Chen</td><td>2</td></tr>
+<tr><td>5</td><td>Emma Novak</td><td>2</td></tr>
+<tr><td>6</td><td>Farid Haddad</td><td>1</td></tr>
+<tr><td>7</td><td>Grace Lee</td><td>1</td></tr>
 </table>
 
 <h2>Grouping by more than one column</h2>
@@ -155,7 +158,7 @@
 </table>
 
 <h2>Adding up quantities</h2>
-<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold during the week. Sorting by the sum shows the best sellers first. To turn quantities into money you need the price, which lives in another table: that is the job of a <a href="joins.html">JOIN</a>, and the JOIN page finishes this example.</p>
+<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold during the week. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least four pieces, and <code>lines</code> counts the order lines behind each total. To turn quantities into money you need the price, which lives in another table: that is the job of a <a href="joins.html">JOIN</a>, and the JOIN page brings in the prices.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">product_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">product_id</span>

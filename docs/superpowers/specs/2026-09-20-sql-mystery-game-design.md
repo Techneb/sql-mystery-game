@@ -633,3 +633,12 @@ framework, no bundler.
   (`ritz.exercises.history`), the game's ad box under the schema (the only ad in the handbook; privacy.html
   says so), and the static questions hidden once the workbench is up, so a `#slug` link lands on it. Not
   checked in a browser yet.
+- **Handbook review (plan `2026-10-19-bakery-v2-and-review.md`, Part 1)**: review done 2026-10-20, findings
+  fixed (wrong prose and edge cases on the construct pages, the grammar sentences, ten exercise wordings
+  tightened to one reading, `back-again` checks the order id too); the edge cases that need data the bakery does
+  not have yet are the plan's "Planted cases from the review" (Part 2). The strict terminal now accepts
+  PostgreSQL's `LEFT`, `RIGHT` and `x::type` (rewritten for SQLite by `toSqlite` and `generate_db.sqlite_sql`)
+  and refuses `date()`/`time()` with a modifier. Owner requests of the same day on `exercises.html`: How to use
+  under History (moved by the script, above the workbench without it), no idle or solved text in the status box
+  (hidden when empty), the game's Enlarge button on the schema, no In the game line; the handbook index groups
+  its pages as Learning chapters, Exercises (a card) and Grammar. Not checked in a browser yet.

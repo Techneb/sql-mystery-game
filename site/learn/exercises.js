@@ -2,7 +2,7 @@
 // browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
 // and a check of the last result against the chosen question's solution, run on the same database.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds } from "../app.js";
+import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml } from "../app.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -89,7 +89,7 @@ async function boot() {
   }
   const refreshTicks = () => [...pick.options].forEach(o => { o.textContent = optionText(items.find(e => e.slug === o.value)); });
 
-  const status = (cls, text) => { const s = $("ex-status"); s.className = "ex-status " + cls; s.textContent = text; };
+  const status = (cls, text) => { const s = $("ex-status"); s.className = "ex-status " + cls; s.textContent = text || ""; s.hidden = !text; };
   const markSolved = () => { $("ex-solved").hidden = !solved.includes(cur.slug); };
   function show(e) {
     cur = e;
@@ -103,8 +103,7 @@ async function boot() {
     $("ex-question").replaceChildren(q, sol);
     $("ex-tables").textContent = names.length ? "Tables: " + tablesIn(e.sql, names).join(", ") : "";
     markSolved();
-    if (solved.includes(e.slug)) status("solved", "Solved. Your result matched this question's.");
-    else status("", e.opts.ordered ? "Run a query: the result is checked here, rows in the order the question asks." : "Run a query: the result is checked here, in any row order.");
+    status("", "");   // the solved mark next to QUESTION says the rest
   }
   const choose = e => { show(e); history.replaceState(null, "", "#" + e.slug); };
   pick.onchange = () => choose(items.find(e => e.slug === pick.value));
@@ -119,6 +118,19 @@ async function boot() {
   window.addEventListener("hashchange", () => { const e = fromHash(); if (e) { show(e); moved = false; land(); } });
   bench.hidden = false;
   $("ex-static").hidden = true;
+  // How to use this page sits above the workbench in the HTML (read without JavaScript); with it, under History.
+  const howto = document.querySelector("details.howto");
+  if (howto) bench.querySelector(".ex-history").after(howto);
+  // The schema's Enlarge button, as in the game: a fixed overlay, closed by the X, a second click or Escape.
+  const erdBox = bench.querySelector(".bakery-erd"), erdBtn = $("btn-erd");
+  const setErd = large => {
+    erdBox.classList.toggle("large", large);
+    const { html, label } = erdButtonHtml(large);
+    erdBtn.innerHTML = html; erdBtn.title = label; erdBtn.setAttribute("aria-label", label);
+  };
+  setErd(false);
+  erdBtn.onclick = () => setErd(!erdBox.classList.contains("large"));
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape" && erdBox.classList.contains("large")) { setErd(false); erdBtn.focus(); } });
   const linked = fromHash();
   setLevel(startLevel(items, solved, linked && linked.slug));
   show(linked || levelPick(items, level, solved));
@@ -171,7 +183,7 @@ async function boot() {
     hits.forEach(e => { if (!solved.includes(e.slug)) solved.push(e.slug); });
     if (hits.length) { save(STORE, solved); refreshTicks(); markSolved(); }
     const rows = res ? res.values.length : 0, want = solutions[cur.slug] ? solutions[cur.slug].values.length : 0;
-    if (hits.includes(cur)) status("solved", "Solved. That is the answer to this question.");
+    if (hits.includes(cur)) status("", "");
     else if (hits.length) status("other", "Not this one, but that result answers " + hits.map(e => e.title).join(", ") + ".");
     else status("wrong", rows !== want ? "Not yet: " + rows + " rows, the question expects " + want + "." : "Not yet: the right number of rows, but not the same values" + (cur.opts.ordered ? " or not in the order asked." : "."));
   }

@@ -84,9 +84,117 @@ def ilike(pattern, value, escape=None):
     return int(re.fullmatch("".join(out), str(value), re.I | re.S) is not None)
 
 
+PG_TOKEN = re.compile(r"""(\s+|--[^\n]*|/\*[\s\S]*?(?:\*/|$))|('(?:[^']|'')*')|("(?:[^"]|"")*")|(`[^`]*`|\[[^\]]*\])|"""
+                       r"""((?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)|([A-Za-z_][A-Za-z0-9_$]*)|(<=|>=|<>|!=|==|\|\||::|[-+*/%(),.;=<>|&~?:@^!])|([\s\S])""")
+TOKEN_KINDS = (None, "str", "qid", "bq", "num", "word", "op", "bad")
+# site/app.js RESERVED, SQLITE_TYPE
+RESERVED = set(("select from where group by having order limit offset union intersect except join inner left right full outer "
+                "cross natural on using as and or not in is null like ilike glob regexp match between case when then else end with recursive "
+                "distinct all exists cast over partition window asc desc values collate escape true false filter isnull notnull").split())
+SQLITE_TYPE = dict([(t, "INTEGER") for t in "int integer int2 int4 int8 smallint bigint".split()]
+                   + [(t, "REAL") for t in ("real", "float", "float4", "float8", "double precision")]
+                   + [("numeric", "NUMERIC"), ("decimal", "NUMERIC")]
+                   + [(t, "TEXT") for t in ("text", "varchar", "char", "character", "character varying", "date", "time", "timestamp")])
+
+
+def sql_tokens(sql):
+    """site/app.js sqlTokens: (kind, text, lower text, start, end), whitespace and comments dropped."""
+    out = []
+    for m in PG_TOKEN.finditer(sql):
+        if m.group(1):
+            continue
+        kind = TOKEN_KINDS[m.lastindex - 1]
+        out.append((kind, m.group(0), m.group(0).lower() if kind == "word" else m.group(0), m.start(), m.end()))
+    return out
+
+
+def _match_paren(toks, k, step):
+    d = 0
+    while 0 <= k < len(toks):
+        d += step if toks[k][1] == "(" else -step if toks[k][1] == ")" else 0
+        if d == 0:
+            return k
+        k += step
+    return -1
+
+
+def _cast_type(toks, i):
+    if i >= len(toks) or toks[i][0] != "word":
+        return None, i
+    name, i = toks[i][2], i + 1
+    if i < len(toks) and (name, toks[i][2]) in (("double", "precision"), ("character", "varying")):
+        name, i = name + " " + toks[i][2], i + 1
+    if i < len(toks) and toks[i][1] == "(":
+        while i < len(toks) and toks[i][1] != ")":
+            i += 1
+        if i >= len(toks):
+            return None, i
+        i += 1
+    return name, i
+
+
+def _rewrite_one(sql, toks):
+    """site/app.js rewriteOne: the leftmost x::type, LEFT(x, n) or RIGHT(x, n) rewritten, or None."""
+    at = lambda k: toks[k] if 0 <= k < len(toks) else (None, "", "", 0, 0)
+    for i, x in enumerate(toks):
+        if x[1] == "::":
+            s = i - 1
+            if s < 0:
+                continue
+            if toks[s][1] == ")":
+                while True:
+                    s = _match_paren(toks, s, -1)
+                    if s < 0:
+                        break
+                    w = at(s - 1)
+                    if w[0] != "word":
+                        break
+                    if w[2] in ("over", "filter") and at(s - 2)[1] == ")":
+                        s -= 2
+                        continue
+                    if w[2] not in RESERVED or w[2] in ("cast", "left", "right", "exists"):
+                        s -= 1
+                    break
+                if s < 0:
+                    continue
+            elif toks[s][0] not in ("word", "qid", "str", "num"):
+                continue
+            elif at(s - 1)[1] == "." and at(s - 2)[0] in ("word", "qid"):
+                s -= 2
+            name, end = _cast_type(toks, i + 1)
+            if not name:
+                continue
+            return (sql[:toks[s][3]] + "CAST(" + sql[toks[s][3]:toks[i - 1][4]] + " AS " + SQLITE_TYPE.get(name, name.upper()) + ")"
+                    + sql[toks[end - 1][4]:])
+        if x[0] == "word" and x[2] in ("left", "right") and at(i + 1)[1] == "(" and at(i - 1)[1] != ".":
+            c = _match_paren(toks, i + 1, 1)
+            commas, d = [], 0
+            for k in range(i + 2, c):
+                v = toks[k][1]
+                d += 1 if v == "(" else -1 if v == ")" else 0
+                if v == "," and d == 0:
+                    commas.append(k)
+            if c < 0 or len(commas) != 1:
+                continue
+            a = sql[toks[i + 2][3]:toks[commas[0] - 1][4]]
+            n = sql[toks[commas[0] + 1][3]:toks[c - 1][4]]
+            body = "substr(%s, 1, %s)" % (a, n) if x[2] == "left" else "substr(%s, -(%s), %s)" % (a, n, n)
+            return sql[:x[3]] + body + sql[toks[c][4]:]
+    return None
+
+
 def sqlite_sql(sql):
-    """site/app.js toSqlite: ILIKE becomes REGEXP (strings untouched)."""
-    return re.sub(r"('(?:[^']|'')*')|\bILIKE\b", lambda m: m.group(1) or "REGEXP", sql, flags=re.I)
+    """site/app.js toSqlite: LEFT/RIGHT become substr, x::type becomes CAST, ILIKE becomes REGEXP (strings untouched)."""
+    while True:
+        r = _rewrite_one(sql, sql_tokens(sql))
+        if r is None:
+            break
+        sql = r
+    out, last = "", 0
+    for t in sql_tokens(sql):
+        if t[0] == "word" and t[2] == "ilike":
+            out, last = out + sql[last:t[3]] + "REGEXP", t[4]
+    return out + sql[last:]
 
 
 def strict_conn(conn):

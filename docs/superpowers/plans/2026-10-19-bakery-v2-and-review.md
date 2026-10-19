@@ -6,7 +6,8 @@ question as worded); make the mechanical part a permanent test so pasted results
 the bakery database (more rows, a few more tables and columns) from a seeded stdlib generator, and carry every
 page, exercise and test over to it, the permanent test guarding the move.
 
-**Owner request:** 2026-10-19. **Status:** planned 2026-10-19; nothing implemented. Part 1 comes first and lands
+**Owner request:** 2026-10-19. **Status:** planned 2026-10-19; Part 1 done 2026-10-20 (Task 1.1's `HandbookResults`, the review and its fixes;
+the data-dependent findings are listed under Part 2, "Planted cases from the review"); Part 2 not started. Part 1 comes first and lands
 on its own; Part 2 starts only after Part 1's findings are fixed and pushed.
 
 **Do not start while** the concurrent session editing `site/learn/*.html`, `site/app.js`, `CLAUDE.md` and
@@ -204,6 +205,23 @@ Small enough for sql.js (microseconds) and for the script on `database.html` (ab
    seller of one category, two customers with the same name in different towns, an order at exactly 09:00, a
    NULL in a column that `NOT IN` meets, a product with no sales, a customer with no orders, and the v1 rows the
    prose names.
+
+**Planted cases from the review** (Part 1, 2026-10-20: edge findings that need data v1 does not have; each page
+or exercise named must then use the case, and its prose say what happens):
+- **Weekend by weekday, not by date bound.** `set-operations.html` (UNION, UNION ALL, duplicates, INTERSECT,
+  EXCEPT, whose "Grace Lee alone" depends on it) and the exercise `not-on-the-weekend-menu` test
+  `day >= '2026-03-07'` / `< '2026-03-07'`, true only because v1 ends on Sunday 8 March. With four weeks, bound both
+  ends of the weekend asked for (`day IN ('2026-03-07', '2026-03-08')`) or name the weekend, and keep an order on a
+  later weekend so a one-sided bound gives a different answer.
+- **An order at exactly 12:00** (and one at 09:00, already listed): `case-when.html` "Buckets and GROUP BY" warns
+  about boundaries with no row on one; say which bucket the 12:00 row lands in.
+- **A tie at a LIMIT cut** for the GROUP BY primary-key example (`group-by-having.html`): v1's four-way tie at 2
+  orders was resolved by dropping the LIMIT (7 rows); v2 can bring LIMIT back with no tie at the cut, or keep one
+  and say so.
+- **No average ending in 5 at the third decimal** (`subqueries.html`, `group-by-having.html`, exercise
+  `above-their-category`: bread averages 3.325, which SQLite's REAL rounds to 3.32 and exact decimals to 3.33; the
+  pages now say so). Choose v2 prices so no shown average sits on a rounding edge, then drop the sentence.
+- **Best seller ties** (`best-seller-of-each-category`): plant the tie the question's "keep ties" announces.
 
 **Rejected as overkill:** a `price_history` table (`unit_price` gives the same lesson in one column); suppliers and
 ingredients (a many-to-many no page teaches); shifts and opening hours tables; a `category` table (category stays

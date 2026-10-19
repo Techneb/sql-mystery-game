@@ -61,7 +61,7 @@
 <tr><th>without_zero</th><th>with_zero</th></tr>
 <tr><td>after</td><td>before</td></tr>
 </table>
-<p>Day-first formats such as <code>'05/03/2026'</code> fail the same way, at every date: they sort by day of the month first. If you design a table, store ISO text or a number; if you inherit one in another format, convert it before comparing.</p>
+<p>Day-first formats such as <code>'05/03/2026'</code> fail the same way as soon as two dates fall in different months: they sort by day of the month first, so <code>'05/03/2026'</code> comes after <code>'04/06/2026'</code>. If you design a table, store ISO text or a number; if you inherit one in another format, convert it before comparing.</p>
 
 <h2>Comparing and filtering ranges</h2>
 <p>Because the order is right, the usual operators work on ISO text as they do on numbers. Compare with a value written in the same shape and in single quotes: <code>day &gt;= '2026-03-05'</code>. <code>BETWEEN a AND b</code> includes both ends, which suits whole days.</p>
@@ -92,7 +92,7 @@
 <tr><td>13</td><td>2026-03-08</td><td>11:40</td></tr>
 <tr><td>14</td><td>2026-03-08</td><td>18:20</td></tr>
 </table>
-<p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code>, which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a half-open range, <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>: <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss everything after midnight, because <code>'2026-03-05 17:45'</code> sorts after <code>'2026-03-05'</code>.</p>
+<p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code>, which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a half-open range, <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>: <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss every stamp of that day, because even <code>'2026-03-05 00:00'</code> sorts after <code>'2026-03-05'</code>.</p>
 
 <h2 id="taking-apart">Taking a date apart: substr</h2>
 <p>A fixed format means each part sits at a fixed position, so <code>substr(text, start, length)</code> cuts it out (positions count from 1). In an ISO date the year is characters 1 to 4, the year and month 1 to 7, the day 9 and 10; in a time the hour is 1 and 2, the minutes 4 and 5. Here the first seven characters give the month each customer joined.</p>
@@ -164,9 +164,9 @@
 <table class="result">
 <tr><th>Instead of</th><th>Write</th></tr>
 <tr><td>strftime, julianday, datetime</td><td>compare the date text (d &gt;= '2024-06-01'), or substr(d, 1, 7)</td></tr>
-<tr><td>LEFT(t, n), RIGHT(t, n)</td><td>substr(t, 1, n), substr(t, length(t) - n + 1)</td></tr>
-<tr><td>x::integer</td><td>CAST(x AS INTEGER)</td></tr>
+<tr><td>date(d, '+1 day'), time(t, '+1 hour')</td><td>compare the date text, or count days in a recursive CTE</td></tr>
 </table>
+<p><code>date</code> and <code>time</code> with a single argument are accepted. PostgreSQL's own <code>LEFT(t, n)</code>, <code>RIGHT(t, n)</code> and <code>x::integer</code> are accepted too: the terminal runs them as <code>substr</code> and <code>CAST(x AS INTEGER)</code>.</p>
 
 <h2>Common mistakes</h2>
 <p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in a shape other than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>

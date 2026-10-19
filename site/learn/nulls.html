@@ -135,7 +135,7 @@
 <tr><td>Chocolate eclair</td><td>5</td></tr>
 <tr><td>Carrot cake slice</td><td>0</td></tr>
 </table>
-<p>Use <code>COALESCE</code> for display, or where a NULL really means zero. Do not use it to hide NULLs that mean "unknown": replacing an unknown price by 0 before averaging pulls the average down with prices nobody ever charged. The reverse tool exists too: <code>NULLIF(a, b)</code> gives NULL when <code>a</code> equals <code>b</code>, which is how you avoid dividing by zero (<code>total / NULLIF(orders, 0)</code> is NULL instead of an error).</p>
+<p>Use <code>COALESCE</code> for display, or where a NULL really means zero. Do not use it to hide NULLs that mean "unknown": replacing an unknown price by 0 before averaging pulls the average down with prices nobody ever charged. The reverse tool exists too: <code>NULLIF(a, b)</code> gives NULL when <code>a</code> equals <code>b</code>, which is how you avoid dividing by zero (<code>total / NULLIF(orders, 0)</code> is NULL instead of an error: PostgreSQL raises an error on division by zero, while SQLite already returns NULL).</p>
 
 <h2 id="coalesce">Grammar: COALESCE and IS</h2>
 <p>The standard way to replace a NULL is <code>COALESCE</code>, as above; <code>IFNULL</code> is not standard SQL. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>

@@ -77,7 +77,6 @@
 #ex-tables { font-size: 14px; margin: 4px 0; }
 #ex-run svg { vertical-align: -3px; margin-right: 5px; }
 .ex-status { margin: 8px 0; padding: 6px 10px; border: 1px solid var(--rule); border-radius: var(--r-box); }
-.ex-status.solved { border: 2px solid var(--accent); font-weight: 700; }
 .ex-status.wrong { border-color: var(--rel); }
 @media (max-width: 900px) {
   .learn .workbench { grid-template-columns: minmax(0, 1fr); }
@@ -85,6 +84,15 @@
 }
 /* exercises.html: How to use this page, closed; the level buttons; the solved mark; History under the terminal */
 .learn details.howto { margin: 24px 0 8px; }
+/* index.html: chapters, exercises and grammar as three groups; the exercises as a card */
+.toc-groups .toc-head { margin: 28px 0 2px; }
+.toc-groups .toc-what { margin: 0 0 8px; }
+.toc-card { display: block; border: 2px solid var(--ink); border-radius: var(--r-card); padding: 12px 16px; color: var(--ink); text-decoration: none; background: var(--card); }
+.toc-card b { display: block; font: 700 19px/1.25 "Playfair Display", serif; margin-bottom: 4px; text-decoration: underline; text-underline-offset: 3px; }
+.toc-card:hover, .toc-card:focus-visible { border-color: var(--accent); }
+.wb-terminal details.howto { margin: 16px 0 0; }
+.wb-terminal details.howto summary { font-size: 16px; }
+.bakery-erd.large svg { max-width: none; }
 .learn details.howto summary { cursor: pointer; font: 700 20px/1.2 "Playfair Display", serif; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
 .ex-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
 .ex-levels button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }

@@ -101,7 +101,7 @@
 
 <h2>Ties and LIMIT</h2>
 <p>Be careful when the value you sort by can tie at the edge of the limit. If two products both cost the same and you ask for <code>LIMIT 1</code>, you get one of them, and which one is not defined. When the question is "which product is the cheapest", it is worth checking whether the second row has the same price as the first: drop the limit, or raise it to five, and read the top of the list with your own eyes. Adding a second sort key, such as the name or the id, at least makes the answer the same every time you run it.</p>
-<p>NULL values also need a thought: in SQLite they sort before every other value in ascending order, and after them in descending order. If a column can be missing, the top of a sorted list may be full of NULLs rather than of the smallest real values; filter them out with <code>WHERE ... IS NOT NULL</code> when they do not belong in the answer.</p>
+<p>NULL values also need a thought: in SQLite they sort before every other value in ascending order, and after them in descending order. PostgreSQL does the opposite (last in ascending order, first in descending); write <code>NULLS FIRST</code> or <code>NULLS LAST</code> after the sort key to say which you want, and both agree. If a column can be missing, the top of a sorted list may be full of NULLs rather than of the smallest real values; filter them out with <code>WHERE ... IS NOT NULL</code> when they do not belong in the answer.</p>
 
 <h2 id="distinct-order">Grammar: DISTINCT and ORDER BY</h2>
 <p>A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own, and the query after it is the correct version.</p>
@@ -109,7 +109,7 @@
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>;</code></pre>
-<div class="refusal"><code>ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list</code> DISTINCT removes repeated rows before sorting, so price is gone by then: add it to the SELECT list, or sort by a column you selected.</div>
+<div class="refusal"><code>ERROR: for SELECT DISTINCT, ORDER BY expressions must appear in select list</code> DISTINCT removes repeated rows before sorting, so price is gone by then: sort by a column you selected, or use GROUP BY and sort by an aggregate such as MIN(price).</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>

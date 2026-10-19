@@ -66,7 +66,8 @@
 </table>
 <p>For the columns of one table, <code>PRAGMA table_info</code> gives their names, types, and whether each is part of the primary key. The table-valued form below can be used in a normal <code>SELECT</code>, so you can choose the columns you want to see.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">type</span>, <span class="sql-id">pk</span>
-<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_table_info</span>(<span class="sql-str">'orders'</span>);</code></pre>
+<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_table_info</span>(<span class="sql-str">'orders'</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">cid</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>type</th><th>pk</th></tr>
 <tr><td>id</td><td>INTEGER</td><td>1</td></tr>
@@ -76,11 +77,12 @@
 </table>
 <p>And <code>pragma_foreign_key_list</code> lists the foreign keys of a table: which column points to which table and column.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-str">"from"</span>, <span class="sql-str">"table"</span>, <span class="sql-str">"to"</span>
-<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_foreign_key_list</span>(<span class="sql-str">'order_item'</span>);</code></pre>
+<span class="sql-kw">FROM</span> <span class="sql-fn">pragma_foreign_key_list</span>(<span class="sql-str">'order_item'</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-str">"from"</span>;</code></pre>
 <table class="result">
 <tr><th>from</th><th>table</th><th>to</th></tr>
-<tr><td>product_id</td><td>product</td><td>id</td></tr>
 <tr><td>order_id</td><td>orders</td><td>id</td></tr>
+<tr><td>product_id</td><td>product</td><td>id</td></tr>
 </table>
 
 <h2>Looking at the data itself</h2>

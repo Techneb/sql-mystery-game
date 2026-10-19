@@ -137,7 +137,7 @@
 <p>A pattern search answers the question "which rows mention this?", but a mention is not proof. A row that contains a word may be about something else entirely, so read the matching rows rather than counting them blindly.</p>
 
 <h2>Performance, briefly</h2>
-<p>A pattern that starts with <code>%</code> forces the database to read every row, because no index can help it find text that may begin anywhere. On a small table that does not matter. On millions of rows it does, and a pattern that begins with fixed text, such as <code>'Choc%'</code>, is much cheaper.</p>
+<p>A pattern that starts with <code>%</code> forces the database to read every row, because an ordinary index cannot help it find text that may begin anywhere. On a small table that does not matter. On millions of rows it does, and a pattern that begins with fixed text, such as <code>'Choc%'</code>, can use an index and is much cheaper.</p>
 
 <h2>Common mistakes</h2>
 <p>Using <code>=</code> with a wildcard: <code>name = '%tart%'</code> looks for a name that is literally percent-t-a-r-t-percent, and finds nothing. Forgetting the leading <code>%</code>, so that <code>'croissant%'</code> misses "Almond croissant". Using the <code>*</code> wildcard of file names or of <code>GLOB</code> inside <code>LIKE</code>. Assuming that <code>LIKE</code> ignores case: in PostgreSQL and in the game it does not, and <code>ILIKE</code> does. Trusting a pattern that is too short: <code>'%a%'</code> matches almost everything.</p>

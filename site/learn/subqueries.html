@@ -165,6 +165,7 @@
 <tr><td>Lemon tart</td><td>cake</td><td>3.9</td><td>3.3</td></tr>
 <tr><td>Almond croissant</td><td>pastry</td><td>2.2</td><td>1.73</td></tr>
 </table>
+<p>The breads average exactly 3.325, yet <code>ROUND</code> gives 3.32: <code>price</code> is a <code>REAL</code>, stored as a binary fraction, and the sum lands a hair below 3.325. Exact decimals (PostgreSQL's <code>NUMERIC</code>) would round it to 3.33.</p>
 <p>A rough guide. Use a scalar subquery for one number you compare against. Use <code>IN</code> or <code>EXISTS</code> when other tables only decide which rows to keep. Use a join when you need their columns in the result. Use a CTE as soon as a subquery grows past a few lines, appears twice, or would sit inside another one. All of them can express most questions; pick the one a reader will understand first.</p>
 
 <h2>Common mistakes</h2>
