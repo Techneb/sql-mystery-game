@@ -1575,7 +1575,7 @@ export const GA_ID = "G-QG0K0D1NQZ";
 // certified consent message (AdSense > Privacy & messaging, served by adsbygoogle.js) asks about both, in Europe only.
 // ?ads=1 previews the ads-on path on localhost (Google serves no ad and no message there).
 export const ADS_CLIENT = "ca-pub-9765732642926043";
-export const AD_SLOT = "";
+export const AD_SLOT = "1774964634";   // "Ritz Affair - under the schema", responsive display unit (2026-10-19)
 export const ADS_ON = AD_SLOT !== "";
 const CONSENT_KEY = "ritz.consent";   // "yes" | "no"; absent = not answered, the banner shows (ads off only)
 let statsRefused = false;             // ads on: Google's message reports analytics_storage DENIED
