@@ -1,6 +1,6 @@
 // Colours the SQL of every <pre><code> block in site/learn/*.html with the game's own highlighter, at build
 // time, so the handbook pages stay free of JavaScript. Run it after editing any example: node colour_learn.mjs
-// It also writes, after each <pre class="wrong"> block (learn/grammar.html), the terminal's own refusal of it
+// It also writes, after each <pre class="wrong"> block (on any learn page), the terminal's own refusal of it
 // (strictCheck on the bakery schema of learn/database.html), so the page always shows what the game says.
 // Idempotent: a coloured block is stripped back to plain SQL and coloured again to the same bytes.
 import fs from "node:fs";

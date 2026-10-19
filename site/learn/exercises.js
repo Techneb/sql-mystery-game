@@ -114,7 +114,7 @@ async function boot() {
     if (cartesian(sql)) error = "Two tables side by side with nothing to match them: say what joins them (ON or WHERE).";
     else if ((strict = strictCheck(sql, schema))) error = strict.error;
     else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; } catch (e) { error = e.message; }
-    $("ex-results").innerHTML = strict ? strictHtml(strict, "grammar.html") : error ? '<div class="error">' + escapeHtml(error) + "</div>" : renderResults(res);
+    $("ex-results").innerHTML = strict ? strictHtml(strict, "") : error ? '<div class="error">' + escapeHtml(error) + "</div>" : renderResults(res);
     $("ex-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows";
     if (error) return status("wrong", "Fix the error first, then run it again.");
     const hits = items.filter(e => sameResult(res, solutions[e.slug], e.opts));
