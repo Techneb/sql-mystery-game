@@ -516,7 +516,7 @@ class HandbookResults(unittest.TestCase):
         for f, sql, rows, got in self.run_all(0):
             n += 1
             self.assertEqual(got, rows, f + ": " + sql)
-        self.assertEqual(n, 106)   # bump when an example is added: a block the regex misses is a block unchecked
+        self.assertEqual(n, 107)   # bump when an example is added: a block the regex misses is a block unchecked
 
     def test_printed_order_does_not_depend_on_scan_order(self):
         for f, sql, rows, got in self.run_all(1):
