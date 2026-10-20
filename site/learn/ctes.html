@@ -152,7 +152,7 @@
 <h2>Common mistakes</h2>
 <p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE steps &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates (see <a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>). Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
 
-<p class="try-it"><b>Try it:</b> <a href="exercises.html#above-their-category">Above their category</a> and <a href="exercises.html#word-of-mouth">Word of mouth</a>, on the exercises page.</p>
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#above-their-category">Above their category</a>, <a href="exercises.html#word-of-mouth">Word of mouth</a>, <a href="exercises.html#money-back">Money back</a> and <a href="exercises.html#shutters-down">Shutters down</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
 <nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a><a class="next" href="exercises.html">Next: SQL exercises with solutions</a></nav>
 </main>

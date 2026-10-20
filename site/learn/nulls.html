@@ -239,7 +239,7 @@
 <h2>Common mistakes</h2>
 <p>Writing <code>= NULL</code> or <code>&lt;&gt; NULL</code> instead of <code>IS NULL</code> or <code>IS NOT NULL</code>. Forgetting that <code>&lt;&gt;</code> and <code>NOT</code> also drop the NULL rows. Using <code>COUNT(*)</code> after a left join and counting the padded rows. Using <code>NOT IN</code> on a subquery whose column can be NULL. Expecting <code>SUM</code> of nothing to be 0. Replacing an unknown value with a made-up one through <code>COALESCE</code> before a calculation. Storing the text <code>'none'</code> or <code>'N/A'</code> instead of NULL, which makes <code>IS NULL</code> miss the rows and <code>COUNT(column)</code> count them.</p>
 
-<p class="try-it"><b>Try it:</b> <a href="exercises.html#back-again">Back again</a>, on the exercises page.</p>
+<p class="try-it"><b>Try it:</b> <a href="exercises.html#back-again">Back again</a>, <a href="exercises.html#untidy-emails">Untidy emails</a> and <a href="exercises.html#money-back">Money back</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> the archives record a missing value as NULL, like the bakery; Chapter X, <i>Never Seen Together</i>, and Chapter XI, <i>The Silence</i>, are where the rules of this page matter most.</p>
 <nav class="learn-pager"><a class="prev" href="joins.html">Previous: JOIN, LEFT JOIN and self-joins</a><a class="next" href="case-when.html">Next: CASE WHEN</a></nav>
 </main>

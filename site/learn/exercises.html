@@ -554,7 +554,7 @@
 <p>A customer's first order has no previous row, so <code>LAG</code> returns NULL for it, and <code>IS NOT NULL</code> drops exactly those orders. The day is chosen outside the CTE, after <code>LAG</code> has seen every order: filtered inside it, the window would see only that Wednesday, and an order whose previous visit was on the Monday would look like a first. Ordering the window by <code>day, time</code> rather than <code>day</code> alone keeps two orders on the same day in their real order.</p>
 </details>
 
-<p class="exercise" id="shutters-down"><b>19. Shutters down.</b> On which days from Monday 2 to Sunday 29 March 2026 did the bakery take no order at all? The dates you list cannot come from <code>orders</code>, so build them. (<a href="ctes.html">WITH RECURSIVE</a>, <a href="subqueries.html">Subqueries</a>) &middot; Expected: 4 rows.</p>
+<p class="exercise" id="shutters-down"><b>19. Shutters down.</b> On which days from Monday 2 to Sunday 29 March 2026 did no customer from Hillcrest place an order? The dates you list cannot come from <code>orders</code>, so build them. (<a href="ctes.html">WITH RECURSIVE</a>, <a href="subqueries.html">Subqueries</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">calendar</span>(<span class="sql-id">n</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-num">2</span>, <span class="sql-str">'2026-03-02'</span>
@@ -565,16 +565,23 @@
 )
 <span class="sql-kw">SELECT</span> <span class="sql-id">day</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">calendar</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">day</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>)
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">day</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
+  <span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
+)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th></tr>
+<tr><td>2026-03-03</td></tr>
 <tr><td>2026-03-06</td></tr>
+<tr><td>2026-03-07</td></tr>
 <tr><td>2026-03-13</td></tr>
 <tr><td>2026-03-20</td></tr>
 <tr><td>2026-03-27</td></tr>
 </table>
-<p>A missing day has no row anywhere, so no query on <code>orders</code> alone can list it. The recursive CTE writes out every date of the period, one row per round, and <code>NOT IN</code> keeps those that no order carries: the four Fridays, when the shop is closed. <code>NOT IN</code> is safe here because <code>orders.day</code> is never NULL; a <code>LEFT JOIN</code> with <code>WHERE o.id IS NULL</code> gives the same rows.</p>
+<p>A missing day has no row anywhere, so no query on <code>orders</code> alone can list it. The recursive CTE writes out every date of the period, one row per round, and <code>NOT IN</code> keeps those that no Hillcrest order carries: the four Fridays, when the shop is closed, and two more days, Tuesday 3 and Saturday 7 March, that only the calendar reveals. <code>NOT IN</code> is safe here because <code>orders.day</code> is never NULL; a <code>LEFT JOIN</code> with <code>WHERE o.id IS NULL</code> gives the same rows.</p>
 </details>
 
 <p class="exercise" id="word-of-mouth"><b>20. Word of mouth.</b> Customers who walked in on their own (no referrer) brought others, who brought others in turn. How many customers does each walk-in account for, directly or down the chain, not counting the walk-in themself? A walk-in who brought nobody counts 0. (<a href="ctes.html">WITH RECURSIVE</a>) &middot; Expected: 7 rows.</p>
