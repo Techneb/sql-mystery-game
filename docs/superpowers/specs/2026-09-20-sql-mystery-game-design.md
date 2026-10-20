@@ -659,3 +659,5 @@ Everything is deployed (2026-10-20, 9f4e671).
   repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`).
 - ~~`bakery.py` scaffolding~~ Done 2026-10-20: v1's schema, `LIVE` and `check(1)` dropped, the generator emits
   v2 only (its first-week rows renamed `FIRST_WEEK`); the script, every pasted result and the schemas unchanged.
+- ~~Blind check of the five new exercises~~ Done 2026-10-20: two independent solvers, 10 of 10 answers match the official
+  results under the page's own check; The price rise now says one row per product and price paid.

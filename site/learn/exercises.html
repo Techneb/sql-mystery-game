@@ -312,7 +312,7 @@
 <p>The money of a line is its quantity times <code>unit_price</code>, the price paid on that line, so <code>product</code> is not needed. Friday 27 March is missing because the bakery is closed on Fridays and nobody ordered: a group needs rows. The <a href="ctes.html">CTE page</a> builds a calendar that shows such a day with zero, and exercise 19 uses one.</p>
 </details>
 
-<p class="exercise" id="the-price-rise"><b>8. The price rise.</b> On some order lines, the price paid differs from the product's current price in the catalogue. Which products, and for each, the price paid on those lines and the current price? (<a href="joins.html">JOIN</a>, <a href="select-where.html">SELECT and WHERE</a>) &middot; Expected: 3 rows.</p>
+<p class="exercise" id="the-price-rise"><b>8. The price rise.</b> On some order lines, the price paid differs from the product's current price in the catalogue. Which products, and for each, the price paid on those lines and the current price? Give one row per product and price paid. (<a href="joins.html">JOIN</a>, <a href="select-where.html">SELECT and WHERE</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span> <span class="sql-kw">AS</span> <span class="sql-id">paid</span>, <span class="sql-id">p</span>.<span class="sql-id">price</span> <span class="sql-kw">AS</span> <span class="sql-id">current_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
