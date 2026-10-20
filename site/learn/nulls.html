@@ -43,101 +43,38 @@
 
 <h2>What NULL means</h2>
 <p>NULL is not a value. It is the mark SQL puts in a cell when there is no value: the fact is unknown, or does not apply. It is not zero, which is a number, and it is not the empty string <code>''</code>, which is a piece of text with no letters in it. A price of 0 says "free"; a NULL price says "nobody wrote the price down".</p>
-<p>In the bakery database (see the <a href="database.html">bakery database page</a>), <code>customer.referred_by</code> holds the id of the customer who recommended the shop. Three customers walked in on their own, so their <code>referred_by</code> is NULL. The column is not wrong for them; there is simply nothing to put in it. That is the honest way to record an absence, and it is why every rule on this page exists.</p>
+<p>In the bakery database (see the <a href="database.html">bakery database page</a>), <code>customer.referred_by</code> holds the id of the customer who recommended the shop. Seven customers walked in on their own, so their <code>referred_by</code> is NULL. In the same way <code>staff.manager_id</code> holds the manager of each member of staff, and Margaret Hale, who owns the shop, answers to nobody: her <code>manager_id</code> is NULL. The columns are not wrong for them; there is simply nothing to put in them. That is the honest way to record an absence, and it is why every rule on this page exists.</p>
 
 <h2>Three answers, not two: true, false and unknown</h2>
-<p>A comparison usually answers true or false. When one side is NULL, it answers <i>unknown</i>: is an unknown referrer equal to customer 1? Nobody can say. SQL's logic therefore has three values, and the rule that matters most is short: <code>WHERE</code>, <code>HAVING</code> and <code>ON</code> keep a row only when the condition is <b>true</b>. Unknown is thrown away, exactly like false.</p>
-<p>The query below asks for the customers not referred by customer 1. It looks as if it should return everyone else, but the three customers with no referrer are missing too: for them <code>referred_by &lt;&gt; 1</code> is unknown.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> &lt;&gt; <span class="sql-num">1</span>
+<p>A comparison usually answers true or false. When one side is NULL, it answers <i>unknown</i>: is a missing manager equal to Tom Becker, staff member 2? Nobody can say. SQL's logic therefore has three values, and the rule that matters most is short: <code>WHERE</code>, <code>HAVING</code> and <code>ON</code> keep a row only when the condition is <b>true</b>. Unknown is thrown away, exactly like false.</p>
+<p>The query below asks for the staff not managed by Tom Becker. Four of the six answer to him, so it looks as if it should return the other two, Tom himself and Margaret Hale, but Margaret is missing: for her <code>manager_id &lt;&gt; 2</code> is unknown.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">manager_id</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">manager_id</span> &lt;&gt; <span class="sql-num">2</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>referred_by</th></tr>
-<tr><td>Emma Novak</td><td>3</td></tr>
-<tr><td>Farid Haddad</td><td>5</td></tr>
-<tr><td>Grace Lee</td><td>2</td></tr>
-<tr><td>Daniel Moreno</td><td>7</td></tr>
-<tr><td>Quentin Schmidt</td><td>10</td></tr>
-<tr><td>Wen Petrov</td><td>6</td></tr>
-<tr><td>Ugo Dubois</td><td>5</td></tr>
-<tr><td>Zoe Garcia</td><td>7</td></tr>
-<tr><td>Hassan Ivanova</td><td>3</td></tr>
-<tr><td>Rosa Weber</td><td>15</td></tr>
-<tr><td>Nadia Jensen</td><td>3</td></tr>
-<tr><td>Priya Hughes</td><td>10</td></tr>
-<tr><td>Marco Olsen</td><td>2</td></tr>
-<tr><td>Oscar Nakamura</td><td>18</td></tr>
-<tr><td>Jonas Eriksen</td><td>7</td></tr>
-<tr><td>Tara Rossi</td><td>3</td></tr>
-<tr><td>Amira Kowalski</td><td>7</td></tr>
-<tr><td>Bruno Fischer</td><td>15</td></tr>
-<tr><td>Yusuf Eriksen</td><td>27</td></tr>
-<tr><td>Felix Bianchi</td><td>20</td></tr>
-<tr><td>Greta Rossi</td><td>3</td></tr>
-<tr><td>Lena Dubois</td><td>23</td></tr>
-<tr><td>Elena Nakamura</td><td>18</td></tr>
-<tr><td>Greta Hughes</td><td>27</td></tr>
-<tr><td>Marco Costa</td><td>3</td></tr>
-<tr><td>Iris Olsen</td><td>34</td></tr>
-<tr><td>Lena Schmidt</td><td>7</td></tr>
-<tr><td>Vera Tanaka</td><td>10</td></tr>
-<tr><td>Yusuf Moreno</td><td>38</td></tr>
-<tr><td>Quentin Jensen</td><td>15</td></tr>
+<tr><th>name</th><th>manager_id</th></tr>
+<tr><td>Tom Becker</td><td>1</td></tr>
 </table>
-<p>If the walk-in customers belong in the answer, say so: <code>WHERE referred_by &lt;&gt; 1 OR referred_by IS NULL</code>. A CASE makes the three outcomes visible. Its first branch catches true, its second catches false, and whatever is left over is unknown.</p>
+<p>If the owner belongs in the answer, say so: <code>WHERE manager_id &lt;&gt; 2 OR manager_id IS NULL</code>. A CASE makes the three outcomes visible. Its first branch catches true, its second catches false, and whatever is left over is unknown.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
        <span class="sql-kw">CASE</span>
-         <span class="sql-kw">WHEN</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span> <span class="sql-kw">THEN</span> <span class="sql-str">'yes'</span>
-         <span class="sql-kw">WHEN</span> <span class="sql-kw">NOT</span> (<span class="sql-id">referred_by</span> = <span class="sql-num">1</span>) <span class="sql-kw">THEN</span> <span class="sql-str">'no'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-id">manager_id</span> = <span class="sql-num">2</span> <span class="sql-kw">THEN</span> <span class="sql-str">'yes'</span>
+         <span class="sql-kw">WHEN</span> <span class="sql-kw">NOT</span> (<span class="sql-id">manager_id</span> = <span class="sql-num">2</span>) <span class="sql-kw">THEN</span> <span class="sql-str">'no'</span>
          <span class="sql-kw">ELSE</span> <span class="sql-str">'unknown'</span>
-       <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">referred_by_customer_1</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+       <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">managed_by_tom</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>referred_by_customer_1</th></tr>
-<tr><td>Alice Turner</td><td>unknown</td></tr>
-<tr><td>Ben Okafor</td><td>yes</td></tr>
-<tr><td>Chloe Martin</td><td>yes</td></tr>
-<tr><td>David Chen</td><td>unknown</td></tr>
-<tr><td>Emma Novak</td><td>no</td></tr>
-<tr><td>Farid Haddad</td><td>no</td></tr>
-<tr><td>Grace Lee</td><td>no</td></tr>
-<tr><td>Hugo Silva</td><td>unknown</td></tr>
-<tr><td>Daniel Moreno</td><td>no</td></tr>
-<tr><td>Kofi Tanaka</td><td>unknown</td></tr>
-<tr><td>Quentin Schmidt</td><td>no</td></tr>
-<tr><td>Wen Petrov</td><td>no</td></tr>
-<tr><td>Ugo Dubois</td><td>no</td></tr>
-<tr><td>Zoe Garcia</td><td>no</td></tr>
-<tr><td>Hassan Ivanova</td><td>no</td></tr>
-<tr><td>Rosa Weber</td><td>no</td></tr>
-<tr><td>Nadia Jensen</td><td>no</td></tr>
-<tr><td>Priya Hughes</td><td>no</td></tr>
-<tr><td>Marco Olsen</td><td>no</td></tr>
-<tr><td>Oscar Nakamura</td><td>no</td></tr>
-<tr><td>Jonas Eriksen</td><td>no</td></tr>
-<tr><td>Stefan Lambert</td><td>unknown</td></tr>
-<tr><td>Tara Rossi</td><td>no</td></tr>
-<tr><td>Amira Kowalski</td><td>no</td></tr>
-<tr><td>Bruno Fischer</td><td>no</td></tr>
-<tr><td>Iris Costa</td><td>unknown</td></tr>
-<tr><td>Zoe Garcia</td><td>unknown</td></tr>
-<tr><td>Vera Bianchi</td><td>yes</td></tr>
-<tr><td>Yusuf Eriksen</td><td>no</td></tr>
-<tr><td>Felix Bianchi</td><td>no</td></tr>
-<tr><td>Greta Rossi</td><td>no</td></tr>
-<tr><td>Lena Dubois</td><td>no</td></tr>
-<tr><td>Elena Nakamura</td><td>no</td></tr>
-<tr><td>Greta Hughes</td><td>no</td></tr>
-<tr><td>Marco Costa</td><td>no</td></tr>
-<tr><td>Iris Olsen</td><td>no</td></tr>
-<tr><td>Lena Schmidt</td><td>no</td></tr>
-<tr><td>Vera Tanaka</td><td>no</td></tr>
-<tr><td>Yusuf Moreno</td><td>no</td></tr>
-<tr><td>Quentin Jensen</td><td>no</td></tr>
+<tr><th>name</th><th>managed_by_tom</th></tr>
+<tr><td>Margaret Hale</td><td>unknown</td></tr>
+<tr><td>Tom Becker</td><td>no</td></tr>
+<tr><td>Nina Patel</td><td>yes</td></tr>
+<tr><td>Omar Reyes</td><td>yes</td></tr>
+<tr><td>Lucy Brandt</td><td>yes</td></tr>
+<tr><td>Sam Ito</td><td>yes</td></tr>
 </table>
-<p>Notice that <code>NOT</code> does not rescue the walk-ins: the opposite of unknown is still unknown. <code>AND</code> and <code>OR</code> follow common sense once you read unknown as "could be either":</p>
+<p>Notice that <code>NOT</code> does not rescue the owner: the opposite of unknown is still unknown. <code>AND</code> and <code>OR</code> follow common sense once you read unknown as "could be either":</p>
 <table class="result">
 <tr><th>a</th><th>b</th><th>a AND b</th><th>a OR b</th></tr>
 <tr><td>true</td><td>unknown</td><td>unknown</td><td>true</td></tr>
@@ -147,36 +84,17 @@
 <p>False AND anything is false, whatever the unknown turns out to be; true OR anything is true. Every other mix stays unknown. Arithmetic behaves the same way: <code>price + NULL</code> is NULL, and so is <code>'Mr ' || NULL</code>.</p>
 
 <h2>Asking about NULL: IS NULL and IS NOT NULL</h2>
-<p>Because a comparison with NULL is never true, <code>referred_by = NULL</code> keeps no rows at all, even on the rows where the column is NULL. SQL has a dedicated test instead: <code>IS NULL</code>, and its opposite <code>IS NOT NULL</code>. These two always answer true or false, never unknown, so they are safe anywhere a condition goes.</p>
+<p>Because a comparison with NULL is never true, <code>referred_by = NULL</code> keeps no rows at all, even on the rows where the column is NULL. SQL has a dedicated test instead: <code>IS NULL</code>, and its opposite <code>IS NOT NULL</code>. These two always answer true or false, never unknown, so they are safe anywhere a condition goes. Here they find the walk-ins who left an email (<code>customer.email</code> is NULL for those who gave none).</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
-  <span class="sql-kw">AND</span> <span class="sql-id">town</span> &lt;&gt; <span class="sql-str">'Riverside'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">email</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>town</th></tr>
-<tr><td>Ben Okafor</td><td>Hillcrest</td></tr>
-<tr><td>Emma Novak</td><td>Hillcrest</td></tr>
-<tr><td>Farid Haddad</td><td>Old Town</td></tr>
-<tr><td>Daniel Moreno</td><td>Hillcrest</td></tr>
-<tr><td>Wen Petrov</td><td>Old Town</td></tr>
-<tr><td>Ugo Dubois</td><td>Hillcrest</td></tr>
-<tr><td>Zoe Garcia</td><td>Hillcrest</td></tr>
-<tr><td>Hassan Ivanova</td><td>Old Town</td></tr>
-<tr><td>Rosa Weber</td><td>Old Town</td></tr>
-<tr><td>Nadia Jensen</td><td>Hillcrest</td></tr>
-<tr><td>Jonas Eriksen</td><td>Hillcrest</td></tr>
-<tr><td>Amira Kowalski</td><td>Old Town</td></tr>
-<tr><td>Bruno Fischer</td><td>Old Town</td></tr>
-<tr><td>Vera Bianchi</td><td>Old Town</td></tr>
-<tr><td>Yusuf Eriksen</td><td>Old Town</td></tr>
-<tr><td>Felix Bianchi</td><td>Old Town</td></tr>
-<tr><td>Greta Rossi</td><td>Hillcrest</td></tr>
-<tr><td>Lena Dubois</td><td>Hillcrest</td></tr>
-<tr><td>Marco Costa</td><td>Hillcrest</td></tr>
-<tr><td>Lena Schmidt</td><td>Old Town</td></tr>
-<tr><td>Vera Tanaka</td><td>Old Town</td></tr>
-<tr><td>Yusuf Moreno</td><td>Old Town</td></tr>
+<tr><td>Alice Turner</td><td>Riverside</td></tr>
+<tr><td>Stefan Lambert</td><td>Old Town</td></tr>
+<tr><td>Zoe Garcia</td><td>Riverside</td></tr>
 </table>
 
 <h2>Aggregates skip NULL</h2>
@@ -189,18 +107,18 @@
 <tr><th>customers</th><th>referred</th><th>referrers</th></tr>
 <tr><td>40</td><td>33</td><td>14</td></tr>
 </table>
-<p>Eight customers, five of whom were referred, by four different people (customer 1 referred two). Each column answers a different question, and picking the wrong <code>COUNT</code> gives a plausible number that answers the wrong one.</p>
-<p>An aggregate over no rows at all is a special case. <code>COUNT</code> of nothing is 0, but <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> of nothing are NULL: there is no total of an empty list. Product 9 was never ordered, so the sum of its quantities is NULL, not 0.</p>
+<p>Forty customers, 33 of whom were referred, by 14 different people (Chloe Martin alone referred six). Each column answers a different question, and picking the wrong <code>COUNT</code> gives a plausible number that answers the wrong one.</p>
+<p>An aggregate over no rows at all is a special case. <code>COUNT</code> of nothing is 0, but <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> of nothing are NULL: there is no total of an empty list. The Pistachio financier, product 19, was never ordered, so the sum of its quantities is NULL, not 0.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">product_id</span> = <span class="sql-num">9</span>;</code></pre>
+<span class="sql-kw">WHERE</span> <span class="sql-id">product_id</span> = <span class="sql-num">19</span>;</code></pre>
 <table class="result">
 <tr><th>lines</th><th>pieces</th></tr>
-<tr><td>32</td><td>46</td></tr>
+<tr><td>0</td><td>NULL</td></tr>
 </table>
 
 <h2>Replacing NULL: COALESCE</h2>
-<p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL. It is the standard way to show a default instead of a hole, and it works in every database (<code>IFNULL</code> is not standard SQL; see <a href="#coalesce">Grammar: COALESCE and IS</a>). Its most common use is turning the NULL sum of an empty group back into a zero. Here each cake is joined to its order lines with a <a href="joins.html">LEFT JOIN</a>, so the carrot cake, which nobody bought, stays in the result with NULL quantities, and <code>COALESCE</code> reports 0 pieces.</p>
+<p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL. It is the standard way to show a default instead of a hole, and it works in every database (<code>IFNULL</code> is not standard SQL; see <a href="#coalesce">Grammar: COALESCE and IS</a>). Its most common use is turning the NULL sum of an empty group back into a zero. Here each cake is joined to its order lines with a <a href="joins.html">LEFT JOIN</a>, so the Pistachio financier, which nobody bought, stays in the result with NULL quantities, and <code>COALESCE</code> reports 0 pieces.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span>), <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
 <span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">product_id</span> = <span class="sql-id">p</span>.<span class="sql-id">id</span>
@@ -241,48 +159,20 @@
 </table>
 
 <h2>NULL in joins</h2>
-<p>A join condition is a condition like any other, so a NULL key never matches anything, not even another NULL. Joining each customer to their referrer with an inner join silently drops the three walk-ins: five rows come back, not eight.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">newcomer</span>.<span class="sql-id">name</span>, <span class="sql-id">referrer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">newcomer</span>
-<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span> <span class="sql-kw">ON</span> <span class="sql-id">referrer</span>.<span class="sql-id">id</span> = <span class="sql-id">newcomer</span>.<span class="sql-id">referred_by</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">newcomer</span>.<span class="sql-id">id</span>;</code></pre>
+<p>A join condition is a condition like any other, so a NULL key never matches anything, not even another NULL. Joining each member of staff to their manager with an inner join silently drops the owner: five rows come back, not six.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">s</span>.<span class="sql-id">name</span>, <span class="sql-id">m</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">manager</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span> <span class="sql-kw">AS</span> <span class="sql-id">s</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">staff</span> <span class="sql-kw">AS</span> <span class="sql-id">m</span> <span class="sql-kw">ON</span> <span class="sql-id">m</span>.<span class="sql-id">id</span> = <span class="sql-id">s</span>.<span class="sql-id">manager_id</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">s</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>referrer</th></tr>
-<tr><td>Ben Okafor</td><td>Alice Turner</td></tr>
-<tr><td>Chloe Martin</td><td>Alice Turner</td></tr>
-<tr><td>Emma Novak</td><td>Chloe Martin</td></tr>
-<tr><td>Farid Haddad</td><td>Emma Novak</td></tr>
-<tr><td>Grace Lee</td><td>Ben Okafor</td></tr>
-<tr><td>Daniel Moreno</td><td>Grace Lee</td></tr>
-<tr><td>Quentin Schmidt</td><td>Kofi Tanaka</td></tr>
-<tr><td>Wen Petrov</td><td>Farid Haddad</td></tr>
-<tr><td>Ugo Dubois</td><td>Emma Novak</td></tr>
-<tr><td>Zoe Garcia</td><td>Grace Lee</td></tr>
-<tr><td>Hassan Ivanova</td><td>Chloe Martin</td></tr>
-<tr><td>Rosa Weber</td><td>Hassan Ivanova</td></tr>
-<tr><td>Nadia Jensen</td><td>Chloe Martin</td></tr>
-<tr><td>Priya Hughes</td><td>Kofi Tanaka</td></tr>
-<tr><td>Marco Olsen</td><td>Ben Okafor</td></tr>
-<tr><td>Oscar Nakamura</td><td>Priya Hughes</td></tr>
-<tr><td>Jonas Eriksen</td><td>Grace Lee</td></tr>
-<tr><td>Tara Rossi</td><td>Chloe Martin</td></tr>
-<tr><td>Amira Kowalski</td><td>Grace Lee</td></tr>
-<tr><td>Bruno Fischer</td><td>Hassan Ivanova</td></tr>
-<tr><td>Vera Bianchi</td><td>Alice Turner</td></tr>
-<tr><td>Yusuf Eriksen</td><td>Zoe Garcia</td></tr>
-<tr><td>Felix Bianchi</td><td>Oscar Nakamura</td></tr>
-<tr><td>Greta Rossi</td><td>Chloe Martin</td></tr>
-<tr><td>Lena Dubois</td><td>Tara Rossi</td></tr>
-<tr><td>Elena Nakamura</td><td>Priya Hughes</td></tr>
-<tr><td>Greta Hughes</td><td>Zoe Garcia</td></tr>
-<tr><td>Marco Costa</td><td>Chloe Martin</td></tr>
-<tr><td>Iris Olsen</td><td>Greta Hughes</td></tr>
-<tr><td>Lena Schmidt</td><td>Grace Lee</td></tr>
-<tr><td>Vera Tanaka</td><td>Kofi Tanaka</td></tr>
-<tr><td>Yusuf Moreno</td><td>Vera Tanaka</td></tr>
-<tr><td>Quentin Jensen</td><td>Hassan Ivanova</td></tr>
+<tr><th>name</th><th>manager</th></tr>
+<tr><td>Tom Becker</td><td>Margaret Hale</td></tr>
+<tr><td>Nina Patel</td><td>Tom Becker</td></tr>
+<tr><td>Omar Reyes</td><td>Tom Becker</td></tr>
+<tr><td>Lucy Brandt</td><td>Tom Becker</td></tr>
+<tr><td>Sam Ito</td><td>Tom Becker</td></tr>
 </table>
-<p>A <code>LEFT JOIN</code> keeps the unmatched rows and fills the right-hand columns with NULL, which brings a trap of its own when you count. With a left join, <code>COUNT(*)</code> counts the padded row too, so a customer with no order still counts one; <code>COUNT(o.id)</code> counts only real orders. Compare the two columns for Hugo Silva.</p>
+<p>A <code>LEFT JOIN</code> keeps the unmatched rows and fills the right-hand columns with NULL, which brings a trap of its own when you count. With a left join, <code>COUNT(*)</code> counts the padded row too, so a customer with no order still counts one; <code>COUNT(o.id)</code> counts only real orders. Compare the two columns for Hugo Silva, Greta Rossi and Marco Costa, who never ordered.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">joined_rows</span>, <span class="sql-fn">COUNT</span>(<span class="sql-id">o</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
@@ -306,71 +196,41 @@
 </table>
 
 <h2>The NOT IN trap</h2>
-<p>Which customers have never referred anyone? A natural first attempt asks for the customers whose id is not in the list of referrers. It returns nothing at all.</p>
+<p>Which members of staff manage nobody? A natural first attempt asks for the staff whose id is not in the list of managers. It returns nothing at all.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>)
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">manager_id</span> <span class="sql-kw">FROM</span> <span class="sql-id">staff</span>)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 </table>
-<p>The list produced by the subquery contains NULL (the walk-ins' empty <code>referred_by</code>). <code>x NOT IN (1, 3, NULL)</code> means <code>x &lt;&gt; 1 AND x &lt;&gt; 3 AND x &lt;&gt; NULL</code>, and the last part is unknown for every customer, so no row is ever true. <code>IN</code> is not affected in the same way (a match is still a match), which makes the bug hard to see: the query is correct until one NULL appears in the data. Two fixes, both worth knowing: remove the NULLs from the list, or use <code>NOT EXISTS</code> (see <a href="subqueries.html">Subqueries</a>), which only asks whether a matching row exists and is never fooled by NULL.</p>
+<p>The list produced by the subquery contains NULL (the owner's empty <code>manager_id</code>). <code>x NOT IN (1, 2, NULL)</code> means <code>x &lt;&gt; 1 AND x &lt;&gt; 2 AND x &lt;&gt; NULL</code>, and the last part is unknown for every row, so no row is ever true. <code>IN</code> is not affected in the same way (a match is still a match), which makes the bug hard to see: the query is correct until one NULL appears in the data. Two fixes, both worth knowing: remove the NULLs from the list, or use <code>NOT EXISTS</code> (see <a href="subqueries.html">Subqueries</a>), which only asks whether a matching row exists and is never fooled by NULL.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>)
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">manager_id</span> <span class="sql-kw">FROM</span> <span class="sql-id">staff</span> <span class="sql-kw">WHERE</span> <span class="sql-id">manager_id</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>Hugo Silva</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Ugo Dubois</td></tr>
-<tr><td>Zoe Garcia</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Nadia Jensen</td></tr>
-<tr><td>Marco Olsen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Iris Costa</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Greta Rossi</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Elena Nakamura</td></tr>
-<tr><td>Marco Costa</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Quentin Jensen</td></tr>
+<tr><td>Nina Patel</td></tr>
+<tr><td>Omar Reyes</td></tr>
+<tr><td>Lucy Brandt</td></tr>
+<tr><td>Sam Ito</td></tr>
 </table>
 
 <h2>NULL in sorting and grouping</h2>
-<p>For <code>GROUP BY</code> and <code>DISTINCT</code>, all NULLs are treated as one value, so the walk-ins form a single group. For sorting, databases disagree: SQLite, which runs these examples, puts NULLs first in ascending order, while PostgreSQL puts them last. When it matters, do not rely on either: say so with <code>NULLS FIRST</code> or <code>NULLS LAST</code>.</p>
+<p>For <code>GROUP BY</code> and <code>DISTINCT</code>, all NULLs are treated as one value, so the seven walk-ins form a single group. For sorting, databases disagree: SQLite, which runs these examples, puts NULLs first in ascending order, while PostgreSQL puts them last. When it matters, do not rely on either: say so with <code>NULLS FIRST</code> or <code>NULLS LAST</code>. Here <code>HAVING</code> keeps the referrers who brought at least three customers, and the group of walk-ins comes last.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">referred_by</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt;= <span class="sql-num">3</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">referred_by</span> <span class="sql-id">NULLS</span> <span class="sql-id">LAST</span>;</code></pre>
 <table class="result">
 <tr><th>referred_by</th><th>customers</th></tr>
 <tr><td>1</td><td>3</td></tr>
-<tr><td>2</td><td>2</td></tr>
 <tr><td>3</td><td>6</td></tr>
-<tr><td>5</td><td>2</td></tr>
-<tr><td>6</td><td>1</td></tr>
 <tr><td>7</td><td>5</td></tr>
 <tr><td>10</td><td>3</td></tr>
 <tr><td>15</td><td>3</td></tr>
-<tr><td>18</td><td>2</td></tr>
-<tr><td>20</td><td>1</td></tr>
-<tr><td>23</td><td>1</td></tr>
-<tr><td>27</td><td>2</td></tr>
-<tr><td>34</td><td>1</td></tr>
-<tr><td>38</td><td>1</td></tr>
 <tr><td>NULL</td><td>7</td></tr>
 </table>
 

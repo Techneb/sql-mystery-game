@@ -65,7 +65,7 @@
 <tr><td>cake</td><td>7</td><td>3.29</td></tr>
 <tr><td>pastry</td><td>7</td><td>1.9</td></tr>
 </table>
-<p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of four breads?), and the query is refused: the next section shows how. (The bread average is exactly 3.325, shown as 3.32 because <code>REAL</code> prices are binary fractions; see <a href="subqueries.html">Subqueries</a>.)</p>
+<p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of six breads?), and the query is refused: the next section shows how.</p>
 
 <h2 id="group-by">Grammar: grouped or aggregated</h2>
 <p>A column in <code>SELECT</code> that is neither grouped nor inside an aggregate has several values inside one group, and no single one of them to show, so the query is refused.</p>
@@ -84,12 +84,13 @@
 <tr><td>cake</td><td>7</td><td>Carrot cake slice</td></tr>
 <tr><td>pastry</td><td>7</td><td>Almond croissant</td></tr>
 </table>
-<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them.</p>
+<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them. Here it counts each customer's orders; <code>LIMIT 5</code> keeps the five most frequent, and the cut is clean: the fifth has 17 orders, the sixth 16. Had they tied, <code>c.id</code> would pick one of them and silently drop the other.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">5</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>orders</th></tr>
 <tr><td>1</td><td>Alice Turner</td><td>20</td></tr>
@@ -97,48 +98,17 @@
 <tr><td>28</td><td>Vera Bianchi</td><td>20</td></tr>
 <tr><td>36</td><td>Iris Olsen</td><td>19</td></tr>
 <tr><td>5</td><td>Emma Novak</td><td>17</td></tr>
-<tr><td>4</td><td>David Chen</td><td>16</td></tr>
-<tr><td>9</td><td>Daniel Moreno</td><td>16</td></tr>
-<tr><td>2</td><td>Ben Okafor</td><td>14</td></tr>
-<tr><td>30</td><td>Felix Bianchi</td><td>14</td></tr>
-<tr><td>3</td><td>Chloe Martin</td><td>12</td></tr>
-<tr><td>7</td><td>Grace Lee</td><td>12</td></tr>
-<tr><td>12</td><td>Wen Petrov</td><td>12</td></tr>
-<tr><td>21</td><td>Jonas Eriksen</td><td>9</td></tr>
-<tr><td>39</td><td>Yusuf Moreno</td><td>9</td></tr>
-<tr><td>29</td><td>Yusuf Eriksen</td><td>8</td></tr>
-<tr><td>6</td><td>Farid Haddad</td><td>7</td></tr>
-<tr><td>18</td><td>Priya Hughes</td><td>7</td></tr>
-<tr><td>10</td><td>Kofi Tanaka</td><td>6</td></tr>
-<tr><td>15</td><td>Hassan Ivanova</td><td>6</td></tr>
-<tr><td>16</td><td>Rosa Weber</td><td>6</td></tr>
-<tr><td>24</td><td>Amira Kowalski</td><td>6</td></tr>
-<tr><td>22</td><td>Stefan Lambert</td><td>5</td></tr>
-<tr><td>23</td><td>Tara Rossi</td><td>5</td></tr>
-<tr><td>25</td><td>Bruno Fischer</td><td>5</td></tr>
-<tr><td>17</td><td>Nadia Jensen</td><td>4</td></tr>
-<tr><td>20</td><td>Oscar Nakamura</td><td>4</td></tr>
-<tr><td>32</td><td>Lena Dubois</td><td>4</td></tr>
-<tr><td>37</td><td>Lena Schmidt</td><td>4</td></tr>
-<tr><td>40</td><td>Quentin Jensen</td><td>4</td></tr>
-<tr><td>34</td><td>Greta Hughes</td><td>3</td></tr>
-<tr><td>13</td><td>Ugo Dubois</td><td>2</td></tr>
-<tr><td>14</td><td>Zoe Garcia</td><td>2</td></tr>
-<tr><td>33</td><td>Elena Nakamura</td><td>2</td></tr>
-<tr><td>26</td><td>Iris Costa</td><td>1</td></tr>
-<tr><td>27</td><td>Zoe Garcia</td><td>1</td></tr>
-<tr><td>38</td><td>Vera Tanaka</td><td>1</td></tr>
 </table>
 
 <h2>Grouping by more than one column</h2>
 <p>Grouping by two columns makes one group per combination that actually occurs. Counting orders per customer and per day, for instance, gives one row for each customer on each day they came in. A day on which a customer did not come in produces no row at all: groups are built from the rows that exist, never from the ones that might have.</p>
 
 <h2>Filtering groups: HAVING</h2>
-<p><code>WHERE</code> filters rows before they are grouped. <code>HAVING</code> filters groups after they are counted, so it is the place for conditions on an aggregate, such as "customers with at least two orders". You cannot write <code>WHERE COUNT(*) &gt;= 2</code>, because when <code>WHERE</code> runs, the counting has not happened yet.</p>
+<p><code>WHERE</code> filters rows before they are grouped. <code>HAVING</code> filters groups after they are counted, so it is the place for conditions on an aggregate, such as "customers with at least fifteen orders". You cannot write <code>WHERE COUNT(*) &gt;= 15</code>, because when <code>WHERE</code> runs, the counting has not happened yet.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">customer_id</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt;= <span class="sql-num">2</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt;= <span class="sql-num">15</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">orders</span> <span class="sql-kw">DESC</span>, <span class="sql-id">customer_id</span>;</code></pre>
 <table class="result">
 <tr><th>customer_id</th><th>orders</th></tr>
@@ -149,86 +119,41 @@
 <tr><td>5</td><td>17</td></tr>
 <tr><td>4</td><td>16</td></tr>
 <tr><td>9</td><td>16</td></tr>
-<tr><td>2</td><td>14</td></tr>
-<tr><td>30</td><td>14</td></tr>
-<tr><td>3</td><td>12</td></tr>
-<tr><td>7</td><td>12</td></tr>
-<tr><td>12</td><td>12</td></tr>
-<tr><td>21</td><td>9</td></tr>
-<tr><td>39</td><td>9</td></tr>
-<tr><td>29</td><td>8</td></tr>
-<tr><td>6</td><td>7</td></tr>
-<tr><td>18</td><td>7</td></tr>
-<tr><td>10</td><td>6</td></tr>
-<tr><td>15</td><td>6</td></tr>
-<tr><td>16</td><td>6</td></tr>
-<tr><td>24</td><td>6</td></tr>
-<tr><td>22</td><td>5</td></tr>
-<tr><td>23</td><td>5</td></tr>
-<tr><td>25</td><td>5</td></tr>
-<tr><td>17</td><td>4</td></tr>
-<tr><td>20</td><td>4</td></tr>
-<tr><td>32</td><td>4</td></tr>
-<tr><td>37</td><td>4</td></tr>
-<tr><td>40</td><td>4</td></tr>
-<tr><td>34</td><td>3</td></tr>
-<tr><td>13</td><td>2</td></tr>
-<tr><td>14</td><td>2</td></tr>
-<tr><td>33</td><td>2</td></tr>
 </table>
-<p>Both clauses can appear in the same query, each doing its own job. The next example keeps only the morning orders (a row filter, so <code>WHERE</code>), groups them by day, and keeps the days with more than one morning order (a group filter, so <code>HAVING</code>).</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">morning_orders</span>
+<p>Both clauses can appear in the same query, each doing its own job. The next example keeps only the orders taken before nine (a row filter, so <code>WHERE</code>), groups them by day, and keeps the days with at least five such early orders (a group filter, so <code>HAVING</code>): six of the twenty-four opening days.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">early_orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">1</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt;= <span class="sql-num">5</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
-<tr><th>day</th><th>morning_orders</th></tr>
-<tr><td>2026-03-02</td><td>6</td></tr>
-<tr><td>2026-03-03</td><td>6</td></tr>
-<tr><td>2026-03-04</td><td>8</td></tr>
-<tr><td>2026-03-05</td><td>5</td></tr>
-<tr><td>2026-03-07</td><td>8</td></tr>
-<tr><td>2026-03-08</td><td>10</td></tr>
-<tr><td>2026-03-09</td><td>6</td></tr>
-<tr><td>2026-03-10</td><td>6</td></tr>
-<tr><td>2026-03-11</td><td>9</td></tr>
-<tr><td>2026-03-12</td><td>6</td></tr>
-<tr><td>2026-03-14</td><td>7</td></tr>
-<tr><td>2026-03-15</td><td>8</td></tr>
-<tr><td>2026-03-16</td><td>10</td></tr>
-<tr><td>2026-03-17</td><td>8</td></tr>
-<tr><td>2026-03-18</td><td>8</td></tr>
-<tr><td>2026-03-19</td><td>9</td></tr>
-<tr><td>2026-03-21</td><td>11</td></tr>
-<tr><td>2026-03-22</td><td>7</td></tr>
-<tr><td>2026-03-23</td><td>6</td></tr>
-<tr><td>2026-03-24</td><td>6</td></tr>
-<tr><td>2026-03-25</td><td>5</td></tr>
-<tr><td>2026-03-26</td><td>6</td></tr>
-<tr><td>2026-03-28</td><td>7</td></tr>
-<tr><td>2026-03-29</td><td>8</td></tr>
+<tr><th>day</th><th>early_orders</th></tr>
+<tr><td>2026-03-09</td><td>5</td></tr>
+<tr><td>2026-03-11</td><td>6</td></tr>
+<tr><td>2026-03-16</td><td>5</td></tr>
+<tr><td>2026-03-17</td><td>6</td></tr>
+<tr><td>2026-03-21</td><td>6</td></tr>
+<tr><td>2026-03-26</td><td>5</td></tr>
 </table>
 
 <h2 id="having">Grammar: HAVING without GROUP BY</h2>
 <p><code>HAVING</code> filters groups. Without <code>GROUP BY</code>, the whole table is one group, so only aggregates make sense in it: a plain column has no single value.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>;</code></pre>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">6</span>;</code></pre>
 <div class="refusal"><code>ERROR: column "product.category" must appear in the GROUP BY clause or be used in an aggregate function</code> HAVING without GROUP BY makes the whole table one group, so product.category can only appear inside an aggregate: add GROUP BY product.category, or move a row condition to WHERE.</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">6</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <table class="result">
 <tr><th>category</th></tr>
-<tr><td>bread</td></tr>
 <tr><td>cake</td></tr>
 <tr><td>pastry</td></tr>
 </table>
-<p>A query that only selects aggregates may keep its <code>HAVING</code> without <code>GROUP BY</code>: it returns the single row of the whole table, or nothing.</p>
+<p>Bread, with six products, is left out. A query that only selects aggregates may keep its <code>HAVING</code> without <code>GROUP BY</code>: it returns the single row of the whole table, or nothing.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">HAVING</span> <span class="sql-fn">COUNT</span>(*) &gt; <span class="sql-num">3</span>;</code></pre>
@@ -238,11 +163,11 @@
 </table>
 
 <h2>Adding up quantities</h2>
-<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold during the week. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least four pieces, and <code>lines</code> counts the order lines behind each total. To turn quantities into money you need the price, which lives in another table: that is the job of a <a href="joins.html">JOIN</a>, and the JOIN page brings in the prices.</p>
+<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold over the four weeks. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least 58 pieces, and <code>lines</code> counts the order lines behind each total. Four products tie at 58, the croissant and the cinnamon roll among them, and <code>product_id</code> breaks the tie, so the order is fixed. To turn quantities into money, multiply each line by its <code>unit_price</code>, the price paid on that line: <code>SUM(quantity * unit_price)</code>. The catalogue's <code>product.price</code> is today's price, and three products cost less before Monday 16 March, so it would overstate the early takings; the <a href="joins.html">JOIN</a> page brings in the names and both prices.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">product_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">product_id</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) &gt;= <span class="sql-num">4</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) &gt;= <span class="sql-num">58</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">pieces</span> <span class="sql-kw">DESC</span>, <span class="sql-id">product_id</span>;</code></pre>
 <table class="result">
 <tr><th>product_id</th><th>pieces</th><th>lines</th></tr>
@@ -254,17 +179,6 @@
 <tr><td>7</td><td>58</td><td>32</td></tr>
 <tr><td>10</td><td>58</td><td>40</td></tr>
 <tr><td>13</td><td>58</td><td>39</td></tr>
-<tr><td>16</td><td>56</td><td>44</td></tr>
-<tr><td>8</td><td>52</td><td>36</td></tr>
-<tr><td>14</td><td>52</td><td>35</td></tr>
-<tr><td>17</td><td>51</td><td>33</td></tr>
-<tr><td>18</td><td>51</td><td>32</td></tr>
-<tr><td>6</td><td>49</td><td>32</td></tr>
-<tr><td>9</td><td>46</td><td>32</td></tr>
-<tr><td>5</td><td>41</td><td>28</td></tr>
-<tr><td>15</td><td>39</td><td>28</td></tr>
-<tr><td>11</td><td>38</td><td>28</td></tr>
-<tr><td>20</td><td>24</td><td>15</td></tr>
 </table>
 
 <h2 id="order-by-grouped">Grammar: ORDER BY after GROUP BY</h2>
@@ -307,7 +221,7 @@
 <p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page; <a href="grammar.html#order-of-execution">Order of execution</a> goes through it step by step.</p>
 
 <h2>Common mistakes</h2>
-<p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which has no single value to show (see <a href="#group-by">Grammar: grouped or aggregated</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered simply does not appear when you group <code>order_item</code>.</p>
+<p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which has no single value to show (see <a href="#group-by">Grammar: grouped or aggregated</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered, such as the Pistachio financier, simply does not appear when you group <code>order_item</code>.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#the-counter-by-category">The counter by category</a>, <a href="exercises.html#orders-by-town">Orders by town</a>, <a href="exercises.html#takings-per-day">Takings per day</a> and <a href="exercises.html#busy-hours">Busy hours</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>

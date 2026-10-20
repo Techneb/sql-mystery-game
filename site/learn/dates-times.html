@@ -50,7 +50,7 @@
 <tr><td>Date and time</td><td><code>'2026-03-05 17:45'</code></td><td>TEXT</td></tr>
 <tr><td>Date as a number</td><td><code>20260305</code></td><td>INTEGER</td></tr>
 </table>
-<p>The bakery database (see the <a href="database.html">bakery database page</a>) uses the first two: <code>orders.day</code> and <code>customer.joined</code> are ISO dates, <code>orders.time</code> is a clock time. The schema tells you which shape a column uses; check a few rows too, because the type alone does not say whether a text column holds <code>'2026-03-05'</code> or <code>'5 March 2026'</code>.</p>
+<p>The bakery database (see the <a href="database.html">bakery database page</a>) uses the first two: <code>orders.day</code>, <code>refund.day</code> and <code>customer.joined</code> are ISO dates, <code>orders.time</code> is a clock time. The schema tells you which shape a column uses; check a few rows too, because the type alone does not say whether a text column holds <code>'2026-03-05'</code> or <code>'5 March 2026'</code>.</p>
 
 <h2>Why text order is calendar order</h2>
 <p>Text is compared character by character from the left, the way a dictionary sorts words. The first character that differs decides, and later characters do not matter. An ISO date puts the largest unit first (year, then month, then day), gives each unit a fixed width, and pads with leading zeros. So the first difference between two dates is always in the largest unit that differs, which is exactly how calendar order works: <code>'2026-03-10'</code> and <code>'2026-03-09'</code> first differ at the ninth character, where <code>1</code> is greater than <code>0</code>, and the tenth of March does come after the ninth.</p>
@@ -64,41 +64,27 @@
 <p>Day-first formats such as <code>'05/03/2026'</code> fail the same way as soon as two dates fall in different months: they sort by day of the month first, so <code>'05/03/2026'</code> comes after <code>'04/06/2026'</code>. If you design a table, store ISO text or a number; if you inherit one in another format, convert it before comparing.</p>
 
 <h2>Comparing and filtering ranges</h2>
-<p>Because the order is right, the usual operators work on ISO text as they do on numbers. Compare with a value written in the same shape and in single quotes: <code>day &gt;= '2026-03-05'</code>. <code>BETWEEN a AND b</code> includes both ends, which suits whole days.</p>
+<p>Because the order is right, the usual operators work on ISO text as they do on numbers. Compare with a value written in the same shape and in single quotes: <code>day &gt;= '2026-03-05'</code>. <code>BETWEEN a AND b</code> includes both ends, which suits whole days, and clock times too: here the orders of the fourth and the fifth taken between nine and ten.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">BETWEEN</span> <span class="sql-str">'2026-03-04'</span> <span class="sql-kw">AND</span> <span class="sql-str">'2026-03-05'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">time</span> <span class="sql-kw">BETWEEN</span> <span class="sql-str">'09:00'</span> <span class="sql-kw">AND</span> <span class="sql-str">'10:00'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>day</th><th>time</th></tr>
-<tr><td>24</td><td>2026-03-04</td><td>07:20</td></tr>
-<tr><td>25</td><td>2026-03-04</td><td>08:35</td></tr>
-<tr><td>26</td><td>2026-03-04</td><td>08:40</td></tr>
-<tr><td>27</td><td>2026-03-04</td><td>08:45</td></tr>
 <tr><td>28</td><td>2026-03-04</td><td>09:00</td></tr>
 <tr><td>29</td><td>2026-03-04</td><td>09:10</td></tr>
-<tr><td>30</td><td>2026-03-04</td><td>10:30</td></tr>
-<tr><td>31</td><td>2026-03-04</td><td>11:05</td></tr>
-<tr><td>32</td><td>2026-03-04</td><td>12:15</td></tr>
-<tr><td>33</td><td>2026-03-04</td><td>16:10</td></tr>
-<tr><td>34</td><td>2026-03-05</td><td>07:30</td></tr>
-<tr><td>35</td><td>2026-03-05</td><td>08:45</td></tr>
 <tr><td>36</td><td>2026-03-05</td><td>09:05</td></tr>
 <tr><td>37</td><td>2026-03-05</td><td>09:40</td></tr>
-<tr><td>38</td><td>2026-03-05</td><td>11:40</td></tr>
-<tr><td>39</td><td>2026-03-05</td><td>13:50</td></tr>
-<tr><td>40</td><td>2026-03-05</td><td>14:20</td></tr>
-<tr><td>41</td><td>2026-03-05</td><td>16:30</td></tr>
-<tr><td>42</td><td>2026-03-05</td><td>16:55</td></tr>
-<tr><td>43</td><td>2026-03-05</td><td>17:45</td></tr>
-<tr><td>44</td><td>2026-03-05</td><td>18:45</td></tr>
 </table>
-<p>A range that starts or ends in the middle of a day needs both columns. "Every order from noon on the fifth onwards" is a later day, or the same day at a later time. Parentheses keep the <code>OR</code> from swallowing the rest of the condition.</p>
+<p>The order taken at exactly 09:00 on the fourth is in the result: <code>BETWEEN</code> keeps its lower end, and would keep an order at 10:00 just as well.</p>
+<p>A range that starts or ends in the middle of a day needs both columns. "Every order from noon on the fifth onwards" is a later day, or the same day at a later time. Parentheses keep the <code>OR</code> from swallowing the rest of the condition. <code>LIMIT 8</code> keeps the first eight: the fifth's afternoon, then Saturday the seventh, since the shop is closed on Fridays.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> &gt; <span class="sql-str">'2026-03-05'</span>
    <span class="sql-kw">OR</span> (<span class="sql-id">day</span> = <span class="sql-str">'2026-03-05'</span> <span class="sql-kw">AND</span> <span class="sql-id">time</span> &gt;= <span class="sql-str">'12:00'</span>)
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>;</code></pre>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">time</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">8</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>day</th><th>time</th></tr>
 <tr><td>39</td><td>2026-03-05</td><td>13:50</td></tr>
@@ -109,263 +95,6 @@
 <tr><td>44</td><td>2026-03-05</td><td>18:45</td></tr>
 <tr><td>45</td><td>2026-03-07</td><td>07:10</td></tr>
 <tr><td>46</td><td>2026-03-07</td><td>08:10</td></tr>
-<tr><td>47</td><td>2026-03-07</td><td>08:20</td></tr>
-<tr><td>48</td><td>2026-03-07</td><td>08:50</td></tr>
-<tr><td>49</td><td>2026-03-07</td><td>09:30</td></tr>
-<tr><td>50</td><td>2026-03-07</td><td>09:40</td></tr>
-<tr><td>51</td><td>2026-03-07</td><td>10:30</td></tr>
-<tr><td>52</td><td>2026-03-07</td><td>11:05</td></tr>
-<tr><td>53</td><td>2026-03-07</td><td>12:35</td></tr>
-<tr><td>54</td><td>2026-03-07</td><td>13:15</td></tr>
-<tr><td>55</td><td>2026-03-07</td><td>13:35</td></tr>
-<tr><td>56</td><td>2026-03-07</td><td>16:55</td></tr>
-<tr><td>57</td><td>2026-03-07</td><td>18:15</td></tr>
-<tr><td>58</td><td>2026-03-07</td><td>18:30</td></tr>
-<tr><td>59</td><td>2026-03-08</td><td>07:45</td></tr>
-<tr><td>60</td><td>2026-03-08</td><td>08:05</td></tr>
-<tr><td>61</td><td>2026-03-08</td><td>08:30</td></tr>
-<tr><td>62</td><td>2026-03-08</td><td>08:40</td></tr>
-<tr><td>63</td><td>2026-03-08</td><td>09:00</td></tr>
-<tr><td>64</td><td>2026-03-08</td><td>10:00</td></tr>
-<tr><td>65</td><td>2026-03-08</td><td>10:15</td></tr>
-<tr><td>66</td><td>2026-03-08</td><td>11:10</td></tr>
-<tr><td>67</td><td>2026-03-08</td><td>11:15</td></tr>
-<tr><td>68</td><td>2026-03-08</td><td>11:40</td></tr>
-<tr><td>69</td><td>2026-03-08</td><td>12:40</td></tr>
-<tr><td>70</td><td>2026-03-08</td><td>15:05</td></tr>
-<tr><td>71</td><td>2026-03-08</td><td>16:10</td></tr>
-<tr><td>72</td><td>2026-03-08</td><td>16:45</td></tr>
-<tr><td>73</td><td>2026-03-08</td><td>17:05</td></tr>
-<tr><td>74</td><td>2026-03-08</td><td>18:20</td></tr>
-<tr><td>75</td><td>2026-03-09</td><td>07:15</td></tr>
-<tr><td>76</td><td>2026-03-09</td><td>07:45</td></tr>
-<tr><td>77</td><td>2026-03-09</td><td>08:10</td></tr>
-<tr><td>78</td><td>2026-03-09</td><td>08:20</td></tr>
-<tr><td>79</td><td>2026-03-09</td><td>08:55</td></tr>
-<tr><td>80</td><td>2026-03-09</td><td>09:50</td></tr>
-<tr><td>81</td><td>2026-03-09</td><td>12:00</td></tr>
-<tr><td>82</td><td>2026-03-09</td><td>14:55</td></tr>
-<tr><td>83</td><td>2026-03-09</td><td>15:30</td></tr>
-<tr><td>84</td><td>2026-03-09</td><td>16:35</td></tr>
-<tr><td>85</td><td>2026-03-09</td><td>17:20</td></tr>
-<tr><td>86</td><td>2026-03-09</td><td>17:35</td></tr>
-<tr><td>87</td><td>2026-03-10</td><td>07:50</td></tr>
-<tr><td>88</td><td>2026-03-10</td><td>08:05</td></tr>
-<tr><td>89</td><td>2026-03-10</td><td>09:30</td></tr>
-<tr><td>90</td><td>2026-03-10</td><td>10:00</td></tr>
-<tr><td>91</td><td>2026-03-10</td><td>10:05</td></tr>
-<tr><td>92</td><td>2026-03-10</td><td>10:25</td></tr>
-<tr><td>93</td><td>2026-03-10</td><td>12:20</td></tr>
-<tr><td>94</td><td>2026-03-10</td><td>13:00</td></tr>
-<tr><td>95</td><td>2026-03-10</td><td>13:40</td></tr>
-<tr><td>96</td><td>2026-03-10</td><td>14:10</td></tr>
-<tr><td>97</td><td>2026-03-10</td><td>15:30</td></tr>
-<tr><td>98</td><td>2026-03-10</td><td>17:05</td></tr>
-<tr><td>99</td><td>2026-03-10</td><td>17:40</td></tr>
-<tr><td>100</td><td>2026-03-11</td><td>07:45</td></tr>
-<tr><td>101</td><td>2026-03-11</td><td>08:00</td></tr>
-<tr><td>102</td><td>2026-03-11</td><td>08:05</td></tr>
-<tr><td>103</td><td>2026-03-11</td><td>08:25</td></tr>
-<tr><td>104</td><td>2026-03-11</td><td>08:30</td></tr>
-<tr><td>105</td><td>2026-03-11</td><td>08:55</td></tr>
-<tr><td>106</td><td>2026-03-11</td><td>09:35</td></tr>
-<tr><td>107</td><td>2026-03-11</td><td>10:45</td></tr>
-<tr><td>108</td><td>2026-03-11</td><td>10:50</td></tr>
-<tr><td>109</td><td>2026-03-11</td><td>15:30</td></tr>
-<tr><td>110</td><td>2026-03-12</td><td>07:10</td></tr>
-<tr><td>111</td><td>2026-03-12</td><td>07:30</td></tr>
-<tr><td>112</td><td>2026-03-12</td><td>07:45</td></tr>
-<tr><td>113</td><td>2026-03-12</td><td>08:15</td></tr>
-<tr><td>114</td><td>2026-03-12</td><td>09:55</td></tr>
-<tr><td>115</td><td>2026-03-12</td><td>10:50</td></tr>
-<tr><td>116</td><td>2026-03-12</td><td>12:00</td></tr>
-<tr><td>117</td><td>2026-03-12</td><td>16:35</td></tr>
-<tr><td>118</td><td>2026-03-12</td><td>17:20</td></tr>
-<tr><td>119</td><td>2026-03-12</td><td>17:25</td></tr>
-<tr><td>120</td><td>2026-03-14</td><td>07:00</td></tr>
-<tr><td>121</td><td>2026-03-14</td><td>07:25</td></tr>
-<tr><td>122</td><td>2026-03-14</td><td>07:40</td></tr>
-<tr><td>123</td><td>2026-03-14</td><td>08:15</td></tr>
-<tr><td>124</td><td>2026-03-14</td><td>09:00</td></tr>
-<tr><td>125</td><td>2026-03-14</td><td>09:05</td></tr>
-<tr><td>126</td><td>2026-03-14</td><td>09:10</td></tr>
-<tr><td>127</td><td>2026-03-14</td><td>12:00</td></tr>
-<tr><td>128</td><td>2026-03-14</td><td>12:30</td></tr>
-<tr><td>129</td><td>2026-03-14</td><td>14:15</td></tr>
-<tr><td>130</td><td>2026-03-14</td><td>14:45</td></tr>
-<tr><td>131</td><td>2026-03-14</td><td>14:55</td></tr>
-<tr><td>132</td><td>2026-03-14</td><td>16:55</td></tr>
-<tr><td>133</td><td>2026-03-14</td><td>17:35</td></tr>
-<tr><td>134</td><td>2026-03-14</td><td>18:00</td></tr>
-<tr><td>135</td><td>2026-03-15</td><td>07:05</td></tr>
-<tr><td>136</td><td>2026-03-15</td><td>07:40</td></tr>
-<tr><td>137</td><td>2026-03-15</td><td>08:55</td></tr>
-<tr><td>138</td><td>2026-03-15</td><td>09:50</td></tr>
-<tr><td>139</td><td>2026-03-15</td><td>10:15</td></tr>
-<tr><td>140</td><td>2026-03-15</td><td>10:20</td></tr>
-<tr><td>141</td><td>2026-03-15</td><td>10:40</td></tr>
-<tr><td>142</td><td>2026-03-15</td><td>11:10</td></tr>
-<tr><td>143</td><td>2026-03-15</td><td>12:25</td></tr>
-<tr><td>144</td><td>2026-03-15</td><td>12:40</td></tr>
-<tr><td>145</td><td>2026-03-15</td><td>12:55</td></tr>
-<tr><td>146</td><td>2026-03-15</td><td>13:00</td></tr>
-<tr><td>147</td><td>2026-03-15</td><td>14:50</td></tr>
-<tr><td>148</td><td>2026-03-15</td><td>15:50</td></tr>
-<tr><td>149</td><td>2026-03-15</td><td>16:30</td></tr>
-<tr><td>150</td><td>2026-03-15</td><td>18:35</td></tr>
-<tr><td>151</td><td>2026-03-16</td><td>07:30</td></tr>
-<tr><td>152</td><td>2026-03-16</td><td>08:00</td></tr>
-<tr><td>153</td><td>2026-03-16</td><td>08:15</td></tr>
-<tr><td>154</td><td>2026-03-16</td><td>08:40</td></tr>
-<tr><td>155</td><td>2026-03-16</td><td>08:45</td></tr>
-<tr><td>156</td><td>2026-03-16</td><td>09:20</td></tr>
-<tr><td>157</td><td>2026-03-16</td><td>09:35</td></tr>
-<tr><td>158</td><td>2026-03-16</td><td>10:00</td></tr>
-<tr><td>159</td><td>2026-03-16</td><td>10:50</td></tr>
-<tr><td>160</td><td>2026-03-16</td><td>11:35</td></tr>
-<tr><td>161</td><td>2026-03-16</td><td>12:30</td></tr>
-<tr><td>162</td><td>2026-03-16</td><td>12:45</td></tr>
-<tr><td>163</td><td>2026-03-16</td><td>16:35</td></tr>
-<tr><td>164</td><td>2026-03-17</td><td>07:30</td></tr>
-<tr><td>165</td><td>2026-03-17</td><td>07:45</td></tr>
-<tr><td>166</td><td>2026-03-17</td><td>08:05</td></tr>
-<tr><td>167</td><td>2026-03-17</td><td>08:10</td></tr>
-<tr><td>168</td><td>2026-03-17</td><td>08:15</td></tr>
-<tr><td>169</td><td>2026-03-17</td><td>08:45</td></tr>
-<tr><td>170</td><td>2026-03-17</td><td>09:45</td></tr>
-<tr><td>171</td><td>2026-03-17</td><td>10:05</td></tr>
-<tr><td>172</td><td>2026-03-17</td><td>12:15</td></tr>
-<tr><td>173</td><td>2026-03-17</td><td>13:40</td></tr>
-<tr><td>174</td><td>2026-03-17</td><td>17:05</td></tr>
-<tr><td>175</td><td>2026-03-18</td><td>07:35</td></tr>
-<tr><td>176</td><td>2026-03-18</td><td>08:05</td></tr>
-<tr><td>177</td><td>2026-03-18</td><td>08:50</td></tr>
-<tr><td>178</td><td>2026-03-18</td><td>08:55</td></tr>
-<tr><td>179</td><td>2026-03-18</td><td>09:25</td></tr>
-<tr><td>180</td><td>2026-03-18</td><td>09:45</td></tr>
-<tr><td>181</td><td>2026-03-18</td><td>11:25</td></tr>
-<tr><td>182</td><td>2026-03-18</td><td>11:55</td></tr>
-<tr><td>183</td><td>2026-03-18</td><td>12:45</td></tr>
-<tr><td>184</td><td>2026-03-18</td><td>14:45</td></tr>
-<tr><td>185</td><td>2026-03-18</td><td>15:10</td></tr>
-<tr><td>186</td><td>2026-03-18</td><td>17:20</td></tr>
-<tr><td>187</td><td>2026-03-19</td><td>07:25</td></tr>
-<tr><td>188</td><td>2026-03-19</td><td>07:45</td></tr>
-<tr><td>189</td><td>2026-03-19</td><td>09:20</td></tr>
-<tr><td>190</td><td>2026-03-19</td><td>09:30</td></tr>
-<tr><td>191</td><td>2026-03-19</td><td>09:35</td></tr>
-<tr><td>192</td><td>2026-03-19</td><td>09:40</td></tr>
-<tr><td>193</td><td>2026-03-19</td><td>10:20</td></tr>
-<tr><td>194</td><td>2026-03-19</td><td>10:50</td></tr>
-<tr><td>195</td><td>2026-03-19</td><td>11:35</td></tr>
-<tr><td>196</td><td>2026-03-19</td><td>12:15</td></tr>
-<tr><td>197</td><td>2026-03-19</td><td>12:45</td></tr>
-<tr><td>198</td><td>2026-03-19</td><td>17:50</td></tr>
-<tr><td>199</td><td>2026-03-19</td><td>17:55</td></tr>
-<tr><td>200</td><td>2026-03-21</td><td>07:05</td></tr>
-<tr><td>201</td><td>2026-03-21</td><td>07:50</td></tr>
-<tr><td>202</td><td>2026-03-21</td><td>07:55</td></tr>
-<tr><td>203</td><td>2026-03-21</td><td>08:00</td></tr>
-<tr><td>204</td><td>2026-03-21</td><td>08:05</td></tr>
-<tr><td>205</td><td>2026-03-21</td><td>08:30</td></tr>
-<tr><td>206</td><td>2026-03-21</td><td>09:05</td></tr>
-<tr><td>207</td><td>2026-03-21</td><td>09:40</td></tr>
-<tr><td>208</td><td>2026-03-21</td><td>09:45</td></tr>
-<tr><td>209</td><td>2026-03-21</td><td>11:00</td></tr>
-<tr><td>210</td><td>2026-03-21</td><td>11:25</td></tr>
-<tr><td>211</td><td>2026-03-21</td><td>12:00</td></tr>
-<tr><td>212</td><td>2026-03-21</td><td>16:30</td></tr>
-<tr><td>213</td><td>2026-03-21</td><td>17:55</td></tr>
-<tr><td>214</td><td>2026-03-21</td><td>18:50</td></tr>
-<tr><td>215</td><td>2026-03-22</td><td>07:05</td></tr>
-<tr><td>216</td><td>2026-03-22</td><td>07:30</td></tr>
-<tr><td>217</td><td>2026-03-22</td><td>07:35</td></tr>
-<tr><td>218</td><td>2026-03-22</td><td>10:35</td></tr>
-<tr><td>219</td><td>2026-03-22</td><td>10:45</td></tr>
-<tr><td>220</td><td>2026-03-22</td><td>11:10</td></tr>
-<tr><td>221</td><td>2026-03-22</td><td>11:40</td></tr>
-<tr><td>222</td><td>2026-03-22</td><td>12:35</td></tr>
-<tr><td>223</td><td>2026-03-22</td><td>12:55</td></tr>
-<tr><td>224</td><td>2026-03-22</td><td>13:40</td></tr>
-<tr><td>225</td><td>2026-03-22</td><td>14:15</td></tr>
-<tr><td>226</td><td>2026-03-22</td><td>17:35</td></tr>
-<tr><td>227</td><td>2026-03-22</td><td>18:20</td></tr>
-<tr><td>228</td><td>2026-03-23</td><td>07:35</td></tr>
-<tr><td>229</td><td>2026-03-23</td><td>07:40</td></tr>
-<tr><td>230</td><td>2026-03-23</td><td>08:30</td></tr>
-<tr><td>231</td><td>2026-03-23</td><td>08:55</td></tr>
-<tr><td>232</td><td>2026-03-23</td><td>10:40</td></tr>
-<tr><td>233</td><td>2026-03-23</td><td>11:35</td></tr>
-<tr><td>234</td><td>2026-03-23</td><td>12:00</td></tr>
-<tr><td>235</td><td>2026-03-23</td><td>12:45</td></tr>
-<tr><td>236</td><td>2026-03-23</td><td>16:10</td></tr>
-<tr><td>237</td><td>2026-03-23</td><td>17:00</td></tr>
-<tr><td>238</td><td>2026-03-23</td><td>17:35</td></tr>
-<tr><td>239</td><td>2026-03-23</td><td>18:00</td></tr>
-<tr><td>240</td><td>2026-03-24</td><td>07:15</td></tr>
-<tr><td>241</td><td>2026-03-24</td><td>07:25</td></tr>
-<tr><td>242</td><td>2026-03-24</td><td>07:45</td></tr>
-<tr><td>243</td><td>2026-03-24</td><td>08:40</td></tr>
-<tr><td>244</td><td>2026-03-24</td><td>10:30</td></tr>
-<tr><td>245</td><td>2026-03-24</td><td>11:00</td></tr>
-<tr><td>246</td><td>2026-03-24</td><td>13:00</td></tr>
-<tr><td>247</td><td>2026-03-24</td><td>15:35</td></tr>
-<tr><td>248</td><td>2026-03-24</td><td>16:35</td></tr>
-<tr><td>249</td><td>2026-03-24</td><td>17:15</td></tr>
-<tr><td>250</td><td>2026-03-25</td><td>07:45</td></tr>
-<tr><td>251</td><td>2026-03-25</td><td>08:00</td></tr>
-<tr><td>252</td><td>2026-03-25</td><td>08:05</td></tr>
-<tr><td>253</td><td>2026-03-25</td><td>08:45</td></tr>
-<tr><td>254</td><td>2026-03-25</td><td>10:45</td></tr>
-<tr><td>255</td><td>2026-03-25</td><td>14:05</td></tr>
-<tr><td>256</td><td>2026-03-25</td><td>14:45</td></tr>
-<tr><td>257</td><td>2026-03-25</td><td>16:05</td></tr>
-<tr><td>258</td><td>2026-03-25</td><td>16:25</td></tr>
-<tr><td>259</td><td>2026-03-25</td><td>17:15</td></tr>
-<tr><td>260</td><td>2026-03-25</td><td>17:25</td></tr>
-<tr><td>261</td><td>2026-03-25</td><td>17:30</td></tr>
-<tr><td>262</td><td>2026-03-25</td><td>17:40</td></tr>
-<tr><td>263</td><td>2026-03-26</td><td>07:00</td></tr>
-<tr><td>264</td><td>2026-03-26</td><td>07:35</td></tr>
-<tr><td>265</td><td>2026-03-26</td><td>07:55</td></tr>
-<tr><td>266</td><td>2026-03-26</td><td>08:20</td></tr>
-<tr><td>267</td><td>2026-03-26</td><td>08:45</td></tr>
-<tr><td>268</td><td>2026-03-26</td><td>11:00</td></tr>
-<tr><td>269</td><td>2026-03-26</td><td>13:45</td></tr>
-<tr><td>270</td><td>2026-03-26</td><td>13:50</td></tr>
-<tr><td>271</td><td>2026-03-26</td><td>14:00</td></tr>
-<tr><td>272</td><td>2026-03-26</td><td>15:20</td></tr>
-<tr><td>273</td><td>2026-03-26</td><td>16:05</td></tr>
-<tr><td>274</td><td>2026-03-28</td><td>07:00</td></tr>
-<tr><td>275</td><td>2026-03-28</td><td>07:55</td></tr>
-<tr><td>276</td><td>2026-03-28</td><td>08:10</td></tr>
-<tr><td>277</td><td>2026-03-28</td><td>08:25</td></tr>
-<tr><td>278</td><td>2026-03-28</td><td>09:30</td></tr>
-<tr><td>279</td><td>2026-03-28</td><td>10:15</td></tr>
-<tr><td>280</td><td>2026-03-28</td><td>10:25</td></tr>
-<tr><td>281</td><td>2026-03-28</td><td>12:40</td></tr>
-<tr><td>282</td><td>2026-03-28</td><td>13:10</td></tr>
-<tr><td>283</td><td>2026-03-28</td><td>13:50</td></tr>
-<tr><td>284</td><td>2026-03-28</td><td>14:30</td></tr>
-<tr><td>285</td><td>2026-03-28</td><td>15:50</td></tr>
-<tr><td>286</td><td>2026-03-28</td><td>17:25</td></tr>
-<tr><td>287</td><td>2026-03-28</td><td>17:55</td></tr>
-<tr><td>288</td><td>2026-03-29</td><td>07:25</td></tr>
-<tr><td>289</td><td>2026-03-29</td><td>07:30</td></tr>
-<tr><td>290</td><td>2026-03-29</td><td>07:40</td></tr>
-<tr><td>291</td><td>2026-03-29</td><td>09:05</td></tr>
-<tr><td>292</td><td>2026-03-29</td><td>09:30</td></tr>
-<tr><td>293</td><td>2026-03-29</td><td>10:40</td></tr>
-<tr><td>294</td><td>2026-03-29</td><td>10:50</td></tr>
-<tr><td>295</td><td>2026-03-29</td><td>11:05</td></tr>
-<tr><td>296</td><td>2026-03-29</td><td>12:05</td></tr>
-<tr><td>297</td><td>2026-03-29</td><td>13:20</td></tr>
-<tr><td>298</td><td>2026-03-29</td><td>13:35</td></tr>
-<tr><td>299</td><td>2026-03-29</td><td>13:40</td></tr>
-<tr><td>300</td><td>2026-03-29</td><td>14:05</td></tr>
-<tr><td>301</td><td>2026-03-29</td><td>16:00</td></tr>
-<tr><td>302</td><td>2026-03-29</td><td>16:40</td></tr>
-<tr><td>303</td><td>2026-03-29</td><td>17:45</td></tr>
 </table>
 <p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code>, which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a half-open range, <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>: <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss every stamp of that day, because even <code>'2026-03-05 00:00'</code> sorts after <code>'2026-03-05'</code>.</p>
 
@@ -391,7 +120,7 @@
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span>,
        <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) * <span class="sql-num">60</span> + <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">4</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">minutes_after_midnight</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span> <span class="sql-kw">AND</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">time</span>, <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>time</th><th>minutes_after_midnight</th></tr>
@@ -401,15 +130,8 @@
 <tr><td>4</td><td>09:25</td><td>565</td></tr>
 <tr><td>5</td><td>09:40</td><td>580</td></tr>
 <tr><td>6</td><td>10:50</td><td>650</td></tr>
-<tr><td>7</td><td>12:30</td><td>750</td></tr>
-<tr><td>8</td><td>12:45</td><td>765</td></tr>
-<tr><td>9</td><td>12:50</td><td>770</td></tr>
-<tr><td>10</td><td>13:00</td><td>780</td></tr>
-<tr><td>11</td><td>13:20</td><td>800</td></tr>
-<tr><td>12</td><td>16:50</td><td>1010</td></tr>
-<tr><td>13</td><td>17:25</td><td>1045</td></tr>
 </table>
-<p>The first two orders of that day are 520 - 435 = 85 minutes apart.</p>
+<p>The first two orders of that morning are 475 - 435 = 40 minutes apart.</p>
 <p>The hour alone, <code>CAST(substr(time, 1, 2) AS INTEGER)</code>, is a number from 0 to 23, which can be compared, bucketed with a <a href="case-when.html">CASE</a>, or grouped on directly; the next page, <a href="group-by-having.html">GROUP BY</a>, explains the grouping used below.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">hour</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
