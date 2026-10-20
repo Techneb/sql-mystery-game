@@ -43,307 +43,85 @@
 
 <h2>WITH: naming a result</h2>
 <p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. Its value is in the reading. Instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
-<p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, and the main query adds those values up per order and keeps the larger orders.</p>
+<p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, its quantity times <code>unit_price</code>, the price paid on that line, and the main query adds those values up per order and keeps the orders of 20 or more.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">line</span> <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>, <span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span> <span class="sql-kw">AS</span> <span class="sql-id">amount</span>
-  <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
-  <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
+  <span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-id">quantity</span> * <span class="sql-id">unit_price</span> <span class="sql-kw">AS</span> <span class="sql-id">amount</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
 )
 <span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">amount</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">total</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">line</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">order_id</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">amount</span>) &gt;= <span class="sql-num">7</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">total</span> <span class="sql-kw">DESC</span>;</code></pre>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">amount</span>) &gt;= <span class="sql-num">20</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">total</span> <span class="sql-kw">DESC</span>, <span class="sql-id">order_id</span>;</code></pre>
 <table class="result">
 <tr><th>order_id</th><th>total</th></tr>
-<tr><td>95</td><td>25.6</td></tr>
+<tr><td>95</td><td>24.7</td></tr>
 <tr><td>182</td><td>24.2</td></tr>
 <tr><td>247</td><td>23.3</td></tr>
 <tr><td>249</td><td>22.5</td></tr>
-<tr><td>10</td><td>22.1</td></tr>
-<tr><td>31</td><td>21.8</td></tr>
+<tr><td>10</td><td>21.9</td></tr>
 <tr><td>216</td><td>21.6</td></tr>
+<tr><td>31</td><td>21.4</td></tr>
 <tr><td>186</td><td>20.7</td></tr>
-<tr><td>67</td><td>20.6</td></tr>
-<tr><td>12</td><td>20.0</td></tr>
-<tr><td>39</td><td>19.8</td></tr>
-<tr><td>111</td><td>19.6</td></tr>
-<tr><td>236</td><td>19.5</td></tr>
-<tr><td>185</td><td>19.3</td></tr>
-<tr><td>162</td><td>19.1</td></tr>
-<tr><td>235</td><td>18.9</td></tr>
-<tr><td>163</td><td>18.7</td></tr>
-<tr><td>8</td><td>18.6</td></tr>
-<tr><td>297</td><td>18.4</td></tr>
-<tr><td>287</td><td>18.1</td></tr>
-<tr><td>261</td><td>18.1</td></tr>
-<tr><td>57</td><td>18.1</td></tr>
-<tr><td>27</td><td>18.0</td></tr>
-<tr><td>267</td><td>17.6</td></tr>
-<tr><td>21</td><td>17.4</td></tr>
-<tr><td>91</td><td>17.3</td></tr>
-<tr><td>145</td><td>16.8</td></tr>
-<tr><td>66</td><td>16.8</td></tr>
-<tr><td>40</td><td>16.8</td></tr>
-<tr><td>284</td><td>16.6</td></tr>
-<tr><td>265</td><td>16.6</td></tr>
-<tr><td>262</td><td>16.6</td></tr>
-<tr><td>88</td><td>16.4</td></tr>
-<tr><td>87</td><td>16.4</td></tr>
-<tr><td>187</td><td>16.2</td></tr>
-<tr><td>26</td><td>16.2</td></tr>
-<tr><td>290</td><td>16.1</td></tr>
-<tr><td>221</td><td>16.1</td></tr>
-<tr><td>175</td><td>16.1</td></tr>
-<tr><td>132</td><td>16.0</td></tr>
-<tr><td>44</td><td>15.9</td></tr>
-<tr><td>301</td><td>15.8</td></tr>
-<tr><td>165</td><td>15.8</td></tr>
-<tr><td>104</td><td>15.8</td></tr>
-<tr><td>155</td><td>15.6</td></tr>
-<tr><td>130</td><td>15.5</td></tr>
-<tr><td>270</td><td>15.4</td></tr>
-<tr><td>292</td><td>15.3</td></tr>
-<tr><td>93</td><td>15.3</td></tr>
-<tr><td>11</td><td>15.3</td></tr>
-<tr><td>264</td><td>15.2</td></tr>
-<tr><td>172</td><td>15.1</td></tr>
-<tr><td>169</td><td>15.0</td></tr>
-<tr><td>144</td><td>15.0</td></tr>
-<tr><td>239</td><td>14.8</td></tr>
-<tr><td>180</td><td>14.8</td></tr>
-<tr><td>174</td><td>14.8</td></tr>
-<tr><td>282</td><td>14.7</td></tr>
-<tr><td>63</td><td>14.7</td></tr>
-<tr><td>5</td><td>14.7</td></tr>
-<tr><td>42</td><td>14.5</td></tr>
-<tr><td>198</td><td>14.2</td></tr>
-<tr><td>189</td><td>14.2</td></tr>
-<tr><td>2</td><td>14.2</td></tr>
-<tr><td>211</td><td>14.1</td></tr>
-<tr><td>105</td><td>14.1</td></tr>
-<tr><td>193</td><td>14.0</td></tr>
-<tr><td>28</td><td>13.9</td></tr>
-<tr><td>289</td><td>13.8</td></tr>
-<tr><td>197</td><td>13.8</td></tr>
-<tr><td>160</td><td>13.8</td></tr>
-<tr><td>149</td><td>13.8</td></tr>
-<tr><td>131</td><td>13.8</td></tr>
-<tr><td>80</td><td>13.8</td></tr>
-<tr><td>215</td><td>13.6</td></tr>
-<tr><td>138</td><td>13.6</td></tr>
-<tr><td>128</td><td>13.5</td></tr>
-<tr><td>190</td><td>13.3</td></tr>
-<tr><td>14</td><td>13.1</td></tr>
-<tr><td>52</td><td>13.0</td></tr>
-<tr><td>272</td><td>12.9</td></tr>
-<tr><td>223</td><td>12.9</td></tr>
-<tr><td>210</td><td>12.8</td></tr>
-<tr><td>203</td><td>12.7</td></tr>
-<tr><td>191</td><td>12.7</td></tr>
-<tr><td>242</td><td>12.5</td></tr>
-<tr><td>259</td><td>12.4</td></tr>
-<tr><td>107</td><td>12.4</td></tr>
-<tr><td>53</td><td>12.4</td></tr>
-<tr><td>47</td><td>12.4</td></tr>
-<tr><td>288</td><td>12.3</td></tr>
-<tr><td>199</td><td>12.3</td></tr>
-<tr><td>90</td><td>12.2</td></tr>
-<tr><td>84</td><td>12.1</td></tr>
-<tr><td>83</td><td>12.1</td></tr>
-<tr><td>38</td><td>12.1</td></tr>
-<tr><td>19</td><td>12.1</td></tr>
-<tr><td>113</td><td>12.0</td></tr>
-<tr><td>279</td><td>11.8</td></tr>
-<tr><td>285</td><td>11.7</td></tr>
-<tr><td>212</td><td>11.6</td></tr>
-<tr><td>123</td><td>11.6</td></tr>
-<tr><td>115</td><td>11.6</td></tr>
-<tr><td>76</td><td>11.6</td></tr>
-<tr><td>49</td><td>11.6</td></tr>
-<tr><td>124</td><td>11.5</td></tr>
-<tr><td>118</td><td>11.5</td></tr>
-<tr><td>302</td><td>11.4</td></tr>
-<tr><td>280</td><td>11.4</td></tr>
-<tr><td>237</td><td>11.4</td></tr>
-<tr><td>178</td><td>11.4</td></tr>
-<tr><td>158</td><td>11.4</td></tr>
-<tr><td>59</td><td>11.4</td></tr>
-<tr><td>192</td><td>11.3</td></tr>
-<tr><td>296</td><td>11.2</td></tr>
-<tr><td>268</td><td>11.2</td></tr>
-<tr><td>102</td><td>11.2</td></tr>
-<tr><td>246</td><td>11.1</td></tr>
-<tr><td>75</td><td>11.0</td></tr>
-<tr><td>195</td><td>10.9</td></tr>
-<tr><td>273</td><td>10.8</td></tr>
-<tr><td>217</td><td>10.8</td></tr>
-<tr><td>73</td><td>10.8</td></tr>
-<tr><td>70</td><td>10.8</td></tr>
-<tr><td>29</td><td>10.8</td></tr>
-<tr><td>4</td><td>10.7</td></tr>
-<tr><td>229</td><td>10.6</td></tr>
-<tr><td>202</td><td>10.6</td></tr>
-<tr><td>101</td><td>10.6</td></tr>
-<tr><td>277</td><td>10.4</td></tr>
-<tr><td>194</td><td>10.4</td></tr>
-<tr><td>139</td><td>10.4</td></tr>
-<tr><td>30</td><td>10.4</td></tr>
-<tr><td>218</td><td>10.3</td></tr>
-<tr><td>214</td><td>10.2</td></tr>
-<tr><td>119</td><td>10.2</td></tr>
-<tr><td>85</td><td>10.1</td></tr>
-<tr><td>300</td><td>10.0</td></tr>
-<tr><td>278</td><td>10.0</td></tr>
-<tr><td>232</td><td>10.0</td></tr>
-<tr><td>207</td><td>9.9</td></tr>
-<tr><td>243</td><td>9.8</td></tr>
-<tr><td>143</td><td>9.8</td></tr>
-<tr><td>205</td><td>9.7</td></tr>
-<tr><td>269</td><td>9.6</td></tr>
-<tr><td>254</td><td>9.6</td></tr>
-<tr><td>92</td><td>9.6</td></tr>
-<tr><td>82</td><td>9.6</td></tr>
-<tr><td>233</td><td>9.5</td></tr>
-<tr><td>7</td><td>9.5</td></tr>
-<tr><td>37</td><td>9.4</td></tr>
-<tr><td>213</td><td>9.2</td></tr>
-<tr><td>188</td><td>9.2</td></tr>
-<tr><td>71</td><td>9.2</td></tr>
-<tr><td>89</td><td>9.1</td></tr>
-<tr><td>58</td><td>9.1</td></tr>
-<tr><td>55</td><td>9.1</td></tr>
-<tr><td>291</td><td>9.0</td></tr>
-<tr><td>281</td><td>9.0</td></tr>
-<tr><td>173</td><td>9.0</td></tr>
-<tr><td>97</td><td>9.0</td></tr>
-<tr><td>230</td><td>8.8</td></tr>
-<tr><td>299</td><td>8.6</td></tr>
-<tr><td>250</td><td>8.6</td></tr>
-<tr><td>135</td><td>8.6</td></tr>
-<tr><td>15</td><td>8.6</td></tr>
-<tr><td>286</td><td>8.4</td></tr>
-<tr><td>112</td><td>8.4</td></tr>
-<tr><td>96</td><td>8.4</td></tr>
-<tr><td>51</td><td>8.4</td></tr>
-<tr><td>22</td><td>8.4</td></tr>
-<tr><td>41</td><td>8.3</td></tr>
-<tr><td>33</td><td>8.3</td></tr>
-<tr><td>231</td><td>8.2</td></tr>
-<tr><td>98</td><td>8.2</td></tr>
-<tr><td>78</td><td>8.1</td></tr>
-<tr><td>227</td><td>8.0</td></tr>
-<tr><td>226</td><td>8.0</td></tr>
-<tr><td>134</td><td>8.0</td></tr>
-<tr><td>116</td><td>8.0</td></tr>
-<tr><td>110</td><td>8.0</td></tr>
-<tr><td>20</td><td>8.0</td></tr>
-<tr><td>271</td><td>7.8</td></tr>
-<tr><td>168</td><td>7.8</td></tr>
-<tr><td>120</td><td>7.8</td></tr>
-<tr><td>68</td><td>7.8</td></tr>
-<tr><td>166</td><td>7.7</td></tr>
-<tr><td>146</td><td>7.7</td></tr>
-<tr><td>108</td><td>7.7</td></tr>
-<tr><td>3</td><td>7.7</td></tr>
-<tr><td>121</td><td>7.6</td></tr>
-<tr><td>36</td><td>7.6</td></tr>
-<tr><td>208</td><td>7.5</td></tr>
-<tr><td>179</td><td>7.5</td></tr>
-<tr><td>177</td><td>7.5</td></tr>
-<tr><td>225</td><td>7.4</td></tr>
-<tr><td>219</td><td>7.4</td></tr>
-<tr><td>206</td><td>7.3</td></tr>
-<tr><td>129</td><td>7.3</td></tr>
-<tr><td>64</td><td>7.3</td></tr>
-<tr><td>171</td><td>7.2</td></tr>
-<tr><td>275</td><td>7.1</td></tr>
-<tr><td>23</td><td>7.0</td></tr>
+<tr><td>67</td><td>20.2</td></tr>
 </table>
+<p>The line's price, not today's. Three products cost more from Monday 16 March, and <code>product.price</code> holds only the current price, so a step that joined <code>product</code> and multiplied by <code>p.price</code> would value the earlier lines at a price nobody paid: order 10 would read 22.10 instead of 21.90, and order 12, which came to 19.60, would join the list at 20.00.</p>
 
 <h2>Several steps, and joining a CTE</h2>
-<p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine.</p>
-<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">order_total</span> <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">total</span>
-  <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
-  <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
-  <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span>
-),
-<span class="sql-id">customer_total</span> <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">t</span>.<span class="sql-id">total</span>) <span class="sql-kw">AS</span> <span class="sql-id">spent</span>
+<p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine. What did each customer who had a refund pay over the four weeks, get back, and keep?</p>
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">paid</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>) <span class="sql-kw">AS</span> <span class="sql-id">paid</span>
   <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
-  <span class="sql-kw">JOIN</span> <span class="sql-id">order_total</span> <span class="sql-kw">AS</span> <span class="sql-id">t</span> <span class="sql-kw">ON</span> <span class="sql-id">t</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
+  <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
+),
+<span class="sql-id">refunded</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">r</span>.<span class="sql-id">amount</span>) <span class="sql-kw">AS</span> <span class="sql-id">refunded</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">refund</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">id</span> = <span class="sql-id">r</span>.<span class="sql-id">order_id</span>
   <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
 )
-<span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">ct</span>.<span class="sql-id">orders</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">ct</span>.<span class="sql-id">spent</span> / <span class="sql-id">ct</span>.<span class="sql-id">orders</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_order</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer_total</span> <span class="sql-kw">AS</span> <span class="sql-id">ct</span>
-<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">ct</span>.<span class="sql-id">customer_id</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">average_order</span> <span class="sql-kw">DESC</span>
-<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">p</span>.<span class="sql-id">paid</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">paid</span>, <span class="sql-fn">ROUND</span>(<span class="sql-id">r</span>.<span class="sql-id">refunded</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">refunded</span>,
+       <span class="sql-fn">ROUND</span>(<span class="sql-id">p</span>.<span class="sql-id">paid</span> - <span class="sql-id">r</span>.<span class="sql-id">refunded</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">net</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">refunded</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">paid</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">r</span>.<span class="sql-id">customer_id</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">r</span>.<span class="sql-id">customer_id</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>orders</th><th>average_order</th></tr>
-<tr><td>Vera Tanaka</td><td>1</td><td>18.7</td></tr>
-<tr><td>Zoe Garcia</td><td>1</td><td>13.8</td></tr>
-<tr><td>Yusuf Eriksen</td><td>8</td><td>12.31</td></tr>
+<tr><th>name</th><th>paid</th><th>refunded</th><th>net</th></tr>
+<tr><td>Alice Turner</td><td>178.5</td><td>1.2</td><td>177.3</td></tr>
+<tr><td>Chloe Martin</td><td>120.6</td><td>5.1</td><td>115.5</td></tr>
+<tr><td>Emma Novak</td><td>144.0</td><td>1.9</td><td>142.1</td></tr>
+<tr><td>Oscar Nakamura</td><td>44.3</td><td>3.2</td><td>41.1</td></tr>
+<tr><td>Jonas Eriksen</td><td>90.4</td><td>3.6</td><td>86.8</td></tr>
+<tr><td>Vera Bianchi</td><td>229.2</td><td>2.2</td><td>227.0</td></tr>
+<tr><td>Felix Bianchi</td><td>154.9</td><td>3.9</td><td>151.0</td></tr>
 </table>
-<p>To debug such a query, replace the final <code>SELECT</code> with <code>SELECT * FROM order_total</code> and look at the intermediate result. Then do the same with the next step. A mistake usually shows up at the first step whose rows look wrong.</p>
+<p>Each step adds up one table per customer: what they paid, from the order lines, and what they were given back, from <code>refund</code>. Joining the two only at the end is what keeps the figures right. Written as one query, with <code>orders</code> joined to both <code>order_item</code> and <code>refund</code>, every refund would repeat once per line of its order and every line once per refund of its order: Chloe Martin's refunds, 5.10, would add up to 10.20, and her payments to 129.60 instead of 120.60. With one row per customer in each step, the final join has nothing to multiply. It starts from <code>refunded</code>, so only the seven refunded customers appear; a <code>LEFT JOIN</code> from <code>paid</code> with <code>COALESCE(r.refunded, 0)</code> would list every customer who ordered.</p>
+<p>To debug such a query, replace the final <code>SELECT</code> with <code>SELECT * FROM paid</code> and look at the intermediate result. Then do the same with the next step. A mistake usually shows up at the first step whose rows look wrong.</p>
 <p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
 
 <h2>WITH RECURSIVE: following a chain</h2>
-<p>Some questions have no fixed number of steps. "Whom did this customer bring in, and whom did they bring in, and so on, all the way down?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
-<p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Starting from the customers who came on their own, each round adds the people they referred, one generation further down.</p>
-<pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">tree</span>(<span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">generation</span>) <span class="sql-kw">AS</span> (
-  <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-num">0</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+<p>Some questions have no fixed number of steps. "Who brought this customer to the shop, and who brought that one, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
+<p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Who brought Wen Petrov (id 12)? The anchor is Wen alone. Each round joins the customer whose <code>id</code> is the previous row's <code>referred_by</code>, one step further up, and the recursion stops at a customer who came on their own: a NULL <code>referred_by</code> matches no one, so the round adds no row.</p>
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">chain</span>(<span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>, <span class="sql-id">steps</span>) <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>, <span class="sql-num">0</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">12</span>
   <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
-  <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">t</span>.<span class="sql-id">generation</span> + <span class="sql-num">1</span>
+  <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">c</span>.<span class="sql-id">referred_by</span>, <span class="sql-id">ch</span>.<span class="sql-id">steps</span> + <span class="sql-num">1</span>
   <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
-  <span class="sql-kw">JOIN</span> <span class="sql-id">tree</span> <span class="sql-kw">AS</span> <span class="sql-id">t</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">referred_by</span> = <span class="sql-id">t</span>.<span class="sql-id">id</span>
+  <span class="sql-kw">JOIN</span> <span class="sql-id">chain</span> <span class="sql-kw">AS</span> <span class="sql-id">ch</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">ch</span>.<span class="sql-id">referred_by</span>
 )
-<span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">generation</span> <span class="sql-kw">FROM</span> <span class="sql-id">tree</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">generation</span>, <span class="sql-id">id</span>;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">steps</span> <span class="sql-kw">FROM</span> <span class="sql-id">chain</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">steps</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>generation</th></tr>
-<tr><td>Alice Turner</td><td>0</td></tr>
-<tr><td>David Chen</td><td>0</td></tr>
-<tr><td>Hugo Silva</td><td>0</td></tr>
-<tr><td>Kofi Tanaka</td><td>0</td></tr>
-<tr><td>Stefan Lambert</td><td>0</td></tr>
-<tr><td>Iris Costa</td><td>0</td></tr>
-<tr><td>Zoe Garcia</td><td>0</td></tr>
-<tr><td>Ben Okafor</td><td>1</td></tr>
-<tr><td>Chloe Martin</td><td>1</td></tr>
-<tr><td>Quentin Schmidt</td><td>1</td></tr>
-<tr><td>Priya Hughes</td><td>1</td></tr>
-<tr><td>Vera Bianchi</td><td>1</td></tr>
-<tr><td>Yusuf Eriksen</td><td>1</td></tr>
-<tr><td>Greta Hughes</td><td>1</td></tr>
-<tr><td>Vera Tanaka</td><td>1</td></tr>
+<tr><th>name</th><th>steps</th></tr>
+<tr><td>Wen Petrov</td><td>0</td></tr>
+<tr><td>Farid Haddad</td><td>1</td></tr>
 <tr><td>Emma Novak</td><td>2</td></tr>
-<tr><td>Grace Lee</td><td>2</td></tr>
-<tr><td>Hassan Ivanova</td><td>2</td></tr>
-<tr><td>Nadia Jensen</td><td>2</td></tr>
-<tr><td>Marco Olsen</td><td>2</td></tr>
-<tr><td>Oscar Nakamura</td><td>2</td></tr>
-<tr><td>Tara Rossi</td><td>2</td></tr>
-<tr><td>Greta Rossi</td><td>2</td></tr>
-<tr><td>Elena Nakamura</td><td>2</td></tr>
-<tr><td>Marco Costa</td><td>2</td></tr>
-<tr><td>Iris Olsen</td><td>2</td></tr>
-<tr><td>Yusuf Moreno</td><td>2</td></tr>
-<tr><td>Farid Haddad</td><td>3</td></tr>
-<tr><td>Daniel Moreno</td><td>3</td></tr>
-<tr><td>Ugo Dubois</td><td>3</td></tr>
-<tr><td>Zoe Garcia</td><td>3</td></tr>
-<tr><td>Rosa Weber</td><td>3</td></tr>
-<tr><td>Jonas Eriksen</td><td>3</td></tr>
-<tr><td>Amira Kowalski</td><td>3</td></tr>
-<tr><td>Bruno Fischer</td><td>3</td></tr>
-<tr><td>Felix Bianchi</td><td>3</td></tr>
-<tr><td>Lena Dubois</td><td>3</td></tr>
-<tr><td>Lena Schmidt</td><td>3</td></tr>
-<tr><td>Quentin Jensen</td><td>3</td></tr>
-<tr><td>Wen Petrov</td><td>4</td></tr>
+<tr><td>Chloe Martin</td><td>3</td></tr>
+<tr><td>Alice Turner</td><td>4</td></tr>
 </table>
-<p>Carrying extra columns through the recursion is a useful trick. A counter such as <code>generation</code> tells you how far each row is from the start, and a text column built up with <code>||</code> can record the whole path, which is often the answer you actually want.</p>
+<p>Four steps lead from Wen Petrov back to Alice Turner, the longest chain in the shop. To walk the other way, all the way down, turn the join round: <code>c.referred_by = ch.id</code> adds, each round, the customers the previous ones brought in. Started from Emma Novak, it finds Farid Haddad and Ugo Dubois, then Wen Petrov. The staff table holds the same kind of chain in <code>staff.manager_id</code>, three levels deep from the owner down to the counter.</p>
+<p>Carrying extra columns through the recursion is a useful trick. A counter such as <code>steps</code> tells you how far each row is from the start, and a text column built up with <code>||</code> can record the whole path, which is often the answer you actually want.</p>
 
 <h2>WITH RECURSIVE: generating rows</h2>
 <p>A recursive CTE does not need a table at all. It can count, or produce every date of a period, which is handy for finding days that are missing from the data. The anchor gives the first day, the recursive part adds one to the day of the month and writes the date out as text (<code>RIGHT('0' || n, 2)</code> pads it to two digits), and a condition in its <code>WHERE</code> stops the recursion. Counting the day of the month only works within one month; real date arithmetic differs from one database to the next (PostgreSQL's <code>CAST(day AS DATE) + 1</code> or <code>generate_series</code>, SQLite's <code>date(day, '+1 day')</code>), and the game's terminal refuses it (see <a href="dates-times.html#date-functions">Dates, substr and CAST</a>).</p>
@@ -367,10 +145,10 @@
 <tr><td>2026-03-07</td><td>14</td></tr>
 <tr><td>2026-03-08</td><td>16</td></tr>
 </table>
-<p>The left join keeps the day on which nobody ordered, with a count of zero; grouping the <code>orders</code> table alone would simply have skipped it.</p>
+<p>The left join keeps Friday 6 March, when the shop was closed, with a count of zero; grouping the <code>orders</code> table alone would simply have skipped it.</p>
 
 <h2>Common mistakes</h2>
-<p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE generation &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates (see <a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>). Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
+<p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE steps &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates (see <a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>). Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#above-their-category">Above their category</a> and <a href="exercises.html#word-of-mouth">Word of mouth</a>, on the exercises page.</p>
 <p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
