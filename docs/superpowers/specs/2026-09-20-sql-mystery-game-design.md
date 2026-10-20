@@ -518,8 +518,9 @@ Everything is deployed (2026-10-20, 9f4e671).
   a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) ~~AdSense >
   Privacy & messaging > European regulations > Settings: the consent mode flags (ads and analytics storage),
   without which European visitors' choices never reach GA or the ads~~ (done: the owner turned Consent Mode on for
-  advertising and analytics in AdSense on 2026-10-19); ~~(4) merge the branch into main~~ (done 2026-10-19, bdd594a); (5) check day, night
-  and phone width in Chrome, and that the house ad comes back with an ad blocker on; (6) confirm Google's consent message appears on the live site (from an EEA connection,
+  advertising and analytics in AdSense on 2026-10-19); ~~(4) merge the branch into main~~ (done 2026-10-19, bdd594a); ~~(5) check day, night
+  and phone width in Chrome, and that the house ad comes back with an ad blocker on~~ (done 2026-10-19/20 in the owner's
+  Chrome: day and night prints, phone width, and the house ad with the blocker on, live); (6) confirm Google's consent message appears on the live site (from an EEA connection,
   in a private window) and that the footer link reopens it (blocked: Google's CMP stays inactive until approval); ~~(7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
   2026-10-10)~~ (done 2026-10-19, republished; ad unit "Ritz Affair - under the schema" = `AD_SLOT` 1774964634); (8) under Google's live message the landing footer reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
