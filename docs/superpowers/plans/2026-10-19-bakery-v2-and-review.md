@@ -6,11 +6,13 @@ question as worded); make the mechanical part a permanent test so pasted results
 the bakery database (more rows, a few more tables and columns) from a seeded stdlib generator, and carry every
 page, exercise and test over to it, the permanent test guarding the move.
 
-**Owner request:** 2026-10-19. **Status:** planned 2026-10-19; Part 1 done 2026-10-20 (Task 1.1's `HandbookResults`, the review and its fixes;
-the data-dependent findings are listed under Part 2, "Planted cases from the review"); Part 2 not started. Part 1 comes first and lands
-on its own; Part 2 starts only after Part 1's findings are fixed and pushed.
+**Owner request:** 2026-10-19. **Status:** done and live 2026-10-20. Part 1 (Task 1.1's `HandbookResults`, the review:
+0 wrong solutions, 30 findings fixed, 5 data-dependent ones moved to Part 2's "Planted cases from the review") and
+Part 2 (owner accepted every default below on 2026-10-20: `bakery.py`, four weeks, six tables, `--paste`, twenty
+exercises; the block count is now 112). Left: drop `bakery.py`'s v1 and `LIVE` scaffolding (spec section 8). The
+inventory and steps below are the plan as written on 2026-10-19.
 
-**Do not start while** the concurrent session editing `site/learn/*.html`, `site/app.js`, `CLAUDE.md` and
+**Did not start while** the concurrent session editing `site/learn/*.html`, `site/app.js`, `CLAUDE.md` and
 `test_site.mjs` is unmerged: both parts touch the same files. Rebase on `main` once it lands.
 
 ## What exists today (inventory, 2026-10-19)

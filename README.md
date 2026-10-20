@@ -83,6 +83,7 @@ The penalty per wrong answer is set per season by the teacher; the rest is in th
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
 | `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
 | `site/learn/` | The Clerk's Handbook: static SQL reference pages on a separate example database |
+| `bakery.py` | generates the handbook's bakery database (seeded, stdlib); `--paste` rewrites the pages' result tables |
 | `site/portraits/*.jpg` | suspect portraits (Style A/Lavery colour, generated), shown in the Suspects panel |
 | `apps_script.gs` | compete backend (Google Apps Script) |
 | `test_site.mjs` | `node --test` suite for the site's pure functions |

@@ -322,6 +322,11 @@ framework, no bundler.
   `RANKS` tuned 2026-10-19 from the trial's GA4 query counts (the trial ran in learn mode, so the compete
   backend holds none; see section 3, Rank). Phase 4 is done.
 
+Since phase 4 (2026-10-19/20, details in section 8): ads live with the house-ad fallback (verdict pending), the
+handbook restructured (header, chapter dropdown, grammar in the chapters), the interactive exercises page, the
+handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-10-19-bakery-v2-and-review.md`.
+Everything is deployed (2026-10-20, 9f4e671).
+
 ## 8. Backlog (not scheduled)
 
 - ~~Translate the site into multiple languages.~~ Dropped 2026-09-29, course owner: English only,
@@ -500,7 +505,7 @@ framework, no bundler.
   decides: Google's ad shows only once the `<ins>` reads `data-ad-status="filled"` with a height; `unfilled`
   (watched by a MutationObserver), an `adsbygoogle.js` that fails to load (ad blockers) or nothing filled after
   `AD_WAIT_MS` (4 s) removes the `<ins>` and brings the house ad back.
-  **2026-10-10, the switch-on is prepared** on branch `claude/ads-switch-on` (not merged; main merged in 2026-10-19, and the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
+  **2026-10-10, the switch-on was prepared** on branch `claude/ads-switch-on`, merged into main 2026-10-19 (bdd594a; the school agreed that day to ads being shown to students, owner): `ADS_CLIENT`, `AD_SLOT`
   and `ADS_ON` in one block of `site/app.js`; with `ADS_ON` the page loads `adsbygoogle.js`, tries a
   responsive unit in `.press-slot` (house-ad fallback above), sets the region defaults (Europe all denied, waiting 500 ms for Google's message; everything granted
   elsewhere, where no message shows, 2026-10-19) and hands European consent to Google's message; the footer link becomes "Privacy and cookie settings" and reopens the message.
@@ -509,15 +514,15 @@ framework, no bundler.
   page uses Google's message only once its CMP is live within 3 s of the ads script and falls back to the game's own
   banner otherwise, and GA4 never loads in a European time zone before a Yes from whichever asks (the rule and its
   signals: CLAUDE.md, Ads);
-  privacy.html is written for that state. Switch-on checklist (2026-10-10): (1) AdSense > Ads > By ad unit: create
+  privacy.html is written for that state. Switch-on checklist (2026-10-10): ~~(1)~~ (done 2026-10-19, `AD_SLOT` 1774964634) AdSense > Ads > By ad unit: create
   a display unit (responsive) and copy its `data-ad-slot` into `AD_SLOT`; (2) ~~set `ADS_ON = true`~~ (2026-10-19: `ADS_ON` is `AD_SLOT !== ""`, step 1 does it; keep Auto ads off for the site, so ads appear only in the box); (3) ~~AdSense >
   Privacy & messaging > European regulations > Settings: the consent mode flags (ads and analytics storage),
   without which European visitors' choices never reach GA or the ads~~ (done: the owner turned Consent Mode on for
-  advertising and analytics in AdSense on 2026-10-19); (4) merge the branch into main (a live deploy, owner-approved); (5) check day, night
+  advertising and analytics in AdSense on 2026-10-19); ~~(4) merge the branch into main~~ (done 2026-10-19, bdd594a); (5) check day, night
   and phone width in Chrome, and that the house ad comes back with an ad blocker on; (6) confirm Google's consent message appears on the live site (from an EEA connection,
-  in a private window) and that the footer link reopens it; ~~(7) in AdSense > Privacy & messaging, point the consent
+  in a private window) and that the footer link reopens it (blocked: Google's CMP stays inactive until approval); ~~(7) in AdSense > Privacy & messaging, point the consent
   message's privacy URL at https://mystery.alephb.uk/privacy.html instead of alephb.uk/privacy.html (owner,
-  2026-10-10)~~ (done 2026-10-19, republished; ad unit "Ritz Affair - under the schema" = `AD_SLOT` 1774964634); (8) the landing footer then reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
+  2026-10-10)~~ (done 2026-10-19, republished; ad unit "Ritz Affair - under the schema" = `AD_SLOT` 1774964634); (8) under Google's live message the landing footer reads "Privacy notice . Privacy and cookie settings" (owner, 2026-10-10:
   rename rather than drop the game's own link, Google requires the second title verbatim): ~~rename the handbook's
   nav and footer "Privacy" links to "Privacy notice" too~~ (done on the branch 2026-10-10, with admin.html, after main's
   compete v2 was merged into it).
@@ -525,15 +530,15 @@ framework, no bundler.
   above).
 - ~~US state privacy message (CCPA)~~ Done 2026-10-19 (owner: set it up): "US states message - alephb.uk" published
   in AdSense > Privacy & messaging > US state regulations (opt-out, "Do Not Sell or Share My Personal Information";
-  the AlephB mark uploaded as its 5:1 logo). privacy.html on the ads branch should name it.
+  the AlephB mark uploaded as its 5:1 logo); privacy.html names its opt-out link (f4df8a2).
 - ~~SQL branding on the landing page~~ Done 2026-10-19 (owner chose option A of four on a design canvas: a red
   band "A FREE GAME TO LEARN SQL" above the masthead, `.landing-band`; options B subtitle, C stamp and query, D band
   and subtitle were not taken) (Nick, the influencer, 2026-10-19: "your landing page should have a more
   obvious 'SQL' type branding so people can immediately see this is a tool to learn SQL"): the landing card leads
   with the 1912 story; make "learn SQL" obvious at first glance (headline or kicker), keeping the story. The owner
   replied that it would be done, ideally before his post. Show options as a design canvas first.
-- **Design canvases** (2026-10-19): the ad box title (options A-D, D chosen) and the landing SQL band (A-D, A chosen); links in
-  the session's memory, not here) is kept; delete it only when the owner asks.
+- **Design canvases** (2026-10-19): the ad box title (options A-D, D chosen) and the landing SQL band (A-D, A chosen)
+  are kept as private artifacts (links in the session's memory, not here); delete them only when the owner asks.
 - ~~Big UI/UX pass~~ (course owner, 2026-10-02): once the in-the-shoes-of-a-student review has covered
   chapters 9-12, do a whole-interface pass (layout, type scale, spacing, the terminal and answer flow,
   case board, Suspects and Badges panels, phone width, both editions), checked in a real browser. Small
@@ -590,7 +595,7 @@ framework, no bundler.
   `site/leaderboard.html`, live before the trial.
 - **Outreach** (course owner, 2026-10-18): the owner drafted an email to Nick (softwarewithnick, a software content creator
   whose video promoted SQLBolt; the owner named the site "sqlbot.com", which did not load) to share the game for
-  free, no sponsorship asked; sent 2026-10-19. He replied the same day that he will probably post about it that
+  free, no sponsorship asked; sent 2026-10-19. Agreed: a GA4 review after his post. He replied the same day that he will probably post about it that
   week, then asked for more obvious SQL branding on the landing page (done the same evening, the owner's reply sent); the owner wants ads live by then (the ads branch is up to date, AdSense approval is the blocker). The site may show ads later (AdSense pending): if asked whether it
   earns money, say so.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
@@ -608,8 +613,8 @@ framework, no bundler.
   requested 2026-10-19. Built 2026-10-19: strictCheck refuses a UNION, INTERSECT or
   EXCEPT that puts a text column against a number in one position (PostgreSQL's "UNION types text and
   integer cannot be matched"; SQLite runs it); NULL, quoted literals and unknown types pass.
-- **Bakery schema and interactive exercises** (owner, 2026-10-19). Built on a branch, not deployed yet (browser
-  check in Chrome pending): `erd.py` draws the bakery database too (`bakery_conn` reads `learn/database.html`'s
+- ~~Bakery schema and interactive exercises~~ Done 2026-10-19 (owner's request the same day; live, current rules in
+  CLAUDE.md, Handbook; the counts and question numbers below are those of the fifteen v1 exercises): `erd.py` draws the bakery database too (`bakery_conn` reads `learn/database.html`'s
   script; a table that refers to itself, `customer.referred_by`, gets a loop beside it), and `python3
   generate_db.py` inlines the svg between `<!-- bakery schema: erd.py -->` markers in `database.html` and
   `exercises.html` (a unittest checks the lines, the widths and that the pages carry the current drawing).
@@ -622,7 +627,7 @@ framework, no bundler.
   really asks for (2, 3, 10, 13, 14), numbers within 1e-6 (`data-tolerance="0.01"` on 10, whose average the
   question does not ask to round). Solved questions get a tick, kept in `ritz.exercises`; `#<slug>` selects a
   question. The deploy versions `exercises.html`'s scripts and `exercises.js`'s `../app.js` import.
-- **Handbook chrome, grammar and exercises pass** (course owner, 2026-10-19, built on a branch for review):
+- ~~Handbook chrome, grammar and exercises pass~~ Done 2026-10-19/20 (course owner, 2026-10-19; merged b028951, live):
   the masthead nav keeps Game, The Clerk's Handbook and The Clerk's Desk, the footer keeps all six links
   (learn pages and `admin.html`); the numbered menu becomes "Index . Learning chapters . Exercises . Grammar",
   Learning chapters a `<details>` dropdown that works without JavaScript. The grammar rules move to their
@@ -631,14 +636,26 @@ framework, no bundler.
   links each refusal to its section. `exercises.html`: How to use folded away, Warm-up / Practice /
   Challenge buttons over the picker, a green Solved mark, a HISTORY under the terminal
   (`ritz.exercises.history`), the game's ad box under the schema (the only ad in the handbook; privacy.html
-  says so), and the static questions hidden once the workbench is up, so a `#slug` link lands on it. Not
-  checked in a browser yet.
-- **Handbook review (plan `2026-10-19-bakery-v2-and-review.md`, Part 1)**: review done 2026-10-20, findings
-  fixed (wrong prose and edge cases on the construct pages, the grammar sentences, ten exercise wordings
+  says so), and the static questions hidden once the workbench is up, so a `#slug` link lands on it. Later
+  owner requests on the live page (2026-10-20): subtitle and intro removed, How to use as five steps in the
+  question column, a wider schema column, the workbench centred so the enlarged schema fills the window.
+- ~~Handbook review (plan `2026-10-19-bakery-v2-and-review.md`, Part 1)~~ Done 2026-10-20: 0 wrong solutions, 30
+  findings fixed, 5 moved to Part 2 (wrong prose and edge cases on the construct pages, the grammar sentences, ten exercise wordings
   tightened to one reading, `back-again` checks the order id too); the edge cases that need data the bakery does
   not have yet are the plan's "Planted cases from the review" (Part 2). The strict terminal now accepts
   PostgreSQL's `LEFT`, `RIGHT` and `x::type` (rewritten for SQLite by `toSqlite` and `generate_db.sqlite_sql`)
   and refuses `date()`/`time()` with a modifier. Owner requests of the same day on `exercises.html`: How to use
   under History (moved by the script, above the workbench without it), no idle or solved text in the status box
   (hidden when empty), the game's Enlarge button on the schema, no In the game line; the handbook index groups
-  its pages as Learning chapters, Exercises (a card) and Grammar. Not checked in a browser yet.
+  its pages as Exercises (a card), Grammar, then the learning chapters (reading order unchanged). A permanent test,
+  `test_generate.HandbookResults`, reruns every example and solution and compares the pasted table cell for cell.
+- ~~Bakery v2 (plan `2026-10-19-bakery-v2-and-review.md`, Part 2)~~ Done 2026-10-20 (owner accepted every default of
+  the plan): `bakery.py` generates six tables over four weeks of March 2026 with the planted cases, `--paste`
+  rewrites the result tables; every handbook page rewritten for it; twenty exercises (new: untidy-emails,
+  the-price-rise, the-staff-room, money-back, shutters-down, which asks for Hillcrest so the Fridays alone are
+  wrong). The same day: a Day/Night edition button on the handbook, desk and board (`learn/theme.js`, sharing
+  `ritz.theme`), the landing card in the handbook's split header and footer, and the engraved house ad's line
+  repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`).
+- **`bakery.py` scaffolding** (2026-10-20): it still carries v1 (`V1`) and `LIVE = 2`, needed only during the
+  migration. Drop them when convenient (the generator then emits v2 only; rerun `python3 generate_db.py`, the
+  pages must not change).
