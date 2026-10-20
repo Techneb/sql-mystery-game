@@ -43,32 +43,18 @@
 
 <h2>Reading a table</h2>
 <p>A relational database stores its data in tables. A table has named columns, and each row is one record: one customer, one product, one order. To read a table you write a <code>SELECT</code> statement. The words after <code>SELECT</code> name the columns you want back, and the word <code>FROM</code> names the table they come from. The star, <code>*</code>, means every column, in the order the table defines them.</p>
-<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>product</code> table lists ten things the bakery sells. Each example ends with <code>ORDER BY id</code>, which lists the rows in id order; without it the database may return them in any order, as the <a href="order-by-limit.html">ORDER BY page</a> explains.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>staff</code> table lists the six people who work there. Each example ends with <code>ORDER BY id</code>, which lists the rows in id order; without it the database may return them in any order, as the <a href="order-by-limit.html">ORDER BY page</a> explains.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">role</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>price</th></tr>
-<tr><td>Baguette</td><td>1.2</td></tr>
-<tr><td>Sourdough loaf</td><td>4.5</td></tr>
-<tr><td>Rye loaf</td><td>3.8</td></tr>
-<tr><td>Croissant</td><td>1.4</td></tr>
-<tr><td>Pain au chocolat</td><td>1.6</td></tr>
-<tr><td>Almond croissant</td><td>2.2</td></tr>
-<tr><td>Lemon tart</td><td>3.9</td></tr>
-<tr><td>Chocolate eclair</td><td>2.8</td></tr>
-<tr><td>Carrot cake slice</td><td>3.2</td></tr>
-<tr><td>Seeded rolls</td><td>3.8</td></tr>
-<tr><td>Brioche</td><td>2.1</td></tr>
-<tr><td>Focaccia</td><td>3.6</td></tr>
-<tr><td>Cinnamon roll</td><td>2.6</td></tr>
-<tr><td>Apple turnover</td><td>1.9</td></tr>
-<tr><td>Cheesecake slice</td><td>3.8</td></tr>
-<tr><td>Walnut bread</td><td>4.2</td></tr>
-<tr><td>Raspberry tart</td><td>4.1</td></tr>
-<tr><td>Coffee eclair</td><td>2.8</td></tr>
-<tr><td>Pistachio financier</td><td>2.4</td></tr>
-<tr><td>Hot cross bun</td><td>1.5</td></tr>
+<tr><th>name</th><th>role</th></tr>
+<tr><td>Margaret Hale</td><td>owner</td></tr>
+<tr><td>Tom Becker</td><td>head baker</td></tr>
+<tr><td>Nina Patel</td><td>counter</td></tr>
+<tr><td>Omar Reyes</td><td>counter</td></tr>
+<tr><td>Lucy Brandt</td><td>counter</td></tr>
+<tr><td>Sam Ito</td><td>baker</td></tr>
 </table>
 <p>The order of the columns in the result is the order you wrote them, not the order in the table.</p>
 
@@ -107,11 +93,11 @@
 <tr><td>Cheesecake slice</td><td>cake</td><td>3.8</td></tr>
 </table>
 <p>The Carrot cake slice (3.2) and the Lemon tart (3.9) sit exactly on the bounds, and both are kept.</p>
-<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero; the <a href="dates-times.html">dates and times page</a> explains why.</p>
+<p>Dates in SQLite are usually stored as text in the form <code>YYYY-MM-DD</code>. Because that form sorts in calendar order, you can compare dates as ordinary text: <code>day &gt;= '2026-03-05'</code> keeps every order from the fifth of March onwards. The same is true of times written <code>HH:MM</code> with a leading zero; the <a href="dates-times.html">dates and times page</a> explains why. The query below keeps the orders of the first weekend, Saturday 7 and Sunday 8 March, taken before nine in the morning.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">IN</span> (<span class="sql-str">'2026-03-07'</span>, <span class="sql-str">'2026-03-08'</span>)
-  <span class="sql-kw">AND</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>customer_id</th><th>day</th><th>time</th></tr>
@@ -119,37 +105,30 @@
 <tr><td>46</td><td>11</td><td>2026-03-07</td><td>08:10</td></tr>
 <tr><td>47</td><td>18</td><td>2026-03-07</td><td>08:20</td></tr>
 <tr><td>48</td><td>16</td><td>2026-03-07</td><td>08:50</td></tr>
-<tr><td>49</td><td>4</td><td>2026-03-07</td><td>09:30</td></tr>
-<tr><td>50</td><td>36</td><td>2026-03-07</td><td>09:40</td></tr>
-<tr><td>51</td><td>7</td><td>2026-03-07</td><td>10:30</td></tr>
-<tr><td>52</td><td>34</td><td>2026-03-07</td><td>11:05</td></tr>
 <tr><td>59</td><td>37</td><td>2026-03-08</td><td>07:45</td></tr>
 <tr><td>60</td><td>3</td><td>2026-03-08</td><td>08:05</td></tr>
 <tr><td>61</td><td>23</td><td>2026-03-08</td><td>08:30</td></tr>
 <tr><td>62</td><td>34</td><td>2026-03-08</td><td>08:40</td></tr>
-<tr><td>63</td><td>30</td><td>2026-03-08</td><td>09:00</td></tr>
-<tr><td>64</td><td>29</td><td>2026-03-08</td><td>10:00</td></tr>
-<tr><td>65</td><td>33</td><td>2026-03-08</td><td>10:15</td></tr>
-<tr><td>66</td><td>36</td><td>2026-03-08</td><td>11:10</td></tr>
-<tr><td>67</td><td>11</td><td>2026-03-08</td><td>11:15</td></tr>
-<tr><td>68</td><td>5</td><td>2026-03-08</td><td>11:40</td></tr>
 </table>
 
 <h2>Missing values: IS NULL</h2>
-<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>referred_by = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who came in without a recommendation has no <code>referred_by</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
+<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>email = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who never gave an email has no <code>email</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">email</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>town</th></tr>
-<tr><td>Alice Turner</td><td>Riverside</td></tr>
 <tr><td>David Chen</td><td>Old Town</td></tr>
 <tr><td>Hugo Silva</td><td>Hillcrest</td></tr>
 <tr><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
-<tr><td>Stefan Lambert</td><td>Old Town</td></tr>
+<tr><td>Quentin Schmidt</td><td>Riverside</td></tr>
+<tr><td>Wen Petrov</td><td>Old Town</td></tr>
 <tr><td>Iris Costa</td><td>Old Town</td></tr>
-<tr><td>Zoe Garcia</td><td>Riverside</td></tr>
+<tr><td>Vera Bianchi</td><td>Old Town</td></tr>
+<tr><td>Felix Bianchi</td><td>Old Town</td></tr>
+<tr><td>Iris Olsen</td><td>Riverside</td></tr>
+<tr><td>Vera Tanaka</td><td>Old Town</td></tr>
 </table>
 
 <h2>A way of working</h2>
@@ -234,50 +213,22 @@
 </table>
 
 <h2 id="boolean">Grammar: conditions</h2>
-<p><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and each <code>WHEN</code> of a <code>CASE WHEN</code> need a condition, something true or false. A bare column such as <code>WHERE referred_by</code> is a value, not a condition: write the comparison out. The same holds for each side of <code>AND</code> and <code>OR</code>, and for <code>NOT</code>.</p>
+<p><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and each <code>WHEN</code> of a <code>CASE WHEN</code> need a condition, something true or false. A bare column such as <code>WHERE manager_id</code> is a value, not a condition: write the comparison out. The same holds for each side of <code>AND</code> and <code>OR</code>, and for <code>NOT</code>.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span>;</code></pre>
-<div class="refusal"><code>ERROR: argument of WHERE must be type boolean, not type integer</code> WHERE needs a condition that is true or false, and referred_by is a number: compare it with something, as in referred_by = ... or referred_by IS NOT NULL.</div>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">manager_id</span>;</code></pre>
+<div class="refusal"><code>ERROR: argument of WHERE must be type boolean, not type integer</code> WHERE needs a condition that is true or false, and manager_id is a number: compare it with something, as in manager_id = ... or manager_id IS NOT NULL.</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">manager_id</span> <span class="sql-kw">IS</span> <span class="sql-kw">NOT</span> <span class="sql-kw">NULL</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Ugo Dubois</td></tr>
-<tr><td>Zoe Garcia</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Nadia Jensen</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Marco Olsen</td></tr>
-<tr><td>Oscar Nakamura</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Greta Rossi</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Elena Nakamura</td></tr>
-<tr><td>Greta Hughes</td></tr>
-<tr><td>Marco Costa</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Vera Tanaka</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Quentin Jensen</td></tr>
+<tr><td>Tom Becker</td></tr>
+<tr><td>Nina Patel</td></tr>
+<tr><td>Omar Reyes</td></tr>
+<tr><td>Lucy Brandt</td></tr>
+<tr><td>Sam Ito</td></tr>
 </table>
 
 

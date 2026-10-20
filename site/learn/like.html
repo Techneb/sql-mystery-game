@@ -111,26 +111,18 @@
 <p>That keeps the customers who joined in the first nine days of any month from January to September 2024. Every value in the column has the same length, so the pattern reads like a template.</p>
 
 <h2>Combining a pattern with other conditions</h2>
-<p><code>LIKE</code> is a condition like any other, so it combines with <code>AND</code>, <code>OR</code> and <code>NOT</code>. <code>NOT LIKE</code> keeps the rows that do not match. A common pattern is to search broadly with <code>LIKE</code>, then narrow down with an exact filter on another column.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">category</span>
-<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%o%'</span>
-  <span class="sql-kw">AND</span> <span class="sql-id">name</span> <span class="sql-kw">NOT</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%loaf%'</span>
-  <span class="sql-kw">AND</span> <span class="sql-id">category</span> &lt;&gt; <span class="sql-str">'cake'</span>
+<p><code>LIKE</code> is a condition like any other, so it combines with <code>AND</code>, <code>OR</code> and <code>NOT</code>. <code>NOT LIKE</code> keeps the rows that do not match. A common pattern is to search broadly, then narrow down with a second condition. The bakery's emails are typed as the customers wrote them, some with capitals: <code>ILIKE</code> finds every email at mail.com whatever its case, and <code>NOT LIKE</code> then takes away those written in lower case.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">email</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">email</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%@mail.com'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">email</span> <span class="sql-kw">NOT</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%@mail.com'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>category</th></tr>
-<tr><td>Croissant</td><td>pastry</td></tr>
-<tr><td>Pain au chocolat</td><td>pastry</td></tr>
-<tr><td>Almond croissant</td><td>pastry</td></tr>
-<tr><td>Seeded rolls</td><td>bread</td></tr>
-<tr><td>Brioche</td><td>pastry</td></tr>
-<tr><td>Focaccia</td><td>bread</td></tr>
-<tr><td>Cinnamon roll</td><td>pastry</td></tr>
-<tr><td>Apple turnover</td><td>pastry</td></tr>
-<tr><td>Hot cross bun</td><td>pastry</td></tr>
+<tr><th>name</th><th>email</th></tr>
+<tr><td>Ben Okafor</td><td>Ben.Okafor@Mail.com</td></tr>
+<tr><td>Farid Haddad</td><td>FARID.HADDAD@MAIL.COM</td></tr>
 </table>
-<p>Read it step by step: names that contain an "o" somewhere, minus the loaves, minus the cakes.</p>
+<p>Read it step by step: emails at mail.com in any case, minus the ones in lower case, leaves the two typed with capitals. A pattern that ends without a <code>%</code> is also defeated by a stray space: Emma Novak's email ends with one, so <code>email LIKE '%post.net'</code> misses it, while <code>trim(email) LIKE '%post.net'</code>, which removes the spaces at both ends first, finds it.</p>
 
 <h2>Searching more than one word</h2>
 <p>When you are not sure of the spelling, try several patterns joined with <code>OR</code>, each one short: a stem such as <code>ILIKE '%choc%'</code> catches both "Chocolate eclair" and "Pain au chocolat" at once. Shorter patterns find more rows, longer ones fewer. Searching is a conversation with the data: run a broad pattern, read what comes back, then tighten it.</p>

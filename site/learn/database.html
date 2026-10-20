@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The bakery database -- The Ritz Affair</title>
-<meta name="description" content="The small bakery database (customers, products, orders and order lines) that every example of The Clerk&#x27;s Handbook runs on, with sample rows and a SQLite script to recreate it.">
+<meta name="description" content="The small bakery database (customers, products, staff, orders, order lines and refunds) that every example of The Clerk&#x27;s Handbook runs on, with sample rows and a SQLite script to recreate it.">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -39,16 +39,18 @@
 <main class="learn">
 <h1>The bakery database</h1>
 <p class="lede">Every example in this handbook runs on this one small, invented database, so you only have to learn its tables once.</p>
-<p>The bakery sells ten products and keeps four tables. They record one week of trade, from Monday 2 March to Sunday 8 March 2026.</p>
+<p>The bakery sells twenty products and keeps six tables. They record four weeks of trade, from Monday 2 March to Sunday 29 March 2026; the shop is closed on Fridays.</p>
 <table class="result">
 <tr><th>Table</th><th>Columns</th><th>One row is</th></tr>
-<tr><td>customer</td><td>id, name, town, joined, referred_by</td><td>a regular customer; <code>referred_by</code> is the id of the customer who recommended the shop, or NULL</td></tr>
-<tr><td>product</td><td>id, name, category, price</td><td>something on sale: bread, pastry or cake, price in euros</td></tr>
-<tr><td>orders</td><td>id, customer_id, day, time</td><td>one visit to the counter; <code>day</code> is <code>YYYY-MM-DD</code>, <code>time</code> is <code>HH:MM</code></td></tr>
-<tr><td>order_item</td><td>order_id, product_id, quantity</td><td>one line of an order: how many of one product</td></tr>
+<tr><td>customer</td><td>id, name, town, joined, referred_by, email</td><td>a regular customer; <code>referred_by</code> is the id of the customer who recommended the shop, or NULL; <code>email</code> is as the customer wrote it (some in capitals or with a stray space), or NULL</td></tr>
+<tr><td>product</td><td>id, name, category, price</td><td>something on sale: bread, pastry or cake, today's price in euros</td></tr>
+<tr><td>staff</td><td>id, name, role, manager_id</td><td>someone who works at the bakery; <code>manager_id</code> is the id of their manager, NULL for the owner</td></tr>
+<tr><td>orders</td><td>id, customer_id, day, time, staff_id</td><td>one visit to the counter; <code>day</code> is <code>YYYY-MM-DD</code>, <code>time</code> is <code>HH:MM</code>, <code>staff_id</code> who served it</td></tr>
+<tr><td>order_item</td><td>order_id, product_id, quantity, unit_price</td><td>one line of an order: how many of one product, at the price paid that day (three products cost more from Monday 16 March)</td></tr>
+<tr><td>refund</td><td>id, order_id, day, amount, reason</td><td>money given back on an order, in euros; <code>reason</code> may be NULL</td></tr>
 </table>
-<p>The ids link the tables: each order line points to its order and its product, each order to its customer, and a customer to the customer who referred them. The schema draws those links: a gold key marks each primary key, a silver one each foreign key, and every line runs from a foreign key (N, many rows can share a value) to the key it points to (1). The loop beside <code>customer</code> is <code>referred_by</code>, which points back into the same table.</p>
-<div class="erd bakery-erd" role="img" aria-label="Schema of the bakery database: customer, product, orders and order_item, their keys and the links between them">
+<p>The ids link the tables: each order line points to its order and its product, each order to its customer and to the member of staff who served it, each refund to its order, a customer to the customer who referred them, and a member of staff to their manager. The schema draws those links: a gold key marks each primary key, a silver one each foreign key, and every line runs from a foreign key (N, many rows can share a value) to the key it points to (1). The loop beside <code>customer</code> is <code>referred_by</code>, and the one beside <code>staff</code> is <code>manager_id</code>: each points back into its own table.</p>
+<div class="erd bakery-erd" role="img" aria-label="Schema of the bakery database: customer, product, staff, orders, order_item and refund, their keys and the links between them">
 <!-- bakery schema: erd.py -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 402" width="480" height="402">
 <defs><symbol id="erd-key" viewBox="0 0 16 10"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></symbol></defs>
@@ -159,7 +161,7 @@
   <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
   <span><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">N</text></svg>one-to-many</span>
 </p>
-<p>A few rows of each table:</p>
+<p>A few rows of the four larger tables (<code>staff</code> and <code>refund</code> are short enough to read whole with <code>SELECT *</code>):</p>
 <pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>town</th><th>joined</th><th>referred_by</th><th>email</th></tr>
