@@ -463,7 +463,7 @@ class Erd(unittest.TestCase):
         import erd
         with open("site/learn/database.html") as f:
             live = erd.bakery_conn(f.read())
-        for conn, names in ((live, None), (bakery.conn(2), ["customer", "order_item", "orders", "product", "refund", "staff"])):
+        for conn, names in ((live, None), (bakery.conn(), ["customer", "order_item", "orders", "product", "refund", "staff"])):
             tables, fks = erd.read_schema(conn)
             if names:
                 self.assertEqual(sorted(tables), names)
@@ -495,27 +495,26 @@ class Erd(unittest.TestCase):
 
 
 class Bakery(unittest.TestCase):
-    """bakery.py: the handbook's database, v2 seeded and deterministic, every planted case present (bakery.check)."""
-    def test_v2_is_deterministic(self):
+    """bakery.py: the handbook's database, seeded and deterministic, every planted case present (bakery.check)."""
+    def test_is_deterministic(self):
         import bakery
         import hashlib
-        self.assertEqual(bakery.script(2), bakery.script(2))
+        self.assertEqual(bakery.script(), bakery.script())
         # pinned: a change here changes every pasted result; rerun bakery.py --paste and reread the pages
-        self.assertEqual(hashlib.sha256(bakery.script(2).encode()).hexdigest(),
+        self.assertEqual(hashlib.sha256(bakery.script().encode()).hexdigest(),
                          "469dbc1cdd7cea49f54016e8faca81a913048785019581af06d9b25ec1e1e647")
 
     def test_every_planted_case_is_in_the_data(self):
         import bakery
-        bakery.check(1)
-        bakery.check(2)   # raises on the first planted case missing
+        bakery.check()   # raises on the first planted case missing
 
     def test_the_page_carries_the_live_script_and_counts(self):
         import bakery
         with open("site/learn/database.html") as f:
             page = f.read()
-        self.assertEqual(html.unescape(bakery.SCRIPT_MARK.search(page).group(0)).count(bakery.script(bakery.LIVE)), 1,
+        self.assertEqual(html.unescape(bakery.SCRIPT_MARK.search(page).group(0)).count(bakery.script()), 1,
                          "run python3 generate_db.py")
-        self.assertIn(bakery.counts(bakery.LIVE), page)
+        self.assertIn(bakery.counts(), page)
         self.assertNotIn("<span", bakery.SCRIPT_MARK.search(page).group(0), "the script block stays plain")
 
     def test_paste_rewrites_a_stale_table(self):

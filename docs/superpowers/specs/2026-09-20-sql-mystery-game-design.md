@@ -657,6 +657,5 @@ Everything is deployed (2026-10-20, 9f4e671).
   wrong). The same day: a Day/Night edition button on the handbook, desk and board (`learn/theme.js`, sharing
   `ritz.theme`), the landing card in the handbook's split header and footer, and the engraved house ad's line
   repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`).
-- **`bakery.py` scaffolding** (2026-10-20): it still carries v1 (`V1`) and `LIVE = 2`, needed only during the
-  migration. Drop them when convenient (the generator then emits v2 only; rerun `python3 generate_db.py`, the
-  pages must not change).
+- ~~`bakery.py` scaffolding~~ Done 2026-10-20: v1's schema, `LIVE` and `check(1)` dropped, the generator emits
+  v2 only (its first-week rows renamed `FIRST_WEEK`); the script, every pasted result and the schemas unchanged.

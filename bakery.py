@@ -1,11 +1,11 @@
 """The Clerk's Handbook's bakery database (site/learn/database.html's script). Stdlib only.
 
-v1 is the week every page uses today (Mon 2 to Sun 8 March 2026), written out row by row. v2 is four weeks of
-trade (2-29 March 2026, closed on Fridays as v1 is), drawn from random.Random(2026) around v1's rows and the
-planted cases of docs/superpowers/plans/2026-10-19-bakery-v2-and-review.md (Part 2); check() fails the build when
-one goes missing. python3 generate_db.py writes LIVE's script and counts into database.html (erd.write_bakery then
-draws its schema); python3 bakery.py --paste [page.html ...] reruns every example on the pages named (all learn
-pages by default) and rewrites its result table from the real result; then node colour_learn.mjs.
+Four weeks of trade (2-29 March 2026, closed on Fridays), drawn from random.Random(2026) around the first week's
+rows (FIRST_WEEK, written out row by row: the first ids) and the planted cases of
+docs/superpowers/plans/2026-10-19-bakery-v2-and-review.md (Part 2); check() fails the build when one goes missing.
+python3 generate_db.py writes the script and counts into database.html (erd.write_bakery then draws its schema);
+python3 bakery.py --paste [page.html ...] reruns every example on the pages named (all learn pages by default) and
+rewrites its result table from the real result; then node colour_learn.mjs.
 """
 import datetime
 import glob
@@ -16,23 +16,15 @@ import re
 import sqlite3
 import sys
 
-LIVE = 2   # the version database.html carries; 2 once the pages are rewritten for it (the plan's migration order)
+SCHEMA = ["CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id), email TEXT);",
+          "CREATE TABLE product (id INTEGER PRIMARY KEY, name TEXT, category TEXT, price REAL);",
+          "CREATE TABLE staff (id INTEGER PRIMARY KEY, name TEXT, role TEXT, manager_id INTEGER REFERENCES staff(id));",
+          "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customer(id), day TEXT, time TEXT, staff_id INTEGER REFERENCES staff(id));",
+          "CREATE TABLE order_item (order_id INTEGER REFERENCES orders(id), product_id INTEGER REFERENCES product(id), quantity INTEGER, unit_price REAL);",
+          "CREATE TABLE refund (id INTEGER PRIMARY KEY, order_id INTEGER REFERENCES orders(id), day TEXT, amount REAL, reason TEXT);"]
+PER_LINE = {"orders": 3, "order_item": 10}   # rows per script line
 
-SCHEMA = {
-    1: ["CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id));",
-        "CREATE TABLE product (id INTEGER PRIMARY KEY, name TEXT, category TEXT, price REAL);",
-        "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customer(id), day TEXT, time TEXT);",
-        "CREATE TABLE order_item (order_id INTEGER REFERENCES orders(id), product_id INTEGER REFERENCES product(id), quantity INTEGER);"],
-    2: ["CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id), email TEXT);",
-        "CREATE TABLE product (id INTEGER PRIMARY KEY, name TEXT, category TEXT, price REAL);",
-        "CREATE TABLE staff (id INTEGER PRIMARY KEY, name TEXT, role TEXT, manager_id INTEGER REFERENCES staff(id));",
-        "CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customer(id), day TEXT, time TEXT, staff_id INTEGER REFERENCES staff(id));",
-        "CREATE TABLE order_item (order_id INTEGER REFERENCES orders(id), product_id INTEGER REFERENCES product(id), quantity INTEGER, unit_price REAL);",
-        "CREATE TABLE refund (id INTEGER PRIMARY KEY, order_id INTEGER REFERENCES orders(id), day TEXT, amount REAL, reason TEXT);"],
-}
-PER_LINE = {"orders": 3, "order_item": 10}   # rows per script line (v1's layout)
-
-V1 = {
+FIRST_WEEK = {
     "customer": [(1, 'Alice Turner', 'Riverside', '2024-01-15', None), (2, 'Ben Okafor', 'Hillcrest', '2024-02-03', 1),
                  (3, 'Chloe Martin', 'Riverside', '2024-02-20', 1), (4, 'David Chen', 'Old Town', '2024-03-11', None),
                  (5, 'Emma Novak', 'Hillcrest', '2024-04-02', 3), (6, 'Farid Haddad', 'Old Town', '2024-05-19', 5),
@@ -52,7 +44,7 @@ V1 = {
                    (11, 6, 1), (12, 4, 2), (12, 5, 2), (13, 7, 2), (14, 1, 1), (14, 10, 1)],
 }
 
-# --- v2: planted rows -------------------------------------------------------------------------------------------
+# --- planted rows ----------------------------------------------------------------------------------------------
 NEW_PRODUCTS = [(11, 'Brioche', 'pastry', 2.10), (12, 'Focaccia', 'bread', 3.60), (13, 'Cinnamon roll', 'pastry', 2.60),
                 (14, 'Apple turnover', 'pastry', 1.90), (15, 'Cheesecake slice', 'cake', 3.80),
                 (16, 'Walnut bread', 'bread', 4.20), (17, 'Raspberry tart', 'cake', 4.10),
@@ -63,10 +55,10 @@ UNSOLD, LAUNCHED = 19, 20          # never sold; first sold on RISE_DAY or later
 STAFF = [(1, 'Margaret Hale', 'owner', None), (2, 'Tom Becker', 'head baker', 1), (3, 'Nina Patel', 'counter', 2),
          (4, 'Omar Reyes', 'counter', 2), (5, 'Lucy Brandt', 'counter', 2), (6, 'Sam Ito', 'baker', 2)]
 NEVER_SERVES = 6
-V1_EMAIL = {1: 'alice.turner@mail.com', 2: 'Ben.Okafor@Mail.com', 3: 'chloe.martin@post.net', 4: None,
+FIRST_WEEK_EMAIL = {1: 'alice.turner@mail.com', 2: 'Ben.Okafor@Mail.com', 3: 'chloe.martin@post.net', 4: None,
             5: 'emma.novak@post.net ', 6: 'FARID.HADDAD@MAIL.COM', 7: 'grace.lee@mail.com', 8: None}
 MESSY = {16: lambda e: e.title(), 23: lambda e: e + ' ', 29: lambda e: ' ' + e}   # noise customers' messy emails
-NEVER_ORDERS = {8, 19, 31, 35}       # Hugo Silva (v1: never ordered, brought nobody) and three noise customers
+NEVER_ORDERS = {8, 19, 31, 35}       # Hugo Silva (never orders, brought nobody) and three noise customers
 TWINS = (14, 27)                   # the same name, in two towns
 DEEP = (12, 6)                     # customer 12 referred by Farid Haddad: Alice -> Chloe -> Emma -> Farid -> 12
 MARCH_JOINERS = (38, 39, 40)       # joined during March 2026
@@ -91,15 +83,15 @@ def days():
     return out
 
 
-def v2():
+def tables():
     rng = random.Random(2026)
-    # customers: v1's eight (with an email), then noise in joining order
+    # customers: the first week's eight (with an email), then noise in joining order
     deal = lambda xs: rng.sample(xs, len(xs)) + rng.sample(xs, len(xs))   # each name used at most twice
     names = [f + ' ' + l for f, l in zip(deal(FIRST), deal(LAST))]
     joined = sorted(str(datetime.date(2024, 8, 1) + datetime.timedelta(days=rng.randrange(570))) for _ in range(29))
     joined += ['2026-03-0%d' % rng.randint(2, 9), '2026-03-1%d' % rng.randint(0, 4), '2026-03-%d' % rng.randint(15, 20)]
     level = {1: 0, 2: 1, 3: 1, 4: 0, 5: 2, 6: 3, 7: 2, 8: 0}
-    customers = [r + (V1_EMAIL[r[0]],) for r in V1["customer"]]
+    customers = [r + (FIRST_WEEK_EMAIL[r[0]],) for r in FIRST_WEEK["customer"]]
     for i, cid in enumerate(range(9, 41)):
         ref = DEEP[1] if cid == DEEP[0] else None
         if ref is None and rng.random() < 0.85:   # most were referred, so walk-ins stay few
@@ -113,7 +105,7 @@ def v2():
     a, b = customers[TWINS[0] - 1], customers[TWINS[1] - 1]
     town = next(t for t in TOWNS if t != a[2])
     customers[TWINS[1] - 1] = (b[0], a[1], town) + b[3:5] + (a[1].lower().replace(' ', '_') + '@' + DOMAINS[0],)
-    products = V1["product"] + NEW_PRODUCTS
+    products = FIRST_WEEK["product"] + NEW_PRODUCTS
     price = {p[0]: p[3] for p in products}
     by_cat = {}
     for p in products:
@@ -121,11 +113,11 @@ def v2():
             by_cat.setdefault(p[2], []).append(p[0])
     weight = {c[0]: 6 if c[0] == 1 else 3 if c[0] <= 8 else rng.randint(1, 4) for c in customers}
 
-    # orders: v1's fourteen kept as they are, the rest drawn per day
-    v1_lines = {}
-    for o, p, q in V1["order_item"]:
-        v1_lines.setdefault(o, []).append((p, q))
-    orders = [(day, time, cust, v1_lines[oid]) for oid, cust, day, time in V1["orders"]]
+    # orders: the first week's fourteen kept as they are, the rest drawn per day
+    week_lines = {}
+    for o, p, q in FIRST_WEEK["order_item"]:
+        week_lines.setdefault(o, []).append((p, q))
+    orders = [(day, time, cust, week_lines[oid]) for oid, cust, day, time in FIRST_WEEK["orders"]]
     for d in days():
         day = str(d)
         n = rng.randint(13, 16) if d.weekday() >= 5 else rng.randint(10, 13)
@@ -150,11 +142,11 @@ def v2():
                     seen.add(p)
                     lines.append((p, rng.choices([1, 2, 3], [6, 3, 1])[0]))
             orders.append((day, t, cust, lines))
-    v1_keys = {(day, time) for _, _, day, time in V1["orders"]}
+    week_keys = {(day, time) for _, _, day, time in FIRST_WEEK["orders"]}
     for c in customers:   # chance may leave a customer out: they take a noise order from the busiest one
         if c[0] not in NEVER_ORDERS and all(o[2] != c[0] for o in orders):
             busiest = max(weight, key=lambda k: sum(o[2] == k for o in orders))
-            k = max(i for i, o in enumerate(orders) if o[2] == busiest and o[0] >= c[3] and o[:2] not in v1_keys)
+            k = max(i for i, o in enumerate(orders) if o[2] == busiest and o[0] >= c[3] and o[:2] not in week_keys)
             orders[k] = orders[k][:2] + (c[0],) + orders[k][3:]
     orders.sort()
 
@@ -174,7 +166,7 @@ def v2():
 
     # plant the tie: the second best seller of TIE_CATEGORY catches up with the first (noise lines only),
     # and the other categories keep a single best seller
-    noise = lambda it: (rows[it[0] - 1][2], rows[it[0] - 1][3]) not in v1_keys
+    noise = lambda it: (rows[it[0] - 1][2], rows[it[0] - 1][3]) not in week_keys
     for cat in by_cat:
         total = {p: sum(it[2] for it in items if it[1] == p) for p in by_cat[cat]}
         top = sorted(total, key=lambda p: -total[p])
@@ -202,10 +194,6 @@ def v2():
             "order_item": [tuple(it) for it in items], "refund": refunds}
 
 
-def tables(version):
-    return V1 if version == 1 else v2()
-
-
 def value(v):
     if v is None:
         return 'NULL'
@@ -217,10 +205,10 @@ def value(v):
     return str(v)
 
 
-def script(version):
-    out = list(SCHEMA[version])
-    data = tables(version)
-    for create in SCHEMA[version]:
+def script():
+    out = list(SCHEMA)
+    data = tables()
+    for create in SCHEMA:
         t = create.split()[2]
         rows = ['(' + ','.join(value(v) for v in r) + ')' for r in data[t]]
         k = PER_LINE.get(t, 1)
@@ -230,9 +218,9 @@ def script(version):
     return '\n'.join(out)
 
 
-def conn(version):
+def conn():
     c = sqlite3.connect(':memory:')
-    c.executescript(script(version))
+    c.executescript(script())
     return c
 
 
@@ -250,45 +238,39 @@ def words(n):
     return str(n)
 
 
-def counts(version):
-    c = conn(version)
+def counts():
+    c = conn()
     n = lambda t: c.execute('SELECT COUNT(*) FROM ' + t).fetchone()[0]
-    parts = ['%s customers' % words(n('customer')), '%s products' % words(n('product'))]
-    if version > 1:
-        parts.append('%s staff' % words(n('staff')))
-    parts += ['%s orders' % words(n('orders')), '%s order lines' % words(n('order_item'))]
-    if version > 1:
-        parts.append('%s refunds' % words(n('refund')))
+    parts = ['%s %s' % (words(n(t)), label) for t, label in (('customer', 'customers'), ('product', 'products'),
+             ('staff', 'staff'), ('orders', 'orders'), ('order_item', 'order lines'), ('refund', 'refunds'))]
     return 'The full database is ' + ', '.join(parts[:-1]) + ' and ' + parts[-1] + '.'
 
 
-def check(version=2):
+def check():
     """The build's test of the bakery: keys resolve, ids are dense, the text is ASCII and free of the game, and
-    (v2) every planted case the pages and exercises rely on is in the data."""
+    every planted case the pages and exercises rely on is in the data."""
     import plot
-    s = script(version)
+    s = script()
     s.encode('ascii')
     for w in [t for ch in plot.CHAPTERS for t in ch['tables']] + [c['name'].split()[-1] for c in plot.CAST]:
         assert not re.search(r'\b%s\b' % re.escape(w), s, re.I), w
-    c = conn(version)
+    c = conn()
     one = lambda q: c.execute(q).fetchone()[0]
     col = lambda q: [r[0] for r in c.execute(q)]
     assert not c.execute('PRAGMA foreign_key_check').fetchall()
     for t in col("SELECT name FROM sqlite_master WHERE type = 'table'"):
         if t != 'order_item':
             assert one('SELECT COUNT(*) = MAX(id) AND MIN(id) = 1 FROM ' + t), t + ' ids are dense'
-    if version == 1:
-        return
     # the shape the plan asked for
     assert 35 <= one('SELECT COUNT(*) FROM customer') <= 45 and one('SELECT COUNT(*) FROM product') == 20
     assert 280 <= one('SELECT COUNT(*) FROM orders') <= 320 and 650 <= one('SELECT COUNT(*) FROM order_item') <= 750
-    for oid, cust, day, time in V1['orders']:   # v1's orders, whole, under new ids
+    for oid, cust, day, time in FIRST_WEEK['orders']:   # the first week's orders, whole, under new ids
         got = c.execute('SELECT id FROM orders WHERE customer_id = ? AND day = ? AND time = ?', (cust, day, time)).fetchall()
         assert len(got) == 1, (cust, day, time)
         assert sorted(c.execute('SELECT product_id, quantity FROM order_item WHERE order_id = ?', got[0])) == \
-            sorted((p, q) for o, p, q in V1['order_item'] if o == oid)
-    assert col('SELECT name FROM customer WHERE id <= 8 ORDER BY id') == [r[1] for r in V1['customer']]
-    assert col('SELECT name FROM product WHERE id <= 10 ORDER BY id') == [r[1] for r in V1['product']]
+            sorted((p, q) for o, p, q in FIRST_WEEK['order_item'] if o == oid)
+    assert col('SELECT name FROM customer WHERE id <= 8 ORDER BY id') == [r[1] for r in FIRST_WEEK['customer']]
+    assert col('SELECT name FROM product WHERE id <= 10 ORDER BY id') == [r[1] for r in FIRST_WEEK['product']]
     # days: four weeks, closed on Fridays only, an order on every weekend day
     open_days = col('SELECT DISTINCT day FROM orders ORDER BY day')
     assert open_days == [str(d) for d in days()], 'one closed day a week (Friday), every other day trades'
@@ -359,15 +341,14 @@ SCRIPT_MARK = re.compile(r'(<!-- bakery script: bakery.py -->\n<pre class="scrip
 COUNTS_MARK = re.compile(r'(<!-- bakery counts: bakery.py -->)[\s\S]*?(<!-- /bakery counts -->)')
 
 
-def write(learn_dir, version=None):
+def write(learn_dir):
     """database.html: the script (plain, not coloured: the page is long enough) and the counts sentence."""
-    version = version or LIVE
-    check(version)
+    check()
     path = os.path.join(learn_dir, 'database.html')
     with open(path) as f:
         text = f.read()
-    new = SCRIPT_MARK.sub(lambda m: m.group(1) + html.escape(script(version), quote=False) + m.group(2), text)
-    new = COUNTS_MARK.sub(lambda m: m.group(1) + counts(version) + m.group(2), new)
+    new = SCRIPT_MARK.sub(lambda m: m.group(1) + html.escape(script(), quote=False) + m.group(2), text)
+    new = COUNTS_MARK.sub(lambda m: m.group(1) + counts() + m.group(2), new)
     assert SCRIPT_MARK.search(new) and COUNTS_MARK.search(new), path + ': the bakery markers are missing'
     if new != text:
         with open(path, 'w') as f:
