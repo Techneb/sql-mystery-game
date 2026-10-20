@@ -70,10 +70,10 @@
 .learn > .erd-legend { justify-content: center; }
 /* exercises.html with JavaScript (exercises.js): the game's three columns, schema / terminal / question, wider
    than the article; on a phone the question first, then the terminal, the schema last */
-.learn .workbench { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr) minmax(0, 340px); gap: 16px; align-items: start;
+.learn .workbench { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr) minmax(0, 340px); gap: 10px; align-items: start;
   width: min(1400px, calc(100vw - 32px)); font-size: 16px;
   /* centred on the window by margin, never by transform: a transform would trap the enlarged schema's fixed overlay */
-  margin: 20px 0 28px calc(50% - min(700px, 50vw - 16px)); }
+  margin: 4px 0 28px calc(50% - min(700px, 50vw - 16px)); }   /* tight under the menu row (owner, 2026-10-20) */
 .learn .workbench[hidden] { display: none; }
 .learn .editor pre.sql-hl { margin: 0; padding: 8px 10px; background: none; border-radius: 0; overflow: hidden; }   /* not .learn pre: it sits exactly under the textarea */
 .learn .workbench #sql { min-height: 140px; }
