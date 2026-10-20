@@ -114,3 +114,4 @@
 /* the schema legend sits on the SCHEMA row, between the label and the Enlarge button (owner, 2026-10-20) */
 .wb-schema .label-row .wb-legend { flex: 1; justify-content: center; flex-wrap: nowrap; gap: 10px; margin: 0 8px; }
 @media (max-width: 600px) { .wb-schema .label-row .wb-legend { flex-wrap: wrap; gap: 2px 10px; } }
+.wb-schema .press-box { margin-top: 6px; }   /* close under the schema (owner, 2026-10-20) */
