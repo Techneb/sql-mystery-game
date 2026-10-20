@@ -121,6 +121,10 @@ async function boot() {
   // How to use this page sits above the workbench in the HTML (read without JavaScript); with it, under History.
   const howto = document.querySelector("details.howto");
   if (howto) bench.querySelector(".wb-question").prepend(howto);   // above the question choice (owner, 2026-10-20)
+  // The page title moves, small, to the top of the question column, so the schema and terminal start higher
+  // (owner, 2026-10-20). Without JavaScript it stays the page's own heading.
+  const title = document.querySelector("main h1");
+  if (title) { bench.querySelector(".wb-question").prepend(title); title.classList.add("wb-title"); }
   // The schema's Enlarge button, as in the game: a fixed overlay, closed by the X, a second click or Escape.
   const erdBox = bench.querySelector(".bakery-erd"), erdBtn = $("btn-erd");
   const setErd = large => {
