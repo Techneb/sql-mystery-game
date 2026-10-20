@@ -1101,7 +1101,7 @@ test("exercises: the level shown first and the question each level button select
   assert.match(page, /<details class="howto"><summary class="label">HOW TO USE THIS PAGE<\/summary>/, "closed by default, titled like HISTORY");
   assert.ok(page.indexOf('class="howto"') < page.indexOf('id="workbench"'), "above the workbench in the HTML, read without JavaScript");
   const js = fs.readFileSync(LEARN + "exercises.js", "utf8");
-  assert.match(js, /bench\.querySelector\("\.ex-history"\)\.after\(howto\)/, "the script moves it under History");
+  assert.match(js, /bench\.querySelector\("\.wb-question"\)\.prepend\(howto\)/, "the script moves it above the question choice");
   assert.match(page, /<p id="ex-status" class="ex-status" aria-live="polite" hidden><\/p>/, "no empty frame");
   assert.doesNotMatch(js, /Run a query: the result is checked here|Solved\. Your result matched|Solved\. That is the answer/, "the solved mark says it alone");
   assert.match(page, /<span class="label">SCHEMA<\/span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><\/button>/);
