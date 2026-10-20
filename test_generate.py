@@ -572,7 +572,7 @@ class HandbookResults(unittest.TestCase):
             n += 1
             with self.subTest(f):   # every stale page listed, not just the first
                 self.assertEqual(got, rows, f + ": run python3 bakery.py --paste " + f.split("/")[-1] + ": " + sql)
-        self.assertEqual(n, 107)   # bump when an example is added: a block the regex misses is a block unchecked
+        self.assertEqual(n, 112)   # bump when an example is added: a block the regex misses is a block unchecked
 
     def test_printed_order_does_not_depend_on_scan_order(self):
         for f, sql, rows, got in self.run_all(1):

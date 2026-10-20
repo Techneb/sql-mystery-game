@@ -1015,7 +1015,7 @@ for q in json.load(sys.stdin):
 print(json.dumps(out))`], { input: JSON.stringify(exercises.map((e) => e.sql)), encoding: "utf8" }));
 
 test("exercises: each solution's result marks its own question solved, and no other one", () => {
-  assert.equal(exercises.length, 15);
+  assert.equal(exercises.length, 20);
   exercises.forEach((e, i) => {
     const res = exRun[i];
     assert.equal(res.values.length, e.rows, e.slug + ": the expected row count");
@@ -1048,7 +1048,7 @@ test("exercises: every Try it link names a question; the page keeps its static c
   for (const f of learnPages)
     for (const [, slug] of learnHtml[f].matchAll(/exercises\.html#([\w-]+)/g)) assert.ok(ids.includes(slug), f + " links " + slug);
   const page = learnHtml["exercises.html"];
-  assert.equal((page.match(/<details class="solution">/g) || []).length, 15);
+  assert.equal((page.match(/<details class="solution">/g) || []).length, 20);
   assert.match(page, /<section id="workbench" class="workbench" hidden/, "the interactive part shows only once the script runs");
   assert.match(page, /<script type="module" src="exercises\.js"><\/script>/);
   assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
