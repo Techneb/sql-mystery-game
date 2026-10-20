@@ -49,7 +49,7 @@
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">id</span>, <span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-id">c</span>.<span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span> <span class="sql-kw">ON</span> <span class="sql-id">c</span>.<span class="sql-id">id</span> = <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> = <span class="sql-str">'2026-03-02'</span> <span class="sql-kw">AND</span> <span class="sql-id">o</span>.<span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">o</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>day</th><th>name</th><th>town</th></tr>
@@ -59,70 +59,35 @@
 <tr><td>4</td><td>2026-03-02</td><td>Emma Novak</td><td>Hillcrest</td></tr>
 <tr><td>5</td><td>2026-03-02</td><td>Stefan Lambert</td><td>Old Town</td></tr>
 <tr><td>6</td><td>2026-03-02</td><td>Farid Haddad</td><td>Old Town</td></tr>
-<tr><td>7</td><td>2026-03-02</td><td>David Chen</td><td>Old Town</td></tr>
-<tr><td>8</td><td>2026-03-02</td><td>Vera Bianchi</td><td>Old Town</td></tr>
-<tr><td>9</td><td>2026-03-02</td><td>Zoe Garcia</td><td>Hillcrest</td></tr>
-<tr><td>10</td><td>2026-03-02</td><td>Vera Bianchi</td><td>Old Town</td></tr>
-<tr><td>11</td><td>2026-03-02</td><td>Wen Petrov</td><td>Old Town</td></tr>
-<tr><td>12</td><td>2026-03-02</td><td>Daniel Moreno</td><td>Hillcrest</td></tr>
-<tr><td>13</td><td>2026-03-02</td><td>Alice Turner</td><td>Riverside</td></tr>
 </table>
 <p>An inner join keeps only the pairs that match. An order whose customer is missing would vanish from the result, and so would a customer who never ordered.</p>
 
 <h2>Several joins in a row</h2>
-<p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products and their prices: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code>; <code>HAVING</code> keeps the customers who spent more than 10. The joins bring in the prices that the GROUP BY page's count of pieces lacked.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">spent</span>
+<p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer of Hillcrest spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code>; <code>HAVING</code> keeps the customers who spent more than 40. What they paid is each line's <code>unit_price</code>, the price on the day; the last column prices the same pieces at today's <code>product.price</code> instead, and comes out higher for most of them, because three products rose on Monday 16 March.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>,
+       <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">spent</span>,
+       <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">at_todays_prices</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>      <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>     <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>
-<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">p</span>.<span class="sql-id">price</span>) &gt; <span class="sql-num">10</span>
+<span class="sql-kw">HAVING</span> <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>) &gt; <span class="sql-num">40</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">spent</span> <span class="sql-kw">DESC</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>spent</th></tr>
-<tr><td>Vera Bianchi</td><td>231.0</td></tr>
-<tr><td>Quentin Schmidt</td><td>226.8</td></tr>
-<tr><td>Iris Olsen</td><td>222.9</td></tr>
-<tr><td>Daniel Moreno</td><td>180.1</td></tr>
-<tr><td>Alice Turner</td><td>179.1</td></tr>
-<tr><td>Felix Bianchi</td><td>156.5</td></tr>
-<tr><td>Emma Novak</td><td>146.0</td></tr>
-<tr><td>David Chen</td><td>142.6</td></tr>
-<tr><td>Chloe Martin</td><td>121.5</td></tr>
-<tr><td>Ben Okafor</td><td>121.2</td></tr>
-<tr><td>Grace Lee</td><td>114.1</td></tr>
-<tr><td>Wen Petrov</td><td>101.7</td></tr>
-<tr><td>Yusuf Eriksen</td><td>98.5</td></tr>
-<tr><td>Jonas Eriksen</td><td>90.6</td></tr>
-<tr><td>Farid Haddad</td><td>64.4</td></tr>
-<tr><td>Amira Kowalski</td><td>61.6</td></tr>
-<tr><td>Priya Hughes</td><td>60.6</td></tr>
-<tr><td>Yusuf Moreno</td><td>60.5</td></tr>
-<tr><td>Quentin Jensen</td><td>48.7</td></tr>
-<tr><td>Lena Dubois</td><td>47.5</td></tr>
-<tr><td>Rosa Weber</td><td>46.4</td></tr>
-<tr><td>Lena Schmidt</td><td>45.0</td></tr>
-<tr><td>Oscar Nakamura</td><td>44.5</td></tr>
-<tr><td>Tara Rossi</td><td>43.7</td></tr>
-<tr><td>Bruno Fischer</td><td>41.4</td></tr>
-<tr><td>Stefan Lambert</td><td>41.3</td></tr>
-<tr><td>Kofi Tanaka</td><td>38.9</td></tr>
-<tr><td>Nadia Jensen</td><td>24.8</td></tr>
-<tr><td>Greta Hughes</td><td>22.7</td></tr>
-<tr><td>Zoe Garcia</td><td>22.2</td></tr>
-<tr><td>Hassan Ivanova</td><td>21.2</td></tr>
-<tr><td>Vera Tanaka</td><td>18.7</td></tr>
-<tr><td>Elena Nakamura</td><td>16.2</td></tr>
-<tr><td>Ugo Dubois</td><td>15.8</td></tr>
-<tr><td>Zoe Garcia</td><td>13.8</td></tr>
-<tr><td>Iris Costa</td><td>12.3</td></tr>
+<tr><th>name</th><th>spent</th><th>at_todays_prices</th></tr>
+<tr><td>Daniel Moreno</td><td>179.4</td><td>180.1</td></tr>
+<tr><td>Emma Novak</td><td>144.0</td><td>146.0</td></tr>
+<tr><td>Ben Okafor</td><td>120.8</td><td>121.2</td></tr>
+<tr><td>Jonas Eriksen</td><td>90.4</td><td>90.6</td></tr>
+<tr><td>Lena Dubois</td><td>47.5</td><td>47.5</td></tr>
 </table>
-<p>Two customers spent less and are dropped by <code>HAVING</code>. Hugo Silva, who never ordered, is missing for another reason: an inner join keeps only the rows that match, so he never reaches the grouping (see <a href="#left-join">LEFT JOIN</a> below).</p>
+<p>Four customers of Hillcrest spent less and are dropped by <code>HAVING</code>. Hugo Silva, Greta Rossi and Marco Costa, who never ordered, are missing for another reason: an inner join keeps only the rows that match, so they never reach the grouping (see <a href="#left-join">LEFT JOIN</a> below).</p>
 <p>When you build a query like this, add one join at a time and look at the rows before you group them. If the count of rows jumps unexpectedly, a condition is missing or wrong, and every sum after it will be inflated.</p>
 
 <h2 id="left-join">Keeping the unmatched rows: LEFT JOIN</h2>
-<p><code>LEFT JOIN</code> keeps every row of the table on its left, even when nothing on the right matches. For those rows, the columns of the right-hand table are filled with NULL. That makes it the tool for questions about absence: which customers have never ordered, which products nobody bought. Join, then keep the rows where the right-hand side is NULL.</p>
+<p><code>LEFT JOIN</code> keeps every row of the table on its left, even when nothing on the right matches. For those rows, the columns of the right-hand table are filled with NULL. That makes it the tool for questions about absence: which customers have never ordered, which products nobody bought. Join, then keep the rows where the right-hand side is NULL. Here it finds the one product in the catalogue that was never sold.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">p</span>.<span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
 <span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">product_id</span> = <span class="sql-id">p</span>.<span class="sql-id">id</span>
@@ -132,13 +97,14 @@
 <tr><th>name</th><th>category</th></tr>
 <tr><td>Pistachio financier</td><td>cake</td></tr>
 </table>
-<p>Where you write a condition matters with a left join. A condition on the right-hand table placed in <code>ON</code> limits what may match, and still keeps every left row. The same condition placed in <code>WHERE</code> runs after the join and throws away the rows whose right side is NULL, which turns the left join back into an inner join.</p>
+<p>The same pattern on <code>staff</code> and <code>orders</code> finds Sam Ito, the baker, who never served at the counter. Where you write a condition matters with a left join. A condition on the right-hand table placed in <code>ON</code> limits what may match, and still keeps every left row. The same condition placed in <code>WHERE</code> runs after the join and throws away the rows whose right side is NULL, which turns the left join back into an inner join.</p>
 
 <h2>A table joined to itself</h2>
-<p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the customer who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own.</p>
+<p>Sometimes the pointer leads back to the same table. In the bakery, <code>customer.referred_by</code> holds the id of the customer who recommended the shop. To show each customer next to the customer who referred them, join <code>customer</code> to itself under two different aliases, one playing the newcomer and one the referrer. A left join keeps the customers who came on their own. The first eight customers are enough to see both kinds; Alice Turner brought Chloe Martin, who brought Emma Novak, who brought Farid Haddad, a chain that <a href="ctes.html">CTEs</a> follow to its end.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">newcomer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">customer</span>, <span class="sql-id">referrer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">referred_by</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">newcomer</span>
 <span class="sql-kw">LEFT</span> <span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span> <span class="sql-kw">ON</span> <span class="sql-id">referrer</span>.<span class="sql-id">id</span> = <span class="sql-id">newcomer</span>.<span class="sql-id">referred_by</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">newcomer</span>.<span class="sql-id">joined</span> &lt; <span class="sql-str">'2024-08-01'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">newcomer</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>customer</th><th>referred_by</th></tr>
@@ -150,125 +116,15 @@
 <tr><td>Farid Haddad</td><td>Emma Novak</td></tr>
 <tr><td>Grace Lee</td><td>Ben Okafor</td></tr>
 <tr><td>Hugo Silva</td><td>NULL</td></tr>
-<tr><td>Daniel Moreno</td><td>Grace Lee</td></tr>
-<tr><td>Kofi Tanaka</td><td>NULL</td></tr>
-<tr><td>Quentin Schmidt</td><td>Kofi Tanaka</td></tr>
-<tr><td>Wen Petrov</td><td>Farid Haddad</td></tr>
-<tr><td>Ugo Dubois</td><td>Emma Novak</td></tr>
-<tr><td>Zoe Garcia</td><td>Grace Lee</td></tr>
-<tr><td>Hassan Ivanova</td><td>Chloe Martin</td></tr>
-<tr><td>Rosa Weber</td><td>Hassan Ivanova</td></tr>
-<tr><td>Nadia Jensen</td><td>Chloe Martin</td></tr>
-<tr><td>Priya Hughes</td><td>Kofi Tanaka</td></tr>
-<tr><td>Marco Olsen</td><td>Ben Okafor</td></tr>
-<tr><td>Oscar Nakamura</td><td>Priya Hughes</td></tr>
-<tr><td>Jonas Eriksen</td><td>Grace Lee</td></tr>
-<tr><td>Stefan Lambert</td><td>NULL</td></tr>
-<tr><td>Tara Rossi</td><td>Chloe Martin</td></tr>
-<tr><td>Amira Kowalski</td><td>Grace Lee</td></tr>
-<tr><td>Bruno Fischer</td><td>Hassan Ivanova</td></tr>
-<tr><td>Iris Costa</td><td>NULL</td></tr>
-<tr><td>Zoe Garcia</td><td>NULL</td></tr>
-<tr><td>Vera Bianchi</td><td>Alice Turner</td></tr>
-<tr><td>Yusuf Eriksen</td><td>Zoe Garcia</td></tr>
-<tr><td>Felix Bianchi</td><td>Oscar Nakamura</td></tr>
-<tr><td>Greta Rossi</td><td>Chloe Martin</td></tr>
-<tr><td>Lena Dubois</td><td>Tara Rossi</td></tr>
-<tr><td>Elena Nakamura</td><td>Priya Hughes</td></tr>
-<tr><td>Greta Hughes</td><td>Zoe Garcia</td></tr>
-<tr><td>Marco Costa</td><td>Chloe Martin</td></tr>
-<tr><td>Iris Olsen</td><td>Greta Hughes</td></tr>
-<tr><td>Lena Schmidt</td><td>Grace Lee</td></tr>
-<tr><td>Vera Tanaka</td><td>Kofi Tanaka</td></tr>
-<tr><td>Yusuf Moreno</td><td>Vera Tanaka</td></tr>
-<tr><td>Quentin Jensen</td><td>Hassan Ivanova</td></tr>
 </table>
-<p>Self-joins also compare rows of the same table with each other: two orders by the same customer on the same day, or two customers from the same town. In that case add a condition such as <code>a.id &lt; b.id</code>, so that a row is not paired with itself and each pair appears once rather than twice.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">a</span>.<span class="sql-id">name</span>, <span class="sql-id">b</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">neighbour</span>, <span class="sql-id">a</span>.<span class="sql-id">town</span>
+<p>Self-joins also compare rows of the same table with each other: two orders by the same customer on the same day, or two customers with the same name. In that case add a condition such as <code>a.id &lt; b.id</code>, so that a row is not paired with itself and each pair appears once rather than twice.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">a</span>.<span class="sql-id">id</span>, <span class="sql-id">b</span>.<span class="sql-id">id</span> <span class="sql-kw">AS</span> <span class="sql-id">other_id</span>, <span class="sql-id">a</span>.<span class="sql-id">name</span>, <span class="sql-id">a</span>.<span class="sql-id">town</span>, <span class="sql-id">b</span>.<span class="sql-id">town</span> <span class="sql-kw">AS</span> <span class="sql-id">other_town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">a</span>
-<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">b</span> <span class="sql-kw">ON</span> <span class="sql-id">b</span>.<span class="sql-id">town</span> = <span class="sql-id">a</span>.<span class="sql-id">town</span> <span class="sql-kw">AND</span> <span class="sql-id">a</span>.<span class="sql-id">id</span> &lt; <span class="sql-id">b</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">a</span>.<span class="sql-id">town</span> = <span class="sql-str">'Riverside'</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">b</span> <span class="sql-kw">ON</span> <span class="sql-id">b</span>.<span class="sql-id">name</span> = <span class="sql-id">a</span>.<span class="sql-id">name</span> <span class="sql-kw">AND</span> <span class="sql-id">a</span>.<span class="sql-id">id</span> &lt; <span class="sql-id">b</span>.<span class="sql-id">id</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">a</span>.<span class="sql-id">id</span>, <span class="sql-id">b</span>.<span class="sql-id">id</span>;</code></pre>
 <table class="result">
-<tr><th>name</th><th>neighbour</th><th>town</th></tr>
-<tr><td>Alice Turner</td><td>Chloe Martin</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Grace Lee</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Quentin Schmidt</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Priya Hughes</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Marco Olsen</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Alice Turner</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Grace Lee</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Quentin Schmidt</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Priya Hughes</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Marco Olsen</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Chloe Martin</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Quentin Schmidt</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Priya Hughes</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Marco Olsen</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Grace Lee</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Priya Hughes</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Marco Olsen</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Quentin Schmidt</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Marco Olsen</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Priya Hughes</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Oscar Nakamura</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Marco Olsen</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Tara Rossi</td><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Tara Rossi</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Tara Rossi</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Tara Rossi</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Tara Rossi</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Zoe Garcia</td><td>Elena Nakamura</td><td>Riverside</td></tr>
-<tr><td>Zoe Garcia</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Zoe Garcia</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Zoe Garcia</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Elena Nakamura</td><td>Greta Hughes</td><td>Riverside</td></tr>
-<tr><td>Elena Nakamura</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Elena Nakamura</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Greta Hughes</td><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Greta Hughes</td><td>Quentin Jensen</td><td>Riverside</td></tr>
-<tr><td>Iris Olsen</td><td>Quentin Jensen</td><td>Riverside</td></tr>
+<tr><th>id</th><th>other_id</th><th>name</th><th>town</th><th>other_town</th></tr>
+<tr><td>14</td><td>27</td><td>Zoe Garcia</td><td>Hillcrest</td><td>Riverside</td></tr>
 </table>
 
 <h2>Common mistakes</h2>
