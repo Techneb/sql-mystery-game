@@ -10,8 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../style.css">
 <link rel="stylesheet" href="learn.css">
+<script src="theme.js"></script>
 </head>
 <body>
+<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition"><svg class="icon moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg><span class="btn-text">Night edition</span></button>
 <header class="masthead">
   <div class="mast-title">LE PETIT JOURNAL</div>
   <div class="mast-sub">THE CLERK'S HANDBOOK</div>
@@ -42,6 +44,14 @@
 <img class="vignette" src="handbook-book.webp" width="440" height="338" alt="" decoding="async">
 <p class="lede">Plain-English pages on the SQL that <a href="../">The Ritz Affair</a> practises, for a first SQL course. Every example runs on a small bakery database, never the game's archives, so nothing here gives a chapter away. The game's terminal follows PostgreSQL's rules; the last page, <a href="grammar.html">The Grammar of SQL</a>, sums them up.</p>
 <div class="toc-groups">
+<h2 class="toc-head">Exercises</h2>
+<p class="muted toc-what">Practise: write the queries yourself, in the page.</p>
+<a class="toc-card" href="exercises.html"><b>SQL exercises with solutions</b><span>Fifteen graded questions in three levels, from a first filter to a recursive chain: run your query in the page's terminal and it is checked against the question. Solutions stay hidden until you open them.</span></a>
+<h2 class="toc-head">Grammar</h2>
+<p class="muted toc-what">Reference: the rules the game's terminal follows, each linked to the chapter that explains it.</p>
+<ul class="toc">
+<li><a href="grammar.html">The Grammar of SQL</a>: grouping, quotes, types and conditions, done right.</li>
+</ul>
 <h2 class="toc-head">Learning chapters</h2>
 <p class="muted toc-what">Read: one construct per page, with examples on the bakery database.</p>
 <ol class="toc">
@@ -60,14 +70,6 @@
 <li><a href="window-functions.html">Window functions: RANK and LAG</a>: ranking rows and comparing with the previous one.</li>
 <li><a href="ctes.html">CTEs and WITH RECURSIVE</a>: named steps and following chains.</li>
 </ol>
-<h2 class="toc-head">Exercises</h2>
-<p class="muted toc-what">Practise: write the queries yourself, in the page.</p>
-<a class="toc-card" href="exercises.html"><b>SQL exercises with solutions</b><span>Fifteen graded questions in three levels, from a first filter to a recursive chain: run your query in the page's terminal and it is checked against the question. Solutions stay hidden until you open them.</span></a>
-<h2 class="toc-head">Grammar</h2>
-<p class="muted toc-what">Reference: the rules the game's terminal follows, each linked to the chapter that explains it.</p>
-<ul class="toc">
-<li><a href="grammar.html">The Grammar of SQL</a>: grouping, quotes, types and conditions, done right.</li>
-</ul>
 </div><!-- /toc-groups -->
 <nav class="learn-pager"><span></span><a class="next" href="database.html">Next: The bakery database</a></nav>
 </main>

@@ -54,7 +54,9 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-story::first-letter { float: left; font: 900 48px/.85 "Playfair Display", serif; margin: 4px 8px 0 0; }
 .landing-kicker { font: italic 400 21px/1.3 "Cormorant Garamond", Georgia, serif; margin: 16px 0 0; }
 .landing-foot { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
-.landing-foot a, .mast-sub a { color: inherit; }
+/* the handbook's split: its header nav under the masthead lines, the rest of its footer in .landing-foot */
+.landing-nav { margin-top: 6px; }
+.landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }

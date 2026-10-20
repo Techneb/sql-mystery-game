@@ -501,7 +501,11 @@ const LEARN = "site/learn/";
 const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
 const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
 // the index lists its pages in three groups (chapters, exercises, grammar), in reading order
-const readingOrder = ["index.html", ...[...learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1].matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1])];
+// Reading order (the pagers): the chapters list, then the exercises card, then grammar, whatever order the index shows its groups in.
+const tocGroups = learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1];
+const tocLinks = (html) => [...html.matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1]);
+const chapterLinks = tocLinks(tocGroups.match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1]);
+const readingOrder = ["index.html", ...chapterLinks, ...tocLinks(tocGroups).filter((h) => !chapterLinks.includes(h))];
 const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
 const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
@@ -535,6 +539,32 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
     assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), foot, f + " footer");
     assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
   }
+});
+
+test("landing: the handbook's header nav under the masthead, the rest of its footer in .landing-foot", () => {
+  const page = fs.readFileSync("site/index.html", "utf8");
+  const labels = (h) => [...h.matchAll(/<a href="[^"]+"(?: id="[^"]+")?>([^<]*)<\/a>/g)].map((m) => m[1]);
+  const nav = labels(one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav"));
+  const foot = labels(one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer"));
+  assert.deepEqual(labels(one(page, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "landing nav")), nav);
+  const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");
+  assert.match(landingFoot, /<span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
+  assert.deepEqual(labels(landingFoot).filter((t) => t !== "Statistics"), foot.filter((t) => !nav.includes(t)));
+});
+
+test("Day/Night button: the game's button on every handbook page, the desk and the board, theme.js draws the game's icons", () => {
+  const game = fs.readFileSync("site/index.html", "utf8");
+  const btn = one(game, /\n(<button id="btn-theme"[^\n]*<\/button>)\n/, "the game's button");
+  assert.equal(btn, `<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition">${themeButtonHtml("day")}</button>`);
+  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8") };
+  for (const [f, html] of Object.entries(pages)) {
+    assert.ok(html.includes("<body>\n" + btn + "\n"), f + ": the same button, first in the body");
+    const head = html.slice(0, html.indexOf("</head>"));
+    assert.ok(head.includes(f.startsWith("../") ? '<script src="learn/theme.js"></script>' : '<script src="theme.js"></script>'), f + ": theme.js in <head>, no defer (no flash)");
+  }
+  const js = fs.readFileSync("site/learn/theme.js", "utf8").replace(/' \+ A \+ '/g, one(themeButtonHtml("day"), /<svg class="icon moon" ([^>]*)>/, "attrs"));
+  for (const mood of ["day", "night"]) assert.ok(js.includes(one(themeButtonHtml(mood), /^(<svg[\s\S]*<\/svg>)/, mood)), mood + " icon matches app.js");
+  assert.match(js, /"ritz\.theme"/, "the game's key");
 });
 
 test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
@@ -1068,10 +1098,10 @@ test("exercises: the level shown first and the question each level button select
   const levels = [...page.matchAll(/<h2>([^<]*)<\/h2>\n<p class="exercise"/g)].map((m) => m[1]);
   assert.deepEqual(levels, ["Warm-up", "Practice", "Challenge"], "each level heading opens its questions");
   assert.match(page, /<div id="ex-static">\n<h2>Warm-up<\/h2>/, "the static questions, hidden by the script only");
-  assert.match(page, /<details class="howto"><summary>How to use this page<\/summary>/, "closed by default");
+  assert.match(page, /<details class="howto"><summary class="label">HOW TO USE THIS PAGE<\/summary>/, "closed by default, titled like HISTORY");
   assert.ok(page.indexOf('class="howto"') < page.indexOf('id="workbench"'), "above the workbench in the HTML, read without JavaScript");
   const js = fs.readFileSync(LEARN + "exercises.js", "utf8");
-  assert.match(js, /bench\.querySelector\("\.ex-history"\)\.after\(howto\)/, "the script moves it under History");
+  assert.match(js, /bench\.querySelector\("\.wb-question"\)\.prepend\(howto\)/, "the script moves it above the question choice");
   assert.match(page, /<p id="ex-status" class="ex-status" aria-live="polite" hidden><\/p>/, "no empty frame");
   assert.doesNotMatch(js, /Run a query: the result is checked here|Solved\. Your result matched|Solved\. That is the answer/, "the solved mark says it alone");
   assert.match(page, /<span class="label">SCHEMA<\/span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><\/button>/);

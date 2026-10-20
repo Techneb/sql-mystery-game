@@ -120,7 +120,7 @@ async function boot() {
   $("ex-static").hidden = true;
   // How to use this page sits above the workbench in the HTML (read without JavaScript); with it, under History.
   const howto = document.querySelector("details.howto");
-  if (howto) bench.querySelector(".ex-history").after(howto);
+  if (howto) bench.querySelector(".wb-question").prepend(howto);   // above the question choice (owner, 2026-10-20)
   // The schema's Enlarge button, as in the game: a fixed overlay, closed by the X, a second click or Escape.
   const erdBox = bench.querySelector(".bakery-erd"), erdBtn = $("btn-erd");
   const setErd = large => {
