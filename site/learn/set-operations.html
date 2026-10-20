@@ -43,489 +43,142 @@
 
 <h2>UNION: one list from two queries</h2>
 <p>Write two complete <code>SELECT</code> statements and put <code>UNION</code> between them: the result holds the rows of the first followed by the rows of the second, with duplicates removed. Each half can read its own tables and use its own conditions, which is what makes it useful when one <code>WHERE</code> cannot say both things at once.</p>
-<p>The examples use the bakery database from the <a href="database.html">bakery database page</a>, whose week of trade ends with the weekend of Saturday 7 and Sunday 8 March. Say the bakery wants to post a leaflet to everyone who lives in Old Town, and to everyone who ordered at the weekend. The first half reads one table, the second needs a join.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">town</span> = <span class="sql-str">'Old Town'</span>
+<p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Say the bakery wants to send a voucher to everyone Alice Turner brought to the shop (the customers whose <code>referred_by</code> is her id, 1), and to everyone who was given a refund. The first half reads one table, the second needs two joins.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
 <span class="sql-kw">UNION</span>
 <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">refund</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span> <span class="sql-kw">ON</span> <span class="sql-id">r</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Alice Turner</td></tr>
-<tr><td>Amira Kowalski</td></tr>
 <tr><td>Ben Okafor</td></tr>
-<tr><td>Bruno Fischer</td></tr>
 <tr><td>Chloe Martin</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>Elena Nakamura</td></tr>
 <tr><td>Emma Novak</td></tr>
-<tr><td>Farid Haddad</td></tr>
 <tr><td>Felix Bianchi</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Greta Hughes</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Iris Costa</td></tr>
-<tr><td>Iris Olsen</td></tr>
 <tr><td>Jonas Eriksen</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Nadia Jensen</td></tr>
 <tr><td>Oscar Nakamura</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Quentin Jensen</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Ugo Dubois</td></tr>
 <tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Tanaka</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Zoe Garcia</td></tr>
 </table>
-<p>David Chen lives in Old Town and ordered at the weekend, so both halves return him, and Alice Turner ordered twice that weekend; each still appears once. The single <code>ORDER BY</code> at the very end sorts the whole result, not the second half: a set operation takes no <code>ORDER BY</code> or <code>LIMIT</code> inside its halves, only one pair after the last of them.</p>
+<p>Chloe Martin and Vera Bianchi were brought by Alice and also refunded, so both halves return them, and Chloe had two refunds on the same order, so the second half returns her twice; each still appears once. Alice Turner herself is on the list for a refund of her own. The single <code>ORDER BY</code> at the very end sorts the whole result, not the second half: a set operation takes no <code>ORDER BY</code> or <code>LIMIT</code> inside its halves, only one pair after the last of them.</p>
 
 <h2>UNION ALL: keeping every row</h2>
-<p><code>UNION ALL</code> stacks the two results as they are. Nothing is compared, so nothing is removed, and it is also the cheaper of the two, since removing duplicates means sorting or hashing every row. Here is the same leaflet list with <code>UNION ALL</code>.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">town</span> = <span class="sql-str">'Old Town'</span>
+<p><code>UNION ALL</code> stacks the two results as they are. Nothing is compared, so nothing is removed, and it is also the cheaper of the two, since removing duplicates means sorting or hashing every row. Here is the same voucher list with <code>UNION ALL</code>.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
 <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
 <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">refund</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span> <span class="sql-kw">ON</span> <span class="sql-id">r</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Alice Turner</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
-<tr><td>Amira Kowalski</td></tr>
 <tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Ben Okafor</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Bruno Fischer</td></tr>
-<tr><td>Bruno Fischer</td></tr>
 <tr><td>Chloe Martin</td></tr>
 <tr><td>Chloe Martin</td></tr>
 <tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Chloe Martin</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>Daniel Moreno</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>David Chen</td></tr>
-<tr><td>Elena Nakamura</td></tr>
-<tr><td>Elena Nakamura</td></tr>
 <tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Emma Novak</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Farid Haddad</td></tr>
 <tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Greta Hughes</td></tr>
-<tr><td>Greta Hughes</td></tr>
-<tr><td>Greta Hughes</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Hassan Ivanova</td></tr>
-<tr><td>Iris Costa</td></tr>
-<tr><td>Iris Costa</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Iris Olsen</td></tr>
 <tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Jonas Eriksen</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Kofi Tanaka</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Lena Dubois</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Lena Schmidt</td></tr>
-<tr><td>Nadia Jensen</td></tr>
-<tr><td>Nadia Jensen</td></tr>
-<tr><td>Nadia Jensen</td></tr>
 <tr><td>Oscar Nakamura</td></tr>
-<tr><td>Oscar Nakamura</td></tr>
-<tr><td>Oscar Nakamura</td></tr>
-<tr><td>Oscar Nakamura</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Quentin Jensen</td></tr>
-<tr><td>Quentin Jensen</td></tr>
-<tr><td>Quentin Jensen</td></tr>
-<tr><td>Quentin Jensen</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Ugo Dubois</td></tr>
-<tr><td>Ugo Dubois</td></tr>
 <tr><td>Vera Bianchi</td></tr>
 <tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Vera Tanaka</td></tr>
-<tr><td>Vera Tanaka</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Yusuf Moreno</td></tr>
-<tr><td>Zoe Garcia</td></tr>
-<tr><td>Zoe Garcia</td></tr>
 </table>
-<p>Alice Turner comes twice from the second half alone, one row per weekend order, and David Chen once from each half. Which one to use depends on the question. For a list of people, <code>UNION</code>. For events you will count or add up afterwards, <code>UNION ALL</code>: two equal amounts on the same day are two payments, and <code>UNION</code> would quietly keep one.</p>
-<p>Duplicates are whole rows. Add a column saying why each name is on the list, and David Chen's two rows are no longer equal, so even <code>UNION</code> keeps both. Alice Turner's two weekend rows are still equal, and <code>UNION</code> still merges them.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-str">'lives in Old Town'</span> <span class="sql-kw">AS</span> <span class="sql-id">reason</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">town</span> = <span class="sql-str">'Old Town'</span>
+<p>Chloe Martin now comes three times, once from the first half and twice from the second, one row per refund, and Vera Bianchi once from each half. Which one to use depends on the question. For a list of people, <code>UNION</code>. For events you will count or add up afterwards, <code>UNION ALL</code>: two equal amounts on the same day are two payments, and <code>UNION</code> would quietly keep one.</p>
+<p>Duplicates are whole rows. Add a column saying why each name is on the list, and the rows Chloe Martin and Vera Bianchi get from the two halves are no longer equal, so even <code>UNION</code> keeps both. Chloe's two refund rows are still equal, and <code>UNION</code> still merges them.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-str">'referred by Alice'</span> <span class="sql-kw">AS</span> <span class="sql-id">reason</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
 <span class="sql-kw">UNION</span>
-<span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-str">'ordered at the weekend'</span>
+<span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-str">'had a refund'</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">refund</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span> <span class="sql-kw">ON</span> <span class="sql-id">r</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>, <span class="sql-id">reason</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>reason</th></tr>
-<tr><td>Alice Turner</td><td>ordered at the weekend</td></tr>
-<tr><td>Amira Kowalski</td><td>lives in Old Town</td></tr>
-<tr><td>Amira Kowalski</td><td>ordered at the weekend</td></tr>
-<tr><td>Ben Okafor</td><td>ordered at the weekend</td></tr>
-<tr><td>Bruno Fischer</td><td>lives in Old Town</td></tr>
-<tr><td>Bruno Fischer</td><td>ordered at the weekend</td></tr>
-<tr><td>Chloe Martin</td><td>ordered at the weekend</td></tr>
-<tr><td>Daniel Moreno</td><td>ordered at the weekend</td></tr>
-<tr><td>David Chen</td><td>lives in Old Town</td></tr>
-<tr><td>David Chen</td><td>ordered at the weekend</td></tr>
-<tr><td>Elena Nakamura</td><td>ordered at the weekend</td></tr>
-<tr><td>Emma Novak</td><td>ordered at the weekend</td></tr>
-<tr><td>Farid Haddad</td><td>lives in Old Town</td></tr>
-<tr><td>Farid Haddad</td><td>ordered at the weekend</td></tr>
-<tr><td>Felix Bianchi</td><td>lives in Old Town</td></tr>
-<tr><td>Felix Bianchi</td><td>ordered at the weekend</td></tr>
-<tr><td>Grace Lee</td><td>ordered at the weekend</td></tr>
-<tr><td>Greta Hughes</td><td>ordered at the weekend</td></tr>
-<tr><td>Hassan Ivanova</td><td>lives in Old Town</td></tr>
-<tr><td>Hassan Ivanova</td><td>ordered at the weekend</td></tr>
-<tr><td>Iris Costa</td><td>lives in Old Town</td></tr>
-<tr><td>Iris Costa</td><td>ordered at the weekend</td></tr>
-<tr><td>Iris Olsen</td><td>ordered at the weekend</td></tr>
-<tr><td>Jonas Eriksen</td><td>ordered at the weekend</td></tr>
-<tr><td>Kofi Tanaka</td><td>ordered at the weekend</td></tr>
-<tr><td>Lena Dubois</td><td>ordered at the weekend</td></tr>
-<tr><td>Lena Schmidt</td><td>lives in Old Town</td></tr>
-<tr><td>Lena Schmidt</td><td>ordered at the weekend</td></tr>
-<tr><td>Nadia Jensen</td><td>ordered at the weekend</td></tr>
-<tr><td>Oscar Nakamura</td><td>ordered at the weekend</td></tr>
-<tr><td>Priya Hughes</td><td>ordered at the weekend</td></tr>
-<tr><td>Quentin Jensen</td><td>ordered at the weekend</td></tr>
-<tr><td>Quentin Schmidt</td><td>ordered at the weekend</td></tr>
-<tr><td>Rosa Weber</td><td>lives in Old Town</td></tr>
-<tr><td>Rosa Weber</td><td>ordered at the weekend</td></tr>
-<tr><td>Stefan Lambert</td><td>lives in Old Town</td></tr>
-<tr><td>Stefan Lambert</td><td>ordered at the weekend</td></tr>
-<tr><td>Tara Rossi</td><td>ordered at the weekend</td></tr>
-<tr><td>Ugo Dubois</td><td>ordered at the weekend</td></tr>
-<tr><td>Vera Bianchi</td><td>lives in Old Town</td></tr>
-<tr><td>Vera Bianchi</td><td>ordered at the weekend</td></tr>
-<tr><td>Vera Tanaka</td><td>lives in Old Town</td></tr>
-<tr><td>Vera Tanaka</td><td>ordered at the weekend</td></tr>
-<tr><td>Wen Petrov</td><td>lives in Old Town</td></tr>
-<tr><td>Wen Petrov</td><td>ordered at the weekend</td></tr>
-<tr><td>Yusuf Eriksen</td><td>lives in Old Town</td></tr>
-<tr><td>Yusuf Eriksen</td><td>ordered at the weekend</td></tr>
-<tr><td>Yusuf Moreno</td><td>lives in Old Town</td></tr>
-<tr><td>Yusuf Moreno</td><td>ordered at the weekend</td></tr>
-<tr><td>Zoe Garcia</td><td>ordered at the weekend</td></tr>
+<tr><td>Alice Turner</td><td>had a refund</td></tr>
+<tr><td>Ben Okafor</td><td>referred by Alice</td></tr>
+<tr><td>Chloe Martin</td><td>had a refund</td></tr>
+<tr><td>Chloe Martin</td><td>referred by Alice</td></tr>
+<tr><td>Emma Novak</td><td>had a refund</td></tr>
+<tr><td>Felix Bianchi</td><td>had a refund</td></tr>
+<tr><td>Jonas Eriksen</td><td>had a refund</td></tr>
+<tr><td>Oscar Nakamura</td><td>had a refund</td></tr>
+<tr><td>Vera Bianchi</td><td>had a refund</td></tr>
+<tr><td>Vera Bianchi</td><td>referred by Alice</td></tr>
 </table>
 
 <h2>Matching the columns</h2>
-<p>Both halves must return the same number of columns, and the columns are matched by position, not by name: the first column of one goes under the first column of the other, whatever each is called. The result takes its column names from the first half, which is why only the first half above says <code>AS reason</code>. Matched columns should also hold the same kind of value. This timeline of Alice Turner's dealings with the bakery stacks a date from <code>customer</code> on dates from <code>orders</code>, text on text, with a label to tell them apart.</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">joined</span> <span class="sql-kw">AS</span> <span class="sql-id">day</span>, <span class="sql-str">'joined'</span> <span class="sql-kw">AS</span> <span class="sql-id">event</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">1</span>
+<p>Both halves must return the same number of columns, and the columns are matched by position, not by name: the first column of one goes under the first column of the other, whatever each is called. The result takes its column names from the first half, which is why only the first half above says <code>AS reason</code>. Matched columns should also hold the same kind of value. This timeline of Oscar Nakamura's dealings with the bakery stacks a date from <code>customer</code> on dates from <code>orders</code> and <code>refund</code>, text on text, with a label to tell them apart. A third half is one more <code>UNION ALL</code>; the final <code>ORDER BY</code> sorts all three together.</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">joined</span> <span class="sql-kw">AS</span> <span class="sql-id">day</span>, <span class="sql-str">'joined'</span> <span class="sql-kw">AS</span> <span class="sql-id">event</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">20</span>
 <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
-<span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-str">'ordered'</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">WHERE</span> <span class="sql-id">customer_id</span> = <span class="sql-num">1</span>
-<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
+<span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-str">'ordered'</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">WHERE</span> <span class="sql-id">customer_id</span> = <span class="sql-num">20</span>
+<span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
+<span class="sql-kw">SELECT</span> <span class="sql-id">r</span>.<span class="sql-id">day</span>, <span class="sql-str">'refunded'</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">refund</span> <span class="sql-kw">AS</span> <span class="sql-id">r</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">id</span> = <span class="sql-id">r</span>.<span class="sql-id">order_id</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-num">20</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>, <span class="sql-id">event</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>event</th></tr>
-<tr><td>2024-01-15</td><td>joined</td></tr>
-<tr><td>2026-03-02</td><td>ordered</td></tr>
-<tr><td>2026-03-02</td><td>ordered</td></tr>
-<tr><td>2026-03-04</td><td>ordered</td></tr>
-<tr><td>2026-03-04</td><td>ordered</td></tr>
-<tr><td>2026-03-07</td><td>ordered</td></tr>
-<tr><td>2026-03-08</td><td>ordered</td></tr>
-<tr><td>2026-03-08</td><td>ordered</td></tr>
-<tr><td>2026-03-14</td><td>ordered</td></tr>
-<tr><td>2026-03-15</td><td>ordered</td></tr>
-<tr><td>2026-03-16</td><td>ordered</td></tr>
-<tr><td>2026-03-19</td><td>ordered</td></tr>
+<tr><td>2025-05-25</td><td>joined</td></tr>
+<tr><td>2026-03-10</td><td>ordered</td></tr>
+<tr><td>2026-03-11</td><td>ordered</td></tr>
+<tr><td>2026-03-11</td><td>ordered</td></tr>
+<tr><td>2026-03-12</td><td>refunded</td></tr>
 <tr><td>2026-03-21</td><td>ordered</td></tr>
-<tr><td>2026-03-21</td><td>ordered</td></tr>
-<tr><td>2026-03-21</td><td>ordered</td></tr>
-<tr><td>2026-03-22</td><td>ordered</td></tr>
-<tr><td>2026-03-23</td><td>ordered</td></tr>
-<tr><td>2026-03-23</td><td>ordered</td></tr>
-<tr><td>2026-03-24</td><td>ordered</td></tr>
-<tr><td>2026-03-26</td><td>ordered</td></tr>
-<tr><td>2026-03-26</td><td>ordered</td></tr>
 </table>
 <p>A label column like <code>event</code> is the usual companion of <code>UNION ALL</code>: once the rows are stacked, it is the only way left to know which half each came from. The same stacking is the first step of a <a href="ctes.html">recursive CTE</a>, whose anchor and recursive part are joined by <code>UNION ALL</code>.</p>
 
 <h2>INTERSECT: the rows both results share</h2>
-<p><code>INTERSECT</code> keeps only the rows that appear in both results, once each. Which customers ordered during the week and came back at the weekend?</p>
+<p><code>INTERSECT</code> keeps only the rows that appear in both results, once each. Which customers of Hillcrest ordered both on a weekday and at the weekend?</p>
+<p>No column says which day of the week a date is, and the functions that compute it differ from one database to the next (PostgreSQL's <code>EXTRACT(DOW FROM ...)</code>, SQLite's <code>strftime</code>, which the game's terminal refuses). Here a little arithmetic does it. Every order falls in March 2026, whose Saturdays are the 7th, 14th, 21st and 28th, so the day of the month divided by 7 leaves 0 on a Saturday and 1 on a Sunday: <code>CAST(substr(o.day, 9, 2) AS INTEGER) % 7 IN (0, 1)</code> means "at the weekend" (<code>substr</code> and <code>CAST</code> as on the <a href="dates-times.html">dates page</a>), and <code>NOT IN (0, 1)</code> means a weekday, Monday to Thursday, since the shop is closed on Fridays. A date bound such as <code>day &gt;= '2026-03-07'</code> is not "the weekend": it is every day from the first Saturday on, weekdays of the three later weeks included.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
+  <span class="sql-kw">AND</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) % <span class="sql-num">7</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-num">0</span>, <span class="sql-num">1</span>)
 <span class="sql-kw">INTERSECT</span>
 <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">c</span>.<span class="sql-id">town</span> = <span class="sql-str">'Hillcrest'</span>
+  <span class="sql-kw">AND</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) % <span class="sql-num">7</span> <span class="sql-kw">IN</span> (<span class="sql-num">0</span>, <span class="sql-num">1</span>)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
-<tr><td>Alice Turner</td></tr>
 <tr><td>Ben Okafor</td></tr>
-<tr><td>Chloe Martin</td></tr>
 <tr><td>Daniel Moreno</td></tr>
-<tr><td>David Chen</td></tr>
 <tr><td>Emma Novak</td></tr>
-<tr><td>Farid Haddad</td></tr>
-<tr><td>Felix Bianchi</td></tr>
-<tr><td>Grace Lee</td></tr>
-<tr><td>Iris Olsen</td></tr>
-<tr><td>Nadia Jensen</td></tr>
-<tr><td>Priya Hughes</td></tr>
-<tr><td>Quentin Schmidt</td></tr>
-<tr><td>Rosa Weber</td></tr>
-<tr><td>Stefan Lambert</td></tr>
-<tr><td>Tara Rossi</td></tr>
-<tr><td>Vera Bianchi</td></tr>
-<tr><td>Wen Petrov</td></tr>
-<tr><td>Yusuf Eriksen</td></tr>
-<tr><td>Zoe Garcia</td></tr>
+<tr><td>Jonas Eriksen</td></tr>
+<tr><td>Kofi Tanaka</td></tr>
+<tr><td>Lena Dubois</td></tr>
+<tr><td>Ugo Dubois</td></tr>
 </table>
-<p>A single query with <code>WHERE o.day &lt; '2026-03-07' AND o.day &gt;= '2026-03-07'</code> would return nothing: one order cannot fall on both sides of the date. The question is about two different rows of the same customer, and <code>INTERSECT</code> compares the two lists of names instead of a single row with itself. <code>EXISTS</code> or a <a href="joins.html">self-join</a> can ask the same thing.</p>
+<p>A single query whose <code>WHERE</code> asks for both, <code>% 7 NOT IN (0, 1) AND % 7 IN (0, 1)</code>, would return nothing: one order cannot fall both on a weekday and at the weekend. The question is about two different rows of the same customer, and <code>INTERSECT</code> compares the two lists of names instead of a single row with itself. <code>EXISTS</code> or a <a href="joins.html">self-join</a> can ask the same thing.</p>
 
 <h2>EXCEPT: the rows of one but not the other</h2>
-<p><code>EXCEPT</code> keeps the rows of the first result that the second does not contain. Which customers ordered during the week but never at the weekend?</p>
+<p><code>EXCEPT</code> keeps the rows of the first result that the second does not contain. Which customers ordered on a weekday but never at the weekend? This time over every town.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) % <span class="sql-num">7</span> <span class="sql-kw">NOT</span> <span class="sql-kw">IN</span> (<span class="sql-num">0</span>, <span class="sql-num">1</span>)
 <span class="sql-kw">EXCEPT</span>
 <span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">o</span>.<span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-07'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-num">9</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) % <span class="sql-num">7</span> <span class="sql-kw">IN</span> (<span class="sql-num">0</span>, <span class="sql-num">1</span>)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
+<tr><td>Nadia Jensen</td></tr>
+<tr><td>Quentin Jensen</td></tr>
+<tr><td>Vera Tanaka</td></tr>
 </table>
-<p>Unlike <code>UNION</code> and <code>INTERSECT</code>, <code>EXCEPT</code> is not symmetrical: swap the halves and the question becomes "at the weekend but never during the week", whose answer is Grace Lee alone. It is another way of asking about a missing row, alongside <code>NOT EXISTS</code> and <code>NOT IN</code> on the <a href="subqueries.html">subqueries page</a>, and unlike <code>NOT IN</code> it treats two NULLs as equal, so a NULL in the second result does not empty the answer.</p>
-<p>Names work as the compared column here because no two customers share one. When two different people could have the same name, compare the ids and join the names back afterwards, or the set operation will treat them as one.</p>
+<p>Unlike <code>UNION</code> and <code>INTERSECT</code>, <code>EXCEPT</code> is not symmetrical: swap the halves and the question becomes "at the weekend but never during the week", whose answer, compared by id as the next paragraph explains, is Elena Nakamura, Greta Hughes, Iris Costa and a Zoe Garcia. It is another way of asking about a missing row, alongside <code>NOT EXISTS</code> and <code>NOT IN</code> on the <a href="subqueries.html">subqueries page</a>, and unlike <code>NOT IN</code> it treats two NULLs as equal, so a NULL in the second result does not empty the answer.</p>
+<p>The answer above is one name short. Two different customers are called Zoe Garcia: the one in Hillcrest (id 14) came only on weekdays, the one in Riverside (id 27) only at weekends. The halves compare names, so the Riverside Zoe's weekend orders remove the Hillcrest Zoe from the result. Select <code>c.id, c.name</code> in both halves instead and the two Zoes are different rows again: the answer becomes four, Zoe Garcia (id 14) included. Whenever two people could share a name, compare the ids, and join the names back afterwards if you need them.</p>
 
 <h2>Common mistakes</h2>
 <p>Halves with a different number of columns, which every database refuses. Columns in a different order in each half, which runs and stacks towns under names. A text column matched with a number, which PostgreSQL refuses and SQLite quietly stacks. An <code>ORDER BY</code> at the end of the first half, which is a syntax error: the only one goes after the last half. Using <code>UNION</code> where duplicates are real events to count, or <code>UNION ALL</code> where a list of people was meant. Chaining several different operators without thinking about the order they run in: PostgreSQL works out <code>INTERSECT</code> first, SQLite reads them from left to right, so name each step in a <a href="ctes.html">CTE</a> rather than rely on either.</p>

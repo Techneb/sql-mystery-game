@@ -70,56 +70,34 @@
 <tr><td>Focaccia</td><td>3.6</td><td>0.73</td></tr>
 <tr><td>Carrot cake slice</td><td>3.2</td><td>0.33</td></tr>
 </table>
-<p>The same subquery appears twice, once to filter and once to display the difference; both evaluate to the same 2.84. A scalar subquery must return at most one row and one column. With no row it gives NULL. With several rows PostgreSQL stops with an error ("more than one row returned by a subquery used as an expression"), while SQLite quietly takes the first row and carries on, which is worse: the query runs and the answer is wrong. If a subquery could ever return more than one row, it does not belong after <code>=</code> or <code>&gt;</code>.</p>
+<p>The same subquery appears twice, once to filter and once to display the difference; both evaluate to the same 2.87. A scalar subquery must return at most one row and one column. With no row it gives NULL. With several rows PostgreSQL stops with an error ("more than one row returned by a subquery used as an expression"), while SQLite quietly takes the first row and carries on, which is worse: the query runs and the answer is wrong. If a subquery could ever return more than one row, it does not belong after <code>=</code> or <code>&gt;</code>.</p>
 
 <h2>A list: IN</h2>
-<p><code>x IN (subquery)</code> is true when <code>x</code> equals one of the values the subquery returns. Which customers bought at least one pastry? The subquery walks from the order lines to the orders and collects the customer ids; the outer query lists those customers.</p>
+<p><code>x IN (subquery)</code> is true when <code>x</code> equals one of the values the subquery returns. Which customers bought a Hot cross bun, the pastry added to the shelves on Monday 16 March? The subquery walks from the order lines to the orders and collects the customer ids; the outer query lists those customers.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> <span class="sql-kw">IN</span> (<span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>
              <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
              <span class="sql-kw">JOIN</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span> <span class="sql-kw">ON</span> <span class="sql-id">oi</span>.<span class="sql-id">order_id</span> = <span class="sql-id">o</span>.<span class="sql-id">id</span>
              <span class="sql-kw">JOIN</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span> <span class="sql-kw">ON</span> <span class="sql-id">p</span>.<span class="sql-id">id</span> = <span class="sql-id">oi</span>.<span class="sql-id">product_id</span>
-             <span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">category</span> = <span class="sql-str">'pastry'</span>)
+             <span class="sql-kw">WHERE</span> <span class="sql-id">p</span>.<span class="sql-id">name</span> = <span class="sql-str">'Hot cross bun'</span>)
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>town</th></tr>
-<tr><td>Alice Turner</td><td>Riverside</td></tr>
-<tr><td>Ben Okafor</td><td>Hillcrest</td></tr>
-<tr><td>Chloe Martin</td><td>Riverside</td></tr>
-<tr><td>David Chen</td><td>Old Town</td></tr>
 <tr><td>Emma Novak</td><td>Hillcrest</td></tr>
-<tr><td>Farid Haddad</td><td>Old Town</td></tr>
 <tr><td>Grace Lee</td><td>Riverside</td></tr>
 <tr><td>Daniel Moreno</td><td>Hillcrest</td></tr>
-<tr><td>Kofi Tanaka</td><td>Hillcrest</td></tr>
 <tr><td>Quentin Schmidt</td><td>Riverside</td></tr>
 <tr><td>Wen Petrov</td><td>Old Town</td></tr>
-<tr><td>Ugo Dubois</td><td>Hillcrest</td></tr>
 <tr><td>Hassan Ivanova</td><td>Old Town</td></tr>
-<tr><td>Rosa Weber</td><td>Old Town</td></tr>
-<tr><td>Nadia Jensen</td><td>Hillcrest</td></tr>
-<tr><td>Priya Hughes</td><td>Riverside</td></tr>
-<tr><td>Oscar Nakamura</td><td>Riverside</td></tr>
 <tr><td>Jonas Eriksen</td><td>Hillcrest</td></tr>
-<tr><td>Stefan Lambert</td><td>Old Town</td></tr>
-<tr><td>Tara Rossi</td><td>Riverside</td></tr>
-<tr><td>Amira Kowalski</td><td>Old Town</td></tr>
-<tr><td>Bruno Fischer</td><td>Old Town</td></tr>
 <tr><td>Iris Costa</td><td>Old Town</td></tr>
-<tr><td>Zoe Garcia</td><td>Riverside</td></tr>
-<tr><td>Vera Bianchi</td><td>Old Town</td></tr>
-<tr><td>Yusuf Eriksen</td><td>Old Town</td></tr>
 <tr><td>Felix Bianchi</td><td>Old Town</td></tr>
 <tr><td>Lena Dubois</td><td>Hillcrest</td></tr>
-<tr><td>Greta Hughes</td><td>Riverside</td></tr>
 <tr><td>Iris Olsen</td><td>Riverside</td></tr>
-<tr><td>Lena Schmidt</td><td>Old Town</td></tr>
-<tr><td>Vera Tanaka</td><td>Old Town</td></tr>
 <tr><td>Yusuf Moreno</td><td>Old Town</td></tr>
-<tr><td>Quentin Jensen</td><td>Riverside</td></tr>
 </table>
-<p>A plain join would answer too, but it returns one row per pastry line, so a customer who bought pastries on two orders appears twice and you need <code>DISTINCT</code> to clean up. <code>IN</code> only asks a yes-or-no question about each customer, so every customer appears at most once. Choose the join when you need columns from the other tables in the result (which pastry, on which day); choose <code>IN</code> when the other tables only decide which rows to keep.</p>
+<p>A plain join would answer too, but it returns one row per Hot cross bun line: 15 lines from 12 customers, three of whom bought one on two different orders and would appear twice, so you would need <code>DISTINCT</code> to clean up. <code>IN</code> only asks a yes-or-no question about each customer, so every customer appears at most once. Choose the join when you need columns from the other tables in the result (how many, on which day); choose <code>IN</code> when the other tables only decide which rows to keep.</p>
 <p><code>NOT IN</code> is the opposite, with one serious trap: if the subquery's column contains a single NULL, <code>NOT IN</code> keeps no rows at all. The <a href="nulls.html">NULL page</a> shows it happening and how to avoid it.</p>
 
 <h2>Is there one? EXISTS and NOT EXISTS</h2>
@@ -222,7 +200,6 @@
 <tr><td>Brioche</td><td>pastry</td><td>2.1</td><td>1.9</td></tr>
 <tr><td>Cinnamon roll</td><td>pastry</td><td>2.6</td><td>1.9</td></tr>
 </table>
-<p>The breads average exactly 3.325, yet <code>ROUND</code> gives 3.32: <code>price</code> is a <code>REAL</code>, stored as a binary fraction, and the sum lands a hair below 3.325. Exact decimals (PostgreSQL's <code>NUMERIC</code>) would round it to 3.33.</p>
 <p>A rough guide. Use a scalar subquery for one number you compare against. Use <code>IN</code> or <code>EXISTS</code> when other tables only decide which rows to keep. Use a join when you need their columns in the result. Use a CTE as soon as a subquery grows past a few lines, appears twice, or would sit inside another one. All of them can express most questions; pick the one a reader will understand first.</p>
 
 <h2>Common mistakes</h2>

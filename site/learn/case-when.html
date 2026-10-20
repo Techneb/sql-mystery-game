@@ -51,7 +51,7 @@
 <p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2>Labelling rows</h2>
-<p>The simplest use turns a number into a word. Here every product receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
+<p>The simplest use turns a number into a word. Here each of the ten products the bakery opened with (ids 1 to 10) receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>,
        <span class="sql-kw">CASE</span>
          <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &lt; <span class="sql-num">2</span> <span class="sql-kw">THEN</span> <span class="sql-str">'small'</span>
@@ -59,28 +59,19 @@
          <span class="sql-kw">ELSE</span> <span class="sql-str">'large'</span>
        <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">id</span> &lt;= <span class="sql-num">10</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span>, <span class="sql-id">name</span>;</code></pre>
 <table class="result">
 <tr><th>name</th><th>price</th><th>band</th></tr>
 <tr><td>Baguette</td><td>1.2</td><td>small</td></tr>
 <tr><td>Croissant</td><td>1.4</td><td>small</td></tr>
-<tr><td>Hot cross bun</td><td>1.5</td><td>small</td></tr>
 <tr><td>Pain au chocolat</td><td>1.6</td><td>small</td></tr>
-<tr><td>Apple turnover</td><td>1.9</td><td>small</td></tr>
-<tr><td>Brioche</td><td>2.1</td><td>medium</td></tr>
 <tr><td>Almond croissant</td><td>2.2</td><td>medium</td></tr>
-<tr><td>Pistachio financier</td><td>2.4</td><td>medium</td></tr>
-<tr><td>Cinnamon roll</td><td>2.6</td><td>medium</td></tr>
 <tr><td>Chocolate eclair</td><td>2.8</td><td>medium</td></tr>
-<tr><td>Coffee eclair</td><td>2.8</td><td>medium</td></tr>
 <tr><td>Carrot cake slice</td><td>3.2</td><td>medium</td></tr>
-<tr><td>Focaccia</td><td>3.6</td><td>large</td></tr>
-<tr><td>Cheesecake slice</td><td>3.8</td><td>large</td></tr>
 <tr><td>Rye loaf</td><td>3.8</td><td>large</td></tr>
 <tr><td>Seeded rolls</td><td>3.8</td><td>large</td></tr>
 <tr><td>Lemon tart</td><td>3.9</td><td>large</td></tr>
-<tr><td>Raspberry tart</td><td>4.1</td><td>large</td></tr>
-<tr><td>Walnut bread</td><td>4.2</td><td>large</td></tr>
 <tr><td>Sourdough loaf</td><td>4.5</td><td>large</td></tr>
 </table>
 
@@ -104,45 +95,28 @@
 <tr><td>evening</td><td>36</td></tr>
 </table>
 <p>SQLite and PostgreSQL both let you group by the alias, as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
-<p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
+<p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. Here five orders were placed at exactly 12:00, and the query above counts them in the afternoon; with <code>&lt;= '12:00'</code> they would move to the morning, and the two buckets would both read 86. Likewise the three orders at exactly 09:00 are in the morning, not the early bucket. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
 
 <h2>Conditional counts and sums</h2>
-<p>A <code>CASE</code> inside an aggregate counts or adds only some rows, which lets one query produce several figures side by side. <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> counts the rows that meet the condition. The same idea with a quantity in the <code>THEN</code> branch adds up only part of a column.</p>
+<p>A <code>CASE</code> inside an aggregate counts or adds only some rows, which lets one query produce several figures side by side. <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> counts the rows that meet the condition. The same idea with a quantity in the <code>THEN</code> branch adds up only part of a column. The example covers the week of Monday 9 March.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>,
        <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>,
        <span class="sql-fn">SUM</span>(<span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">ELSE</span> <span class="sql-num">0</span> <span class="sql-kw">END</span>) <span class="sql-kw">AS</span> <span class="sql-id">before_noon</span>,
        <span class="sql-fn">SUM</span>(<span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &gt;= <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">ELSE</span> <span class="sql-num">0</span> <span class="sql-kw">END</span>) <span class="sql-kw">AS</span> <span class="sql-id">after_noon</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">BETWEEN</span> <span class="sql-str">'2026-03-09'</span> <span class="sql-kw">AND</span> <span class="sql-str">'2026-03-15'</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
 <tr><th>day</th><th>orders</th><th>before_noon</th><th>after_noon</th></tr>
-<tr><td>2026-03-02</td><td>13</td><td>6</td><td>7</td></tr>
-<tr><td>2026-03-03</td><td>10</td><td>6</td><td>4</td></tr>
-<tr><td>2026-03-04</td><td>10</td><td>8</td><td>2</td></tr>
-<tr><td>2026-03-05</td><td>11</td><td>5</td><td>6</td></tr>
-<tr><td>2026-03-07</td><td>14</td><td>8</td><td>6</td></tr>
-<tr><td>2026-03-08</td><td>16</td><td>10</td><td>6</td></tr>
 <tr><td>2026-03-09</td><td>12</td><td>6</td><td>6</td></tr>
 <tr><td>2026-03-10</td><td>13</td><td>6</td><td>7</td></tr>
 <tr><td>2026-03-11</td><td>10</td><td>9</td><td>1</td></tr>
 <tr><td>2026-03-12</td><td>10</td><td>6</td><td>4</td></tr>
 <tr><td>2026-03-14</td><td>15</td><td>7</td><td>8</td></tr>
 <tr><td>2026-03-15</td><td>16</td><td>8</td><td>8</td></tr>
-<tr><td>2026-03-16</td><td>13</td><td>10</td><td>3</td></tr>
-<tr><td>2026-03-17</td><td>11</td><td>8</td><td>3</td></tr>
-<tr><td>2026-03-18</td><td>12</td><td>8</td><td>4</td></tr>
-<tr><td>2026-03-19</td><td>13</td><td>9</td><td>4</td></tr>
-<tr><td>2026-03-21</td><td>15</td><td>11</td><td>4</td></tr>
-<tr><td>2026-03-22</td><td>13</td><td>7</td><td>6</td></tr>
-<tr><td>2026-03-23</td><td>12</td><td>6</td><td>6</td></tr>
-<tr><td>2026-03-24</td><td>10</td><td>6</td><td>4</td></tr>
-<tr><td>2026-03-25</td><td>13</td><td>5</td><td>8</td></tr>
-<tr><td>2026-03-26</td><td>11</td><td>6</td><td>5</td></tr>
-<tr><td>2026-03-28</td><td>14</td><td>7</td><td>7</td></tr>
-<tr><td>2026-03-29</td><td>16</td><td>8</td><td>8</td></tr>
 </table>
-<p>This is often called pivoting: values that were rows (before noon, after noon) become columns. It is a compact way to compare categories without running one query per category.</p>
+<p>Monday's order at exactly 12:00 is counted after noon, because the two conditions split at <code>&lt; '12:00'</code> and <code>&gt;= '12:00'</code>: every order falls in exactly one column, and the two add up to <code>orders</code>. Friday 13 March has no row at all: the shop is closed on Fridays, and <code>GROUP BY</code> only makes groups for days that have orders. This is often called pivoting: values that were rows (before noon, after noon) become columns. It is a compact way to compare categories without running one query per category.</p>
 
 <h2>CASE in ORDER BY</h2>
 <p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
