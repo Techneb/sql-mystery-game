@@ -208,15 +208,13 @@ function stats_(p) {
       return r.dimensionValues.map(function (v) { return v.value; }).concat(r.metricValues.map(function (v) { return Number(v.value); }));
     });
   };
-  var events = function (names) { return {dimensionFilter: {filter: {fieldName: "eventName", inListFilter: {values: names}}}}; };
   var top = function (metric, limit) { return {orderBys: [{metric: {metricName: metric}, desc: true}], limit: limit}; };
   var out = {
     ok: true, days: days,
     users: run(["date"], ["activeUsers"], {orderBys: [{dimension: {dimensionName: "date"}}]})
       .map(function (r) { return {date: r[0], users: r[1]}; }),
-    chapters: run(["customEvent:chapter", "eventName", "customEvent:count"], ["totalUsers", "eventCount"], events(FUNNEL_EVENTS))
-      .map(function (r) { return {chapter: r[0], event: r[1], count: r[2], users: r[3], events: r[4]}; }),
-    devices: run(["deviceCategory", "eventName"], ["totalUsers"], events(["chapter_open", "chapter_solve"]))
+    chapters: chapters_(run),
+    devices: run(["deviceCategory", "eventName"], ["totalUsers"], events_(["chapter_open", "chapter_solve"]))
       .map(function (r) { return {device: r[0], event: r[1], users: r[2]}; }),
     countries: run(["country"], ["activeUsers"], top("activeUsers", 10)).map(function (r) { return {country: r[0], users: r[1]}; }),
     channels: run(["sessionDefaultChannelGroup"], ["activeUsers"], top("activeUsers", 20)).map(function (r) { return {channel: r[0], users: r[1]}; })
@@ -224,6 +222,18 @@ function stats_(p) {
   cache.put(ck, JSON.stringify(out), 600);
   return out;
 }
+
+// Without `count` registered in GA the split fails: fall back to the funnel without the 1 / 5 / 20 columns.
+function chapters_(run) {
+  var map = function (r) { return {chapter: r[0], event: r[1], count: r[2], users: r[3], events: r[4]}; };
+  try {
+    return run(["customEvent:chapter", "eventName", "customEvent:count"], ["totalUsers", "eventCount"], events_(FUNNEL_EVENTS)).map(map);
+  } catch (err) {
+    return run(["customEvent:chapter", "eventName"], ["totalUsers", "eventCount"], events_(FUNNEL_EVENTS))
+      .map(function (r) { return map([r[0], r[1], "", r[2], r[3]]); });
+  }
+}
+function events_(names) { return {dimensionFilter: {filter: {fieldName: "eventName", inListFilter: {values: names}}}}; }
 
 function int_(v, lo, hi) {
   if (v === undefined || v === null || v === "") return lo === 0 ? 0 : null;
