@@ -802,7 +802,7 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, the d
     .filter((f) => /from "\.\.?\/(app|shared|qr)\.js"/.test(fs.readFileSync(f, "utf8")));
   assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/explore.js", "site/leaderboard.js", "site/learn/exercises.js", "site/monitor.js"]);
   for (const f of importers) assert.ok(yml.includes(f), f + " is versioned by the deploy");
-  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js"])
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/world.json"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
 
@@ -1152,7 +1152,7 @@ test("chapter_queries milestones: 1, 5 and 20 queries, once each, catching up on
 });
 
 const monitor = await import("./site/monitor.js");
-test("monitor: the chapter funnel from GA rows, devices, bars, every value escaped", () => {
+test("monitor: the chapter funnel from GA rows, devices, raw data, every value escaped", () => {
   const rows = [
     { chapter: "1", event: "chapter_open", count: "(not set)", users: 474 },
     { chapter: "1", event: "chapter_queries", count: "1", users: 300 },
@@ -1165,19 +1165,25 @@ test("monitor: the chapter funnel from GA rows, devices, bars, every value escap
     { chapter: 1, opened: 474, q1: 300, q5: 200, q20: 40, solved: 127 },
     { chapter: 2, opened: 120, q1: 0, q5: 0, q20: 0, solved: 0 }]);
   const html = monitor.funnelHtml(rows);
-  assert.ok(html.includes(">27%<") && html.includes(">0%<") && html.includes("Finished a part: 9 users"));
+  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary>") && html.includes('data-k="Chapter 1"'));
+  const rate = monitor.solveRateHtml(rows);
+  assert.ok(rate.includes(">27%<") && rate.includes(">0%<") && rate.includes("127 of 474"));
   assert.equal(monitor.pct(1, 0), "-");
   const dev = monitor.devicesHtml([{ device: "mobile", event: "chapter_open", users: 10 }, { device: "mobile", event: "chapter_solve", users: 2 },
     { device: "<b>desktop", event: "chapter_open", users: 20 }]);
-  assert.ok(dev.indexOf("&#60;b>desktop") < dev.indexOf("mobile"), "escaped, most opened first");
-  assert.ok(dev.includes(">20%<"));
+  assert.ok(dev.indexOf("&#60;b&#62;desktop") < dev.indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, most opened first");
+  assert.ok(dev.includes(">20%<") && dev.includes(">67%<"), "solve rate in the table, share in the legend");
   const users = monitor.usersHtml([{ date: "20261022", users: 5 }, { date: "20261021", users: 10 }]);
   assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
-  const all = monitor.statsHtml({ users: [], chapters: [], devices: [], countries: [{ country: "<script>", users: 3 }], channels: [{ channel: "Organic Search", users: 1 }] });
+  const all = monitor.statsHtml({ users: [], chapters: [], devices: [], countries: [{ country: "<script>", users: 3 }], channels: [{ channel: "Organic Search", users: 1 }] }, 640, null);
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && all.includes("No chapter events"));
+  const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows, devices: [{ device: "mobile", event: "chapter_open", users: 1 }],
+    countries: [{ country: "France", users: 3 }], channels: [{ channel: "Direct", users: 1 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } });
+  assert.equal((full.match(/<svg /g) || []).length, 6, "six charts");
+  assert.equal((full.match(/<summary>Raw data<\/summary>/g) || []).length, 6, "each with its raw data under it");
 });
 
-test("monitor charts: clean ticks, the users line inside its plot, the funnel bars scaled to the largest stage", () => {
+test("monitor charts: ticks, the line inside its plot (one day too), vertical funnel bars, tooltips", () => {
   assert.deepEqual(monitor.ticks(220), [0, 100, 200, 300]);
   assert.deepEqual(monitor.ticks(680), [0, 200, 400, 600, 800]);
   assert.deepEqual(monitor.ticks(3), [0, 1, 2, 3]);
@@ -1189,17 +1195,56 @@ test("monitor charts: clean ticks, the users line inside its plot, the funnel ba
   const d = svg.match(/class="line" d="M([^"]+)"/)[1].split("L").map(p => p.split(",").map(Number));
   assert.deepEqual(d.map(p => p[0]), [40, 193, 346], "first and last day on the plot edges (390 - 40 left - 44 right)");
   assert.equal(d[2][1], 176, "zero on the baseline (200 - 24 bottom)");
-  assert.ok(d[1][1] > 12 && d[1][1] < d[0][1], "the peak below the top tick, above the 220 day");
-  assert.equal((svg.match(/<g class="hit">/g) || []).length, 3, "one hover strip per day");
-  assert.ok(svg.includes("<title>2026-10-21: 680 users</title>"));
-  assert.ok(monitor.usersHtml([]).includes("Nothing"));
+  assert.ok(d[1][1] > 22 && d[1][1] < d[0][1], "the peak below the top tick, above the 220 day");
+  assert.equal((svg.match(/<g class="hit"/g) || []).length, 3, "one hover strip per day");
+  assert.ok(svg.includes('data-k="2026-10-21" data-v="680\tusers"') && svg.includes(">Users</text>"), "the tooltip's data and the axis title");
+  assert.ok(!svg.includes("<title>"), "no native title racing the tooltip");
+  const one = monitor.lineSvg([{ label: "2026-10-22", value: 7 }], 390);
+  assert.match(one, /class="line" d="M193,/, "a single day in the middle");
+  assert.match(one, /<rect x="40" y="22" width="306"/, "its hover strip spans the plot");
+  assert.equal(monitor.tipAttrs('a"<', [["1", "x", "c1"], ["2", "y"]]), ' data-k="a&#34;&#60;" data-v="1\tx\tc1\n2\ty"');
+  const rate = monitor.lineSvg([{ label: "1", value: 30 }, { label: "2", value: 60 }], 390, { top: 100, fmt: v => v + "%", xlab: p => p.label });
+  assert.ok(rate.includes(">100%</text>") && rate.includes(">60%</text>"), "the solve rate on a fixed 0-100% axis");
   const f = [{ chapter: 1, opened: 400, q1: 300, q5: 200, q20: 40, solved: 100 }, { chapter: 2, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }];
   const fs2 = monitor.funnelSvg(f, 640);
-  const widths = [...fs2.matchAll(/class="f\d" d="M34,[\d.]+h([\d.]+)q([\d.]+)/g)].map(m => Number(m[1]) + Number(m[2]));
-  assert.deepEqual(widths.slice(0, 5), [522, 391.5, 261, 52.2, 130.5], "bars scaled to the largest stage (640 - 34 - 84)");
-  assert.deepEqual(widths.slice(5), [0, 0, 0, 0, 0], "an empty chapter draws nothing");
-  assert.ok(fs2.includes(">25%<") && fs2.includes(">-<") && fs2.includes("<title>Chapter 1, Ran 20: 40</title>"));
-  assert.ok(!/NaN|undefined/.test(fs2 + svg));
+  const bars = [...fs2.matchAll(/class="bar (c\d)" d="M([\d.]+),([\d.]+)v(-[\d.]+)/g)];
+  assert.deepEqual(bars.map(m => m[1]), ["c1", "c2", "c3", "c4", "c5"], "the five stages in the categorical order; an empty chapter draws nothing");
+  assert.ok(bars.every(m => Number(m[3]) === 196), "every bar stands on the baseline (220 - 24 bottom)");
+  assert.deepEqual(bars.map(m => Math.round(2 - Number(m[4]))), [174, 131, 87, 17, 44], "heights scaled to the top tick (400 = 174 px)");
+  assert.ok(Number(bars[1][2]) > Number(bars[0][2]), "side by side, left to right");
+  assert.ok(fs2.includes('data-k="Chapter 1"') && fs2.includes("25%\tsolve rate") && fs2.includes("40\tRan 20\tc4") && fs2.includes(">Users</text>"));
+  assert.ok(!/NaN|undefined/.test(fs2 + svg + one));
+});
+
+test("monitor donuts and map: folding, arcs, area-proportional bubbles, the projection, unknown countries listed", () => {
+  const items = [7, 6, 5, 4, 3, 2, 1].map((v, i) => ({ label: "k" + i, value: v }));
+  assert.deepEqual(monitor.fold(items).map(i => [i.label, i.value]), [["k0", 7], ["k1", 6], ["k2", 5], ["k3", 4], ["k4", 3], ["Other", 3]]);
+  assert.equal(monitor.fold(items.slice(0, 6)).length, 6, "six slices are not folded");
+  const a = monitor.arcs([1, 1, 2]);
+  assert.deepEqual(a.map(([x, y]) => [+(x / Math.PI).toFixed(3), +(y / Math.PI).toFixed(3)]), [[0, 0.5], [0.5, 1], [1, 2]]);
+  assert.equal(monitor.arcPath(90, 90, 52, 86, 0, Math.PI / 2), "M90,4A86,86 0 0 1 176,90L142,90A52,52 0 0 0 90,38Z");
+  assert.equal((monitor.arcPath(90, 90, 52, 86, 0, 2 * Math.PI).match(/M/g) || []).length, 2, "a lone slice is two halves");
+  const ch = monitor.channelsHtml([{ channel: "Direct", users: 3 }, { channel: "<i>x", users: 1 }]);
+  assert.ok(ch.includes(">75%<") && ch.includes("&#60;i&#62;x") && !ch.includes("<i>x") && ch.includes('class="slice c2"'));
+  assert.equal(monitor.bubbleR(100, 100), 40);
+  assert.equal(monitor.bubbleR(25, 100), 20, "area proportional: a quarter of the users, half the radius");
+  assert.equal(monitor.bubbleR(0, 100), 0);
+  assert.equal(monitor.bubbleR(1, 1e6), 3, "a minimum radius stays visible");
+  assert.deepEqual(monitor.project(-180, 84), [0, 0]);
+  assert.deepEqual(monitor.project(180, -57), [1000, monitor.MAP.H]);
+  assert.equal(monitor.countryKey("C\u00f4te d\u2019Ivoire"), "Cote d'Ivoire");
+  const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
+  assert.equal(world.height, monitor.MAP.H, "the outline and the bubbles share one projection");
+  assert.ok(fs.statSync("site/world.json").size < 100000, "the outline stays small");
+  for (const n of ["United States", "India", "France", "United Kingdom", "Germany", "Brazil", "Cote d'Ivoire", "Turkiye", "Singapore"]) assert.ok(world.centroids[n], n);
+  const [fx, fy] = monitor.project(...world.centroids.France);
+  assert.ok(fx > 500 && fx < 520 && fy > 100 && fy < 110, "France in western Europe");
+  const m = monitor.mapHtml([{ country: "France", users: 40 }, { country: "C\u00f4te d\u2019Ivoire", users: 10 }, { country: "<b>Narnia", users: 2 }], world);
+  assert.equal((m.match(/<g class="bubble"/g) || []).length, 2, "two bubbles");
+  assert.ok(m.indexOf('data-k="France"') < m.indexOf('data-k="C\u00f4te'), "the biggest drawn first, the small ones on top");
+  assert.ok(m.includes("Not on the map: &#60;b&#62;Narnia (2)") && !m.includes("<b>Narnia"));
+  const bare = monitor.mapHtml([{ country: "France", users: 1 }], null);
+  assert.ok(bare.includes("Raw data") && !bare.includes("<svg"), "without the outline, the table alone");
 });
 
 const explore = await import("./site/explore.js");

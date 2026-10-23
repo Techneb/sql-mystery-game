@@ -1,24 +1,30 @@
-// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the chapter funnel, devices, countries and
-// channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs stats_), so nobody opens GA.
-// Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser. The board URL comes from
-// ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
+// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the chapter funnel and solve rate, a map
+// of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
+// stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
+// The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
 import { BOARD_KEY, deskLinks, deskPassphrase, escapeHtml as esc } from "./shared.js";
 
 export const DAYS = [7, 30, 90];
 export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
+const NONE = '<p class="muted">Nothing in this period.</p>';
 
 // A table whose last column is a CSS bar scaled to the largest value.
 function barTable(head, rows) {
-  if (!rows.length) return '<p class="muted">Nothing in this period.</p>';
+  if (!rows.length) return NONE;
   const max = Math.max(1, ...rows.map(r => r[1]));
   return '<table class="detail stats"><thead><tr><th>' + esc(head) + "</th><th>Users</th><th></th></tr></thead><tbody>" +
     rows.map(([k, v]) => "<tr><td>" + esc(k) + '</td><td class="num">' + esc(v) + '</td><td class="bar-cell"><span class="bar" style="width:' +
       Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody></table>";
 }
+// Every chart keeps its numbers under it, closed.
+const raw = table => '<details class="numbers"><summary>Raw data</summary>' + table + "</details>";
 
-// --- charts: inline SVG drawn at the box's pixel width (text keeps its real size at 390 px), coloured by the page's
-// tokens (--rel, --rule, --ink, --paper, and admin.css's --f1..--f5 funnel ramp), so day and night follow for free.
+// --- charts: inline SVG coloured by the page's tokens (--rel, --rule, --ink, --paper, and admin.css's categorical
+// --c1..--c6, validated light and night with the dataviz skill's script), so day and night follow for free. Every
+// hoverable mark carries data-k (the tooltip's heading) and data-v (its rows, "value<TAB>label<TAB>key class" per line);
+// the page shows them in one #chart-tip (wireTips), filled with textContent.
 export const compact = n => (n >= 1e6 ? +(n / 1e6).toFixed(1) + "M" : n >= 1e3 ? +(n / 1e3).toFixed(1) + "K" : String(n));
+export const tipAttrs = (k, rows) => ' data-k="' + esc(k) + '" data-v="' + esc(rows.map(r => r.join("\t")).join("\n")) + '"';
 // Clean ticks from 0 to at least max: steps of 1, 2 or 5 times a power of ten, about n of them.
 export function ticks(max, n = 4) {
   if (!(max > 0)) return [0, 1];
@@ -29,33 +35,40 @@ export function ticks(max, n = 4) {
   return out;
 }
 const isoDate = d => String(d).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3");
+const r1 = v => +v.toFixed(1);
+// The y axis: hairline grid, tick labels and the axis title above them.
+const yAxis = (tk, y, L, x2, fmt, title) => '<text class="axis-title" x="2" y="11">' + esc(title) + "</text>" +
+  tk.map(v => '<line class="grid" x1="' + L + '" x2="' + x2 + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="tick" x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmt(v) + "</text>").join("");
 
-// Users per day as a line: one series (no legend, the label names it), 2 px line over a 10% wash, hairline grid, the
-// last value labelled at its end dot; each day has a full-height hover strip with its own crosshair, dot and <title>.
-export function lineSvg(points, w = 640) {
-  const H = 200, L = 40, R = 44, T = 12, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
-  const tk = ticks(Math.max(...points.map(p => p.value))), top = tk.at(-1);
-  const x = i => +(L + (points.length < 2 ? pw / 2 : (i * pw) / (points.length - 1))).toFixed(1);
-  const y = v => +(T + ph - (v * ph) / top).toFixed(1);
+// One series as a line (no legend, the label names it): 2 px line over a 10% wash, hairline grid, the last value
+// labelled at its end dot; each point owns a full-height hover strip (crosshair and dot on :hover, the tooltip from
+// its data-k/data-v). o: top (fixed y max), fmt (tick and value text), xlab (x tick text), tip (point -> [k, rows]),
+// title (the y axis), aria.
+export function lineSvg(points, w = 640, o = {}) {
+  const fmt = o.fmt || compact, xlab = o.xlab || (p => p.label.slice(5)), tip = o.tip || (p => [p.label, [[fmt(p.value), "users"]]]);
+  const H = 200, L = 40, R = 44, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
+  const tk = o.top ? ticks(o.top) : ticks(Math.max(...points.map(p => p.value))), top = tk.at(-1);
+  const x = i => r1(L + (points.length < 2 ? pw / 2 : (i * pw) / (points.length - 1)));
+  const y = v => r1(T + ph - (v * ph) / top);
   const xy = points.map((p, i) => [x(i), y(p.value)]);
   const line = "M" + xy.map(q => q.join(",")).join("L");
   const step = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(pw / 70))));
-  const strip = +(points.length < 2 ? pw : pw / (points.length - 1)).toFixed(1);
+  const strip = r1(points.length < 2 ? pw : pw / (points.length - 1));
   const last = xy.at(-1);
-  return '<svg class="chart line-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Users per day">' +
-    tk.map(v => '<line class="grid" x1="' + L + '" x2="' + (L + pw) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="tick" x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + compact(v) + "</text>").join("") +
+  return '<svg class="chart line-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(o.aria || "Users per day") + '">' +
+    yAxis(tk, y, L, L + pw, fmt, o.title || "Users") +
     points.map((p, i) => (i % step && i !== points.length - 1) || (i !== points.length - 1 && points.length - 1 - i < step / 2) ? "" :
-      '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(p.label.slice(5)) + "</text>").join("") +
+      '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(xlab(p)) + "</text>").join("") +
     '<path class="area" d="' + line + "L" + last[0] + "," + (T + ph) + "L" + xy[0][0] + "," + (T + ph) + 'Z"/><path class="line" d="' + line + '"/>' +
-    '<circle class="dot end" cx="' + last[0] + '" cy="' + last[1] + '" r="4"/><text class="val" x="' + (last[0] + 8) + '" y="' + (last[1] + 4) + '">' + compact(points.at(-1).value) + "</text>" +
-    points.map((p, i) => '<g class="hit"><rect x="' + (xy[i][0] - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph + '"/><line class="cross" x1="' + xy[i][0] + '" x2="' + xy[i][0] + '" y1="' + T + '" y2="' + (T + ph) +
-      '"/><circle class="dot" cx="' + xy[i][0] + '" cy="' + xy[i][1] + '" r="4"/><title>' + esc(p.label) + ": " + esc(p.value) + " users</title></g>").join("") + "</svg>";
+    '<circle class="dot end" cx="' + last[0] + '" cy="' + last[1] + '" r="4"/><text class="val" x="' + (last[0] + 8) + '" y="' + (last[1] + 4) + '">' + esc(fmt(points.at(-1).value)) + "</text>" +
+    points.map((p, i) => { const [k, rows] = tip(p); return '<g class="hit"' + tipAttrs(k, rows) + '><rect x="' + r1(xy[i][0] - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph + '"/><line class="cross" x1="' + xy[i][0] + '" x2="' + xy[i][0] + '" y1="' + T + '" y2="' + (T + ph) +
+      '"/><circle class="dot" cx="' + xy[i][0] + '" cy="' + xy[i][1] + '" r="4"/></g>'; }).join("") + "</svg>";
 }
-// GA dates come as YYYYMMDD. The line, then the same numbers as a table under a closed <details>.
+// GA dates come as YYYYMMDD. The line, then the same numbers as raw data.
 export function usersHtml(users, w) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
-  if (!pts.length) return '<p class="muted">Nothing in this period.</p>';
-  return lineSvg(pts, w) + '<details class="numbers"><summary>The numbers</summary>' + barTable("Day", pts.map(p => [p.label, p.value])) + "</details>";
+  if (!pts.length) return NONE;
+  return lineSvg(pts, w) + raw(barTable("Day", pts.map(p => [p.label, p.value])));
 }
 
 // One line per chapter: opened, ran 1 / 5 / 20 queries (chapter_queries by count), solved, solved / opened.
@@ -73,37 +86,75 @@ export function funnel(rows) {
   return Object.values(by).sort((a, b) => a.chapter - b.chapter);
 }
 export const STAGES = [["opened", "Opened"], ["q1", "Ran 1 query"], ["q5", "Ran 5"], ["q20", "Ran 20"], ["solved", "Solved"]];
-// The funnel as grouped horizontal bars, one group per chapter, the five stages in an ordinal ramp of one hue (light =
-// first step, dark = solved; validated with the dataviz skill's script, light and night); Opened is labelled at its
-// tip, the solve rate at the right; each bar carries its <title>, and the table under the chart keeps every number.
+// A bar from the baseline up, its top corners rounded (r <= 2, at most half its width).
+const barPath = (x, y, bw, h) => { const r = Math.min(2, bw / 2, h); return "M" + x + "," + r1(y + h) + "v" + r1(-(h - r)) + "q0," + r1(-r) + " " + r1(r) + "," + r1(-r) +
+  "h" + r1(bw - 2 * r) + "q" + r1(r) + ",0 " + r1(r) + "," + r1(r) + "v" + r1(h - r) + "Z"; };
+// The funnel as vertical grouped bars: x = chapter, the five stages side by side in the categorical --c1..--c5 (a legend
+// above), a labelled y axis with gridlines. Each chapter has one hover column whose tooltip lists the five stages.
 export function funnelSvg(f, w = 640) {
-  const L = 34, R = 84, bar = 5, gap = 2, group = STAGES.length * (bar + gap) - gap, pad = 12, T = 4;
-  const pw = Math.max(1, w - L - R), max = Math.max(1, ...f.flatMap(c => STAGES.map(([k]) => c[k])));
-  const H = T + f.length * (group + pad);
+  const H = 220, L = 40, R = 8, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
+  const tk = ticks(Math.max(1, ...f.flatMap(c => STAGES.map(([k]) => c[k])))), top = tk.at(-1);
+  const gw = pw / Math.max(1, f.length), inner = gw * 0.8, gap = inner / STAGES.length > 4 ? 1 : 0, bw = (inner - gap * (STAGES.length - 1)) / STAGES.length;
+  const y = v => r1(T + ph - (v * ph) / top);
   return '<svg class="chart funnel-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Chapter funnel">' +
+    yAxis(tk, y, L, L + pw, compact, "Users") + '<text class="tick" x="' + (L - 6) + '" y="' + (H - 6) + '" text-anchor="end">Ch.</text>' +
     f.map((c, i) => {
-      const y0 = T + i * (group + pad);
-      return '<text class="tick" x="' + (L - 8) + '" y="' + (y0 + group / 2 + 4) + '" text-anchor="end">' + c.chapter + "</text>" +
-        '<line class="axis" x1="' + L + '" x2="' + L + '" y1="' + y0 + '" y2="' + (y0 + group) + '"/>' +
-        STAGES.map(([k, name], j) => {
-          const bw = +Math.max(c[k] ? 1 : 0, (c[k] * pw) / max).toFixed(1), y = y0 + j * (bar + gap), r = Math.min(2, bw / 2);
-          return '<path class="f' + (j + 1) + '" d="M' + L + "," + y + "h" + +(bw - r).toFixed(1) + "q" + r + ",0 " + r + "," + r + "v" + (bar - 2 * r) + "q0," + r + " " + -r + "," + r +
-            "h" + -(bw - r).toFixed(1) + 'Z"><title>Chapter ' + c.chapter + ", " + name + ": " + c[k] + "</title></path>";
-        }).join("") +
-        '<text class="val" x="' + +(L + (c.opened * pw) / max + 4).toFixed(1) + '" y="' + (y0 + bar + 1) + '">' + compact(c.opened) + "</text>" +
-        '<text class="val" x="' + (w - 2) + '" y="' + (y0 + group / 2 + 4) + '" text-anchor="end">' + pct(c.solved, c.opened) + "</text>";
-    }).join("") + "</svg>";
+      const x0 = L + i * gw;
+      return '<g class="hit"' + tipAttrs("Chapter " + c.chapter, STAGES.map(([k, name], j) => [c[k], name, "c" + (j + 1)]).concat([[pct(c.solved, c.opened), "solve rate"]])) +
+        '><rect x="' + r1(x0) + '" y="' + T + '" width="' + r1(gw) + '" height="' + ph + '"/></g>' +
+        '<text class="tick" x="' + r1(x0 + gw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + c.chapter + "</text>" +
+        STAGES.map(([k], j) => c[k] ? '<path class="bar c' + (j + 1) + '" d="' + barPath(r1(x0 + gw * 0.1 + j * (bw + gap)), y(c[k]), r1(bw), r1(T + ph - y(c[k]))) + '"/>' : "").join("");
+    }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
 }
+const legend = names => '<p class="legend">' + names.map((name, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(name) + "</span>").join("") + "</p>";
 export function funnelHtml(rows, w) {
   const f = funnel(rows);
   const finished = rows.filter(r => r.event === "game_finish").reduce((s, r) => s + (Number(r.users) || 0), 0);
   if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
-  return '<p class="legend">' + STAGES.map(([, name], j) => '<span><i class="f' + (j + 1) + '"></i>' + name + "</span>").join("") +
-    '<span class="muted">(right: solve rate)</span></p>' + funnelSvg(f, w) +
-    '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
-    f.map(c => "<tr><td>" + c.chapter + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.q1 + '</td><td class="num">' + c.q5 +
-      '</td><td class="num">' + c.q20 + '</td><td class="num">' + c.solved + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") +
-    '</tbody></table><p class="muted">Finished a part: ' + finished + " users.</p>";
+  return legend(STAGES.map(s => s[1])) + funnelSvg(f, w) +
+    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th></tr></thead><tbody>' +
+    f.map(c => "<tr><td>" + c.chapter + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") + "</tr>").join("") + "</tbody></table>") +
+    '<p class="muted">Finished a part: ' + finished + " users.</p>";
+}
+// Solved / opened per chapter as a line on a 0-100% axis (chapters nobody opened are left out).
+export function solveRateHtml(rows, w) {
+  const f = funnel(rows).filter(c => c.opened);
+  if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
+  const pts = f.map(c => ({ label: String(c.chapter), value: Math.round((100 * c.solved) / c.opened), c }));
+  return lineSvg(pts, w, { top: 100, fmt: v => v + "%", xlab: p => p.label, title: "Solve rate", aria: "Solve rate per chapter",
+    tip: p => ["Chapter " + p.label, [[p.value + "%", "solve rate"], [p.c.solved + " of " + p.c.opened, "solved of opened"]]] }) +
+    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
+      f.map(c => "<tr><td>" + c.chapter + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
+}
+
+// --- donuts: the first five slices by value, the rest folded into Other (never a seventh colour).
+export function fold(items, n = 5) {
+  const s = [...items].filter(i => i.value > 0).sort((a, b) => b.value - a.value);
+  if (s.length <= n + 1) return s;
+  return s.slice(0, n).concat([{ label: "Other", value: s.slice(n).reduce((t, i) => t + i.value, 0) }]);
+}
+// Slice angles in radians, clockwise from 12 o'clock.
+export function arcs(values) {
+  const total = values.reduce((t, v) => t + v, 0);
+  let a = 0;
+  return values.map(v => { const a0 = a; a += total ? (2 * Math.PI * v) / total : 0; return [a0, a]; });
+}
+// An annulus slice between radii r0 < r1 (a full turn is drawn as two halves, so a lone slice still shows).
+export function arcPath(cx, cy, r0, r, a0, a1) {
+  if (a1 - a0 >= 2 * Math.PI - 1e-9) return arcPath(cx, cy, r0, r, 0, Math.PI) + arcPath(cx, cy, r0, r, Math.PI, 2 * Math.PI);
+  const p = (rad, a) => r1(cx + rad * Math.sin(a)) + "," + r1(cy - rad * Math.cos(a)), big = a1 - a0 > Math.PI ? 1 : 0;
+  return "M" + p(r, a0) + "A" + r + "," + r + " 0 " + big + " 1 " + p(r, a1) + "L" + p(r0, a1) + "A" + r0 + "," + r0 + " 0 " + big + " 0 " + p(r0, a0) + "Z";
+}
+export function donutHtml(items, what, aria) {
+  const s = fold(items);
+  if (!s.length) return NONE;
+  const total = s.reduce((t, i) => t + i.value, 0), D = 180, c = D / 2;
+  const svg = '<svg class="chart donut" width="' + D + '" height="' + D + '" viewBox="0 0 ' + D + " " + D + '" role="img" aria-label="' + esc(aria) + '">' +
+    arcs(s.map(i => i.value)).map(([a0, a1], j) => '<path class="slice c' + (j + 1) + '"' + tipAttrs(s[j].label, [[s[j].value + " " + what, pct(s[j].value, total)]]) +
+      ' d="' + arcPath(c, c, 52, 86, a0, a1) + '"/>').join("") +
+    '<text class="val" x="' + c + '" y="' + (c + 2) + '" text-anchor="middle">' + compact(total) + '</text><text class="tick" x="' + c + '" y="' + (c + 18) + '" text-anchor="middle">' + esc(what) + "</text></svg>";
+  return '<div class="donut-row">' + svg + '<ul class="donut-legend">' + s.map((i, j) => '<li><i class="c' + (j + 1) + '"></i><span>' + esc(i.label) +
+    '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>";
 }
 
 export function devicesHtml(rows) {
@@ -114,23 +165,86 @@ export function devicesHtml(rows) {
     if (r.event === "chapter_solve") d.solved += Number(r.users) || 0;
   }
   const list = Object.entries(by).sort((a, b) => b[1].opened - a[1].opened);
-  if (!list.length) return '<p class="muted">Nothing in this period.</p>';
-  return '<table class="detail stats"><thead><tr><th>Device</th><th>Opened a chapter</th><th>Solved one</th><th>Solve rate</th></tr></thead><tbody>' +
+  if (!list.length) return NONE;
+  return donutHtml(list.map(([d, c]) => ({ label: d, value: c.opened })), "users", "Users who opened a chapter, by device") +
+    raw('<table class="detail stats"><thead><tr><th>Device</th><th>Opened a chapter</th><th>Solved one</th><th>Solve rate</th></tr></thead><tbody>' +
     list.map(([d, c]) => "<tr><td>" + esc(d) + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' +
-      pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>";
+      pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
+}
+export function channelsHtml(rows) {
+  const list = rows.map(c => ({ label: c.channel, value: Number(c.users) || 0 }));
+  if (!list.length) return NONE;
+  return donutHtml(list, "users", "Users by channel") + raw(barTable("Channel", list.map(i => [i.label, i.value])));
 }
 
-export function statsHtml(s, w) {
+// --- map: site/world.json (Natural Earth 110m, equirectangular 84N-57S, 1000 units wide; its centroids in lon/lat
+// under GA's English country names, ASCII-folded), one bubble per country, its area proportional to users.
+export const MAP = { W: 1000, N: 84, S: -57 };
+MAP.H = Math.round((MAP.W * (MAP.N - MAP.S)) / 360);
+export const project = (lon, lat) => [r1(((lon + 180) * MAP.W) / 360), r1(((MAP.N - lat) * MAP.H) / (MAP.N - MAP.S))];
+export const countryKey = s => String(s).normalize("NFD").replace(/\p{M}/gu, "").replace(/\p{Pi}|\p{Pf}/gu, "'");
+export const bubbleR = (v, max, rMax = 40) => (max > 0 && v > 0 ? r1(Math.max(3, rMax * Math.sqrt(v / max))) : 0);
+export function mapHtml(countries, world) {
+  const list = countries.map(c => ({ label: c.country, value: Number(c.users) || 0 }));
+  if (!list.length) return NONE;
+  const max = Math.max(...list.map(c => c.value));
+  const placed = [], off = [];
+  for (const c of list) { const ll = world && world.centroids[countryKey(c.label)]; (ll && c.value > 0 ? placed : off).push({ ...c, xy: ll && project(...ll) }); }
+  const svg = !world ? "" : '<svg class="chart map" viewBox="0 0 ' + MAP.W + " " + MAP.H + '" role="img" aria-label="Users by country">' +
+    '<path class="land" d="' + world.land + '"/>' +
+    placed.sort((a, b) => b.value - a.value).map(c => { const r = bubbleR(c.value, max); return '<g class="bubble"' + tipAttrs(c.label, [[c.value + " users", ""]]) +
+      '><circle class="hitzone" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + Math.max(r, 18) + '"/><circle class="b" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + r + '"/></g>'; }).join("") + "</svg>";
+  return svg + (world && off.length ? '<p class="muted">Not on the map: ' + off.map(c => esc(c.label) + " (" + c.value + ")").join(", ") + ".</p>" : "") +
+    raw(barTable("Country", list.map(c => [c.label, c.value])));
+}
+
+export function statsHtml(s, w, world) {
   return '<div class="label">USERS PER DAY</div>' + usersHtml(s.users || [], w) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
-    '<div class="label">DEVICES</div>' + devicesHtml(s.devices || []) +
-    '<div class="label">COUNTRIES (TOP 10)</div>' + barTable("Country", (s.countries || []).map(c => [c.country, Number(c.users) || 0])) +
-    '<div class="label">CHANNELS</div>' + barTable("Channel", (s.channels || []).map(c => [c.channel, Number(c.users) || 0]));
+    '<div class="label">SOLVE RATE PER CHAPTER</div>' + solveRateHtml(s.chapters || [], w) +
+    '<div class="label">COUNTRIES (TOP 10)</div>' + mapHtml(s.countries || [], world) +
+    '<div class="donuts"><div><div class="label">DEVICES (OPENED A CHAPTER)</div>' + devicesHtml(s.devices || []) +
+    '</div><div><div class="label">CHANNELS</div>' + channelsHtml(s.channels || []) + "</div></div>";
 }
 
 // --- page wiring (browser only) ----------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
+
+// One tooltip for every chart: a mark's data-k / data-v, written with textContent, beside the pointer (kept inside
+// the window). A mouse leaving the box hides it; a touch tap shows it until the next tap elsewhere.
+function wireTips(box) {
+  const tip = document.createElement("div");
+  tip.className = "chart-tip"; tip.hidden = true; tip.setAttribute("role", "tooltip");
+  document.body.append(tip);
+  let cur = null;
+  const hide = () => { tip.hidden = true; cur = null; };
+  const show = e => {
+    const m = e.target.closest && e.target.closest("[data-k]");
+    if (!m || !box.contains(m)) return hide();
+    if (m !== cur) {
+      cur = m;
+      const head = document.createElement("div");
+      head.className = "tip-k"; head.textContent = m.dataset.k;
+      tip.replaceChildren(head, ...m.dataset.v.split("\n").map(line => {
+        const [v, label, key] = line.split("\t"), row = document.createElement("div"), b = document.createElement("b");
+        if (key) { const i = document.createElement("i"); i.className = "key " + key; row.append(i); }
+        b.textContent = v; row.append(b, label ? " " + label : "");
+        return row;
+      }));
+      tip.hidden = false;
+    }
+    const pad = 12, tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + tw > innerWidth - 4) x = Math.max(4, e.clientX - pad - tw);
+    if (y + th > innerHeight - 4) y = Math.max(4, e.clientY - pad - th);
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  };
+  box.addEventListener("pointermove", show);
+  box.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") hide(); });
+  document.addEventListener("pointerdown", e => (box.contains(e.target) ? show(e) : hide()));
+  addEventListener("scroll", hide, { passive: true });
+}
 
 async function main() {
   let board = new URLSearchParams(location.search).get("board") || "";
@@ -141,8 +255,11 @@ async function main() {
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
   $("monitor").hidden = false;
-  let gen = 0, last = null, wide = 0;
-  const draw = () => { wide = $("stats").clientWidth; if (last) $("stats").innerHTML = statsHtml(last, Math.max(280, wide)); };
+  wireTips($("stats"));
+  let gen = 0, last = null, wide = 0, world = null;
+  const draw = () => { wide = $("stats").clientWidth; if (last) $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world); };
+  // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
+  fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
   async function load(days) {
     const mine = ++gen;

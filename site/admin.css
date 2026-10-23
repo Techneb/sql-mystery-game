@@ -46,33 +46,54 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .stats .bar-cell { width: 45%; }
 .stats .bar { display: block; height: 10px; min-width: 2px; background: var(--rel); border-radius: 2px; }
 @media (max-width: 600px) { .stats .bar-cell { width: 30%; } .days { margin-left: 0; } }
-/* Charts (monitor.js): inline SVG drawn at the box's width, every colour a token. The funnel's five stages are an
-   ordinal ramp of --rel toward the paper (checked light and night with the dataviz validator: monotone, 2:1 light end). */
+/* Charts (monitor.js): inline SVG, every colour a token. --c1..--c6 are the dataviz skill's categorical slots in its
+   fixed order (blue, orange, aqua, yellow, magenta, violet), checked with its validator on --paper light (#f3ead7) and
+   night (#131820): all pass; light contrast is a WARN, relieved by the legends with values and the Raw data tables. */
+:root { --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #6250d6; }
+:root[data-mood="night"] { --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #9085e9; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mood="day"]) { --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #9085e9; }
+}
+.c1 { fill: var(--c1); background: var(--c1); } .c2 { fill: var(--c2); background: var(--c2); } .c3 { fill: var(--c3); background: var(--c3); }
+.c4 { fill: var(--c4); background: var(--c4); } .c5 { fill: var(--c5); background: var(--c5); } .c6 { fill: var(--c6); background: var(--c6); }
 .chart { display: block; max-width: 100%; margin: 4px 0 8px; overflow: visible; }
 .chart text { font: 12px "Special Elite", monospace; fill: var(--ink); }
 .chart .tick { opacity: .65; font-variant-numeric: tabular-nums; }
-.chart .grid, .chart .axis { stroke: var(--rule); stroke-width: 1; }
+.chart .axis-title { opacity: .8; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.chart .axis { stroke: var(--ink); stroke-width: 1; opacity: .5; }
 .chart .line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .area { fill: var(--rel); opacity: .1; }
 .chart .dot { fill: var(--rel); stroke: var(--paper); stroke-width: 2; }
 .chart .hit rect { fill: transparent; }
 .chart .hit .cross, .chart .hit .dot { visibility: hidden; }
-.chart .hit .cross { stroke: var(--ink); stroke-width: 1; opacity: .4; }
+.chart .hit .cross { stroke: var(--ink); stroke-width: 1; opacity: .6; }
 .chart .hit:hover .cross, .chart .hit:hover .dot { visibility: visible; }
-.funnel-chart, .legend { --f1: color-mix(in srgb, var(--rel) 45%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 60%, var(--paper));
-  --f3: color-mix(in srgb, var(--rel) 73%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 87%, var(--paper)); --f5: var(--rel); }
-:root[data-mood="night"] :is(.funnel-chart, .legend) { --f1: color-mix(in srgb, var(--rel) 40%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 55%, var(--paper));
-  --f3: color-mix(in srgb, var(--rel) 70%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 85%, var(--paper)); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-mood="day"]) :is(.funnel-chart, .legend) { --f1: color-mix(in srgb, var(--rel) 40%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 55%, var(--paper));
-    --f3: color-mix(in srgb, var(--rel) 70%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 85%, var(--paper)); }
-}
-.f1 { fill: var(--f1); background: var(--f1); } .f2 { fill: var(--f2); background: var(--f2); } .f3 { fill: var(--f3); background: var(--f3); }
-.f4 { fill: var(--f4); background: var(--f4); } .f5 { fill: var(--f5); background: var(--f5); }
+.funnel-chart .hit:hover rect { fill: var(--shade); }
+.funnel-chart .bar { pointer-events: none; }
+.donut .slice { stroke: var(--paper); stroke-width: 2; }
+.donut .slice:hover, .map .bubble:hover .b { opacity: .8; }
+.donut .val { font: 700 20px "Playfair Display", serif; }
+.donut-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
+.donut-legend { list-style: none; margin: 0; padding: 0; font-size: 16px; }
+.donut-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 3.2em; gap: 8px; align-items: baseline; }
+.donut-legend i { width: 12px; height: 10px; border-radius: 2px; }
+.donut-legend .num { text-align: right; font-variant-numeric: tabular-nums; }
+.donuts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 28px; }
+.map { width: 100%; height: auto; }
+.map .land { fill: var(--shade); stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.map .b { fill: var(--rel); fill-opacity: .6; stroke: var(--paper); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.map .hitzone { fill: transparent; }
+.chart-tip { position: fixed; z-index: 40; pointer-events: none; max-width: 260px; background: var(--card); color: var(--ink); border: 1px solid var(--ink);
+  border-radius: var(--r-box); padding: 5px 9px; font: 13px/1.45 "Special Elite", monospace; box-shadow: 0 3px 8px rgba(0, 0, 0, .2); }
+.chart-tip .tip-k { opacity: .7; }
+.chart-tip b { font-variant-numeric: tabular-nums; }
+.chart-tip .key { display: inline-block; width: 10px; height: 2px; margin-right: 6px; vertical-align: middle; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 13px "Special Elite", monospace; margin: 4px 0; }
 .legend i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 5px; }
 .numbers { margin: 0 0 16px; }
 .numbers summary { cursor: pointer; font-size: 15px; }
+#stats > .label, .donuts .label { margin-top: 14px; }
 /* Pivot table (explore.html): filters on the left, the table on the right; stacked under 900 px; the table scrolls in its box */
 .explore { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
 .explore aside { border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px 10px; font-size: 16px; }
