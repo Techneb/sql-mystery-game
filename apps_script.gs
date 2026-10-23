@@ -12,7 +12,8 @@
 // ?stats=<days>&key=<passphrase> (monitor.html) reads GA4 through the advanced service "Google Analytics Data API"
 // (Services > + > Google Analytics Data API, identifier AnalyticsData), OAuth scope
 // https://www.googleapis.com/auth/analytics.readonly. The account the script runs as needs Viewer on GA4 property
-// 557203749, and `count` (chapter_queries) registered as an event-scoped custom dimension.
+// 557203749, and `count` (chapter_queries) registered as an event-scoped custom dimension. ?report=<json>&key=
+// (explore.html, the pivot table) runs one whitelisted GA report through the same service (report_ below).
 //
 // A season is a record {id, name, date, db, penalty, state, createdAt, openedAt, closedAt}; state goes
 // created -> open -> closed (or created -> closed, for a season created by mistake), never back. Players "join"
@@ -172,6 +173,7 @@ function locked_(fn) {
 function get_(e) {
   var p = (e && e.parameter) || {};
   if (p.seasons) return seasons_();
+  if (p.report) return report_(p);
   if (p.stats) return stats_(p);
   if (p.meta) {
     var m = find_(seasons_(), String(p.meta));
@@ -233,6 +235,70 @@ function chapters_(run) {
       .map(function (r) { return map([r[0], r[1], "", r[2], r[3]]); });
   }
 }
+// --- ?report=<json>&key= for explore.html (the pivot table) ------------------------------------
+// json = {days | start, end, dimensions: [...], metrics: [...], filters: {dimension: [values]}}. Only the whitelisted
+// names below (explore.js DIMENSIONS and METRICS, a test checks they match), at most 9 dimensions and 10 metrics (GA's
+// limits); filters become an andGroup of inListFilters. GA refuses some combinations: its error text comes back as
+// {ok:false, error} through doGet. Cached 10 minutes per normalised request.
+var REPORT_DIMS = ["date", "eventName", "customEvent:chapter", "customEvent:count", "customEvent:mode", "customEvent:part",
+  "customEvent:name", "deviceCategory", "operatingSystem", "browser", "country", "city", "language",
+  "sessionDefaultChannelGroup", "sessionSource", "newVsReturning"];
+var REPORT_METRICS = ["activeUsers", "totalUsers", "newUsers", "sessions", "engagedSessions", "eventCount",
+  "userEngagementDuration", "averageSessionDuration", "screenPageViews"];
+var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function report_(p) {
+  if (!adminOk_({key: p.key})) return {ok: false, error: "wrong admin key"};
+  var q;
+  try { q = JSON.parse(p.report); } catch (err) { return {ok: false, error: "report is not JSON"}; }
+  if (!q || typeof q !== "object") return {ok: false, error: "report is not an object"};
+  var names = function (list, allowed, max, what) {
+    if (!Array.isArray(list)) throw new Error(what + "s must be a list");
+    var out = [];
+    list.forEach(function (n) {
+      if (allowed.indexOf(n) < 0) throw new Error("unknown " + what + ": " + String(n).slice(0, 40));
+      if (out.indexOf(n) < 0) out.push(n);
+    });
+    if (out.length > max) throw new Error("at most " + max + " " + what + "s");
+    return out;
+  };
+  var dims = names(q.dimensions || [], REPORT_DIMS, 9, "dimension");
+  var metrics = names(q.metrics || [], REPORT_METRICS, 10, "metric");
+  if (!metrics.length) return {ok: false, error: "pick at least one metric"};
+  var range;
+  if (DATE_RE.test(String(q.start)) && DATE_RE.test(String(q.end)) && q.start <= q.end) range = {startDate: q.start, endDate: q.end};
+  else {
+    var n = Math.floor(Number(q.days)), days = isFinite(n) ? Math.min(425, Math.max(1, n)) : 7;
+    range = {startDate: days === 1 ? "today" : (days - 1) + "daysAgo", endDate: "today"};
+  }
+  var filters = [], f = q.filters && typeof q.filters === "object" ? q.filters : {};
+  Object.keys(f).sort().forEach(function (d) {
+    if (REPORT_DIMS.indexOf(d) < 0) throw new Error("unknown filter: " + String(d).slice(0, 40));
+    if (!Array.isArray(f[d]) || !f[d].length) return;
+    if (f[d].length > 500) throw new Error("at most 500 values per filter");
+    filters.push({filter: {fieldName: d, inListFilter: {values: f[d].map(function (v) { return String(v).slice(0, 200); })}}});
+  });
+  var req = {dateRanges: [range], dimensions: dims.map(function (d) { return {name: d}; }),
+             metrics: metrics.map(function (m) { return {name: m}; }), metricAggregates: ["TOTAL"],
+             orderBys: [{metric: {metricName: metrics[0]}, desc: true}], limit: 10000};
+  if (filters.length) req.dimensionFilter = {andGroup: {expressions: filters}};
+  var norm = JSON.stringify(req);
+  var cache = CacheService.getScriptCache();
+  var ck = "report-" + Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(norm, "report"));
+  var hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  var res = AnalyticsData.Properties.runReport(req, GA_PROPERTY);
+  var nums = function (vals) { return (vals || []).map(function (v) { return Number(v.value); }); };
+  var out = {ok: true, range: range, dimensions: dims, metrics: metrics, rowCount: res.rowCount || 0,
+    rows: (res.rows || []).map(function (r) {
+      return (r.dimensionValues || []).map(function (v) { return v.value; }).concat(nums(r.metricValues));
+    }),
+    totals: res.totals && res.totals[0] ? nums(res.totals[0].metricValues) : null};
+  // ponytail: CacheService refuses values over 100 KB, so a big report is simply not cached.
+  try { cache.put(ck, JSON.stringify(out), 600); } catch (err) {}
+  return out;
+}
+
 function events_(names) { return {dimensionFilter: {filter: {fieldName: "eventName", inListFilter: {values: names}}}}; }
 
 function int_(v, lo, hi) {

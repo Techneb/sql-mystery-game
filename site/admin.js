@@ -2,7 +2,7 @@
 // code, watch who joined, export the rows. Pure helpers are exported for test_site.mjs; the page wiring runs only in a
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in memory and goes to the backend as `key` (apps_script.gs compares it with ADMIN_KEY).
-import { BOARD_KEY, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+import { BOARD_KEY, deskLinks, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
@@ -191,7 +191,7 @@ function setBoard(value) {
   const v = value.trim();
   try { if (v) { new URL(v); board = v; } } catch { say("That board URL is not a URL.", true); }
   try { if (board) localStorage.setItem(BOARD_KEY, board); } catch {}
-  $("monitor-link").href = "monitor.html" + (board ? "?board=" + encodeURIComponent(board) : "");
+  deskLinks(board);
 }
 
 async function main() {

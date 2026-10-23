@@ -15,8 +15,10 @@ function backend() {
   const lock = { busy: false };
   const reports = [], cache = new Map();
   // GA4 Data API stub: one row per report, its dimension values named after the dimensions.
+  let answer = null;   // setRunReport: a test's own GA answer (or a throw)
   const runReport = (req, property) => {
     reports.push({ req, property });
+    if (answer) return answer(req);
     return { rows: [{ dimensionValues: req.dimensions.map(d => ({ value: d.name + "-v" })), metricValues: req.metrics.map((m, i) => ({ value: String(10 + i) })) }] };
   };
   const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
@@ -50,7 +52,7 @@ function backend() {
   const get = parameter => JSON.parse(ctx.doGet({ parameter }).text);
   const admin = (act, extra = {}) => post({ admin: act, key: KEY, ...extra });
   const create = () => admin("create", { name: "Group A", date: "2026-10-14", penalty: 30 }).season;
-  return { post, get, admin, create, props, tabs, lock, reports, cache, log: () => tabs.get("log").rows };
+  return { post, get, admin, create, props, tabs, lock, reports, cache, log: () => tabs.get("log").rows, setRunReport: f => { answer = f; } };
 }
 const ev = (event, team, season, chapter, token, extra = {}) =>
   ({ event, team, season, chapter, wrong: 0, queries: chapter * 3, clientAt: 1700000000000, elapsedMs: chapter * 60000, token, ...extra });
@@ -178,4 +180,50 @@ test("?stats: the admin key gate, days clamped to 1-90, the report shapes, cache
   assert.equal(b.get({ stats: "0", key: KEY }).days, 1);
   assert.equal(b.reports.at(-1).req.dateRanges[0].startDate, "today");
   assert.equal(b.get({ stats: "x", key: KEY }).days, 7);
+});
+
+test("?report: the admin key gate, the whitelist and limits, filters as an andGroup, GA's totals, cached per request", () => {
+  const b = backend();
+  const rep = (q, key = KEY) => b.get({ report: typeof q === "string" ? q : JSON.stringify(q), key });
+  const ok = { days: 30, dimensions: ["country", "date"], metrics: ["activeUsers", "sessions"] };
+  assert.equal(rep(ok, "wrong").error, "wrong admin key");
+  assert.equal(b.reports.length, 0, "no GA call without the key");
+  assert.equal(rep("{nope").error, "report is not JSON");
+  assert.match(rep({ ...ok, dimensions: ["userId"] }).error, /unknown dimension: userId/);
+  assert.match(rep({ ...ok, metrics: ["totalRevenue"] }).error, /unknown metric: totalRevenue/);
+  assert.match(rep({ ...ok, filters: { pagePath: ["/"] } }).error, /unknown filter: pagePath/);
+  assert.match(rep({ ...ok, dimensions: ["date", "country", "city", "browser", "language", "eventName", "deviceCategory", "operatingSystem", "sessionSource", "newVsReturning"] }).error, /at most 9 dimensions/);
+  assert.equal(rep({ ...ok, metrics: [] }).error, "pick at least one metric");
+  assert.equal(b.reports.length, 0, "nothing refused reaches GA");
+  const r = rep({ ...ok, dimensions: ["country", "date", "country"], filters: { deviceCategory: ["mobile", "tablet"], browser: [] } });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.dimensions, ["country", "date"], "duplicates dropped, order kept");
+  assert.deepEqual(r.rows, [["country-v", "date-v", 10, 11]]);
+  const req = b.reports[0].req;
+  assert.equal(b.reports[0].property, "properties/557203749");
+  assert.equal(req.dateRanges[0].startDate, "29daysAgo");
+  assert.equal(req.limit, 10000);
+  assert.deepEqual([...req.metricAggregates], ["TOTAL"]);
+  assert.equal(req.dimensionFilter.andGroup.expressions.length, 1, "an empty filter is no filter");
+  assert.deepEqual(JSON.parse(JSON.stringify(req.dimensionFilter.andGroup.expressions[0])), { filter: { fieldName: "deviceCategory", inListFilter: { values: ["mobile", "tablet"] } } });
+  assert.deepEqual(rep({ ...ok, filters: { deviceCategory: ["mobile", "tablet"] } }), r, "the same request is cached");
+  assert.equal(b.reports.length, 1);
+  rep({ ...ok, days: 7 });
+  assert.equal(b.reports.length, 2, "another request is not");
+  rep({ ...ok, start: "2026-10-01", end: "2026-10-20" });
+  assert.deepEqual({ ...b.reports.at(-1).req.dateRanges[0] }, { startDate: "2026-10-01", endDate: "2026-10-20" });
+  rep({ ...ok, days: 9999 });
+  assert.equal(b.reports.at(-1).req.dateRanges[0].startDate, "424daysAgo");
+  assert.equal(rep({ ...ok, dimensions: [] }).rows.length, 1, "metrics alone are a one-row report");
+});
+
+test("?report: GA's error text comes back as {ok:false, error}, and totals are read when GA sends them", () => {
+  const b = backend();
+  b.setRunReport(() => { throw new Error("Please remove customEvent:chapter to make the request compatible"); });
+  const bad = b.get({ report: JSON.stringify({ dimensions: ["customEvent:chapter", "sessionSource"], metrics: ["sessions"] }), key: KEY });
+  assert.equal(bad.ok, false);
+  assert.match(bad.error, /make the request compatible/);
+  b.setRunReport(() => ({ rowCount: 42, rows: [], totals: [{ metricValues: [{ value: "1300" }] }] }));
+  const r = b.get({ report: JSON.stringify({ dimensions: ["date"], metrics: ["activeUsers"] }), key: KEY });
+  assert.deepEqual([r.rowCount, r.rows, r.totals], [42, [], [1300]]);
 });
