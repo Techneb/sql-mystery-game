@@ -689,7 +689,7 @@ Everything is deployed (2026-10-20, 9f4e671).
   kept under it; both drawn at the box's width (no library). New desk page `site/explore.html` + `explore.js`
   ("Pivot table"; the desk menu row is now Setup . Monitoring . Pivot table): period (7/30/90 days or a custom
   range), dimension and metric pickers (order picked = column order), filters per whitelisted dimension (its values
-  load when opened), a sortable table with GA's own totals (`metricAggregates` TOTAL, so users are not summed across
+  load when opened), a sortable table with GA's own totals (`metricAggregations` TOTAL, so users are not summed across
   rows), CSV in the browser. Backend `?report=<json>&key=` (`report_`): whitelisted names (`REPORT_DIMS`,
   `REPORT_METRICS`, the same lists as `explore.js`, a test compares), at most 9 dimensions and 10 metrics, filters as
   an andGroup of inListFilters, 10,000 rows, cached 10 minutes per normalised request (not cached above

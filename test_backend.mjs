@@ -203,7 +203,7 @@ test("?report: the admin key gate, the whitelist and limits, filters as an andGr
   assert.equal(b.reports[0].property, "properties/557203749");
   assert.equal(req.dateRanges[0].startDate, "29daysAgo");
   assert.equal(req.limit, 10000);
-  assert.deepEqual([...req.metricAggregates], ["TOTAL"]);
+  assert.deepEqual([...req.metricAggregations], ["TOTAL"]);
   assert.equal(req.dimensionFilter.andGroup.expressions.length, 1, "an empty filter is no filter");
   assert.deepEqual(JSON.parse(JSON.stringify(req.dimensionFilter.andGroup.expressions[0])), { filter: { fieldName: "deviceCategory", inListFilter: { values: ["mobile", "tablet"] } } });
   assert.deepEqual(rep({ ...ok, filters: { deviceCategory: ["mobile", "tablet"] } }), r, "the same request is cached");

@@ -279,7 +279,7 @@ function report_(p) {
     filters.push({filter: {fieldName: d, inListFilter: {values: f[d].map(function (v) { return String(v).slice(0, 200); })}}});
   });
   var req = {dateRanges: [range], dimensions: dims.map(function (d) { return {name: d}; }),
-             metrics: metrics.map(function (m) { return {name: m}; }), metricAggregates: ["TOTAL"],
+             metrics: metrics.map(function (m) { return {name: m}; }), metricAggregations: ["TOTAL"],
              orderBys: [{metric: {metricName: metrics[0]}, desc: true}], limit: 10000};
   if (filters.length) req.dimensionFilter = {andGroup: {expressions: filters}};
   var norm = JSON.stringify(req);
