@@ -519,17 +519,22 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   const admin = fs.readFileSync("site/admin.html", "utf8");
   assert.deepEqual(links(one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav")), links(nav), "the admin page's header");
   assert.deepEqual(links(one(admin, /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "admin footer")), links(foot), "the admin page's footer");
-  const monitor = fs.readFileSync("site/monitor.html", "utf8");
-  for (const tag of [/<nav class="learn-nav muted">[\s\S]*?<\/nav>/, /<footer class="learn-foot muted">[\s\S]*?<\/footer>/, /<dialog id="passgate"[\s\S]*?<\/dialog>/])
-    assert.equal(monitor.match(tag)[0], admin.match(tag)[0], "monitor.html repeats the desk's " + tag.source.slice(1, 9));
-  // The desk's own menu row: Setup and Monitoring, the same on both pages but for the current marker.
+  const monitor = fs.readFileSync("site/monitor.html", "utf8"), explore = fs.readFileSync("site/explore.html", "utf8");
+  for (const [f, h] of [["monitor.html", monitor], ["explore.html", explore]])
+    for (const tag of [/<nav class="learn-nav muted">[\s\S]*?<\/nav>/, /<footer class="learn-foot muted">[\s\S]*?<\/footer>/, /<dialog id="passgate"[\s\S]*?<\/dialog>/])
+      assert.equal(h.match(tag)[0], admin.match(tag)[0], f + " repeats the desk's " + tag.source.slice(1, 9));
+  // The desk's own menu row: Setup, Monitoring and Pivot table, the same on the three pages but for the current marker.
   const deskMenu = (h, f) => one(h, /<\/header>\n<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " desk menu");
   const plain = (m) => m.replace(/<span class="current" aria-current="page">([^<]*)<\/span>/, "$1").replace(/<a [^>]*>([^<]*)<\/a>/g, "$1");
-  const [am, mm] = [deskMenu(admin, "admin.html"), deskMenu(monitor, "monitor.html")];
-  assert.equal(plain(am), plain(mm), "both desk pages carry the same menu row");
-  assert.equal(plain(am), "Setup &middot;\n  Monitoring");
-  assert.match(am, /^<span class="current" aria-current="page">Setup<\/span>[\s\S]*<a id="monitor-link" href="monitor.html">Monitoring<\/a>$/);
-  assert.match(mm, /^<a id="setup-link" href="admin.html">Setup<\/a>[\s\S]*<span class="current" aria-current="page">Monitoring<\/span>$/);
+  const [am, mm, em] = [deskMenu(admin, "admin.html"), deskMenu(monitor, "monitor.html"), deskMenu(explore, "explore.html")];
+  assert.equal(plain(am), plain(mm), "the desk pages carry the same menu row");
+  assert.equal(plain(am), plain(em), "the desk pages carry the same menu row");
+  assert.equal(plain(am), "Setup &middot;\n  Monitoring &middot;\n  Pivot table");
+  const deskItems = ['<a id="setup-link" href="admin.html">Setup</a>', '<a id="monitor-link" href="monitor.html">Monitoring</a>', '<a id="explore-link" href="explore.html">Pivot table</a>'];
+  [am, mm, em].forEach((m, i) => {
+    const want = deskItems.map((it, j) => (j === i ? '<span class="current" aria-current="page">' + it.match(/>([^<]*)</)[1] + "</span>" : it)).join(" &middot;\n  ");
+    assert.equal(m, want, ["admin", "monitor", "explore"][i] + ".html menu: one current item, the others linked");
+  });
   assert.equal((admin.match(/monitor-link/g) || []).length, 1, "the old SEASONS-row link is gone");
   const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html"].includes(f));
   const linked = (f) => {
@@ -568,7 +573,7 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
   const game = fs.readFileSync("site/index.html", "utf8");
   const btn = one(game, /\n(<button id="btn-theme"[^\n]*<\/button>)\n/, "the game's button");
   assert.equal(btn, `<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition">${themeButtonHtml("day")}</button>`);
-  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8"), "../monitor.html": fs.readFileSync("site/monitor.html", "utf8") };
+  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8"), "../monitor.html": fs.readFileSync("site/monitor.html", "utf8"), "../explore.html": fs.readFileSync("site/explore.html", "utf8") };
   for (const [f, html] of Object.entries(pages)) {
     assert.ok(html.includes("<body>\n" + btn + "\n"), f + ": the same button, first in the body");
     const head = html.slice(0, html.indexOf("</head>"));
@@ -784,18 +789,20 @@ test("board: eight-cell strip, three states, every pseudo escaped", () => {
 });
 
 test("admin and board pages: not in the sitemap, admin kept out of robots, the deploy versions their scripts, pure ASCII", () => {
-  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html|monitor\.html/);
+  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html|monitor\.html|explore\.html/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/monitor\.html$/m);
   assert.match(fs.readFileSync("site/monitor.html", "utf8"), /<meta name="robots" content="noindex">/);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/explore\.html$/m);
+  assert.match(fs.readFileSync("site/explore.html", "utf8"), /<meta name="robots" content="noindex">/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
   const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
-  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
+  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
   // every module importing app.js, shared.js or qr.js is one the deploy versions
   const importers = ["site", "site/learn"].flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".js")).map((f) => d + "/" + f))
     .filter((f) => /from "\.\.?\/(app|shared|qr)\.js"/.test(fs.readFileSync(f, "utf8")));
-  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/leaderboard.js", "site/learn/exercises.js", "site/monitor.js"]);
+  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/explore.js", "site/leaderboard.js", "site/learn/exercises.js", "site/monitor.js"]);
   for (const f of importers) assert.ok(yml.includes(f), f + " is versioned by the deploy");
-  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js"])
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
 
@@ -1168,4 +1175,64 @@ test("monitor: the chapter funnel from GA rows, devices, bars, every value escap
   assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
   const all = monitor.statsHtml({ users: [], chapters: [], devices: [], countries: [{ country: "<script>", users: 3 }], channels: [{ channel: "Organic Search", users: 1 }] });
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && all.includes("No chapter events"));
+});
+
+test("monitor charts: clean ticks, the users line inside its plot, the funnel bars scaled to the largest stage", () => {
+  assert.deepEqual(monitor.ticks(220), [0, 100, 200, 300]);
+  assert.deepEqual(monitor.ticks(680), [0, 200, 400, 600, 800]);
+  assert.deepEqual(monitor.ticks(3), [0, 1, 2, 3]);
+  assert.deepEqual(monitor.ticks(0), [0, 1]);
+  assert.equal(monitor.compact(1300), "1.3K");
+  assert.equal(monitor.compact(42), "42");
+  const svg = monitor.lineSvg([{ label: "2026-10-20", value: 220 }, { label: "2026-10-21", value: 680 }, { label: "2026-10-22", value: 0 }], 390);
+  assert.match(svg, /width="390"/);
+  const d = svg.match(/class="line" d="M([^"]+)"/)[1].split("L").map(p => p.split(",").map(Number));
+  assert.deepEqual(d.map(p => p[0]), [40, 193, 346], "first and last day on the plot edges (390 - 40 left - 44 right)");
+  assert.equal(d[2][1], 176, "zero on the baseline (200 - 24 bottom)");
+  assert.ok(d[1][1] > 12 && d[1][1] < d[0][1], "the peak below the top tick, above the 220 day");
+  assert.equal((svg.match(/<g class="hit">/g) || []).length, 3, "one hover strip per day");
+  assert.ok(svg.includes("<title>2026-10-21: 680 users</title>"));
+  assert.ok(monitor.usersHtml([]).includes("Nothing"));
+  const f = [{ chapter: 1, opened: 400, q1: 300, q5: 200, q20: 40, solved: 100 }, { chapter: 2, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }];
+  const fs2 = monitor.funnelSvg(f, 640);
+  const widths = [...fs2.matchAll(/class="f\d" d="M34,[\d.]+h([\d.]+)q([\d.]+)/g)].map(m => Number(m[1]) + Number(m[2]));
+  assert.deepEqual(widths.slice(0, 5), [522, 391.5, 261, 52.2, 130.5], "bars scaled to the largest stage (640 - 34 - 84)");
+  assert.deepEqual(widths.slice(5), [0, 0, 0, 0, 0], "an empty chapter draws nothing");
+  assert.ok(fs2.includes(">25%<") && fs2.includes(">-<") && fs2.includes("<title>Chapter 1, Ran 20: 40</title>"));
+  assert.ok(!/NaN|undefined/.test(fs2 + svg));
+});
+
+const explore = await import("./site/explore.js");
+test("explore: the request from the side panel, the pivot table sorted with GA's totals, CSV, every value escaped", () => {
+  const backendSrc = fs.readFileSync("apps_script.gs", "utf8");
+  const list = (name) => JSON.parse(backendSrc.match(new RegExp("var " + name + " = (\\[[\\s\\S]*?\\]);"))[1]);
+  assert.deepEqual(Object.keys(explore.DIMENSIONS), list("REPORT_DIMS"), "the page offers exactly the backend's dimensions");
+  assert.deepEqual(Object.keys(explore.METRICS), list("REPORT_METRICS"), "and its metrics");
+  const s = { period: "30", dims: ["country", "date"], metrics: ["activeUsers"], filters: { deviceCategory: ["mobile"], browser: [] } };
+  assert.deepEqual(explore.buildRequest(s), { days: 30, dimensions: ["country", "date"], metrics: ["activeUsers"], filters: { deviceCategory: ["mobile"] } });
+  assert.deepEqual(explore.buildRequest({ ...s, period: "custom", start: "2026-10-01", end: "2026-10-20", filters: {} }),
+    { start: "2026-10-01", end: "2026-10-20", dimensions: ["country", "date"], metrics: ["activeUsers"] });
+  assert.equal(explore.buildRequest({ ...s, period: "custom", start: "" }).days, 7, "an unfinished custom range falls back to 7 days");
+  assert.deepEqual(explore.valuesRequest(s, "city"), { days: 30, dimensions: ["city"], metrics: ["activeUsers"] });
+  const u = new URL(explore.reportUrl("https://script.example/exec", { days: 7 }, "pass"));
+  assert.deepEqual(JSON.parse(u.searchParams.get("report")), { days: 7 });
+  assert.equal(u.searchParams.get("key"), "pass");
+  const res = { dimensions: ["date", "country"], metrics: ["activeUsers", "averageSessionDuration"], rowCount: 5, totals: [1300, 61.25],
+    rows: [["20261021", "France", 300, 50.5], ["20261020", "<b>UK", 900, 70], ["20261022", "Spain, \"north\"", 100, 12]] };
+  const html = explore.pivotHtml(res);
+  assert.ok(html.indexOf("&#60;b&#62;UK") > 0 && html.indexOf("&#60;b&#62;UK") < html.indexOf("France") && html.indexOf("France") < html.indexOf("Spain"), "largest first metric first");
+  assert.ok(html.includes("2026-10-20") && html.includes("Active users &#9660;") && html.includes(">Avg session (s)<"));
+  assert.ok(html.includes('<td colspan="2">Total (GA, each user once)</td><td class="num">1,300</td><td class="num">61.3</td>'));
+  assert.ok(html.includes("Showing 3 of 5 rows"));
+  assert.ok(!html.includes("<b>"));
+  const byDate = explore.pivotHtml(res, { col: 0, desc: false });
+  assert.ok(byDate.indexOf("2026-10-20") < byDate.indexOf("2026-10-21") && byDate.includes('aria-sort="ascending"'));
+  assert.deepEqual(explore.sortRows(res, 3, false).map(r => r[3]), [12, 50.5, 70]);
+  assert.equal(explore.pivotCsv(res, { col: 0, desc: true }),
+    'Date,Country,Active users,Avg session (s)\n2026-10-22,"Spain, ""north""",100,12\n2026-10-21,France,300,50.5\n2026-10-20,<b>UK,900,70\n');
+  assert.ok(explore.pivotHtml({ ...res, rows: [] }).includes("No rows"));
+  const pick = explore.pickerHtml(explore.DIMENSIONS, ["country", "date"], "dim");
+  assert.ok(pick.includes('data-dim="country" checked> Country<span class="ord">1</span>') && pick.includes('data-dim="date" checked> Date<span class="ord">2</span>'));
+  const vals = explore.filterValuesHtml("country", [["<i>x", 3], ["France", 1200]], ["France"]);
+  assert.ok(vals.includes('value="France" checked') && vals.includes("&#60;i&#62;x") && vals.includes("1,200") && !vals.includes("<i>"));
 });

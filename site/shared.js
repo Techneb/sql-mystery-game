@@ -59,6 +59,12 @@ export function deskPassphrase(d) {
   });
 }
 
+// The desk's menu row (admin.html, monitor.html, explore.html): every other page's link carries the board as ?board=.
+export function deskLinks(board) {
+  for (const a of document.querySelectorAll(".learn-menu a"))
+    a.href = a.getAttribute("href").split("?")[0] + (board ? "?board=" + encodeURIComponent(board) : "");
+}
+
 export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 

@@ -46,3 +46,52 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .stats .bar-cell { width: 45%; }
 .stats .bar { display: block; height: 10px; min-width: 2px; background: var(--rel); border-radius: 2px; }
 @media (max-width: 600px) { .stats .bar-cell { width: 30%; } .days { margin-left: 0; } }
+/* Charts (monitor.js): inline SVG drawn at the box's width, every colour a token. The funnel's five stages are an
+   ordinal ramp of --rel toward the paper (checked light and night with the dataviz validator: monotone, 2:1 light end). */
+.chart { display: block; max-width: 100%; margin: 4px 0 8px; overflow: visible; }
+.chart text { font: 12px "Special Elite", monospace; fill: var(--ink); }
+.chart .tick { opacity: .65; font-variant-numeric: tabular-nums; }
+.chart .grid, .chart .axis { stroke: var(--rule); stroke-width: 1; }
+.chart .line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .area { fill: var(--rel); opacity: .1; }
+.chart .dot { fill: var(--rel); stroke: var(--paper); stroke-width: 2; }
+.chart .hit rect { fill: transparent; }
+.chart .hit .cross, .chart .hit .dot { visibility: hidden; }
+.chart .hit .cross { stroke: var(--ink); stroke-width: 1; opacity: .4; }
+.chart .hit:hover .cross, .chart .hit:hover .dot { visibility: visible; }
+.funnel-chart, .legend { --f1: color-mix(in srgb, var(--rel) 45%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 60%, var(--paper));
+  --f3: color-mix(in srgb, var(--rel) 73%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 87%, var(--paper)); --f5: var(--rel); }
+:root[data-mood="night"] :is(.funnel-chart, .legend) { --f1: color-mix(in srgb, var(--rel) 40%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 55%, var(--paper));
+  --f3: color-mix(in srgb, var(--rel) 70%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 85%, var(--paper)); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mood="day"]) :is(.funnel-chart, .legend) { --f1: color-mix(in srgb, var(--rel) 40%, var(--paper)); --f2: color-mix(in srgb, var(--rel) 55%, var(--paper));
+    --f3: color-mix(in srgb, var(--rel) 70%, var(--paper)); --f4: color-mix(in srgb, var(--rel) 85%, var(--paper)); }
+}
+.f1 { fill: var(--f1); background: var(--f1); } .f2 { fill: var(--f2); background: var(--f2); } .f3 { fill: var(--f3); background: var(--f3); }
+.f4 { fill: var(--f4); background: var(--f4); } .f5 { fill: var(--f5); background: var(--f5); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 13px "Special Elite", monospace; margin: 4px 0; }
+.legend i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.numbers { margin: 0 0 16px; }
+.numbers summary { cursor: pointer; font-size: 15px; }
+/* Pivot table (explore.html): filters on the left, the table on the right; stacked under 900 px; the table scrolls in its box */
+.explore { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
+.explore aside { border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px 10px; font-size: 16px; }
+.explore fieldset { border: 0; border-top: 1px solid var(--rule); margin: 6px 0 0; padding: 6px 0 0; min-width: 0; }
+.explore legend { font: 700 13px "Playfair Display", serif; letter-spacing: 1px; padding: 0; }
+.explore label { display: flex; gap: 6px; align-items: baseline; line-height: 1.5; }
+.explore .ord { margin-left: auto; font: 11px "Special Elite", monospace; color: var(--rel); }
+.explore label { flex-wrap: wrap; }
+.explore input[type="date"] { font-size: 14px; width: 140px; }
+.days button { white-space: nowrap; }
+#monitor .label-row { flex-wrap: wrap; gap: 6px; }
+.explore details summary { cursor: pointer; }
+.explore .values { max-height: 220px; overflow: auto; padding-left: 14px; font-size: 15px; }
+.explore .values .n { margin-left: auto; font: 11px "Special Elite", monospace; opacity: .7; }
+#pivot { overflow: auto; max-height: 75vh; border: 1px solid var(--rule); border-radius: var(--r-panel); }
+#pivot table { margin: 0; }
+#pivot th { position: sticky; top: 0; background: var(--paper); white-space: nowrap; }
+#pivot th button { all: unset; cursor: pointer; }
+#pivot th button:focus-visible { outline: 2px solid var(--rel); }
+#pivot td, #pivot th { padding-left: 8px; }
+#pivot tfoot td { font-weight: 700; border-top: 1px solid var(--ink); position: sticky; bottom: 0; background: var(--paper); }
+@media (max-width: 900px) { .explore { grid-template-columns: minmax(0, 1fr); } }

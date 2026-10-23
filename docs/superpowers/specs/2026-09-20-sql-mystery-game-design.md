@@ -681,3 +681,18 @@ Everything is deployed (2026-10-20, 9f4e671).
   another Google account, give it Viewer on GA property 557203749; register `count` as an event-scoped custom
   dimension in GA (the stats call fails until it exists); redeploy the script as a new version of the same
   deployment, keeping the /exec URL. The live GA call is untested (stubbed in `test_backend.mjs`).
+- Monitoring charts and a pivot table (owner, 2026-10-23: "Create line chart for USERS PER DAY", "Convert chapter
+  funnel into a nice chart as well", "a sub page with pivot table: several dimensions and several metrics in the same
+  table, with filters on the side"). Built: users per day is an inline SVG line (hover strip per day, the table under
+  a closed "The numbers"); the funnel is grouped horizontal bars per chapter, the five stages an ordinal ramp of
+  `--rel` (validated light and night with the dataviz skill's script), Opened and the solve rate labelled, the table
+  kept under it; both drawn at the box's width (no library). New desk page `site/explore.html` + `explore.js`
+  ("Pivot table"; the desk menu row is now Setup . Monitoring . Pivot table): period (7/30/90 days or a custom
+  range), dimension and metric pickers (order picked = column order), filters per whitelisted dimension (its values
+  load when opened), a sortable table with GA's own totals (`metricAggregates` TOTAL, so users are not summed across
+  rows), CSV in the browser. Backend `?report=<json>&key=` (`report_`): whitelisted names (`REPORT_DIMS`,
+  `REPORT_METRICS`, the same lists as `explore.js`, a test compares), at most 9 dimensions and 10 metrics, filters as
+  an andGroup of inListFilters, 10,000 rows, cached 10 minutes per normalised request (not cached above
+  CacheService's 100 KB); GA's refusals come back as `{ok:false, error}`. Needs the script redeployed; the live GA
+  calls are untested (stubbed), and whether GA accepts `customEvent:mode`, `part` and `name` depends on their being
+  registered as custom dimensions.
