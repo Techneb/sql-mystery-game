@@ -282,6 +282,7 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
   .landing-band { margin: -16px -16px 12px; }
+  #landing { padding-top: 48px; }   /* the card starts under the 32px Day/Night square, not behind it */
 }
 .landing-story b, .landing-kicker b { font-weight: 700; }
 /* Part II ending: Lupin's photograph of the Blue Star (site/blue-star.jpg), set below the text like a news photo */
