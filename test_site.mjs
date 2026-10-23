@@ -522,6 +522,15 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   const monitor = fs.readFileSync("site/monitor.html", "utf8");
   for (const tag of [/<nav class="learn-nav muted">[\s\S]*?<\/nav>/, /<footer class="learn-foot muted">[\s\S]*?<\/footer>/, /<dialog id="passgate"[\s\S]*?<\/dialog>/])
     assert.equal(monitor.match(tag)[0], admin.match(tag)[0], "monitor.html repeats the desk's " + tag.source.slice(1, 9));
+  // The desk's own menu row: Setup and Monitoring, the same on both pages but for the current marker.
+  const deskMenu = (h, f) => one(h, /<\/header>\n<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " desk menu");
+  const plain = (m) => m.replace(/<span class="current" aria-current="page">([^<]*)<\/span>/, "$1").replace(/<a [^>]*>([^<]*)<\/a>/g, "$1");
+  const [am, mm] = [deskMenu(admin, "admin.html"), deskMenu(monitor, "monitor.html")];
+  assert.equal(plain(am), plain(mm), "both desk pages carry the same menu row");
+  assert.equal(plain(am), "Setup &middot;\n  Monitoring");
+  assert.match(am, /^<span class="current" aria-current="page">Setup<\/span>[\s\S]*<a id="monitor-link" href="monitor.html">Monitoring<\/a>$/);
+  assert.match(mm, /^<a id="setup-link" href="admin.html">Setup<\/a>[\s\S]*<span class="current" aria-current="page">Monitoring<\/span>$/);
+  assert.equal((admin.match(/monitor-link/g) || []).length, 1, "the old SEASONS-row link is gone");
   const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html"].includes(f));
   const linked = (f) => {
     const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");

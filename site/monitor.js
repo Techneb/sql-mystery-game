@@ -74,6 +74,7 @@ async function main() {
   let board = new URLSearchParams(location.search).get("board") || "";
   try { board ||= localStorage.getItem(BOARD_KEY) || ""; } catch {}
   try { new URL(board); } catch { board = ""; }
+  if (board) $("setup-link").href = "admin.html?board=" + encodeURIComponent(board);
   if (!board) { $("nob").hidden = false; return; }
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
