@@ -1302,6 +1302,31 @@ test("explore: the request from the side panel, the pivot table sorted with GA's
   assert.ok(pick.includes('data-dim="country" checked> Country<span class="ord">1</span>') && pick.includes('data-dim="date" checked> Date<span class="ord">2</span>'));
   const vals = explore.filterValuesHtml("country", [["<i>x", 3], ["France", 1200]], ["France"]);
   assert.ok(vals.includes('value="France" checked') && vals.includes("&#60;i&#62;x") && vals.includes("1,200") && !vals.includes("<i>"));
+  assert.ok(!vals.includes("ms-search"), "no search box for a short list");
+  const many = explore.filterValuesHtml("city", Array.from({ length: 11 }, (_, i) => ["c" + i, i]));
+  assert.ok(many.startsWith('<input type="search" class="ms-search"') && many.includes('aria-label="Search City values"'), "a search box past 10 values");
+});
+
+test("explore: the dropdowns' buttons, the picked order, which filters show", () => {
+  assert.equal(explore.chipsHtml(["country", "deviceCategory"], explore.DIMENSIONS, "Choose dimensions"),
+    '<span class="chip"><b>1</b> Country</span> <span class="chip"><b>2</b> Device</span>');
+  assert.equal(explore.chipsHtml([], explore.METRICS, "Choose metrics"), '<span class="muted">Choose metrics</span>');
+  assert.ok(explore.chipsHtml(["<x>"], {}, "").includes("&#60;x&#62;") , "an unknown name is escaped");
+  assert.ok(explore.filterSummary("country", 0).endsWith('<span class="ms-count">All</span>'));
+  assert.ok(explore.filterSummary("country", 3).includes("Country</span> <span class=\"ms-count\">3 picked"));
+  assert.deepEqual(explore.toggleOrder(["a", "b"], "c", true, 9), ["a", "b", "c"], "ticking appends");
+  assert.deepEqual(explore.toggleOrder(["a", "b", "c"], "a", false, 9), ["b", "c"]);
+  assert.deepEqual(explore.toggleOrder(["b", "c"], "a", true, 9), ["b", "c", "a"], "untick and tick again moves it last");
+  assert.equal(explore.toggleOrder(["a", "b"], "c", true, 2), null, "refused over the limit");
+  assert.deepEqual(explore.toggleOrder(["a", "b"], "a", true, 2), ["a", "b"]);
+  const s = { dims: ["country", "date"], filters: { browser: ["Chrome"], city: [] } };
+  assert.deepEqual(explore.filterDims(s, ["deviceCategory"]), ["country", "date", "deviceCategory", "browser"], "chosen first, then added, then still filtering");
+  const add = explore.addableDims(s, ["deviceCategory"]);
+  assert.ok(add.includes("city") && !add.includes("browser") && add.length === Object.keys(explore.DIMENSIONS).length - 4);
+  const m = explore.msHtml("f-x", "S", "<p>P</p>", 'A "b"');
+  assert.equal(m, '<details class="ms" id="f-x"><summary>S</summary><div class="ms-panel" role="group" aria-label="A &#34;b&#34;"><p>P</p></div></details>');
+  assert.deepEqual(explore.buildRequest({ period: "7", dims: s.dims, metrics: ["sessions"], filters: s.filters }),
+    { days: 7, dimensions: ["country", "date"], metrics: ["sessions"], filters: { browser: ["Chrome"] } }, "an emptied filter means All");
 });
 
 test("monitor: users per day broken down by a dimension, the countries' N", () => {

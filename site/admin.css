@@ -134,3 +134,29 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .legend i.total, .chart-tip .key.total { background: var(--ink); opacity: .5; }
 .wide { overflow-x: auto; }
 .wide td:first-child { white-space: nowrap; }
+/* Pivot table dropdowns (explore.js msHtml, 2026-10-24): a <details class="ms"> whose <summary> is the button and whose
+   panel floats under it, as wide as the side panel (so it never leaves a 390 px screen), scrolling inside */
+.explore .ms { position: relative; margin: 4px 0; }
+.explore .ms > summary { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-height: 32px; padding: 4px 26px 4px 8px;
+  border: 1px solid var(--ink); border-radius: var(--r-box); background: var(--card); position: relative; }
+.explore .ms > summary::-webkit-details-marker { display: none; }
+.explore .ms > summary::after { content: ""; position: absolute; right: 10px; top: 50%; width: 6px; height: 6px; margin-top: -5px;
+  border: solid var(--ink); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.explore .ms[open] > summary::after { margin-top: -1px; transform: rotate(225deg); }
+.explore .ms > summary:focus-visible { outline: 2px solid var(--rel); outline-offset: 1px; }
+.explore .ms-panel { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); max-height: min(300px, 60vh); overflow: auto;
+  background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); box-shadow: 0 3px 8px rgba(0, 0, 0, .22); padding: 6px 8px; font-size: 15px; }
+.explore .ms-panel label { padding: 1px 0; }
+.explore .ms-panel label[hidden] { display: none; }
+.explore .ms-panel input:focus-visible, .explore .ms-panel button:focus-visible { outline: 2px solid var(--rel); outline-offset: 1px; }
+.explore .ms-panel .n { margin-left: auto; font: 11px "Special Elite", monospace; opacity: .7; }
+.explore .ms-panel button { display: block; width: 100%; text-align: left; border: 0; padding: 3px 4px; letter-spacing: 0; }
+.explore .ms-panel button:hover { background: var(--shade); }
+.explore .ms-search { width: 100%; box-sizing: border-box; margin-bottom: 4px; font-size: 14px; }
+.explore .chip { display: inline-block; border: 1px solid var(--rule); border-radius: var(--r-box); padding: 0 6px; font-size: 14px; background: var(--paper); }
+.explore .chip b { font: 11px "Special Elite", monospace; color: var(--rel); }
+.explore .ms-name { font-weight: 600; }
+.explore .ms-count { margin-left: auto; font: 12px "Special Elite", monospace; opacity: .75; }
+.explore #filter-add .ms > summary { border-style: dashed; }
+.explore .ms-hint { font-size: 13px; margin: 2px 0 0; }
+/* end Pivot table dropdowns */

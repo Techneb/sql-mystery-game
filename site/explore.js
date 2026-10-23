@@ -60,17 +60,46 @@ export function pivotCsv(res, sort) {
     .map(r => r.map(csvCell).join(",")).join("\n") + "\n";
 }
 
-// The side panel's pickers: a checkbox per name; ticked dimensions carry their order (the table's column order).
+// The side panel's dropdowns: a <details class="ms"> whose <summary> is the button and whose panel holds checkboxes
+// (native: Tab reaches it, Space/Enter opens it; the page adds Escape, outside click and arrows).
+export function msHtml(id, summary, panel, name) {
+  return '<details class="ms" id="' + esc(id) + '"><summary>' + summary + '</summary><div class="ms-panel" role="group" aria-label="' +
+    esc(name) + '">' + panel + "</div></details>";
+}
+// A dimension or metric dropdown's button: the picked names as numbered chips, in picking (= column) order.
+export const chipsHtml = (picked, dict, empty) => (picked.length
+  ? picked.map((k, i) => '<span class="chip"><b>' + (i + 1) + "</b> " + esc(label(k, dict)) + "</span>").join(" ")
+  : '<span class="muted">' + esc(empty) + "</span>");
+// A filter's button: its dimension and how many values it keeps ("All" when none is picked).
+export const filterCount = n => (n ? n + " picked" : "All");
+export const filterSummary = (dim, n) => '<span class="ms-name">' + esc(label(dim, DIMENSIONS)) + '</span> <span class="ms-count">' + filterCount(n) + "</span>";
+// Tick or untick k: ticking appends (the order picked is the column order); null when that would pass max.
+export function toggleOrder(list, k, on, max) {
+  if (!on) return list.filter(x => x !== k);
+  if (list.includes(k)) return list;
+  return list.length >= max ? null : [...list, k];
+}
+// Which dimensions get a filter dropdown: the chosen dimensions first, then those added by hand or still filtering.
+export function filterDims(s, added = []) {
+  const busy = Object.keys(s.filters || {}).filter(d => s.filters[d].length);
+  return [...new Set([...s.dims, ...added, ...busy])].filter(d => d in DIMENSIONS);
+}
+export const addableDims = (s, added) => Object.keys(DIMENSIONS).filter(d => !filterDims(s, added).includes(d));
+
+// A checkbox per name; ticked ones carry their order (the table's column order).
 export function pickerHtml(dict, picked, kind) {
   return Object.entries(dict).map(([k, v]) => {
     const n = picked.indexOf(k);
     return '<label><input type="checkbox" data-' + kind + '="' + esc(k) + '"' + (n >= 0 ? " checked" : "") + "> " + esc(v) +
-      (kind === "dim" && n >= 0 ? '<span class="ord">' + (n + 1) + "</span>" : "") + "</label>";
+      '<span class="ord">' + (n >= 0 ? n + 1 : "") + "</span></label>";
   }).join("");
 }
+export const SEARCH_FROM = 10;
 export function filterValuesHtml(dim, rows, chosen = []) {
   if (!rows.length) return '<p class="muted">No values in this period.</p>';
-  return rows.slice(0, 200).map(([v, users]) => '<label><input type="checkbox" data-filter="' + esc(dim) + '" value="' + esc(v) + '"' +
+  const search = rows.length > SEARCH_FROM ? '<input type="search" class="ms-search" placeholder="Search" aria-label="Search ' +
+    esc(label(dim, DIMENSIONS)) + ' values">' : "";
+  return search + rows.slice(0, 200).map(([v, users]) => '<label><input type="checkbox" data-filter="' + esc(dim) + '" value="' + esc(v) + '"' +
     (chosen.includes(String(v)) ? " checked" : "") + "> " + esc(cell(dim, v)) + '<span class="n">' + esc(fmtNum(users)) + "</span></label>").join("");
 }
 
@@ -94,39 +123,74 @@ async function main() {
     if (!r || !r.ok) throw new Error((r && r.error) || "no numbers");
     return r;
   };
-  const pickers = () => {
-    $("dims").innerHTML = "<legend>DIMENSIONS (ROWS)</legend>" + pickerHtml(DIMENSIONS, s.dims, "dim");
-    $("metrics").innerHTML = "<legend>METRICS (COLUMNS)</legend>" + pickerHtml(METRICS, s.metrics, "metric");
+  const added = [], vals = {}; // filters added by hand; each dimension's values for the current period
+  $("dims").insertAdjacentHTML("beforeend", msHtml("dims-ms", chipsHtml(s.dims, DIMENSIONS, "Choose dimensions"), pickerHtml(DIMENSIONS, s.dims, "dim"), "Dimensions"));
+  $("metrics").insertAdjacentHTML("beforeend", msHtml("metrics-ms", chipsHtml(s.metrics, METRICS, "Choose metrics"), pickerHtml(METRICS, s.metrics, "metric"), "Metrics"));
+  const sync = (box, picked, dict, empty) => { // in place, so the open panel and its focus stay
+    box.querySelector("summary").innerHTML = chipsHtml(picked, dict, empty);
+    box.querySelectorAll(".ms-panel input").forEach(i => {
+      const n = picked.indexOf(i.dataset.dim || i.dataset.metric);
+      i.parentNode.querySelector(".ord").textContent = n >= 0 ? n + 1 : "";
+    });
   };
-  pickers();
-  $("filters").insertAdjacentHTML("beforeend", Object.entries(DIMENSIONS).map(([k, v]) =>
-    '<details data-dim="' + esc(k) + '"><summary>' + esc(v) + ' <span class="ord"></span></summary><div class="values"></div></details>').join(""));
-  const loadValues = async d => {
-    const box = d.querySelector(".values"), dim = d.dataset.dim;
-    box.innerHTML = '<p class="muted">Reading...</p>';
-    try { box.innerHTML = filterValuesHtml(dim, (await get(valuesRequest(s, dim))).rows, s.filters[dim]); }
-    catch (e) { box.innerHTML = '<p class="muted">' + esc(e.message) + "</p>"; }
+  const filters = () => {
+    $("filter-list").innerHTML = filterDims(s, added).map(d => msHtml("f-" + d, filterSummary(d, (s.filters[d] || []).length),
+      vals[d] ? filterValuesHtml(d, vals[d], s.filters[d]) : '<p class="muted">Reading...</p>', label(d, DIMENSIONS) + " values")).join("");
+    const add = addableDims(s, added);
+    $("filter-add").innerHTML = add.length ? msHtml("add-ms", "Add filter", add.map(d => '<button type="button" class="quiet" data-add="' +
+      esc(d) + '">' + esc(label(d, DIMENSIONS)) + "</button>").join(""), "Add a filter") : "";
   };
-  $("filters").addEventListener("toggle", e => { if (e.target.open) loadValues(e.target); }, true);
+  filters();
+  const loadValues = async m => {
+    const dim = m.id.slice(2);
+    if (vals[dim]) return;
+    const panel = m.querySelector(".ms-panel");
+    try { vals[dim] = (await get(valuesRequest(s, dim))).rows; panel.innerHTML = filterValuesHtml(dim, vals[dim], s.filters[dim]); }
+    catch (e) { panel.innerHTML = '<p class="muted">' + esc(e.message) + "</p>"; }
+  };
+  $("filter-list").addEventListener("toggle", e => { if (e.target.open) loadValues(e.target); }, true);
+  $("filter-list").addEventListener("input", e => {
+    if (!e.target.classList.contains("ms-search")) return;
+    const q = e.target.value.trim().toLowerCase();
+    e.target.parentNode.querySelectorAll("label").forEach(l => { l.hidden = !!q && !l.textContent.toLowerCase().includes(q); });
+  });
+  $("filter-add").addEventListener("click", e => {
+    const b = e.target.closest("button[data-add]");
+    if (!b) return;
+    added.push(b.dataset.add); filters();
+    const m = $("f-" + b.dataset.add); m.open = true; m.querySelector("summary").focus();
+  });
+  // Every dropdown: Escape closes it (focus back on its button), a click outside closes it, arrows move between options.
+  document.addEventListener("keydown", e => {
+    const m = e.target.closest && e.target.closest("details.ms[open]");
+    if (!m) return;
+    if (e.key === "Escape") { m.open = false; m.querySelector("summary").focus(); e.preventDefault(); }
+    else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      const opts = [...m.querySelectorAll("summary, .ms-panel input, .ms-panel button")].filter(x => !x.closest("[hidden]"));
+      const i = opts.indexOf(e.target) + (e.key === "ArrowDown" ? 1 : -1);
+      if (opts[i]) { opts[i].focus(); e.preventDefault(); }
+    }
+  });
+  document.addEventListener("click", e => e.target.isConnected && document.querySelectorAll("details.ms[open]").forEach(m => { if (!m.contains(e.target)) m.open = false; }));
   $("period").onchange = e => {
     if (e.target.type === "date") document.querySelector('input[value="custom"]').checked = true;
     s.period = document.querySelector('input[name="period"]:checked').value;
     s.start = $("start").value; s.end = $("end").value;
-    document.querySelectorAll("#filters details[open]").forEach(loadValues);
+    for (const d in vals) delete vals[d];
+    filters();
   };
   document.querySelector("aside").addEventListener("change", e => {
-    const t = e.target, toggle = (list, k) => (t.checked ? list.includes(k) || list.push(k) : list.splice(list.indexOf(k), 1));
-    if (t.dataset.dim) {
-      if (t.checked && s.dims.length >= MAX_DIMS) { t.checked = false; return say("At most " + MAX_DIMS + " dimensions (GA's limit).", true); }
-      toggle(s.dims, t.dataset.dim); pickers();
-    } else if (t.dataset.metric) {
-      if (t.checked && s.metrics.length >= MAX_METRICS) { t.checked = false; return say("At most " + MAX_METRICS + " metrics (GA's limit).", true); }
-      toggle(s.metrics, t.dataset.metric); pickers();
+    const t = e.target;
+    if (t.dataset.dim || t.dataset.metric) {
+      const dim = !!t.dataset.dim, max = dim ? MAX_DIMS : MAX_METRICS;
+      const next = toggleOrder(dim ? s.dims : s.metrics, t.dataset.dim || t.dataset.metric, t.checked, max);
+      if (!next) { t.checked = false; return say("At most " + max + (dim ? " dimensions" : " metrics") + " (GA's limit).", true); }
+      if (dim) { s.dims = next; sync($("dims-ms"), s.dims, DIMENSIONS, "Choose dimensions"); filters(); }
+      else { s.metrics = next; sync($("metrics-ms"), s.metrics, METRICS, "Choose metrics"); }
     } else if (t.dataset.filter) {
-      const list = (s.filters[t.dataset.filter] ||= []);
-      toggle(list, t.value);
-      const n = t.closest("details").querySelector(".ord");
-      n.textContent = list.length ? list.length + " kept" : "";
+      const d = t.dataset.filter, list = s.filters[d] || [];
+      s.filters[d] = t.checked ? [...list, t.value] : list.filter(v => v !== t.value);
+      t.closest("details").querySelector(".ms-count").textContent = filterCount(s.filters[d].length);
     }
   });
   const draw = () => { $("pivot").innerHTML = pivotHtml(res, sort); };
