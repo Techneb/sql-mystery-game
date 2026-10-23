@@ -2,7 +2,7 @@
 // of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
 // stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
-import { BOARD_KEY, deskLinks, deskPassphrase, escapeHtml as esc } from "./shared.js";
+import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, reportUrl } from "./shared.js";
 
 export const DAYS = [7, 30, 90];
 export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
@@ -67,6 +67,86 @@ export function usersHtml(users, w) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
   if (!pts.length) return NONE;
   return lineSvg(pts, w) + raw(barTable("Day", pts.map(p => [p.label, p.value])));
+}
+
+// --- users per day broken down by one dimension (the select by its label): ?report= with dimensions [date, X] and
+// activeUsers, one line per value for the top TOP values by users summed over the days (a user active on two days
+// counts twice: a ranking, not a head count), in --c1..--c5, over the page's own users-per-day total as a neutral line.
+export const TOP = 5;
+// The dimensions that make sense per day (names from shared.js DIMENSIONS), and the plural the note uses.
+export const BREAKDOWNS = { country: "countries", deviceCategory: "devices", sessionDefaultChannelGroup: "channels", sessionSource: "sources",
+  operatingSystem: "operating systems", browser: "browsers", language: "languages", newVsReturning: "values", "customEvent:mode": "modes" };
+export const breakdownRequest = (days, dim) => ({ days, dimensions: ["date", dim], metrics: ["activeUsers"] });
+// rows [date, value, users] -> {dates (sorted, the union with the total's days), series [{label, values, cls}] for the
+// top n values, most users first, a missing day counting 0; count: how many values there were}.
+export function pivotSeries(rows, totalDates = [], n = TOP) {
+  const by = new Map(), dates = new Set(totalDates.map(String));
+  for (const [d, v, u] of rows) {
+    dates.add(String(d));
+    const m = by.get(v) || by.set(v, new Map()).get(v);
+    m.set(String(d), (m.get(String(d)) || 0) + (Number(u) || 0));
+  }
+  const ds = [...dates].sort(), sum = m => [...m.values()].reduce((a, b) => a + b, 0);
+  const top = [...by].sort((a, b) => sum(b[1]) - sum(a[1]) || String(a[0]).localeCompare(String(b[0]))).slice(0, n);
+  return { dates: ds, count: by.size, series: top.map(([label, m], j) => ({ label: String(label), values: ds.map(d => m.get(d) || 0), cls: "c" + (j + 1) })) };
+}
+// One day's tooltip rows, the largest first: [value, label, key class].
+export const dayTip = (series, i) => series.map(s => [s.values[i], s.label, s.cls]).sort((a, b) => b[0] - a[0]).map(([v, l, c]) => [compact(v), l, c]);
+// Several lines on one axis, lineSvg's frame; the total (cls "total") drawn first, under the others. Each day's hover
+// strip shows the crosshair and a dot per series.
+export function multiLineSvg(labels, series, w = 640) {
+  const H = 200, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B, n = labels.length;
+  const tk = ticks(Math.max(1, ...series.flatMap(s => s.values))), top = tk.at(-1);
+  const x = i => r1(L + (n < 2 ? pw / 2 : (i * pw) / (n - 1))), y = v => r1(T + ph - (v * ph) / top);
+  const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(pw / 70)))), strip = r1(n < 2 ? pw : pw / (n - 1));
+  const col = s => "var(--" + (s.cls === "total" ? "ink" : s.cls) + ")";
+  return '<svg class="chart line-chart multi-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Users per day by value">' +
+    yAxis(tk, y, L, L + pw, compact, "Users") +
+    labels.map((l, i) => (i % step && i !== n - 1) || (i !== n - 1 && n - 1 - i < step / 2) ? "" :
+      '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(l.slice(5)) + "</text>").join("") +
+    series.map(s => '<path class="sl ' + esc(s.cls) + '" style="stroke:' + col(s) + '" d="M' + s.values.map((v, i) => x(i) + "," + y(v)).join("L") + '"/>').join("") +
+    labels.map((l, i) => '<g class="hit"' + tipAttrs(l, dayTip(series, i)) + '><rect x="' + r1(x(i) - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph +
+      '"/><line class="cross" x1="' + x(i) + '" x2="' + x(i) + '" y1="' + T + '" y2="' + (T + ph) + '"/>' +
+      series.map(s => '<circle class="dot" style="fill:' + col(s) + '" cx="' + x(i) + '" cy="' + y(s.values[i]) + '" r="4"/>').join("") + "</g>").join("") + "</svg>";
+}
+// The breakdown: legend, lines, the "Top 5 of N" note, and the date x series table as raw data.
+export function breakdownHtml(res, users, dim, w) {
+  const total = [...users].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const p = pivotSeries(res.rows || [], total.map(u => u.date));
+  if (!p.series.length) return NONE;
+  const tot = new Map(total.map(u => [String(u.date), Number(u.users) || 0]));
+  const all = { label: "All users", values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
+  const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values";
+  return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
+    multiLineSvg(labels, series, w) +
+    (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by users summed over the days).</p>" : "") +
+    raw('<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
+      labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>");
+}
+const optionsHtml = (pairs, cur) => pairs.map(([v, l]) => '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(l) + "</option>").join("");
+const breakdownSelect = cur => '<label class="pick">Breakdown <select id="bd-dim">' +
+  optionsHtml([["", "None"], ...Object.keys(BREAKDOWNS).map(k => [k, DIMENSIONS[k] || k])], cur) + "</select></label>";
+// opts.bd: {dim, res, error} (res null while reading); none or no dim: the single line.
+export function usersSection(s, w, bd = {}) {
+  const head = '<div class="label-row"><span class="label">USERS PER DAY</span>' + breakdownSelect(bd.dim || "") + "</div>";
+  if (!bd.dim) return head + usersHtml(s.users || [], w);
+  if (bd.error) return head + '<p class="status bad">Google Analytics said: ' + esc(bd.error) + "</p>";
+  if (!bd.res) return head + '<p class="muted">Reading the breakdown...</p>';
+  return head + breakdownHtml(bd.res, s.users || [], bd.dim, w);
+}
+
+// The countries' N: 10 comes with ?stats; any other is a ?report= on country (GA orders it by users, 0 = all).
+export const TOP_COUNTRIES = [5, 10, 20, 50, 0];
+export const countriesRequest = days => ({ days, dimensions: ["country"], metrics: ["activeUsers"] });
+export const countriesFrom = (res, n) => (res.rows || []).slice(0, n || Infinity).map(([country, users]) => ({ country, users }));
+const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
+// opts.top: {n, rows, error}; n 10 (or none) uses the ?stats list.
+export function countriesSection(s, world, top = {}) {
+  const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
+  if (n === 10) return head + mapHtml(s.countries || [], world);
+  if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
+  if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
+  return head + mapHtml(top.rows, world);
 }
 
 // One line per chapter: opened, ran 1 / 5 / 20 queries (chapter_queries by count), solved, solved / opened.
@@ -229,11 +309,12 @@ export function mapHtml(countries, world) {
     raw(barTable("Country", list.map(c => [c.label, c.value])));
 }
 
-export function statsHtml(s, w, world) {
-  return '<div class="label">USERS PER DAY</div>' + usersHtml(s.users || [], w) +
+// opts: {bd, top} as usersSection and countriesSection take them.
+export function statsHtml(s, w, world, opts = {}) {
+  return usersSection(s, w, opts.bd) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
     '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
-    '<div class="label">COUNTRIES (TOP 10)</div>' + mapHtml(s.countries || [], world) +
+    countriesSection(s, world, opts.top) +
     '<div class="donuts"><div><div class="label">DEVICES (OPENED A CHAPTER)</div>' + devicesHtml(s.devices || []) +
     '</div><div><div class="label">CHANNELS</div>' + channelsHtml(s.channels || []) + "</div></div>";
 }
@@ -287,13 +368,50 @@ async function main() {
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
   $("monitor").hidden = false;
   wireTips($("stats"));
-  let gen = 0, last = null, wide = 0, world = null;
-  const draw = () => { wide = $("stats").clientWidth; if (last) $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world); };
+  let gen = 0, last = null, wide = 0, world = null, days = DAYS[0];
+  // The breakdown (remembered per browser) and the countries' N; each extra report checks on return that it still
+  // answers the current choice, so a late reply for an older one is dropped.
+  const BD_KEY = "ritz.monitor.breakdown";
+  const bd = { dim: "", res: null, error: null }, top = { n: 10, rows: null, error: null };
+  try { const d = localStorage.getItem(BD_KEY) || ""; if (d in BREAKDOWNS) bd.dim = d; } catch {}
+  const draw = () => {
+    wide = $("stats").clientWidth;
+    if (!last) return;
+    const focus = document.activeElement && document.activeElement.id;
+    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { bd, top });
+    if (focus && $(focus)) $(focus).focus();
+  };
+  const report = async req => {
+    const r = await (await fetch(reportUrl(board, req, key), { signal: AbortSignal.timeout(40000) })).json();
+    if (!r || !r.ok) throw new Error((r && r.error) || "no numbers");
+    return r;
+  };
+  const loadBd = async () => {
+    bd.res = null; bd.error = null; draw();
+    if (!bd.dim) return;
+    const want = days + "|" + bd.dim, still = () => want === days + "|" + bd.dim;
+    try { const r = await report(breakdownRequest(days, bd.dim)); if (still()) bd.res = r; }
+    catch (e) { if (still()) bd.error = e.message; }
+    if (still()) draw();
+  };
+  const loadTop = async () => {
+    top.rows = null; top.error = null; draw();
+    if (top.n === 10) return;
+    const want = days + "|" + top.n, still = () => want === days + "|" + top.n;
+    try { const r = await report(countriesRequest(days)); if (still()) top.rows = countriesFrom(r, top.n); }
+    catch (e) { if (still()) top.error = e.message; }
+    if (still()) draw();
+  };
+  $("stats").addEventListener("change", e => {
+    if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
+    if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
+  });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
   fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
-  async function load(days) {
+  async function load(d) {
     const mine = ++gen;
+    days = d;
     document.querySelectorAll("#days button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.days) === days)));
     say("Reading the last " + days + " days...");
     try {
@@ -302,7 +420,7 @@ async function main() {
       const s = await (await fetch(u, { signal: AbortSignal.timeout(40000) })).json();
       if (mine !== gen) return;
       if (!s || !s.ok) throw new Error((s && s.error) || "no numbers");
-      last = s; draw();
+      last = s; loadBd(); loadTop();
       say("The last " + s.days + " days, from Google Analytics (cached 10 minutes).");
     } catch (e) { if (mine === gen) say("Could not read the numbers: " + e.message, true); }
   }

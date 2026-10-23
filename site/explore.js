@@ -2,15 +2,10 @@
 // and filters, read from the Apps Script's ?report=<json>&key=<passphrase> (apps_script.gs report_, the same whitelist).
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
-import { BOARD_KEY, deskLinks, deskPassphrase, escapeHtml as esc } from "./shared.js";
+import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, reportUrl } from "./shared.js";
 
-// The whitelist, in the order the side panel lists it (apps_script.gs REPORT_DIMS / REPORT_METRICS, a test compares).
-export const DIMENSIONS = {
-  date: "Date", eventName: "Event", "customEvent:chapter": "Chapter", "customEvent:count": "Query milestone",
-  "customEvent:mode": "Mode", "customEvent:part": "Part finished", "customEvent:name": "Badge", deviceCategory: "Device",
-  operatingSystem: "Operating system", browser: "Browser", country: "Country", city: "City", language: "Language",
-  sessionDefaultChannelGroup: "Channel", sessionSource: "Source", newVsReturning: "New or returning",
-};
+// The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
+export { DIMENSIONS, reportUrl };
 export const METRICS = {
   activeUsers: "Active users", totalUsers: "Total users", newUsers: "New users", sessions: "Sessions",
   engagedSessions: "Engaged sessions", eventCount: "Events", userEngagementDuration: "Engagement time (s)",
@@ -27,11 +22,6 @@ export function buildRequest(s) {
   for (const [d, vals] of Object.entries(s.filters || {})) if (vals && vals.length) filters[d] = [...vals];
   if (Object.keys(filters).length) req.filters = filters;
   return req;
-}
-export function reportUrl(board, req, key) {
-  const u = new URL(board);
-  u.searchParams.set("report", JSON.stringify(req)); u.searchParams.set("key", key);
-  return u.toString();
 }
 // The values a filter offers: the same report with that one dimension and its users, same period, no other filter.
 export const valuesRequest = (s, dim) => buildRequest({ ...s, dims: [dim], metrics: ["activeUsers"], filters: {} });
