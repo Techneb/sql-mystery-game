@@ -145,3 +145,17 @@ export function chapterSummary(rows, meta) {
   return per.map((c, i) => ({ chapter: i + 1, solvers: c.solvers,
     minutes: median(c.minutes), queries: median(c.queries), wrong: median(c.wrong) }));
 }
+
+// The GA dimensions the desk may ask for (apps_script.gs REPORT_DIMS, a test compares), with readable names, in the
+// pivot table's order (explore.js), and the ?report=<json>&key= URL that explore.js and monitor.js fetch.
+export const DIMENSIONS = {
+  date: "Date", eventName: "Event", "customEvent:chapter": "Chapter", "customEvent:count": "Query milestone",
+  "customEvent:mode": "Mode", "customEvent:part": "Part finished", "customEvent:name": "Badge", deviceCategory: "Device",
+  operatingSystem: "Operating system", browser: "Browser", country: "Country", city: "City", language: "Language",
+  sessionDefaultChannelGroup: "Channel", sessionSource: "Source", newVsReturning: "New or returning",
+};
+export function reportUrl(board, req, key) {
+  const u = new URL(board);
+  u.searchParams.set("report", JSON.stringify(req)); u.searchParams.set("key", key);
+  return u.toString();
+}

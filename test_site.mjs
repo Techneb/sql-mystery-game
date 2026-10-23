@@ -1303,3 +1303,43 @@ test("explore: the request from the side panel, the pivot table sorted with GA's
   const vals = explore.filterValuesHtml("country", [["<i>x", 3], ["France", 1200]], ["France"]);
   assert.ok(vals.includes('value="France" checked') && vals.includes("&#60;i&#62;x") && vals.includes("1,200") && !vals.includes("<i>"));
 });
+
+test("monitor: users per day broken down by a dimension, the countries' N", () => {
+  for (const k of Object.keys(monitor.BREAKDOWNS)) assert.ok(k in shared.DIMENSIONS, k + " is in the report whitelist");
+  assert.equal(explore.DIMENSIONS, shared.DIMENSIONS, "one whitelist");
+  assert.deepEqual(monitor.breakdownRequest(30, "country"), { days: 30, dimensions: ["date", "country"], metrics: ["activeUsers"] });
+  const rows = [["20261022", "France", 5], ["20261021", "France", 3], ["20261022", "<b>UK", 9],
+    ...["A", "B", "C", "D", "E"].map((c, i) => ["20261021", c, i + 1])];
+  const p = monitor.pivotSeries(rows, ["20261020"]);
+  assert.deepEqual(p.dates, ["20261020", "20261021", "20261022"], "the total's days too");
+  assert.equal(p.count, 7);
+  assert.deepEqual(p.series.map(s => s.label), ["<b>UK", "France", "E", "D", "C"], "top 5 by users over the period");
+  assert.deepEqual(p.series[1].values, [0, 3, 5], "a missing day counts 0");
+  assert.deepEqual(p.series.map(s => s.cls), ["c1", "c2", "c3", "c4", "c5"]);
+  assert.deepEqual(monitor.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
+  const users = [{ date: "20261021", users: 12 }, { date: "20261022", users: 14 }];
+  const html = monitor.breakdownHtml({ rows }, users, "country", 390);
+  assert.ok(!html.includes("<b>UK") && html.includes("&#60;b&#62;UK"), "escaped");
+  assert.ok(html.includes("Top 5 of 7 countries"), "the note");
+  assert.ok(html.includes("All users") && (html.match(/<path class="sl /g) || []).length === 6, "five lines and the total");
+  assert.equal((html.match(/<g class="hit"/g) || []).length, 2, "one hover strip per day");
+  assert.ok(html.includes('data-k="2026-10-22" data-v="14\tAll users\ttotal\n9\t&#60;b&#62;UK\tc1'), "the tooltip, sorted");
+  assert.ok(html.includes("<summary>Raw data</summary>") && html.includes("<td>2026-10-21</td>"), "date x series raw data");
+  assert.ok(!monitor.breakdownHtml({ rows: rows.slice(0, 2) }, users, "country", 390).includes("Top "), "no note when every value is drawn");
+  const s = { users, chapters: [], devices: [], countries: [{ country: "France", users: 3 }], channels: [] };
+  assert.ok(monitor.statsHtml(s, 390, null).includes('<option value="" selected>None</option>'), "None by default, the single line");
+  assert.ok(monitor.statsHtml(s, 390, null, { bd: { dim: "country" } }).includes("Reading the breakdown"), "loading in place");
+  const err = monitor.statsHtml(s, 390, null, { bd: { dim: "country", error: "<i>quota" } });
+  assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota"), "GA's error, escaped");
+  assert.ok(monitor.statsHtml(s, 390, null, { bd: { dim: "browser", res: { rows: [["20261021", "Chrome", 4]] } } }).includes('<option value="browser" selected>Browser</option>'));
+  // countries: N 10 from ?stats, any other from ?report=
+  assert.ok(monitor.statsHtml(s, 390, null).includes("COUNTRIES (TOP 10)"));
+  const res = { rows: [["France", 9], ["Spain", 4], ["<Narnia>", 1]] };
+  assert.deepEqual(monitor.countriesFrom(res, 2), [{ country: "France", users: 9 }, { country: "Spain", users: 4 }]);
+  assert.equal(monitor.countriesFrom(res, 0).length, 3, "0 = all");
+  assert.deepEqual(monitor.countriesRequest(7), { days: 7, dimensions: ["country"], metrics: ["activeUsers"] });
+  const all = monitor.statsHtml(s, 390, null, { top: { n: 0, rows: monitor.countriesFrom(res, 0) } });
+  assert.ok(all.includes("COUNTRIES (ALL)") && all.includes("&#60;Narnia&#62;") && !all.includes("<Narnia>"), "every row, escaped");
+  const t20 = monitor.statsHtml(s, 390, null, { top: { n: 20 } });
+  assert.ok(t20.includes("COUNTRIES (TOP 20)") && t20.includes("Reading the countries"));
+});
