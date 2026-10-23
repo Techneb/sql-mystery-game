@@ -1,4 +1,4 @@
-// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the chapter funnel with its solve rate, a map
+// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the chapter funnel with its retention, the solve rate, a map
 // of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
 // stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
@@ -90,43 +90,71 @@ const barPath = (x, y, bw, h) => { const r = Math.min(2, bw / 2, h); return "M" 
 // Chapters as the game names them.
 export const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 const roman = n => ROMAN[n] || String(n);
-const rate = c => (c.opened ? Math.round((100 * c.solved) / c.opened) : null);
+export const solveRate = c => (c.opened ? Math.round((100 * c.solved) / c.opened) : null);
+// Retention: users who opened chapter N over those who opened chapter I (so I is 100%); null without chapter I openers.
+export const retention = f => { const base = (f.find(c => c.chapter === 1) || {}).opened || 0; return c => (base ? Math.round((100 * c.opened) / base) : null); };
+// Both chapter charts share one x layout (40 px each side, one column per chapter), so the solve rate lines up under
+// the funnel.
+const CL = 40, CR = 40, CT = 22, CB = 24;
+const cols = (f, w) => { const pw = Math.max(1, w - CL - CR); return { pw, gw: pw / Math.max(1, f.length) }; };
+// A percent line with dots: one point per chapter whose value is not null, mid-column.
+const pctLine = (f, val, gw, yr, cls) => {
+  const pts = f.map((c, i) => [r1(CL + (i + 0.5) * gw), val(c)]).filter(p => p[1] !== null).map(([px, v]) => [px, yr(v)]);
+  return pts.length ? '<path class="' + cls + '-line" d="M' + pts.map(p => p.join(",")).join("L") + '"/>' + pts.map(p => '<circle class="' + cls + '-dot" cx="' + p[0] + '" cy="' + p[1] + '" r="4"/>').join("") : "";
+};
+const xLabels = (f, gw, H) => '<text class="tick" x="' + (CL - 6) + '" y="' + (H - 6) + '" text-anchor="end">Ch.</text>' +
+  f.map((c, i) => '<text class="tick' + (gw < 32 ? " small" : "") + '" x="' + r1(CL + (i + 0.5) * gw) + '" y="' + (H - 6) + '" text-anchor="middle">' + roman(c.chapter) + "</text>").join("");
+const pctOf = v => (v === null ? "-" : v + "%");
 // The funnel as vertical grouped bars, x = chapter, the five stages side by side in the categorical --c1..--c5 on the
-// left axis (users), and the solve rate (solved / opened) as a --c6 line with dots on a right 0-100% axis (the owner
-// asked for one chart, 2026-10-23; chapters nobody opened have no dot). Each chapter has one hover column whose
-// tooltip lists the five stages and the solve rate.
+// left axis (users), and the retention (opened / chapter I's opened) as a --c6 line with dots on a right 0-100% axis
+// (a dual axis the owner asked for, 2026-10-23). Each chapter has one hover column whose tooltip lists the five
+// stages, the retention and the solve rate.
 export function funnelSvg(f, w = 640) {
-  const H = 220, L = 40, R = 40, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
+  const H = 220, L = CL, T = CT, { pw, gw } = cols(f, w), ph = H - T - CB;
   const tk = ticks(Math.max(1, ...f.flatMap(c => STAGES.map(([k]) => c[k])))), top = tk.at(-1);
-  const gw = pw / Math.max(1, f.length), inner = gw * 0.8, gap = inner / STAGES.length > 4 ? 1 : 0, bw = (inner - gap * (STAGES.length - 1)) / STAGES.length;
-  const y = v => r1(T + ph - (v * ph) / top), yr = v => r1(T + ph - (v * ph) / 100);
-  const pts = f.map((c, i) => [r1(L + (i + 0.5) * gw), rate(c)]).filter(p => p[1] !== null).map(([px, v]) => [px, yr(v)]);
-  const small = gw < 32 ? " small" : "";
-  return '<svg class="chart funnel-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Chapter funnel and solve rate">' +
-    yAxis(tk, y, L, L + pw, compact, "Users") + '<text class="axis-title" x="' + (w - 2) + '" y="11" text-anchor="end">Solve rate</text>' +
-    [0, 25, 50, 75, 100].map(v => '<text class="tick" x="' + (L + pw + 6) + '" y="' + (yr(v) + 4) + '">' + v + "%</text>").join("") +
-    '<text class="tick" x="' + (L - 6) + '" y="' + (H - 6) + '" text-anchor="end">Ch.</text>' +
+  const inner = gw * 0.8, gap = inner / STAGES.length > 4 ? 1 : 0, bw = (inner - gap * (STAGES.length - 1)) / STAGES.length;
+  const y = v => r1(T + ph - (v * ph) / top), yr = v => r1(T + ph - (v * ph) / 100), ret = retention(f);
+  return '<svg class="chart funnel-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Chapter funnel and retention">' +
+    yAxis(tk, y, L, L + pw, compact, "Users") + '<text class="axis-title" x="' + (w - 2) + '" y="11" text-anchor="end">Retention</text>' +
+    [0, 25, 50, 75, 100].map(v => '<text class="tick" x="' + (L + pw + 6) + '" y="' + (yr(v) + 4) + '">' + v + "%</text>").join("") + xLabels(f, gw, H) +
     f.map((c, i) => {
       const x0 = L + i * gw;
-      return '<g class="hit"' + tipAttrs("Chapter " + roman(c.chapter), STAGES.map(([k, name], j) => [c[k], name, "c" + (j + 1)]).concat([[pct(c.solved, c.opened), "solve rate", "c6"]])) +
+      return '<g class="hit"' + tipAttrs("Chapter " + roman(c.chapter), STAGES.map(([k, name], j) => [c[k], name, "c" + (j + 1)])
+        .concat([[pctOf(ret(c)), "retention", "c6"], [pct(c.solved, c.opened), "solve rate"]])) +
         '><rect x="' + r1(x0) + '" y="' + T + '" width="' + r1(gw) + '" height="' + ph + '"/></g>' +
-        '<text class="tick' + small + '" x="' + r1(x0 + gw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + roman(c.chapter) + "</text>" +
         STAGES.map(([k], j) => c[k] ? '<path class="bar c' + (j + 1) + '" d="' + barPath(r1(x0 + gw * 0.1 + j * (bw + gap)), y(c[k]), r1(bw), r1(T + ph - y(c[k]))) + '"/>' : "").join("");
     }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/>' +
-    (pts.length ? '<path class="rate-line" d="M' + pts.map(p => p.join(",")).join("L") + '"/>' + pts.map(p => '<circle class="rate-dot" cx="' + p[0] + '" cy="' + p[1] + '" r="4"/>').join("") : "") +
-    "</svg>";
+    pctLine(f, ret, gw, yr, "rate") + "</svg>";
+}
+// The solve rate (solved / opened) per chapter, one line with dots on a 0-100% axis, in the funnel's columns (its
+// right gutter left empty so the chapters line up); chapters nobody opened have no dot.
+export function solveRateSvg(f, w = 640) {
+  const H = 160, { pw, gw } = cols(f, w), ph = H - CT - CB, yr = v => r1(CT + ph - (v * ph) / 100);
+  return '<svg class="chart solve-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Solve rate per chapter">' +
+    yAxis([0, 25, 50, 75, 100], yr, CL, CL + pw, v => v + "%", "Solve rate") + xLabels(f, gw, H) +
+    f.map((c, i) => '<g class="hit"' + tipAttrs("Chapter " + roman(c.chapter), [[c.solved + " of " + c.opened + " solved (" + pct(c.solved, c.opened) + ")"]]) +
+      '><rect x="' + r1(CL + i * gw) + '" y="' + CT + '" width="' + r1(gw) + '" height="' + ph + '"/></g>').join("") +
+    '<line class="axis" x1="' + CL + '" x2="' + (CL + pw) + '" y1="' + (CT + ph) + '" y2="' + (CT + ph) + '"/>' + pctLine(f, solveRate, gw, yr, "solve") + "</svg>";
+}
+export function solveRateHtml(rows, w) {
+  const f = funnel(rows);
+  if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
+  return solveRateSvg(f, w) +
+    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
+      f.map(c => "<tr><td>" + roman(c.chapter) + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
 }
 const legend = names => '<p class="legend">' + names.map((name, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(name) + "</span>").join("") +
-  '<span><i class="c6 key-line"></i>Solve rate (right axis)</span></p>';
+  '<span><i class="c6 key-line"></i>Retention (right axis)</span></p>';
 export function funnelHtml(rows, w) {
   const f = funnel(rows);
   const finished = rows.filter(r => r.event === "game_finish").reduce((s, r) => s + (Number(r.users) || 0), 0);
   if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
-  const noQueries = f.every(c => !c.q1 && !c.q5 && !c.q20);
+  const noQueries = f.every(c => !c.q1 && !c.q5 && !c.q20), ret = retention(f);
   return legend(STAGES.map(s => s[1])) + funnelSvg(f, w) +
     (noQueries ? '<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>' : "") +
-    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
-    f.map(c => "<tr><td>" + roman(c.chapter) + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") + '<td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>") +
+    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Retention</th><th>Solve rate</th></tr></thead><tbody>' +
+    f.map(c => "<tr><td>" + roman(c.chapter) + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") +
+      '<td class="num">' + pctOf(ret(c)) + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>") +
     '<p class="muted">Finished a part: ' + finished + " users.</p>";
 }
 
@@ -204,6 +232,7 @@ export function mapHtml(countries, world) {
 export function statsHtml(s, w, world) {
   return '<div class="label">USERS PER DAY</div>' + usersHtml(s.users || [], w) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
+    '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
     '<div class="label">COUNTRIES (TOP 10)</div>' + mapHtml(s.countries || [], world) +
     '<div class="donuts"><div><div class="label">DEVICES (OPENED A CHAPTER)</div>' + devicesHtml(s.devices || []) +
     '</div><div><div class="label">CHANNELS</div>' + channelsHtml(s.channels || []) + "</div></div>";

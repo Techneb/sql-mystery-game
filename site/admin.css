@@ -73,7 +73,11 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .funnel-chart .bar, .funnel-chart .rate-line, .funnel-chart .rate-dot { pointer-events: none; }
 .funnel-chart .rate-line { fill: none; stroke: var(--c6); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .funnel-chart .rate-dot { fill: var(--c6); stroke: var(--paper); stroke-width: 2; }
-.funnel-chart .tick.small { font-size: 9px; }
+.funnel-chart .tick.small, .solve-chart .tick.small { font-size: 9px; }
+.solve-chart .hit:hover rect { fill: var(--shade); }
+.solve-chart .solve-line, .solve-chart .solve-dot { pointer-events: none; }
+.solve-chart .solve-line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.solve-chart .solve-dot { fill: var(--rel); stroke: var(--paper); stroke-width: 2; }
 .donut .slice { stroke: var(--paper); stroke-width: 2; }
 .donut .slice:hover, .map .bubble:hover .b { opacity: .8; }
 .donut .val { font: 700 20px "Playfair Display", serif; }
