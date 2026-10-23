@@ -696,3 +696,15 @@ Everything is deployed (2026-10-20, 9f4e671).
   CacheService's 100 KB); GA's refusals come back as `{ok:false, error}`. Needs the script redeployed; the live GA
   calls are untested (stubbed), and whether GA accepts `customEvent:mode`, `part` and `name` depends on their being
   registered as custom dimensions.
+- Monitoring status (2026-10-24). Done: the backend moved to the AlephB account (the one owning GA; the owner's
+  personal-account project could not read GA), `count` registered in GA (2026-10-23; mode, part and the badge `name`
+  were already registered), backend deploys scripted with clasp (`assets-source/clasp/deploy.sh`, see CLAUDE.md
+  Status sources), the desk menu row Setup . Monitoring . Pivot table. The charts were reworked twice the same night
+  (owner): users per day a line with an HTML tooltip (the first version relied on SVG `<title>`, which Chrome shows
+  only after a still second); the chapter funnel vertical grouped bars (chapters I..XII, five categorical colours)
+  with the retention line on a right axis (chapter N's openers / chapter I's; a dual axis against the dataviz
+  guidance, kept because the owner asked); the solve rate its own line chart aligned under it; top countries as
+  bubbles on a world map (`site/world.json`, 79 KB, Natural Earth 110m plus centroids under GA's English names);
+  devices and channels as donuts; every chart with a closed Raw data table. `chapter_queries` reaches GA (Realtime,
+  2026-10-23) but the Data API shows a new event only after up to a day; the funnel notes it while ran-N is empty.
+  Open: the owner's look at the live pages with real data; archive the old backend project once no old link uses it.
