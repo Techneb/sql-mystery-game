@@ -1165,9 +1165,13 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
     { chapter: 1, opened: 474, q1: 300, q5: 200, q20: 40, solved: 127 },
     { chapter: 2, opened: 120, q1: 0, q5: 0, q20: 0, solved: 0 }]);
   const html = monitor.funnelHtml(rows);
-  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary>") && html.includes('data-k="Chapter 1"'));
-  const rate = monitor.solveRateHtml(rows);
-  assert.ok(rate.includes(">27%<") && rate.includes(">0%<") && rate.includes("127 of 474"));
+  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary>") && html.includes('data-k="Chapter I"'));
+  assert.ok(html.includes("<td>I</td>") && html.includes("<td>II</td>") && html.includes("<th>Solve rate</th>") && html.includes('>27%<') && html.includes('>0%<'), "roman chapters, the solve rate in the raw data");
+  assert.ok(html.includes("Solve rate (right axis)"), "the legend names the line");
+  assert.ok(!html.includes("new event"), "no note while some ran-N value is set");
+  const fresh = monitor.funnelHtml(rows.filter(r => r.event !== "chapter_queries"));
+  assert.ok(fresh.includes('<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>'), "the note when every ran-N is zero");
+  assert.equal(monitor.ROMAN[12], "XII");
   assert.equal(monitor.pct(1, 0), "-");
   const dev = monitor.devicesHtml([{ device: "mobile", event: "chapter_open", users: 10 }, { device: "mobile", event: "chapter_solve", users: 2 },
     { device: "<b>desktop", event: "chapter_open", users: 20 }]);
@@ -1179,8 +1183,8 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && all.includes("No chapter events"));
   const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows, devices: [{ device: "mobile", event: "chapter_open", users: 1 }],
     countries: [{ country: "France", users: 3 }], channels: [{ channel: "Direct", users: 1 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } });
-  assert.equal((full.match(/<svg /g) || []).length, 6, "six charts");
-  assert.equal((full.match(/<summary>Raw data<\/summary>/g) || []).length, 6, "each with its raw data under it");
+  assert.equal((full.match(/<svg /g) || []).length, 5, "five charts (the solve rate inside the funnel)");
+  assert.equal((full.match(/<summary>Raw data<\/summary>/g) || []).length, 5, "each with its raw data under it");
 });
 
 test("monitor charts: ticks, the line inside its plot (one day too), vertical funnel bars, tooltips", () => {
@@ -1203,8 +1207,6 @@ test("monitor charts: ticks, the line inside its plot (one day too), vertical fu
   assert.match(one, /class="line" d="M193,/, "a single day in the middle");
   assert.match(one, /<rect x="40" y="22" width="306"/, "its hover strip spans the plot");
   assert.equal(monitor.tipAttrs('a"<', [["1", "x", "c1"], ["2", "y"]]), ' data-k="a&#34;&#60;" data-v="1\tx\tc1\n2\ty"');
-  const rate = monitor.lineSvg([{ label: "1", value: 30 }, { label: "2", value: 60 }], 390, { top: 100, fmt: v => v + "%", xlab: p => p.label });
-  assert.ok(rate.includes(">100%</text>") && rate.includes(">60%</text>"), "the solve rate on a fixed 0-100% axis");
   const f = [{ chapter: 1, opened: 400, q1: 300, q5: 200, q20: 40, solved: 100 }, { chapter: 2, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }];
   const fs2 = monitor.funnelSvg(f, 640);
   const bars = [...fs2.matchAll(/class="bar (c\d)" d="M([\d.]+),([\d.]+)v(-[\d.]+)/g)];
@@ -1212,7 +1214,14 @@ test("monitor charts: ticks, the line inside its plot (one day too), vertical fu
   assert.ok(bars.every(m => Number(m[3]) === 196), "every bar stands on the baseline (220 - 24 bottom)");
   assert.deepEqual(bars.map(m => Math.round(2 - Number(m[4]))), [174, 131, 87, 17, 44], "heights scaled to the top tick (400 = 174 px)");
   assert.ok(Number(bars[1][2]) > Number(bars[0][2]), "side by side, left to right");
-  assert.ok(fs2.includes('data-k="Chapter 1"') && fs2.includes("25%\tsolve rate") && fs2.includes("40\tRan 20\tc4") && fs2.includes(">Users</text>"));
+  assert.ok(fs2.includes('data-k="Chapter I"') && fs2.includes("25%\tsolve rate\tc6") && fs2.includes("40\tRan 20\tc4") && fs2.includes(">Users</text>"));
+  assert.ok(fs2.includes(">I</text>") && fs2.includes(">II</text>"), "roman numerals on the x axis");
+  assert.ok(fs2.includes(">Solve rate</text>") && fs2.includes(">100%</text>") && fs2.includes(">0%</text>"), "the right axis, titled, 0-100%");
+  assert.match(fs2, /class="rate-line" d="M180,152.5"/, "the rate line: 25% a quarter up the plot (196 - 174 / 4), mid-column");
+  assert.equal((fs2.match(/class="rate-dot"/g) || []).length, 1, "no dot for a chapter nobody opened");
+  const twelve = monitor.funnelSvg(Array.from({ length: 12 }, (_, i) => ({ chapter: i + 1, opened: 10, q1: 5, q5: 3, q20: 1, solved: 2 })), 390);
+  assert.ok(twelve.includes('class="tick small"') && twelve.includes(">XII</text>"), "twelve chapters at 390 px: smaller numerals");
+  assert.match(twelve, /width="390"/);
   assert.ok(!/NaN|undefined/.test(fs2 + svg + one));
 });
 

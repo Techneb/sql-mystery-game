@@ -70,7 +70,10 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .chart .hit .cross { stroke: var(--ink); stroke-width: 1; opacity: .6; }
 .chart .hit:hover .cross, .chart .hit:hover .dot { visibility: visible; }
 .funnel-chart .hit:hover rect { fill: var(--shade); }
-.funnel-chart .bar { pointer-events: none; }
+.funnel-chart .bar, .funnel-chart .rate-line, .funnel-chart .rate-dot { pointer-events: none; }
+.funnel-chart .rate-line { fill: none; stroke: var(--c6); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.funnel-chart .rate-dot { fill: var(--c6); stroke: var(--paper); stroke-width: 2; }
+.funnel-chart .tick.small { font-size: 9px; }
 .donut .slice { stroke: var(--paper); stroke-width: 2; }
 .donut .slice:hover, .map .bubble:hover .b { opacity: .8; }
 .donut .val { font: 700 20px "Playfair Display", serif; }
@@ -91,6 +94,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .chart-tip .key { display: inline-block; width: 10px; height: 2px; margin-right: 6px; vertical-align: middle; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 13px "Special Elite", monospace; margin: 4px 0; }
 .legend i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.legend i.key-line { width: 16px; height: 3px; vertical-align: middle; }
 .numbers { margin: 0 0 16px; }
 .numbers summary { cursor: pointer; font-size: 15px; }
 #stats > .label, .donuts .label { margin-top: 14px; }
