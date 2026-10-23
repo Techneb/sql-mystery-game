@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin.html
+Disallow: /monitor.html
 
 Sitemap: https://mystery.alephb.uk/sitemap.xml

@@ -2,11 +2,10 @@
 // code, watch who joined, export the rows. Pure helpers are exported for test_site.mjs; the page wiring runs only in a
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in memory and goes to the backend as `key` (apps_script.gs compares it with ADMIN_KEY).
-import { sha256, ADMIN_PASS_SHA256, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+import { BOARD_KEY, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
-const BOARD_KEY = "ritz.admin.board";
 export const CSV_COLUMNS = ["timestamp", "event", "team", "season", "chapter", "wrong", "queries", "clientAt", "elapsedMs"];
 
 // RFC 4180: a field with a comma, a quote or a line break goes in quotes, its quotes doubled; lines end CRLF.
@@ -187,27 +186,12 @@ async function create(e) {
   showDetail(s.id);
 }
 
-// The passphrase dialog: asked again until it matches, never stored. Cancel leaves the page locked.
-function unlock() {
-  const d = $("passgate"), input = $("pass"), msg = d.querySelector(".gate-msg");
-  return new Promise(resolve => {
-    d.onclose = async () => {
-      if (d.returnValue !== "ok") return resolve(false);
-      const pass = input.value.trim().toLowerCase();
-      if (pass && (await sha256(pass)) === ADMIN_PASS_SHA256) { key = pass; return resolve(true); }
-      msg.textContent = "Wrong passphrase. Try again.";
-      d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
-      input.value = ""; d.returnValue = ""; d.showModal();
-    };
-    input.value = ""; d.returnValue = ""; d.showModal();
-  });
-}
-
 function setBoard(value) {
   board = "";
   const v = value.trim();
   try { if (v) { new URL(v); board = v; } } catch { say("That board URL is not a URL.", true); }
   try { if (board) localStorage.setItem(BOARD_KEY, board); } catch {}
+  $("monitor-link").href = "monitor.html" + (board ? "?board=" + encodeURIComponent(board) : "");
 }
 
 async function main() {
@@ -220,7 +204,7 @@ async function main() {
   $("qr").querySelector("button").onclick = () => $("qr").close();
   $("btn-unlock").onclick = start;
   async function start() {
-    if (!(await unlock())) { $("locked").hidden = false; return; }
+    if (!(key = await deskPassphrase($("passgate")))) { $("locked").hidden = false; return; }
     $("locked").hidden = true; $("desk").hidden = false;
     $("board-form").onsubmit = e => { e.preventDefault(); setBoard($("board-url").value); if (board) say("Board URL saved."); selected = ""; $("detail").innerHTML = ""; loadSeasons(); };
     $("create").onsubmit = create;

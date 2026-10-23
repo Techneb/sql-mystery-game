@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -519,6 +519,9 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   const admin = fs.readFileSync("site/admin.html", "utf8");
   assert.deepEqual(links(one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav")), links(nav), "the admin page's header");
   assert.deepEqual(links(one(admin, /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "admin footer")), links(foot), "the admin page's footer");
+  const monitor = fs.readFileSync("site/monitor.html", "utf8");
+  for (const tag of [/<nav class="learn-nav muted">[\s\S]*?<\/nav>/, /<footer class="learn-foot muted">[\s\S]*?<\/footer>/, /<dialog id="passgate"[\s\S]*?<\/dialog>/])
+    assert.equal(monitor.match(tag)[0], admin.match(tag)[0], "monitor.html repeats the desk's " + tag.source.slice(1, 9));
   const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html"].includes(f));
   const linked = (f) => {
     const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
@@ -556,7 +559,7 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
   const game = fs.readFileSync("site/index.html", "utf8");
   const btn = one(game, /\n(<button id="btn-theme"[^\n]*<\/button>)\n/, "the game's button");
   assert.equal(btn, `<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition">${themeButtonHtml("day")}</button>`);
-  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8") };
+  const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8"), "../monitor.html": fs.readFileSync("site/monitor.html", "utf8") };
   for (const [f, html] of Object.entries(pages)) {
     assert.ok(html.includes("<body>\n" + btn + "\n"), f + ": the same button, first in the body");
     const head = html.slice(0, html.indexOf("</head>"));
@@ -772,16 +775,18 @@ test("board: eight-cell strip, three states, every pseudo escaped", () => {
 });
 
 test("admin and board pages: not in the sitemap, admin kept out of robots, the deploy versions their scripts, pure ASCII", () => {
-  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html/);
+  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html|monitor\.html/);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/monitor\.html$/m);
+  assert.match(fs.readFileSync("site/monitor.html", "utf8"), /<meta name="robots" content="noindex">/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
   const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
-  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
+  for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
   // every module importing app.js, shared.js or qr.js is one the deploy versions
   const importers = ["site", "site/learn"].flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".js")).map((f) => d + "/" + f))
     .filter((f) => /from "\.\.?\/(app|shared|qr)\.js"/.test(fs.readFileSync(f, "utf8")));
-  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/leaderboard.js", "site/learn/exercises.js"]);
+  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/leaderboard.js", "site/learn/exercises.js", "site/monitor.js"]);
   for (const f of importers) assert.ok(yml.includes(f), f + " is versioned by the deploy");
-  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js"])
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
 
@@ -1116,4 +1121,42 @@ test("exercises: the level shown first and the question each level button select
   assert.ok(page.indexOf('id="press-box"') > page.indexOf("<!-- /bakery schema -->") && page.indexOf('id="press-box"') < page.indexOf('<div class="wb-terminal">'), "under the schema");
   for (const f of learnPages) if (f !== "exercises.html") assert.doesNotMatch(learnHtml[f], /press-box|adsbygoogle/, f + " carries no ad");
   assert.match(fs.readFileSync("site/privacy.html", "utf8"), /ritz\.exercises\.history/);
+});
+
+test("chapter_queries milestones: 1, 5 and 20 queries, once each, catching up one per run", () => {
+  assert.equal(queryMilestone(0, 0), 0);
+  assert.equal(queryMilestone(1, 0), 1);
+  assert.equal(queryMilestone(2, 1), 0, "already sent");
+  assert.equal(queryMilestone(5, 1), 5);
+  assert.equal(queryMilestone(19, 5), 0);
+  assert.equal(queryMilestone(20, 5), 20);
+  assert.equal(queryMilestone(40, 20), 0, "nothing past 20");
+  assert.equal(queryMilestone(7, undefined), 1, "a chapter begun before the tracker sends the lowest missing one first");
+  assert.deepEqual(freshState().milestones, {}, "kept in the saved state");
+});
+
+const monitor = await import("./site/monitor.js");
+test("monitor: the chapter funnel from GA rows, devices, bars, every value escaped", () => {
+  const rows = [
+    { chapter: "1", event: "chapter_open", count: "(not set)", users: 474 },
+    { chapter: "1", event: "chapter_queries", count: "1", users: 300 },
+    { chapter: "1", event: "chapter_queries", count: "5", users: 200 },
+    { chapter: "1", event: "chapter_queries", count: "20", users: 40 },
+    { chapter: "1", event: "chapter_solve", count: "(not set)", users: 127 },
+    { chapter: "2", event: "chapter_open", count: "(not set)", users: 120 },
+    { chapter: "(not set)", event: "game_finish", count: "(not set)", users: 9 }];
+  assert.deepEqual(monitor.funnel(rows), [
+    { chapter: 1, opened: 474, q1: 300, q5: 200, q20: 40, solved: 127 },
+    { chapter: 2, opened: 120, q1: 0, q5: 0, q20: 0, solved: 0 }]);
+  const html = monitor.funnelHtml(rows);
+  assert.ok(html.includes(">27%<") && html.includes(">0%<") && html.includes("Finished a part: 9 users"));
+  assert.equal(monitor.pct(1, 0), "-");
+  const dev = monitor.devicesHtml([{ device: "mobile", event: "chapter_open", users: 10 }, { device: "mobile", event: "chapter_solve", users: 2 },
+    { device: "<b>desktop", event: "chapter_open", users: 20 }]);
+  assert.ok(dev.indexOf("&#60;b>desktop") < dev.indexOf("mobile"), "escaped, most opened first");
+  assert.ok(dev.includes(">20%<"));
+  const users = monitor.usersHtml([{ date: "20261022", users: 5 }, { date: "20261021", users: 10 }]);
+  assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
+  const all = monitor.statsHtml({ users: [], chapters: [], devices: [], countries: [{ country: "<script>", users: 3 }], channels: [{ channel: "Organic Search", users: 1 }] });
+  assert.ok(!all.includes("<script>") && all.includes("Organic Search") && all.includes("No chapter events"));
 });

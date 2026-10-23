@@ -13,6 +13,12 @@ function backend() {
   const props = new Map([["SHEET_ID", "sheet-1"], ["ADMIN_KEY", KEY]]);
   const tabs = new Map();
   const lock = { busy: false };
+  const reports = [], cache = new Map();
+  // GA4 Data API stub: one row per report, its dimension values named after the dimensions.
+  const runReport = (req, property) => {
+    reports.push({ req, property });
+    return { rows: [{ dimensionValues: req.dimensions.map(d => ({ value: d.name + "-v" })), metricValues: req.metrics.map((m, i) => ({ value: String(10 + i) })) }] };
+  };
   const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
   const newSheet = () => {
     const rows = [];
@@ -35,6 +41,8 @@ function backend() {
       base64EncodeWebSafe: b => Buffer.from(b).toString("base64").replace(/\+/g, "-").replace(/\//g, "_"),
       newBlob: s => ({ getBytes: () => [...Buffer.from(s, "utf8")] }),
     },
+    AnalyticsData: { Properties: { runReport } },
+    CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
   });
   vm.runInContext(fs.readFileSync(new URL("./apps_script.gs", import.meta.url), "utf8"), ctx);
@@ -42,7 +50,7 @@ function backend() {
   const get = parameter => JSON.parse(ctx.doGet({ parameter }).text);
   const admin = (act, extra = {}) => post({ admin: act, key: KEY, ...extra });
   const create = () => admin("create", { name: "Group A", date: "2026-10-14", penalty: 30 }).season;
-  return { post, get, admin, create, props, tabs, lock, log: () => tabs.get("log").rows };
+  return { post, get, admin, create, props, tabs, lock, reports, cache, log: () => tabs.get("log").rows };
 }
 const ev = (event, team, season, chapter, token, extra = {}) =>
   ({ event, team, season, chapter, wrong: 0, queries: chapter * 3, clientAt: 1700000000000, elapsedMs: chapter * 60000, token, ...extra });
@@ -143,4 +151,31 @@ test("bodies that are not JSON objects, and our own exceptions, come back as {ok
   const r = b.get({ season: "s1" });
   assert.equal(r.ok, false);
   assert.match(r.error, /SHEET_ID/);
+});
+
+test("?stats: the admin key gate, days clamped to 1-90, the report shapes, cached per days value", () => {
+  const b = backend();
+  assert.equal(b.get({ stats: "7", key: "wrong" }).error, "wrong admin key");
+  assert.equal(b.get({ stats: "7" }).ok, false);
+  assert.equal(b.reports.length, 0, "no GA call without the key");
+  const r = b.get({ stats: "7", key: " Test Passphrase " });
+  assert.equal(r.ok, true);
+  assert.equal(r.days, 7);
+  assert.ok(b.reports.every(x => x.property === "properties/557203749"));
+  assert.equal(b.reports[0].req.dateRanges[0].startDate, "6daysAgo");
+  assert.deepEqual(r.users, [{ date: "date-v", users: 10 }]);
+  assert.deepEqual(r.chapters, [{ chapter: "customEvent:chapter-v", event: "eventName-v", count: "customEvent:count-v", users: 10, events: 11 }]);
+  assert.deepEqual([...b.reports[1].req.dimensionFilter.filter.inListFilter.values], ["chapter_open", "chapter_queries", "chapter_solve", "game_finish"]);
+  assert.deepEqual(r.devices, [{ device: "deviceCategory-v", event: "eventName-v", users: 10 }]);
+  assert.deepEqual([...b.reports[2].req.dimensionFilter.filter.inListFilter.values], ["chapter_open", "chapter_solve"]);
+  assert.deepEqual(r.countries, [{ country: "country-v", users: 10 }]);
+  assert.equal(b.reports[3].req.limit, 10);
+  assert.deepEqual(r.channels, [{ channel: "sessionDefaultChannelGroup-v", users: 10 }]);
+  const n = b.reports.length;
+  assert.deepEqual(b.get({ stats: "7", key: KEY }), r, "cached");
+  assert.equal(b.reports.length, n, "the cache answers");
+  assert.equal(b.get({ stats: "500", key: KEY }).days, 90);
+  assert.equal(b.get({ stats: "0", key: KEY }).days, 1);
+  assert.equal(b.reports.at(-1).req.dateRanges[0].startDate, "today");
+  assert.equal(b.get({ stats: "x", key: KEY }).days, 7);
 });

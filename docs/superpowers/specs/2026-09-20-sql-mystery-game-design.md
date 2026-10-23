@@ -671,3 +671,13 @@ Everything is deployed (2026-10-20, 9f4e671).
   v2 only (its first-week rows renamed `FIRST_WEEK`); the script, every pasted result and the schemas unchanged.
 - ~~Blind check of the five new exercises~~ Done 2026-10-20: two independent solvers, 10 of 10 answers match the official
   results under the page's own check; The price rise now says one row per product and price paid.
+- Query funnel and monitoring page (2026-10-23; GA showed 474 players opening chapter 1 and 127 solving it, with no way
+  to tell the idle from the stuck). Built: the GA event `chapter_queries` {chapter, mode, count}, sent once each when a
+  student's runs in the current, unsolved chapter reach 1, 5 and 20 (`queryMilestone`, `state.milestones`; privacy.html
+  lists it); `apps_script.gs` answers `?stats=<days>&key=<passphrase>` (1-90 days, default 7, cached 10 minutes) from the
+  GA4 Data API on property 557203749: users per day, the per-chapter funnel, devices, top countries, channels; and
+  `site/monitor.html` (linked from the desk's seasons row) shows them. Owner steps before it reads anything: in the
+  Apps Script editor add the Google Analytics Data API service (identifier `AnalyticsData`); if the script runs under
+  another Google account, give it Viewer on GA property 557203749; register `count` as an event-scoped custom
+  dimension in GA (the stats call fails until it exists); redeploy the script as a new version of the same
+  deployment, keeping the /exec URL. The live GA call is untested (stubbed in `test_backend.mjs`).

@@ -6,7 +6,7 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
+           film: [], opened: {}, milestones: {}, suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
@@ -971,6 +971,11 @@ export function recordQuery(state, chapter, sql, error) {
   pushHistory(state, sql);
 }
 
+// GA chapter_queries: the milestone (1, 5 or 20 queries in a chapter) this run reaches, once each per chapter;
+// `sent` is the highest already sent for it (state.milestones), so a reload never resends one.
+export const QUERY_MILESTONES = [1, 5, 20];
+export const queryMilestone = (count, sent = 0) => QUERY_MILESTONES.find(m => count >= m && m > sent) || 0;
+
 function runQuery() {
   const sql = $("sql").value.trim();
   if (!sql) return;
@@ -981,6 +986,8 @@ function runQuery() {
   else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; }
   catch (e) { error = e.message; }
   recordQuery(state, ch.n, sql, error);
+  const m = state.solved.includes(ch.n) ? 0 : queryMilestone(state.queries[ch.n], (state.milestones ||= {})[ch.n]);
+  if (m) { state.milestones[ch.n] = m; track("chapter_queries", { chapter: ch.n, mode: state.mode, count: m }); }
   const ms = Math.round(performance.now() - t0);
   $("results").innerHTML = strict ? strictHtml(strict) : error ? '<div class="error">' + esc(error) + "</div>" : renderResults(res);
   $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";

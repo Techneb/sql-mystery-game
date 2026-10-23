@@ -9,6 +9,11 @@
 //   TOKEN_SECRET  optional; signs the per-player tokens (falls back to ADMIN_KEY, then SHEET_ID)
 //   SEASONS       written by this script (the season records), never by hand
 //
+// ?stats=<days>&key=<passphrase> (monitor.html) reads GA4 through the advanced service "Google Analytics Data API"
+// (Services > + > Google Analytics Data API, identifier AnalyticsData), OAuth scope
+// https://www.googleapis.com/auth/analytics.readonly. The account the script runs as needs Viewer on GA4 property
+// 557203749, and `count` (chapter_queries) registered as an event-scoped custom dimension.
+//
 // A season is a record {id, name, date, db, penalty, state, createdAt, openedAt, closedAt}; state goes
 // created -> open -> closed (or created -> closed, for a season created by mistake), never back. Players "join"
 // a season (one join per pseudo), then post "progress"
@@ -167,6 +172,7 @@ function locked_(fn) {
 function get_(e) {
   var p = (e && e.parameter) || {};
   if (p.seasons) return seasons_();
+  if (p.stats) return stats_(p);
   if (p.meta) {
     var m = find_(seasons_(), String(p.meta));
     return m ? withNow_(m) : {ok: false, error: "no such season"};
@@ -182,7 +188,42 @@ function get_(e) {
   });
   return out;
 }
+// --- GA4 numbers for monitor.html -------------------------------------------------------------
+var GA_PROPERTY = "properties/557203749";
+var FUNNEL_EVENTS = ["chapter_open", "chapter_queries", "chapter_solve", "game_finish"];
 
+// The last <days> days (1-90, default 7), cached 10 minutes per days value: the GA Data API has a daily quota.
+function stats_(p) {
+  if (!adminOk_({key: p.key})) return {ok: false, error: "wrong admin key"};
+  var n = Math.floor(Number(p.stats)), days = isFinite(n) ? Math.min(90, Math.max(1, n)) : 7;
+  var cache = CacheService.getScriptCache(), ck = "stats-" + days, hit = cache.get(ck);
+  if (hit) return JSON.parse(hit);
+  var range = {startDate: days === 1 ? "today" : (days - 1) + "daysAgo", endDate: "today"};
+  var run = function (dims, metrics, more) {
+    var req = {dateRanges: [range], dimensions: dims.map(function (d) { return {name: d}; }),
+               metrics: metrics.map(function (m) { return {name: m}; })};
+    for (var k in more || {}) req[k] = more[k];
+    var res = AnalyticsData.Properties.runReport(req, GA_PROPERTY);
+    return (res.rows || []).map(function (r) {
+      return r.dimensionValues.map(function (v) { return v.value; }).concat(r.metricValues.map(function (v) { return Number(v.value); }));
+    });
+  };
+  var events = function (names) { return {dimensionFilter: {filter: {fieldName: "eventName", inListFilter: {values: names}}}}; };
+  var top = function (metric, limit) { return {orderBys: [{metric: {metricName: metric}, desc: true}], limit: limit}; };
+  var out = {
+    ok: true, days: days,
+    users: run(["date"], ["activeUsers"], {orderBys: [{dimension: {dimensionName: "date"}}]})
+      .map(function (r) { return {date: r[0], users: r[1]}; }),
+    chapters: run(["customEvent:chapter", "eventName", "customEvent:count"], ["totalUsers", "eventCount"], events(FUNNEL_EVENTS))
+      .map(function (r) { return {chapter: r[0], event: r[1], count: r[2], users: r[3], events: r[4]}; }),
+    devices: run(["deviceCategory", "eventName"], ["totalUsers"], events(["chapter_open", "chapter_solve"]))
+      .map(function (r) { return {device: r[0], event: r[1], users: r[2]}; }),
+    countries: run(["country"], ["activeUsers"], top("activeUsers", 10)).map(function (r) { return {country: r[0], users: r[1]}; }),
+    channels: run(["sessionDefaultChannelGroup"], ["activeUsers"], top("activeUsers", 20)).map(function (r) { return {channel: r[0], users: r[1]}; })
+  };
+  cache.put(ck, JSON.stringify(out), 600);
+  return out;
+}
 
 function int_(v, lo, hi) {
   if (v === undefined || v === null || v === "") return lo === 0 ? 0 : null;

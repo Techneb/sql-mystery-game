@@ -41,6 +41,24 @@ export function fmtTime(ms) {
 
 // Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
 // The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
+// The Clerk's Desk pages (admin.html, monitor.html): the board URL saved under this key, and the #passgate dialog
+// asked again until the passphrase matches; resolves the passphrase (kept in memory only), or "" on Cancel.
+export const BOARD_KEY = "ritz.admin.board";
+export function deskPassphrase(d) {
+  const input = d.querySelector("input"), msg = d.querySelector(".gate-msg");
+  return new Promise(resolve => {
+    d.onclose = async () => {
+      if (d.returnValue !== "ok") return resolve("");
+      const pass = input.value.trim().toLowerCase();
+      if (pass && (await sha256(pass)) === ADMIN_PASS_SHA256) return resolve(pass);
+      msg.textContent = "Wrong passphrase. Try again.";
+      d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
+      input.value = ""; d.returnValue = ""; d.showModal();
+    };
+    input.value = ""; d.returnValue = ""; d.showModal();
+  });
+}
+
 export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 
