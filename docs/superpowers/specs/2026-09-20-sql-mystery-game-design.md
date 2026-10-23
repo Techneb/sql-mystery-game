@@ -599,6 +599,16 @@ Everything is deployed (2026-10-20, 9f4e671).
   free, no sponsorship asked; sent 2026-10-19. Agreed: a GA4 review after his post. He replied the same day that he will probably post about it that
   week, then asked for more obvious SQL branding on the landing page (done the same evening, the owner's reply sent); the owner wants ads live by then (the ads branch is up to date, AdSense approval is the blocker). The site may show ads later (AdSense pending): if asked whether it
   earns money, say so.
+  Nick's video went out Wed 2026-10-21. GA4 on 2026-10-23: about 1,300 users in 7 days (about 220 on the 20th, 680 on
+  the 21st, 540 on the 22nd), 83% Direct, US 38% and India 12%, about 4 min average engaged time. Funnel: 474 opened
+  chapter 1, 127 solved it (27%), 72 solved chapter 2, 19 finished Part I, 2 finished Part II. Queries per solve run
+  far above the class trial (Part I about 120), so `RANKS` (45/70/110) now makes most players Constable. Offered, not
+  decided: retune `RANKS` from this data, and look into the chapter 1 drop-off. AdSense still showed the site as under
+  review that day, so the visit brought no ad revenue (the house ad showed).
+  Next wave (owner, 2026-10-23): 15 contact emails drafted for similar creators and newsletters, to send **only once
+  real ads are live**. They are in `assets-source/outreach/` (gitignored, owner's Mac only; they hold creators'
+  addresses: never commit them). Before sending, refresh the visitor figure and each creator's recent post. The owner
+  sends them.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
