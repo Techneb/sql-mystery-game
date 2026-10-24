@@ -1661,3 +1661,23 @@ test("desk: ?board= is stored and leaves the address bar, links stay bare unless
   d.returnValue = "cancel"; d.onclose();
   assert.equal(await p, "");
 });
+
+test("desk type: the five desk pages get Nunito through admin.css; the game, the handbook, the board and privacy keep the 1912 faces", () => {
+  const css = fs.readFileSync("site/admin.css", "utf8");
+  const faces = [...css.matchAll(/@font-face \{[^}]*font-family: "([^"]+)";[^}]*font-display: swap; src: url\((fonts\/[^)]+\.woff2)\)/g)];
+  assert.deepEqual(faces.map((m) => m[1]).sort(), ["Nunito", "Nunito", "Nunito Sans", "Nunito Sans"]);
+  for (const m of faces) assert.ok(fs.existsSync("site/" + m[2]), m[2] + " is self-hosted");
+  assert.ok(fs.existsSync("site/fonts/OFL.txt"), "the OFL licence ships with the fonts");
+  assert.match(css, /body, body \*:not\(code, pre\) \{ font-family: "Nunito Sans"[^}]*!important/);
+  for (const f of ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html"]) {
+    const h = fs.readFileSync("site/" + f, "utf8");
+    assert.match(h, /<link rel="stylesheet" href="admin\.css">/, f + " loads admin.css");
+    assert.doesNotMatch(h, /fonts\.googleapis/, f + " no longer asks Google Fonts for the 1912 faces");
+  }
+  for (const f of ["index.html", "leaderboard.html", "privacy.html", ...learnPages.map((f) => "learn/" + f)]) {
+    const h = fs.readFileSync("site/" + f, "utf8");
+    assert.doesNotMatch(h, /admin\.css|Nunito/, f + " keeps its own type");
+    assert.match(h, /fonts\.googleapis\.com\/css2\?family=Playfair\+Display/, f + " still loads the 1912 faces");
+  }
+  for (const f of ["site/style.css", "site/learn/learn.css"]) assert.doesNotMatch(fs.readFileSync(f, "utf8"), /Nunito/, f + " stays 1912");
+});
