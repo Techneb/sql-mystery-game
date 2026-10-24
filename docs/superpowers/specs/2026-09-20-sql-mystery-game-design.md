@@ -720,6 +720,21 @@ Everything is deployed (2026-10-20, 9f4e671).
   GA's error in its panel).
   Since then (owner, 2026-10-24): the donuts' centre is GA's own total (devices and channels agree), Export CSV beside
   every Raw data toggle, one common Count select (users per day, countries, donuts) and a "Count metrics compared"
-  stacked bar chart. In progress the same day: Global's PAGES as a donut and TOP PAGES removed; Game and Handbook
-  redrawn in Global's style (Count select and users-per-day line with Breakdown at the top, donuts for splits, bars
-  for comparisons).
+  stacked bar chart. Shipped the same day (f803e39): Global's PAGES as a donut and TOP PAGES removed; Game and
+  Handbook redrawn in Global's style (Count select and users-per-day line with Breakdown at the top, donuts for splits,
+  bars for comparisons). In progress (owner, 2026-10-24): desk links without `?board=` (the board URL kept in
+  localStorage and stripped from the address bar), the passphrase kept for the tab's session (sessionStorage) instead
+  of asked on every page, the current page red in the desk menu, "SQL error" for an empty rule in QUERY FAILURES, and
+  Page views (`screenPageViews`) in the Count select.
+- Ad networks (2026-10-24): Criteo not now (no published minimum, but comparable networks start at 10k-100k page
+  views a month; this site gets a few thousand; header bidding and heavier consent). Revisit Ad Manager + Prebid only
+  at steady tens of thousands of page views a month. Real ad clicks cannot be seen from the page (Google's iframe;
+  blur-detection scripts are unreliable and a policy risk): the way is linking AdSense to GA4 (a Google setting, owner's
+  call), then `publisherAdClicks` / `publisherAdImpressions` / `totalAdRevenue` in the backend whitelist and an "ad
+  clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Open: the owner making the link.
+- Strix security test (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
+  throwaway season, never during a class, with request caps; Google's services out; findings in the uncommitted
+  `docs/audits/`. It starts only after Compromise's Strix run (planned the night of 2026-10-24); Compromise Main will
+  message this session with its reusable setup (Colima, strix 1.7.0 via pipx, a Keychain launcher; litellm needs
+  `ANTHROPIC_API_KEY` exported, and a workspace-scoped key). The Keychain key `strix-anthropic` answered 200 on
+  2026-10-24 (value never read).
