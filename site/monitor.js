@@ -17,7 +17,24 @@ function barTable(head, rows, valHead = "Users") {
       Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody></table>";
 }
 // Every chart keeps its numbers under it, closed.
-const raw = table => '<details class="numbers"><summary>Raw data</summary>' + table + "</details>";
+// Raw data under a chart, with an Export CSV button beside the toggle (wireCsv reads the table it holds).
+const raw = (name, table) => '<details class="numbers"><summary>Raw data <button type="button" class="quiet csv" data-csv="' + esc(name) +
+  '">Export CSV</button></summary>' + table + "</details>";
+const csvCell = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+// cells: rows of cell texts (the header row first), as read from a Raw data table.
+export const tableCsv = cells => cells.map(r => r.map(c => csvCell(String(c).trim())).join(",")).join("\r\n") + "\r\n";
+function wireCsv(box) {
+  box.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("button.csv");
+    if (!b || !box.contains(b)) return;
+    e.preventDefault();   // inside <summary>: export without toggling the table
+    const t = b.closest("details").querySelector("table");
+    const cells = [...t.rows].map(r => [...r.cells].map(c => c.textContent));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([tableCsv(cells)], { type: "text/csv;charset=utf-8" }));
+    a.download = "ga-" + b.dataset.csv + "-" + new Date().toISOString().slice(0, 10) + ".csv"; a.click(); URL.revokeObjectURL(a.href);
+  });
+}
 
 // --- charts: inline SVG coloured by the page's tokens (--rel, --rule, --ink, --paper, and admin.css's categorical
 // --c1..--c6, validated light and night with the dataviz skill's script), so day and night follow for free. Every
@@ -67,7 +84,7 @@ export function usersHtml(users, w, m) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
   if (!pts.length) return NONE;
   const d = metricOf(m);
-  return lineSvg(pts, w, d.label, d.unit) + raw(barTable("Day", pts.map(p => [p.label, p.value]), d.label));
+  return lineSvg(pts, w, d.label, d.unit) + raw("users-per-day", barTable("Day", pts.map(p => [p.label, p.value]), d.label));
 }
 // A ?report= on [date] as usersHtml's [{date, users}].
 export const daysFrom = res => (res.rows || []).map(([date, users]) => ({ date, users }));
@@ -124,7 +141,7 @@ export function breakdownHtml(res, users, dim, w, m) {
   return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
     multiLineSvg(labels, series, w, d.label) +
     (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by " + esc(d.unit) + " summed over the days).</p>" : "") +
-    raw('<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
+    raw("users-per-day-breakdown", '<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
       labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>");
 }
 const optionsHtml = (pairs, cur) => pairs.map(([v, l]) => '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(l) + "</option>").join("");
@@ -230,7 +247,7 @@ export function solveRateHtml(rows, w) {
   const f = funnel(rows);
   if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
   return solveRateSvg(f, w) +
-    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
+    raw("solve-rate", '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
       f.map(c => "<tr><td>" + roman(c.chapter) + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
 }
 const legend = names => '<p class="legend">' + names.map((name, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(name) + "</span>").join("") +
@@ -242,7 +259,7 @@ export function funnelHtml(rows, w) {
   const noQueries = f.every(c => !c.q1 && !c.q5 && !c.q20), ret = retention(f);
   return legend(STAGES.map(s => s[1])) + funnelSvg(f, w) +
     (noQueries ? '<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>' : "") +
-    raw('<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Retention</th><th>Solve rate</th></tr></thead><tbody>' +
+    raw("chapter-funnel", '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Retention</th><th>Solve rate</th></tr></thead><tbody>' +
     f.map(c => "<tr><td>" + roman(c.chapter) + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") +
       '<td class="num">' + pctOf(ret(c)) + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>") +
     '<p class="muted">Finished a part: ' + finished + " users.</p>";
@@ -319,7 +336,7 @@ export function donutSection(kind, sel = {}, m = "visitors") {
   if (!list.length) return head + NONE;
   const unique = sel.res.totals ? Number(sel.res.totals[0]) || 0 : 0;
   return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase(), unique) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
-    raw(barTable(k.head, list.map(i => [i.label, i.value]), d.label));
+    raw(k.label.toLowerCase(), barTable(k.head, list.map(i => [i.label, i.value]), d.label));
 }
 
 // --- the five Count metrics side by side: one bar each, stacked by a dimension (its own select), so the heights show
@@ -375,7 +392,7 @@ export function compareSection(cmp = {}, w) {
   if (!st.segs.length) return head + NONE;
   return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
     '<p class="muted">Visitors and players are people, sessions are visits: the bars do not share a unit. A person in two segments (two devices, say) counts in both, so a bar can add up to more than its people.</p>' +
-    raw('<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
+    raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
 
@@ -397,7 +414,7 @@ export function mapHtml(countries, world, m) {
     placed.sort((a, b) => b.value - a.value).map(c => { const r = bubbleR(c.value, max); return '<g class="bubble"' + tipAttrs(c.label, [[c.value + " " + d.unit, ""]]) +
       '><circle class="hitzone" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + Math.max(r, 18) + '"/><circle class="b" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + r + '"/></g>'; }).join("") + "</svg>";
   return svg + (world && off.length ? '<p class="muted">Not on the map: ' + off.map(c => esc(c.label) + " (" + c.value + ")").join(", ") + ".</p>" : "") +
-    raw(barTable("Country", list.map(c => [c.label, c.value]), d.label));
+    raw("countries", barTable("Country", list.map(c => [c.label, c.value]), d.label));
 }
 
 // opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
@@ -458,7 +475,7 @@ async function main() {
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
   $("monitor").hidden = false;
-  wireTips($("stats"));
+  wireTips($("stats")); wireCsv($("stats"));
   let gen = 0, last = null, wide = 0, world = null, days = DAYS[0];
   // The breakdown (remembered per browser) and the countries' N; each extra report checks on return that it still
   // answers the current choice, so a late reply for an older one is dropped.

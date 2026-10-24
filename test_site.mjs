@@ -1165,13 +1165,13 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
     { chapter: 1, opened: 474, q1: 300, q5: 200, q20: 40, solved: 127 },
     { chapter: 2, opened: 120, q1: 0, q5: 0, q20: 0, solved: 0 }]);
   const html = monitor.funnelHtml(rows);
-  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary>") && html.includes('data-k="Chapter I"'));
+  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data <button") && html.includes('data-k="Chapter I"'));
   assert.ok(html.includes("<td>I</td>") && html.includes("<td>II</td>") && html.includes("<th>Solve rate</th>") && html.includes('>27%<') && html.includes('>0%<'), "roman chapters, the solve rate in the raw data");
   assert.ok(html.includes("<th>Retention</th>") && html.includes('>100%<') && html.includes('>25%<'), "retention in the raw data: 120 of chapter I's 474");
   assert.ok(html.includes("Retention (right axis)") && !html.includes("Solve rate (right axis)"), "the legend names the line");
   const sr = monitor.solveRateHtml(rows);
   assert.ok(sr.includes('data-k="Chapter I" data-v="127 of 474 solved (27%)"') && sr.includes('data-v="0 of 120 solved (0%)"'), "the solve rate tooltip");
-  assert.ok(sr.includes("<summary>Raw data</summary>") && sr.includes("<td>II</td>") && sr.includes(">27%<"), "its own raw data");
+  assert.ok(sr.includes("<summary>Raw data <button") && sr.includes("<td>II</td>") && sr.includes(">27%<"), "its own raw data");
   assert.ok(!html.includes("new event"), "no note while some ran-N value is set");
   const fresh = monitor.funnelHtml(rows.filter(r => r.event !== "chapter_queries"));
   assert.ok(fresh.includes('<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>'), "the note when every ran-N is zero");
@@ -1190,7 +1190,7 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
     countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } }, { dn });
   assert.equal((full.match(/<svg /g) || []).length, 6, "six charts (the solve rate under the funnel)");
   assert.ok(full.indexOf("CHAPTER FUNNEL") < full.indexOf(">SOLVE RATE<") && full.indexOf(">SOLVE RATE<") < full.indexOf("COUNTRIES"), "the solve rate right under the funnel");
-  assert.equal((full.match(/<summary>Raw data<\/summary>/g) || []).length, 6, "each with its raw data under it");
+  assert.equal((full.match(/<summary>Raw data <button[^>]*class="quiet csv"/g) || []).length, 6, "each with its raw data under it");
 });
 
 test("monitor charts: ticks, the line inside its plot (one day too), vertical funnel bars, tooltips", () => {
@@ -1350,7 +1350,7 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.ok(html.includes("All visitors") && (html.match(/<path class="sl /g) || []).length === 6, "five lines and the total");
   assert.equal((html.match(/<g class="hit"/g) || []).length, 2, "one hover strip per day");
   assert.ok(html.includes('data-k="2026-10-22" data-v="14\tAll visitors\ttotal\n9\t&#60;b&#62;UK\tc1'), "the tooltip, sorted");
-  assert.ok(html.includes("<summary>Raw data</summary>") && html.includes("<td>2026-10-21</td>"), "date x series raw data");
+  assert.ok(html.includes("<summary>Raw data <button") && html.includes("<td>2026-10-21</td>"), "date x series raw data");
   assert.ok(!monitor.breakdownHtml({ rows: rows.slice(0, 2) }, users, "country", 390).includes("Top "), "no note when every value is drawn");
   const s = { users, chapters: [], devices: [], countries: [{ country: "France", users: 3 }], channels: [] };
   assert.ok(monitor.statsHtml(s, 390, null).includes('<option value="" selected>None</option>'), "None by default, the single line");
@@ -1470,4 +1470,11 @@ test("monitor donuts: the centre is GA's own total, so both donuts agree on the 
   assert.ok(withTotal.includes("70%"), "shares of the people, not of the slices");
   const noTotal = monitor.donutSection("devices", { res: { rows } }, "visitors");
   assert.ok(noTotal.includes(">110</text>") && !noTotal.includes("the slices add up to 110"), "without GA's total, the sum and no note");
+});
+
+test("monitor raw data: an Export CSV button beside every Raw data toggle, and the CSV quoting", () => {
+  const html = monitor.donutSection("devices", { res: { rows: [["desktop", "7"]], totals: [7] } }, "visitors");
+  assert.ok(/<summary>Raw data <button type="button" class="quiet csv" data-csv="devices">Export CSV<\/button><\/summary>/.test(html));
+  assert.equal(monitor.tableCsv([["Country", "Visitors"], ["Korea, South", " 3 "], ['A "b"', "1"]]),
+    'Country,Visitors\r\n"Korea, South",3\r\n"A ""b""",1\r\n');
 });

@@ -101,6 +101,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .legend i.key-line { width: 16px; height: 3px; vertical-align: middle; }
 .numbers { margin: 0 0 16px; }
 .numbers summary { cursor: pointer; font-size: 15px; }
+.numbers summary .csv { margin-left: 10px; font-size: 12px; padding: 1px 8px; vertical-align: 1px; }
 #stats > .label { margin-top: 14px; }
 /* Pivot table (explore.html): filters on the left, the table on the right; stacked under 900 px; the table scrolls in its box */
 .explore { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 18px; align-items: start; }
