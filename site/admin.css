@@ -78,7 +78,15 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .solve-chart .solve-line, .solve-chart .solve-dot { pointer-events: none; }
 .solve-chart .solve-line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .solve-chart .solve-dot { fill: var(--rel); stroke: var(--paper); stroke-width: 2; }
+/* the leaving block's averages: small lines in the leavers' own --c1, on the chapter grid */
+.avg-chart .tick.small { font-size: 9px; }
+.avg-chart .hit:hover rect { fill: var(--shade); }
+.avg-chart .avg-line, .avg-chart .avg-dot { pointer-events: none; }
+.avg-chart .avg-line { fill: none; stroke: var(--c1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.avg-chart .avg-dot { fill: var(--c1); stroke: var(--paper); stroke-width: 2; }
+.label.sub { font-size: 11px; opacity: .8; margin-top: 6px; }
 .donut .slice { stroke: var(--paper); stroke-width: 2; }
+.donut .slice.empty { fill: var(--rule); }
 .donut .slice:hover, .map .bubble:hover .b { opacity: .8; }
 .donut .val { font: 700 20px "Playfair Display", serif; }
 .donut-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
