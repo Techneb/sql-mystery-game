@@ -1233,7 +1233,7 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
     countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } },
     { dn, pages: { res: [{ totals: [5] }, { totals: [3] }, { rows: [] }, { totals: [1] }, { totals: [7] }] } });
   assert.equal((full.match(/<svg /g) || []).length, 5, "users, the pages donut, map, two donuts");
-  assert.ok(full.indexOf(">PAGES<") < full.indexOf("COUNTRIES") && !full.includes("TOP PAGES"), "the top pages table is gone (owner, 2026-10-24)");
+  assert.ok(full.indexOf(">PAGES<") > full.indexOf("COUNTRIES") && full.includes("donuts three") && !full.includes("TOP PAGES"), "PAGES shares the donuts row, the top pages table is gone (owner, 2026-10-24)");
   assert.equal((full.match(/<summary>Raw data <button[^>]*class="quiet csv"/g) || []).length, 5, "each with its raw data under it");
   const game = monitor.gameHtml({ chapters: rows }, 640, {});
   assert.ok(game.indexOf("CHAPTER FUNNEL") < game.indexOf(">SOLVE RATE<") && game.includes("Reading..."), "the funnel moved to Game; panels read in place");
@@ -1475,7 +1475,7 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   const sec = monitor.compareSection({ dim: "country", res }, 390);
   assert.ok(sec.includes("COUNT METRICS COMPARED") && sec.includes('<option value="country" selected>Country</option>') && sec.includes("do not share a unit"), "label, select, note");
   assert.ok(sec.includes('<i class="c3"></i>&#60;b&#62;tablet') && sec.includes("<td>Sessions</td>") && sec.includes('<td class="num">132</td>'), "legend and the metric x segment raw data");
-  assert.ok(monitor.compareSection({}, 390).includes('<option value="deviceCategory" selected>Device</option>') && monitor.compareSection({}, 390).includes("Reading the five counts"), "Device by default, loading in place");
+  assert.ok(monitor.compareSection({}, 390).includes('<option value="sessionDefaultChannelGroup" selected>Channel</option>') && monitor.compareSection({}, 390).includes("Reading the five counts"), "Channel by default, loading in place");
   assert.ok(monitor.compareSection({ error: "<i>x" }, 390).includes("&#60;i&#62;x"));
   for (const d of Object.keys(monitor.STACKS)) assert.ok(fs.readFileSync("apps_script.gs", "utf8").match(/var REPORT_DIMS = [^;]*/)[0].includes('"' + d + '"'), d);
 });

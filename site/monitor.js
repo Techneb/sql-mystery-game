@@ -418,7 +418,7 @@ export function stackSvg(st, w = 640) {
 }
 // cmp: {dim, res: {m: res} (null while reading), error}.
 export function compareSection(cmp = {}, w) {
-  const dim = cmp.dim in STACKS ? cmp.dim : "deviceCategory";
+  const dim = cmp.dim in STACKS ? cmp.dim : "sessionDefaultChannelGroup";
   const head = '<div class="label-row"><span class="label">COUNT METRICS COMPARED</span><label class="pick">Stack by <select id="stack-dim">' +
     optionsHtml(Object.entries(STACKS), dim) + "</select></label></div>";
   if (cmp.error) return head + '<p class="status bad">Google Analytics said: ' + esc(cmp.error) + "</p>";
@@ -452,12 +452,11 @@ export function mapHtml(countries, world, m) {
 
 // opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
 // dn: {devices, channels} as donutSection takes them.
-// The Global view (monitor.html). opts.pages: a panel state ({res: [replies] | null, error}).
+// The Global view (monitor.html). opts.pages: a panel state ({res: [replies] | null, error}); PAGES, devices and channels share one row.
 export function statsHtml(s, w, world, opts = {}) {
   return usersSection(s, w, opts.bd, opts.m) + compareSection(opts.cmp, w) +
-    pagesSection(opts.pages, opts.m) +
     countriesSection(s, world, opts.top, opts.m) +
-    '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
+    '<div class="donuts three"><div>' + pagesSection(opts.pages, opts.m) + "</div>" + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
 }
 
 // --- the three views ---------------------------------------------------------------------------
@@ -771,7 +770,7 @@ async function main() {
   const view = document.body.dataset.view in PANELS ? document.body.dataset.view : "global", P = {}, scope = SCOPES[view];
   const sfx = view === "global" ? "" : "." + view, BD_KEY = "ritz.monitor.breakdown" + sfx, COUNT_KEY = "ritz.monitor.count" + sfx;
   const bd = { dim: "", total: null, res: null, error: null }, top = { n: 10, rows: null, error: null };
-  const cmp = { dim: "deviceCategory", res: null, error: null };
+  const cmp = { dim: "sessionDefaultChannelGroup", res: null, error: null };
   try { const d = localStorage.getItem(BD_KEY) || ""; if (VIEW_BREAKDOWNS[view].includes(d)) bd.dim = d; } catch {}
   // The page's Count (beside the period buttons), remembered per browser; it drives users per day, the countries and the donuts.
   let m = "visitors";
