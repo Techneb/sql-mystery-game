@@ -152,7 +152,7 @@ const topSelect = cur => '<label class="pick">Top <select id="top-n">' + options
 // opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list; m the page's Count.
 export function countriesSection(s, world, top = {}, m = "visitors") {
   const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
-  const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("two countries", m)) + "</p>" : "");
+  const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
   if (countriesFromStats(n, m)) return head + show(s.countries || []);
   if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
   if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
@@ -289,8 +289,8 @@ export const COUNT_METRICS = {
   engaged: { label: "Engaged sessions", short: "Engaged", metric: "engagedSessions", unit: "sessions", note: "Counts engaged sessions (GA's: 10 s or more, two pages or a key event)" },
 };
 export const DONUTS = {
-  devices: { dim: "deviceCategory", label: "DEVICES", head: "Device", many: "two devices" },
-  channels: { dim: "sessionDefaultChannelGroup", label: "CHANNELS", head: "Channel", many: "two channels" },
+  devices: { dim: "deviceCategory", label: "DEVICES", head: "Device", many: "on two devices" },
+  channels: { dim: "sessionDefaultChannelGroup", label: "CHANNELS", head: "Channel", many: "through two channels" },
 };
 // (declarations, hoisted: usersHtml above uses them)
 function metricOf(m) { return COUNT_METRICS[m] || COUNT_METRICS.visitors; }
@@ -301,11 +301,11 @@ export function countRequest(days, dimensions, m) {
 export const donutRequest = (days, kind, m) => countRequest(days, [DONUTS[kind].dim], m);
 export const donutNote = (kind, m) => overlapNote(DONUTS[kind].many, m);
 // What a Count counts and how one person can fall in several slices (many: "two devices").
-export const overlapNote = (many, m) => {
+export const overlapNote = (many, m, part = "slices") => {
   const d = metricOf(m);
   return d.unit === "sessions"
-    ? d.note + ": each session sits in one slice, but one person's sessions can fall in several (" + many + ")."
-    : d.note + ": a person on " + many + " counts in both slices, so the slices may add up to more than the people.";
+    ? d.note + ": each session sits in one " + part.slice(0, -1) + ", but one person's sessions can fall in several (" + many + ")."
+    : d.note + ": a person " + many + " counts in both " + part + ", so the " + part + " may add up to more than the people.";
 };
 // sel: {res, error}, res null while reading; m the page's Count.
 export function donutSection(kind, sel = {}, m = "visitors") {

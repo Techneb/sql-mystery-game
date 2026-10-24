@@ -1440,11 +1440,11 @@ test("monitor countries follow the Count: ?stats only for Visitors top 10, units
   const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
   const s = { users: [], chapters: [], countries: [{ country: "France", users: 3 }] };
   const vis = monitor.countriesSection(s, world, { n: 10 }, "visitors");
-  assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("two countries"), "Visitors from ?stats");
+  assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("in two countries counts in both bubbles"), "Visitors from ?stats");
   assert.ok(monitor.countriesSection(s, world, { n: 10 }, "sessions").includes("Reading the countries"), "another Count reads ?report= even at 10");
   const ses = monitor.countriesSection(s, world, { n: 10, rows: monitor.countriesFrom({ rows: [["France", 12], ["Spain", 4]] }, 10) }, "sessions");
   assert.ok(ses.includes("12 sessions") && ses.includes("<th>Sessions</th>") && ses.includes('aria-label="Sessions by country"') && !ses.includes(" users"), "units follow");
-  assert.ok(ses.includes(monitor.overlapNote("two countries", "sessions").slice(0, 30)) && ses.includes("one person&#39;s sessions"), "the donuts' note");
+  assert.ok(ses.includes(monitor.overlapNote("in two countries", "sessions", "bubbles").slice(0, 30)) && ses.includes("one person&#39;s sessions"), "the donuts' note");
   assert.ok(monitor.statsHtml(s, 390, world, { m: "opened", top: { n: 10 } }).includes("Reading the countries"), "statsHtml passes the Count");
 });
 
