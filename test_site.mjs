@@ -1468,13 +1468,17 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.deepEqual(many.segs, ["a", "b", "c", "d", "e", "Other"]);
   assert.deepEqual(many.bars[0].values, [10, 9, 8, 7, 6, 9], "past six, the rest folds into Other");
   assert.equal(many.bars[1].total, 0, "a metric with no rows is an empty bar");
-  const svg = monitor.stackSvg(st, 390);
+  const svg = monitor.groupSvg(st, 390);
   assert.match(svg, /width="390"/);
-  assert.equal((svg.match(/class="seg /g) || []).length, 9, "one mark per non-zero segment");
-  assert.ok(svg.includes('data-k="Players who opened a chapter" data-v="25\tmobile\tc2\n56%\tof the bar"'), "tooltip: metric, segment, value, share of the bar");
+  assert.equal((svg.match(/class="seg /g) || []).length, 9, "one bar per non-zero segment");
+  assert.ok(svg.includes('data-k="Players who opened a chapter" data-v="25\tmobile\tc2\n56%\tof the total"'), "tooltip: metric, segment, value, share of the total");
   assert.ok(svg.includes('text-anchor="middle">132</text>') && svg.includes(">Engaged</text>") && svg.includes(">Count</text>"), "totals on top, short names below, the axis titled");
-  const segY = [...svg.matchAll(/<rect class="seg c1" [^>]*y="([\d.]+)" width="[\d.]+" height="([\d.]+)"/g)];
-  assert.ok(segY.length && segY.every(m => Math.abs(Number(m[1]) + Number(m[2]) - 216) < 0.2), "the first segment stands on the baseline (240 - 24)");
+  assert.equal((svg.match(/class="val"/g) || []).length, 6, "one total per group");
+  assert.ok(svg.includes(">Visitors</text>") && /y="234"[^>]*>Visitors</.test(svg) && /y="246"[^>]*>Opened</.test(svg) && monitor.groupSvg(st, 1200).includes('height="240"'), "narrow groups: names on two staggered lines");
+  const bars = [...svg.matchAll(/<path class="seg c\d"[^>]* d="M([\d.]+),([\d.]+)/g)];
+  assert.ok(bars.every(m => Math.abs(Number(m[2]) - 216) < 0.2), "every bar stands on the baseline (240 - 24)");
+  const xs = bars.slice(0, 2).map(m => Number(m[1]));
+  assert.ok(xs[1] > xs[0], "a group's bars side by side, not stacked");
   assert.ok(!svg.includes("&<b>") && svg.includes("&#60;b&#62;tablet") && !/NaN|undefined/.test(svg));
   const sec = monitor.compareSection({ dim: "country", res }, 390);
   assert.ok(sec.includes("COUNT METRICS COMPARED") && sec.includes('<option value="country" selected>Country</option>') && sec.includes("do not share a unit"), "label, select, note");
@@ -1506,7 +1510,7 @@ test("a missing GA value reads (empty), never null or undefined", () => {
   const dn = monitor.donutSection("devices", { res: { rows: [[null, 3], ["mobile", 1]] } });
   assert.ok(dn.includes("(empty)") && !bad.test(dn), "donut");
   const st = monitor.compareSection({ dim: "country", res: { visitors: { rows: [[null, 2]] } } }, 390);
-  assert.ok(st.includes("(empty)") && !bad.test(st), "stacked bars");
+  assert.ok(st.includes("(empty)") && !bad.test(st), "grouped bars");
   assert.equal(monitor.pivotSeries([["20261021", null, 2]]).series[0].label, "(empty)");
   const res = { dimensions: ["date", "country"], metrics: ["activeUsers"], rowCount: 1, totals: null, rows: [["20261021", null, null]] };
   const pv = explore.pivotHtml(res);
@@ -1569,7 +1573,17 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const h = monitor.handbookHtml(390, Object.fromEntries(Object.entries(monitor.PANELS.handbook).map(([k, f]) => [k, { res: f(7, "ran").map(() => empty) }])), { total: empty }, "ran");
   assert.ok(!bad.test(h) && h.includes('data-k="20. Word of mouth"') && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
   assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && h.includes(">Readers who ran an exercise</text>"), "the handbook's breakdowns and Count");
-  assert.equal((h.match(/class="slice empty"/g) || []).length, 3, "pages, level and outcome donuts: empty rings");
+  assert.equal((h.match(/class="slice empty"/g) || []).length, 5, "pages, devices, channels, level and outcome donuts: empty rings");
+  // Global's layout on /learn/: the countries map, then PAGES, devices and channels on one row, all following the Count
+  assert.ok(h.indexOf("USERS PER DAY") < h.indexOf("COUNTRIES (TOP 10)") && h.indexOf("COUNTRIES (TOP 10)") < h.indexOf('<div class="donuts three"><div>') &&
+    h.indexOf('<div class="donuts three"><div>') < h.indexOf(">PAGES<") && h.indexOf("CHANNELS") < h.indexOf("EXERCISES"), "users, countries, the three donuts, then the exercises");
+  assert.ok(h.includes("Counts the users who ran an exercise: a person on two devices"), "the donuts' overlap note follows the Count");
+  for (const k of ["countries", "devices", "channels"]) {
+    assert.ok(monitor.COUNTED.includes(k), k + " follows the Count");
+    assert.deepEqual(monitor.PANELS.handbook[k](7, "ran")[0].filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
+  }
+  const hc = monitor.handbookHtml(390, { countries: { res: [{ rows: [["France", 4], ["Spain", 3], ["Italy", 1]] }] }, devices: { res: [{ rows: [["mobile", 3]], totals: [2] }] } }, { total: empty }, "visitors", null, 5);
+  assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && hc.includes(">2</text>") && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
   assert.ok(monitor.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
   // the leave block reads GA's averages as they come, labelled as averages, no dot where nobody left
   const leave = monitor.leaveHtml([{ rows: [["2", 7, 95.25, 4.5], ["(not set)", 1, 1, 1]] }], 640);
@@ -1613,10 +1627,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.deepEqual(monitor.breakdownRequest(7, "deviceCategory", "solved", monitor.SCOPES.game).filters, { eventName: ["chapter_solve"], pagePath: ["/", "/index.html"] });
   for (const v of ["game", "handbook"]) for (const k of monitor.VIEW_COUNTS[v]) assert.ok(monitor.metricOf(k).label, v + " " + k);
   assert.ok(monitor.panel("X", { error: "<q>" }, () => "").includes("&#60;q&#62;") && monitor.panel("X", null, () => "").includes("Reading..."));
-  // the compared bars print GA's total over each bar when the reply has one
+  // the compared groups print GA's total over each group when the reply has one
   const st = monitor.stackData({ visitors: { rows: [["desktop", 6], ["mobile", 5]], totals: [9] } });
   assert.deepEqual([st.bars[0].sum, st.bars[0].total], [11, 9]);
-  assert.ok(monitor.stackSvg(st, 390).includes('text-anchor="middle">9</text>'));
+  assert.ok(monitor.groupSvg(st, 390).includes('text-anchor="middle">9</text>'));
   const cb = monitor.chapterBarsSvg(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]], 390);
   assert.equal((cb.match(/class="bar c1"/g) || []).length, 1, "one bar, the zeros drawn as nothing");
 });

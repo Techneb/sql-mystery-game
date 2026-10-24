@@ -145,7 +145,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .multi-chart .sl.total { opacity: .45; }
 .legend i.total, .chart-tip .key.total { background: var(--ink); opacity: .5; }
 .wide { overflow-x: auto; }
-/* The five counts compared (monitor.js stackSvg): segments 2 px apart, each its own hover target */
+/* The counts compared (monitor.js groupSvg): one bar per segment, each its own hover target */
 .stack-chart .seg:hover { opacity: .8; }
 .stack-chart .val { font-variant-numeric: tabular-nums; }
 .wide td:first-child { white-space: nowrap; }

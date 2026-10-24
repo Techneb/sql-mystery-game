@@ -173,11 +173,11 @@ export const countriesRequest = (days, m) => countRequest(days, ["country"], m);
 export const countriesFromStats = (n, m) => n === 10 && metricOf(m) === COUNT_METRICS.visitors;
 export const countriesFrom = (res, n) => (res.rows || []).slice(0, n || Infinity).map(([country, users]) => ({ country, users }));
 const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
-// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list; m the page's Count.
+// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list (s null: always top.rows); m the page's Count.
 export function countriesSection(s, world, top = {}, m = "visitors") {
   const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
   const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
-  if (countriesFromStats(n, m)) return head + show(s.countries || []);
+  if (s && countriesFromStats(n, m)) return head + show(s.countries || []);
   if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
   if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
   return head + show(top.rows);
@@ -371,12 +371,12 @@ export function donutSection(kind, sel = {}, m = "visitors") {
     raw(k.label.toLowerCase(), barTable(k.head, list.map(i => [i.label, i.value]), d.label));
 }
 
-// --- the five Count metrics side by side: one bar each, stacked by a dimension (its own select), so the heights show
-// how the metrics differ and the segments the mix. One ?report= per metric on [dim] (countRequest, the donuts' shape).
+// --- the Count metrics side by side: one group each, a bar per segment of a dimension (its own select), so the totals
+// show how the metrics differ and the bars the mix. One ?report= per metric on [dim] (countRequest, the donuts' shape).
 export const STACKS = { deviceCategory: "Device", sessionDefaultChannelGroup: "Channel", country: "Country", newVsReturning: "New vs returning" };
 export const compareRequests = (days, dim) => Object.keys(COUNT_METRICS).map(m => [m, countRequest(days, [dim], m)]);
 // byMetric {m: res}: the segments ranked by their value summed over every bar (one order and colour for all bars;
-// past n + 1 the rest fold into Other, as on the donuts), each bar's values in that order.
+// past n + 1 the rest fold into Other, as on the donuts), each metric's values in that order.
 export function stackData(byMetric, n = 5) {
   const per = Object.keys(COUNT_METRICS).map(m => [m, new Map(((byMetric[m] || {}).rows || []).map(([l, v]) => [gaText(l), Number(v) || 0]))]);
   const sum = new Map();
@@ -387,33 +387,29 @@ export function stackData(byMetric, n = 5) {
   const bars = per.map(([m, mp]) => {
     const values = keep.map(l => mp.get(l) || 0);
     if (other) values.push([...mp].filter(e => !keep.includes(e[0])).reduce((t, e) => t + e[1], 0));
-    // sum: the segments stacked (a person in two segments counts twice); total: GA's own total (each person once)
+    // sum: the segments added (a person in two segments counts twice); total: GA's own total (each person once)
     // when the reply carries it, else the sum.
     const sum = values.reduce((a, b) => a + b, 0), t = (byMetric[m] || {}).totals;
     return { m, values, sum, total: t ? Number(t[0]) || 0 : sum };
   });
   return { segs, bars };
 }
-// Vertical bars on one count axis, segments from the baseline up in --c1..--c6 with a 2 px gap, the top one's corners
-// rounded, the total over each bar; each segment its own tooltip (metric, segment, value, share of the bar).
-export function stackSvg(st, w = 640) {
-  const H = 240, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
-  const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.sum, b.total)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
-  const gw = pw / st.bars.length, bw = r1(Math.min(56, gw * 0.6));
+// Grouped vertical bars on one count axis: per metric (x group, its short name below) one bar per segment side by
+// side in --c1..--c6, GA's total once centred over the group; each bar its own tooltip (metric, segment, value, share
+// of the metric's total).
+export function groupSvg(st, w = 640) {
+  // groups too narrow for their names (390 px): every other name drops to a second line under the axis
+  const L = 40, R = 16, T = 22, pw = Math.max(1, w - L - R), gw = pw / st.bars.length, two = gw < 64, B = two ? 36 : 24, H = 216 + B, ph = H - T - B;
+  const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.total, ...b.values)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
+  const n = Math.max(1, st.segs.length), inner = Math.min(gw * 0.8, n * 18), gap = inner / n > 4 ? 1 : 0, bw = (inner - gap * (n - 1)) / n;
   return '<svg class="chart stack-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Count metrics compared">' +
     yAxis(tk, y, L, L + pw, compact, "Count") +
     st.bars.map((b, i) => {
-      const d = metricOf(b.m), cx = L + (i + 0.5) * gw, x0 = r1(cx - bw / 2), last = b.values.findLastIndex(v => v > 0);
-      let cum = 0, drawn = false;
-      const segs = b.values.map((v, j) => {
-        if (!v) return "";
-        const y0 = y(cum), y1 = y(cum += v), h = r1(Math.max(1, y0 - y1 - (drawn ? 2 : 0))), tip = tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.sum), "of the bar"]]);
-        drawn = true;
-        return j === last ? '<path class="seg c' + (j + 1) + '"' + tip + ' d="' + barPath(x0, y1, bw, h) + '"/>'
-          : '<rect class="seg c' + (j + 1) + '"' + tip + ' x="' + x0 + '" y="' + y1 + '" width="' + bw + '" height="' + h + '"/>';
-      }).join("");
-      return segs + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.sum, b.total)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
-        '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(d.short) + "</text>";
+      const d = metricOf(b.m), cx = L + (i + 0.5) * gw, x0 = cx - inner / 2;
+      const bars = b.values.map((v, j) => !v ? "" : '<path class="seg c' + (j + 1) + '"' + tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.total), "of the total"]]) +
+        ' d="' + barPath(r1(x0 + j * (bw + gap)), y(v), r1(bw), r1(Math.max(1, T + ph - y(v)))) + '"/>').join("");
+      return bars + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.total, ...b.values)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
+        '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6 - (two && i % 2 === 0 ? 12 : 0)) + '" text-anchor="middle">' + esc(d.short) + "</text>";
     }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
 }
 // cmp: {dim, res: {m: res} (null while reading), error}.
@@ -424,8 +420,8 @@ export function compareSection(cmp = {}, w) {
   if (cmp.error) return head + '<p class="status bad">Google Analytics said: ' + esc(cmp.error) + "</p>";
   if (!cmp.res) return head + '<p class="muted">Reading the five counts...</p>';
   const st = stackData(cmp.res);
-  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
-    '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a bar is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a bar&#39;s segments can stack higher than its total.</p>' +
+  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + groupSvg(st, w) +
+    '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a group is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a group&#39;s bars can add up to more than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
@@ -555,7 +551,7 @@ export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
 // in COUNTED follow the Count (reloaded when it changes); the others count what their events say.
-export const COUNTED = ["pages"];
+export const COUNTED = ["pages", "countries", "devices", "channels"];
 export const PANELS = {
   global: {
     pages: (d, m) => sectionRequests(d, m),
@@ -573,6 +569,10 @@ export const PANELS = {
   },
   handbook: {
     pages: (d, m) => [scoped(countRequest(d, ["pageTitle"], m), LEARN)],
+    // as on Global, on the /learn/ pages: every country (the Top select slices it), devices, channels
+    countries: (d, m) => [scoped(countriesRequest(d, m), LEARN)],
+    devices: (d, m) => [scoped(donutRequest(d, "devices", m), LEARN)],
+    channels: (d, m) => [scoped(donutRequest(d, "channels", m), LEARN)],
     exercises: d => [ev(d, ["customEvent:exercise"], ["totalUsers"], { eventName: ["exercise_run"] }),
       ev(d, ["customEvent:exercise", "customEvent:outcome"], ["totalUsers"], { eventName: ["exercise_run"] }),
       ev(d, ["customEvent:exercise"], ["totalUsers", "averageCustomEvent:runs"], { eventName: ["exercise_solve"] })],
@@ -704,9 +704,15 @@ export function tryItHtml(res, w) {
   return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "clicks"]] })), [["users", "c5"]], w, compact, "Try it links per exercise") +
     raw("try-it", tableHtml(["Exercise", "Users", "Clicks"], rows.map(r => [r.label, r.values[0], r.ev])));
 }
-export function handbookHtml(w, P = {}, bd, m) {
+// Global's layout on the /learn/ pages: users per day, the countries map, then PAGES, devices and channels as three
+// donuts on one row, all following the Count. world: the map outline; n: the countries' Top.
+const first = p => p && { res: p.res && p.res[0], error: p.error };
+export function handbookHtml(w, P = {}, bd, m, world = null, n = 10) {
+  const c = P.countries || {};
   return usersSection(null, w, bd, m, VIEW_BREAKDOWNS.handbook) +
-    panel("PAGES", P.pages, res => handbookPagesHtml(res[0], m)) +
+    countriesSection(null, world, { n, rows: c.res ? countriesFrom(c.res[0], n) : null, error: c.error }, m) +
+    '<div class="donuts three"><div>' + panel("PAGES", P.pages, res => handbookPagesHtml(res[0], m)) + "</div>" +
+    Object.keys(DONUTS).map(k => "<div>" + donutSection(k, first(P[k]), m) + "</div>").join("") + "</div>" +
     panel("EXERCISES", P.exercises, res => exercisesHtml(res, w)) +
     (P.choices && P.choices.res ? choicesHtml(P.choices.res) : panel("LEVEL CHOICE", P.choices, () => "")) +
     panel("QUERY FAILURES BY RULE", P.fails, res => failsHtml(res, w, "Exercise", "exercise-failures")) +
@@ -782,7 +788,7 @@ async function main() {
     wide = $("stats").clientWidth;
     if (!last && view === "global") return;
     const focus = document.activeElement && document.activeElement.id, w = Math.max(280, wide);
-    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m)
+    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m, world, top.n)
       : statsHtml(last, w, world, { m, bd, cmp, top, dn, pages: P.pages });
     if (focus && $(focus)) $(focus).focus();
   };
@@ -840,7 +846,7 @@ async function main() {
   $("stats").addEventListener("change", e => {
     if (e.target.id === "stack-dim") { cmp.dim = e.target.value; loadCmp(); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
-    if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
+    if (e.target.id === "top-n") { top.n = Number(e.target.value); if (view === "global") loadTop(); else draw(); }
   });
   $("count").addEventListener("change", e => {
     m = e.target.value;
@@ -850,7 +856,7 @@ async function main() {
     else if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
-  if (view === "global") fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
+  if (view !== "game") fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
   async function load(d) {
     const mine = ++gen;
