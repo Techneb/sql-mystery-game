@@ -1,6 +1,8 @@
-// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the five counts compared, the chapter funnel with its retention, the solve rate, a map
-// of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
-// stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
+// site/monitor.js -- the teacher's GA4 numbers in three views (<body data-view>): Global (monitor.html: users per day,
+// the five counts compared, users by site section, top pages, a map of countries, devices and channels), Game
+// (monitor-game.html: the chapter funnel with its retention, the solve rate, leaving, failures, wrong answers, hints,
+// features, the landing) and Handbook (monitor-handbook.html: its days and pages, the exercises, levels, failures,
+// features), read from the Apps Script's ?stats=<days>&key= and ?report= (apps_script.gs stats_, report_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
 import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
@@ -256,9 +258,8 @@ export function funnelHtml(rows, w) {
   const f = funnel(rows);
   const finished = rows.filter(r => r.event === "game_finish").reduce((s, r) => s + (Number(r.users) || 0), 0);
   if (!f.length) return '<p class="muted">No chapter events in this period.</p>';
-  const noQueries = f.every(c => !c.q1 && !c.q5 && !c.q20), ret = retention(f);
+  const ret = retention(f);
   return legend(STAGES.map(s => s[1])) + funnelSvg(f, w) +
-    (noQueries ? '<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>' : "") +
     raw("chapter-funnel", '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Retention</th><th>Solve rate</th></tr></thead><tbody>' +
     f.map(c => "<tr><td>" + roman(c.chapter) + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") +
       '<td class="num">' + pctOf(ret(c)) + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>") +
@@ -355,7 +356,10 @@ export function stackData(byMetric, n = 5) {
   const bars = per.map(([m, mp]) => {
     const values = keep.map(l => mp.get(l) || 0);
     if (other) values.push([...mp].filter(e => !keep.includes(e[0])).reduce((t, e) => t + e[1], 0));
-    return { m, values, total: values.reduce((a, b) => a + b, 0) };
+    // sum: the segments stacked (a person in two segments counts twice); total: GA's own total (each person once)
+    // when the reply carries it, else the sum.
+    const sum = values.reduce((a, b) => a + b, 0), t = (byMetric[m] || {}).totals;
+    return { m, values, sum, total: t ? Number(t[0]) || 0 : sum };
   });
   return { segs, bars };
 }
@@ -363,7 +367,7 @@ export function stackData(byMetric, n = 5) {
 // rounded, the total over each bar; each segment its own tooltip (metric, segment, value, share of the bar).
 export function stackSvg(st, w = 640) {
   const H = 240, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
-  const tk = ticks(Math.max(1, ...st.bars.map(b => b.total))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
+  const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.sum, b.total)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
   const gw = pw / st.bars.length, bw = r1(Math.min(56, gw * 0.6));
   return '<svg class="chart stack-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Count metrics compared">' +
     yAxis(tk, y, L, L + pw, compact, "Count") +
@@ -372,12 +376,12 @@ export function stackSvg(st, w = 640) {
       let cum = 0, drawn = false;
       const segs = b.values.map((v, j) => {
         if (!v) return "";
-        const y0 = y(cum), y1 = y(cum += v), h = r1(Math.max(1, y0 - y1 - (drawn ? 2 : 0))), tip = tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.total), "of the bar"]]);
+        const y0 = y(cum), y1 = y(cum += v), h = r1(Math.max(1, y0 - y1 - (drawn ? 2 : 0))), tip = tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.sum), "of the bar"]]);
         drawn = true;
         return j === last ? '<path class="seg c' + (j + 1) + '"' + tip + ' d="' + barPath(x0, y1, bw, h) + '"/>'
           : '<rect class="seg c' + (j + 1) + '"' + tip + ' x="' + x0 + '" y="' + y1 + '" width="' + bw + '" height="' + h + '"/>';
       }).join("");
-      return segs + '<text class="val" x="' + r1(cx) + '" y="' + (y(b.total) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
+      return segs + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.sum, b.total)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
         '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(d.short) + "</text>";
     }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
 }
@@ -391,7 +395,7 @@ export function compareSection(cmp = {}, w) {
   const st = stackData(cmp.res);
   if (!st.segs.length) return head + NONE;
   return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
-    '<p class="muted">Visitors and players are people, sessions are visits: the bars do not share a unit. A person in two segments (two devices, say) counts in both, so a bar can add up to more than its people.</p>' +
+    '<p class="muted">Visitors and players are people, sessions are visits: the bars do not share a unit. The number over a bar is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a bar&#39;s segments can stack higher than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
@@ -419,12 +423,241 @@ export function mapHtml(countries, world, m) {
 
 // opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
 // dn: {devices, channels} as donutSection takes them.
+// The Global view (monitor.html). opts.pages / opts.topPages: panel states ({res: [replies] | null, error}).
 export function statsHtml(s, w, world, opts = {}) {
   return usersSection(s, w, opts.bd, opts.m) + compareSection(opts.cmp, w) +
-    '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
-    '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
+    pagesSection(opts.pages, w, opts.m) + topPagesSection(opts.topPages, w) +
     countriesSection(s, world, opts.top, opts.m) +
     '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
+}
+
+// --- the three views ---------------------------------------------------------------------------
+// monitor.html (Global), monitor-game.html (Game) and monitor-handbook.html (Handbook) all run this module; <body
+// data-view> picks the view. Every number drawn is one GA returned: people are never added across rows (a total of
+// people is GA's own `totals`), averages are GA's averageCustomEvent:<param> (per event) and say so, and a reply with
+// no rows draws the chart's empty frame (zeros on a per-chapter or per-exercise grid).
+
+// Page sections as pagePath filters (apps_script.gs report_: a list is exact paths, an object adds prefixes and not).
+export const GAME_PATHS = ["/", "/index.html"];
+export const DESK_PATHS = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/leaderboard.html"];
+export const LEARN = { beginsWith: ["/learn/"] };
+export const SECTIONS = [["Game", GAME_PATHS], ["Handbook", LEARN], ["Desk", DESK_PATHS],
+  ["Other", { exact: [...GAME_PATHS, ...DESK_PATHS], beginsWith: ["/learn/"], not: true }]];
+const withFilters = (req, f) => ({ ...req, filters: { ...(req.filters || {}), ...f } });
+export const sectionRequests = (days, m) => SECTIONS.map(([, f]) => withFilters(countRequest(days, [], m), { pagePath: f }));
+// A reply's grand total for its first metric: GA's totals, else (no dimensions) its one row.
+export const gaTotal = res => (res && res.totals ? Number(res.totals[0]) || 0 : res && res.rows && res.rows.length === 1 ? Number(res.rows[0].at(-1)) || 0 : 0);
+// rows -> Map(first dimension value -> the row's metrics as numbers); nd: how many dimensions the reply has.
+const byFirst = (res, nd = 1) => new Map(((res && res.rows) || []).map(r => [String(r[0]), r.slice(nd).map(v => Number(v) || 0)]));
+const avg = v => (Math.round(v * 10) / 10).toString();
+
+// Horizontal bars, one row per item (its label above its bars, so long names fit at 390 px), one bar per series in
+// --c1.., the value at each bar's end; one hover row per item. rows: [{label, values, tip}], series: [[name, cls]].
+// No rows: the empty frame.
+const hbarPath = (y, bw, h) => { const r = Math.min(2, h / 2, bw); return "M0," + y + "h" + r1(bw - r) + "q" + r + ",0 " + r + "," + r + "v" + r1(h - 2 * r) + "q0," + r + " " + -r + "," + r + "h" + r1(-(bw - r)) + "Z"; };
+export function hbarSvg(rows, series, w = 640, fmt = compact, aria = "Bars") {
+  const LH = 16, BH = 8, G = 2, rh = LH + series.length * (BH + G) + 8, H = Math.max(1, rows.length) * rh + 4, R = 52, pw = Math.max(1, w - R);
+  const max = Math.max(0, ...rows.flatMap(r => r.values)) || 1, chars = Math.max(10, Math.floor(w / 7.4));
+  const cut = s => (s.length > chars ? s.slice(0, chars - 3) + "..." : s);
+  return '<svg class="chart hbar-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(aria) + '">' +
+    rows.map((r, i) => {
+      const y0 = i * rh;
+      return '<g class="hit"' + tipAttrs(r.label, series.map(([n, c], j) => [fmt(r.values[j]), n, c]).concat(r.tip || [])) + '><rect x="0" y="' + y0 + '" width="' + w + '" height="' + rh + '"/></g>' +
+        '<text x="0" y="' + (y0 + 12) + '">' + esc(cut(r.label)) + "</text>" +
+        series.map(([, c], j) => {
+          const v = r.values[j] || 0, y = y0 + LH + j * (BH + G), bw = r1((v * pw) / max);
+          return (v > 0 ? '<path class="bar ' + c + '" d="' + hbarPath(y, Math.max(1, bw), BH) + '"/>' : "") +
+            '<text class="tick" x="' + r1(bw + 4) + '" y="' + (y + BH) + '">' + esc(fmt(v)) + "</text>";
+        }).join("");
+    }).join("") + '<line class="axis" x1="0.5" x2="0.5" y1="0" y2="' + H + '"/></svg>';
+}
+// Vertical grouped bars per chapter in the funnel's columns, on one axis titled `title`; f: [{chapter, values}].
+export function chapterBarsSvg(f, series, w = 640, title = "Users", fmt = compact) {
+  const H = 180, { pw, gw } = cols(f, w), ph = H - CT - CB;
+  const tk = ticks(Math.max(1, ...f.flatMap(c => c.values))), top = tk.at(-1), y = v => r1(CT + ph - (v * ph) / top);
+  const n = series.length, inner = gw * 0.7, gap = n > 1 && inner / n > 4 ? 1 : 0, bw = (inner - gap * (n - 1)) / n;
+  return '<svg class="chart cols-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(title) + ' per chapter">' +
+    yAxis(tk, y, CL, CL + pw, compact, title) + xLabels(f, gw, H) +
+    f.map((c, i) => {
+      const x0 = CL + i * gw;
+      return '<g class="hit"' + tipAttrs("Chapter " + roman(c.chapter), series.map(([name, cls], j) => [fmt(c.values[j]), name, cls]).concat(c.tip || [])) +
+        '><rect x="' + r1(x0) + '" y="' + CT + '" width="' + r1(gw) + '" height="' + ph + '"/></g>' +
+        series.map(([, cls], j) => c.values[j] > 0 ? '<path class="bar ' + cls + '" d="' + barPath(r1(x0 + gw * 0.15 + j * (bw + gap)), y(c.values[j]), r1(bw), r1(CT + ph - y(c.values[j]))) + '"/>' : "").join("");
+    }).join("") + '<line class="axis" x1="' + CL + '" x2="' + (CL + pw) + '" y1="' + (CT + ph) + '" y2="' + (CT + ph) + '"/></svg>';
+}
+// A table from a header and rows of cells, every cell escaped; numbers (and "40%", "3.5", "-") right-aligned.
+const isNum = c => typeof c === "number" || /^(-|\d+(\.\d+)?%?)$/.test(String(c));
+export const tableHtml = (heads, rows) => '<div class="wide"><table class="detail stats"><thead><tr>' + heads.map((h, i) => "<th" + (rows.length && i && isNum(rows[0][i]) ? ' class="num"' : "") + ">" + esc(h) + "</th>").join("") +
+  "</tr></thead><tbody>" + rows.map(r => "<tr>" + r.map(c => "<td" + (isNum(c) ? ' class="num"' : "") + ">" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
+const legendOf = series => series.length > 1 ? '<p class="legend">' + series.map(([n, c]) => '<span><i class="' + c + '"></i>' + esc(n) + "</span>").join("") + "</p>" : "";
+// A panel: its label row, GA's error or "Reading..." in place, else body(res) with res the panel's replies.
+const head = (label, extra = "") => '<div class="label-row"><span class="label">' + esc(label) + "</span>" + extra + "</div>";
+export function panel(label, p, body, extra = "") {
+  if (p && p.error) return head(label, extra) + '<p class="status bad">Google Analytics said: ' + esc(p.error) + "</p>";
+  if (!p || !p.res) return head(label, extra) + '<p class="muted">Reading...</p>';
+  return head(label, extra) + body(p.res);
+}
+// Chapters I-XII always (zeros where GA has nothing), each with the metrics of its row in res (first dimension the chapter).
+export const CHAPTERS = 12;
+export const chapterGrid = (res, k = 1) => { const m = byFirst(res); return Array.from({ length: CHAPTERS }, (_, i) => ({ chapter: i + 1, values: (m.get(String(i + 1)) || []).concat(Array(k).fill(0)).slice(0, k) })); };
+
+// --- Global: users by site section and the top pages ---------------------------------------------
+export function pagesSection(p, w, m) {
+  const d = metricOf(m);
+  return panel("PAGES", p, res => {
+    const rows = SECTIONS.map(([l], i) => ({ label: l, values: [gaTotal(res[i])] }));
+    return hbarSvg(rows, [[d.label, "c1"]], w, compact, d.label + " by section") +
+      '<p class="muted">Game is /, Handbook the /learn/ pages, Desk the teacher&#39;s pages (GA does not run there, so it reads 0), Other the rest. ' +
+      esc(d.note) + ", each section counted by GA on its own: a person on two sections counts in both.</p>" +
+      raw("pages", tableHtml(["Section", d.label], rows.map(r => [r.label, r.values[0]])));
+  });
+}
+export const TOP_PAGES = 15;
+export const topPagesRequest = (days, path) => ({ days, dimensions: ["pagePath", "pageTitle"], metrics: ["screenPageViews", "activeUsers", "userEngagementDuration"], ...(path ? { filters: { pagePath: path } } : {}) });
+// Pages by views (GA orders by the first metric); tooltip and raw data add the users and the average engagement per
+// user (GA's engagement time divided by its active users, the figure GA's own Pages report shows).
+export function topPagesHtml(res, w, name = "top-pages") {
+  const rows = ((res && res.rows) || []).slice(0, TOP_PAGES).map(([path, title, v, u, e]) => ({ path: gaText(path), title: gaText(title), views: Number(v) || 0, users: Number(u) || 0, eng: Number(e) || 0 }));
+  const per = r => (r.users ? avg(r.eng / r.users) + " s" : "-");
+  return hbarSvg(rows.map(r => ({ label: r.title === "(empty)" ? r.path : r.title, values: [r.views], tip: [[r.users, "users"], [per(r), "avg engagement per user"], [r.path, ""]] })), [["views", "c1"]], w, compact, "Top pages by views") +
+    raw(name, tableHtml(["Path", "Title", "Views", "Users", "Avg engagement per user (s)"], rows.map(r => [r.path, r.title, r.views, r.users, r.users ? avg(r.eng / r.users) : "-"])));
+}
+export const topPagesSection = (p, w) => panel("TOP PAGES", p, res => topPagesHtml(res[0], w));
+
+// --- Game ---------------------------------------------------------------------------------------
+export const GAME_FEATURES = { schema_enlarge: "Schema enlarged", suspects_open: "Suspects opened", history_reuse: "History query reused",
+  grammar_link: "Grammar link followed", film_play: "Film played", film_end: "Film watched to the end", landing_about: "Landing about opened", theme_toggle: "Day/Night toggled" };
+export const HANDBOOK_FEATURES = { schema_enlarge: "Schema enlarged", history_reuse: "History query reused", grammar_link: "Grammar link followed",
+  howto_open: "How to use opened", solution_open: "Solution opened", try_it: "Try it link followed", theme_toggle: "Day/Night toggled", ad_house_click: "House ad clicked" };
+const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
+// Each panel: its ?report= requests for a period (and the page's Count on Global); the page fetches them in parallel.
+export const PANELS = {
+  global: {
+    pages: (d, m) => sectionRequests(d, m),
+    topPages: d => [topPagesRequest(d)],
+  },
+  game: {
+    leave: d => [ev(d, ["customEvent:chapter"], ["totalUsers", "averageCustomEvent:seconds", "averageCustomEvent:queries"], { eventName: ["chapter_leave"] })],
+    fails: d => [ev(d, ["customEvent:rule"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: GAME_PATHS }),
+      ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:chapter"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: GAME_PATHS })],
+    wrong: d => [ev(d, ["customEvent:chapter", "customEvent:n"], ["totalUsers"], { eventName: ["answer_wrong"] })],
+    hints: d => [ev(d, ["customEvent:chapter"], ["totalUsers", "eventCount"], { eventName: ["hint_open"] })],
+    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: GAME_PATHS })],
+    landing: d => [ev(d, ["customEvent:mode"], ["totalUsers"], { eventName: ["landing_begin"] }), ev(d, [], ["activeUsers"], { pagePath: GAME_PATHS })],
+  },
+  handbook: {
+    days: d => [ev(d, ["date"], ["activeUsers"], { pagePath: LEARN })],
+    pages: d => [topPagesRequest(d, LEARN)],
+    exercises: d => [ev(d, ["customEvent:exercise"], ["totalUsers"], { eventName: ["exercise_run"] }),
+      ev(d, ["customEvent:exercise", "customEvent:outcome"], ["totalUsers"], { eventName: ["exercise_run"] }),
+      ev(d, ["customEvent:exercise"], ["totalUsers", "averageCustomEvent:runs"], { eventName: ["exercise_solve"] })],
+    levels: d => [ev(d, ["customEvent:level"], ["totalUsers", "eventCount"], { eventName: ["exercise_level"] })],
+    fails: d => [ev(d, ["customEvent:rule"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN }),
+      ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:exercise"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN })],
+    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: LEARN })],
+    tryIt: d => [ev(d, ["customEvent:exercise"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], "customEvent:feature": ["try_it"] })],
+  },
+};
+
+// res[0]: [chapter] totalUsers, avg seconds, avg queries of chapter_leave: three charts on the chapter grid.
+export function leaveHtml(res, w) {
+  const g = chapterGrid(res[0], 3), tip = c => [[avg(c.values[1]) + " s", "avg time"], [avg(c.values[2]), "avg queries"]];
+  const chart = (label, j, title, fmt) => head(label) + chapterBarsSvg(g.map(c => ({ chapter: c.chapter, values: [c.values[j]], tip: tip(c) })), [[title, "c" + (j + 1)]], w, title, fmt);
+  return chart("LEFT AN UNSOLVED CHAPTER", 0, "Users", compact) +
+    chart("AVERAGE TIME BEFORE LEAVING", 1, "Seconds", v => avg(v) + " s") +
+    chart("AVERAGE QUERIES BEFORE LEAVING", 2, "Queries", avg) +
+    '<p class="muted">Users who left a chapter they had not solved, and GA&#39;s average per leave event of the seconds spent and the queries run in it (an average, not a median).</p>' +
+    raw("chapter-leave", tableHtml(["Chapter", "Users who left", "Avg seconds (per leave)", "Avg queries (per leave)"], g.map(c => [roman(c.chapter), c.values[0], avg(c.values[1]), avg(c.values[2])])));
+}
+// res: [by rule, by rule x kind x where]: bars per rule from GA's own [rule] rows; the split as raw data.
+export function failsHtml(res, w, where = "Chapter", name = "query-failures") {
+  const rows = ((res[0] && res[0].rows) || []).map(([r, e, u]) => ({ label: gaText(r), values: [Number(e) || 0], tip: [[Number(u) || 0, "users"]] }));
+  const split = ((res[1] && res[1].rows) || []).map(([r, k, c, e, u]) => [gaText(r), gaText(k), where === "Chapter" && ROMAN[Number(c)] ? roman(Number(c)) : gaText(c), Number(e) || 0, Number(u) || 0]);
+  return hbarSvg(rows, [["failures", "c2"]], w, compact, "Query failures by grammar rule") +
+    '<p class="muted">Failed or refused runs, the first 3 per ' + (where === "Chapter" ? "chapter" : "exercise") + " per page load; the rule is the Grammar section the refusal links ((empty) for a plain error).</p>" +
+    raw(name, tableHtml(["Rule", "Kind", where, "Failures", "Users"], split));
+}
+// res[0]: [chapter, n] totalUsers of answer_wrong: 1st and 3rd wrong answer side by side per chapter.
+export function wrongHtml(res, w) {
+  const by = new Map();
+  for (const [c, n, u] of (res[0] && res[0].rows) || []) by.set(c + "|" + n, Number(u) || 0);
+  const g = Array.from({ length: CHAPTERS }, (_, i) => ({ chapter: i + 1, values: [by.get(i + 1 + "|1") || 0, by.get(i + 1 + "|3") || 0] }));
+  const series = [["1st wrong answer", "c1"], ["3rd wrong answer", "c2"]];
+  return legendOf(series) + chapterBarsSvg(g, series, w, "Users") +
+    raw("wrong-answers", tableHtml(["Chapter", "Users with a 1st wrong answer", "Users with a 3rd"], g.map(c => [roman(c.chapter), ...c.values])));
+}
+export function hintsHtml(res, w) {
+  const g = chapterGrid(res[0], 2);
+  return chapterBarsSvg(g.map(c => ({ ...c, values: [c.values[0]], tip: [[c.values[1], "opens"]] })), [["users", "c4"]], w, "Users") +
+    raw("hint-opens", tableHtml(["Chapter", "Users", "Opens"], g.map(c => [roman(c.chapter), ...c.values])));
+}
+// Every known feature (zeros included) in its list's order, then any other GA reports.
+export function featuresHtml(res, w, names, name = "feature-use") {
+  const m = byFirst(res[0]), keys = [...Object.keys(names), ...[...m.keys()].filter(k => !(k in names))];
+  const rows = keys.map(k => ({ key: k, label: names[k] || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }));
+  return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] })), [["users", "c3"]], w, compact, "Feature use") +
+    raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], rows.map(r => [r.label, r.key, r.values[0], r.ev])));
+}
+// res: [landing_begin by mode, activeUsers on the game page]: two bars, GA's totals.
+export function landingHtml(res, w) {
+  const begun = gaTotal(res[0]), seen = gaTotal(res[1]);
+  return hbarSvg([{ label: "Visitors on the game page", values: [seen] }, { label: "Pressed Begin", values: [begun], tip: [[pct(begun, seen), "of the visitors"]] }], [["users", "c1"]], w, compact, "Landing: begin vs visitors") +
+    raw("landing-begin", tableHtml(["Mode", "Users who pressed Begin"], ((res[0] && res[0].rows) || []).map(([mode, u]) => [gaText(mode), Number(u) || 0]).concat([["All (GA's total)", begun]])));
+}
+export function gameHtml(s, w, P = {}) {
+  const ch = s ? s.chapters || [] : null, reading = '<p class="muted">Reading...</p>';
+  return '<div class="label">CHAPTER FUNNEL</div>' + (ch ? funnelHtml(ch, w) : reading) +
+    '<div class="label">SOLVE RATE</div>' + (ch ? solveRateHtml(ch, w) : reading) +
+    (P.leave && P.leave.res ? leaveHtml(P.leave.res, w) : panel("LEFT AN UNSOLVED CHAPTER", P.leave, () => "")) +
+    panel("QUERY FAILURES BY RULE", P.fails, res => failsHtml(res, w)) +
+    panel("WRONG ANSWERS", P.wrong, res => wrongHtml(res, w)) +
+    panel("HINT OPENS", P.hints, res => hintsHtml(res, w)) +
+    panel("FEATURE USE", P.features, res => featuresHtml(res, w, GAME_FEATURES)) +
+    panel("LANDING: BEGIN VS VISITORS", P.landing, res => landingHtml(res, w));
+}
+
+// --- Handbook -----------------------------------------------------------------------------------
+// The twenty exercises of learn/exercises.html in its order, slug -> its numbered title (a test checks the page).
+export const EXERCISES = [["the-cheap-shelf", "1. The cheap shelf"], ["early-customers", "2. Early customers"], ["every-croissant", "3. Every croissant"],
+  ["untidy-emails", "4. Untidy emails"], ["the-counter-by-category", "5. The counter by category"], ["orders-by-town", "6. Orders by town"],
+  ["takings-per-day", "7. Takings per day"], ["the-price-rise", "8. The price rise"], ["busy-hours", "9. Busy hours"], ["referred-from-afar", "10. Referred from afar"],
+  ["the-staff-room", "11. The staff room"], ["morning-people", "12. Morning people"], ["above-their-category", "13. Above their category"],
+  ["not-on-the-weekend-menu", "14. Not on the weekend menu"], ["no-bread-thank-you", "15. No bread, thank you"], ["money-back", "16. Money back"],
+  ["best-seller-of-each-category", "17. Best seller of each category"], ["back-again", "18. Back again"], ["shutters-down", "19. Shutters down"], ["word-of-mouth", "20. Word of mouth"]];
+const exTitle = new Map(EXERCISES);
+// Every exercise in order (zeros included), then any slug GA reports that the list lacks.
+const exRows = (...maps) => [...EXERCISES.map(e => e[0]), ...new Set(maps.flatMap(m => [...m.keys()]).filter(k => !exTitle.has(k)))];
+// res: [ran by exercise, ran by exercise x outcome, solved by exercise with avg runs].
+export function exercisesHtml(res, w) {
+  const ran = byFirst(res[0]), solved = byFirst(res[2]), out = new Map();
+  for (const [e, o, u] of (res[1] && res[1].rows) || []) out.set(e + "|" + o, Number(u) || 0);
+  const rows = exRows(ran, solved).map(k => {
+    const r = (ran.get(k) || [0])[0], [s, runs] = solved.get(k) || [0, 0];
+    return { key: k, label: exTitle.get(k) || gaText(k), values: [r, s], runs, tip: [[pct(s, r), "solve rate"], [s ? avg(runs) : "-", "avg runs to solve"]] };
+  });
+  const series = [["ran a query", "c1"], ["solved", "c3"]];
+  return legendOf(series) + hbarSvg(rows, series, w, compact, "Exercises: ran and solved") +
+    '<p class="muted">Users who ran a query on the exercise and who solved it; the solve rate is solved over ran, the runs to solve GA&#39;s average per solve event.</p>' +
+    raw("exercises", tableHtml(["Exercise", "Ran", "Solved", "Solve rate", "Avg runs to solve", "Ran: ok", "Ran: error", "Ran: refused"],
+      rows.map(r => [r.label, r.values[0], r.values[1], pct(r.values[1], r.values[0]), r.values[1] ? avg(r.runs) : "-", ...["ok", "error", "refused"].map(o => out.get(r.key + "|" + o) || 0)])));
+}
+export function levelsHtml(res, w) {
+  const rows = ((res[0] && res[0].rows) || []).map(([l, u, e]) => ({ label: gaText(l), values: [Number(u) || 0], tip: [[Number(e) || 0, "presses"]] }));
+  return hbarSvg(rows, [["users", "c4"]], w, compact, "Level buttons") + raw("level-buttons", tableHtml(["Level", "Users", "Presses"], rows.map(r => [r.label, r.values[0], r.tip[0][0]])));
+}
+export function tryItHtml(res, w) {
+  const m = byFirst(res[0]), rows = exRows(m).map(k => ({ label: exTitle.get(k) || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }));
+  return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "clicks"]] })), [["users", "c5"]], w, compact, "Try it links per exercise") +
+    raw("try-it", tableHtml(["Exercise", "Users", "Clicks"], rows.map(r => [r.label, r.values[0], r.ev])));
+}
+export function handbookHtml(w, P = {}) {
+  return panel("USERS PER DAY", P.days, res => usersHtml(daysFrom(res[0]), w)) +
+    panel("HANDBOOK PAGES", P.pages, res => topPagesHtml(res[0], w, "handbook-pages")) +
+    panel("EXERCISES", P.exercises, res => exercisesHtml(res, w)) +
+    panel("LEVEL BUTTONS", P.levels, res => levelsHtml(res, w)) +
+    panel("QUERY FAILURES BY RULE", P.fails, res => failsHtml(res, w, "Exercise", "exercise-failures")) +
+    panel("FEATURE USE", P.features, res => featuresHtml(res, w, HANDBOOK_FEATURES, "handbook-features")) +
+    panel("TRY IT LINKS", P.tryIt, res => tryItHtml(res, w));
 }
 
 // --- page wiring (browser only) ----------------------------------------------------------------
@@ -486,14 +719,17 @@ async function main() {
   // The page's Count (beside the period buttons), remembered per browser; it drives users per day, the countries and both donuts.
   let m = "visitors";
   try { const c = localStorage.getItem(COUNT_KEY); if (c in COUNT_METRICS) m = c; } catch {}
-  $("count").innerHTML = optionsHtml(Object.entries(COUNT_METRICS).map(([v, o]) => [v, o.label]), m);
+  // The view (monitor.html Global, monitor-game.html, monitor-handbook.html) and its panels' replies.
+  const view = document.body.dataset.view in PANELS ? document.body.dataset.view : "global", P = {};
+  if ($("count")) $("count").innerHTML = optionsHtml(Object.entries(COUNT_METRICS).map(([v, o]) => [v, o.label]), m);
   const dn = {};
   for (const k in DONUTS) dn[k] = { res: null, error: null };
   const draw = () => {
     wide = $("stats").clientWidth;
-    if (!last) return;
-    const focus = document.activeElement && document.activeElement.id;
-    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { m, bd, cmp, top, dn });
+    if (!last && view !== "handbook") return;
+    const focus = document.activeElement && document.activeElement.id, w = Math.max(280, wide);
+    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P) : view === "handbook" ? handbookHtml(w, P)
+      : statsHtml(last, w, world, { m, bd, cmp, top, dn, pages: P.pages, topPages: P.topPages });
     if (focus && $(focus)) $(focus).focus();
   };
   const report = async req => {
@@ -536,31 +772,43 @@ async function main() {
     catch (e) { if (still()) c.error = e.message; }
     if (still()) draw();
   };
+  // One panel: its requests in parallel; a late reply for an older period or Count is dropped.
+  const loadPanel = async id => {
+    P[id] = { res: null, error: null }; draw();
+    const want = days + "|" + m, still = () => want === days + "|" + m;
+    try { const got = await Promise.all(PANELS[view][id](days, m).map(report)); if (still()) P[id].res = got; }
+    catch (e) { if (still()) P[id].error = e.message; }
+    if (still()) draw();
+  };
+  const loadPanels = () => { for (const id in PANELS[view]) loadPanel(id); };
   $("stats").addEventListener("change", e => {
     if (e.target.id === "stack-dim") { cmp.dim = e.target.value; loadCmp(); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
     if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
   });
-  $("count").addEventListener("change", e => {
+  if ($("count")) $("count").addEventListener("change", e => {
     m = e.target.value;
     try { localStorage.setItem(COUNT_KEY, m); } catch {}
-    if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); }
+    if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); loadPanel("pages"); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
-  fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
+  if (view === "global") fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
   async function load(d) {
     const mine = ++gen;
     days = d;
     document.querySelectorAll("#days button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.days) === days)));
     say("Reading the last " + days + " days...");
+    last = null; loadPanels();
+    if (view === "handbook") { say("The last " + days + " days, from Google Analytics (cached 10 minutes)."); return; }
     try {
       const u = new URL(board);
       u.searchParams.set("stats", days); u.searchParams.set("key", key);
       const s = await (await fetch(u, { signal: AbortSignal.timeout(40000) })).json();
       if (mine !== gen) return;
       if (!s || !s.ok) throw new Error((s && s.error) || "no numbers");
-      last = s; loadBd(); loadCmp(); loadTop(); for (const k in DONUTS) loadDn(k);
+      last = s;
+      if (view === "global") { loadBd(); loadCmp(); loadTop(); for (const k in DONUTS) loadDn(k); } else draw();
       say("The last " + s.days + " days, from Google Analytics (cached 10 minutes).");
     } catch (e) { if (mine === gen) say("Could not read the numbers: " + e.message, true); }
   }

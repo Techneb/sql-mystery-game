@@ -73,7 +73,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .funnel-chart .bar, .funnel-chart .rate-line, .funnel-chart .rate-dot { pointer-events: none; }
 .funnel-chart .rate-line { fill: none; stroke: var(--c6); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .funnel-chart .rate-dot { fill: var(--c6); stroke: var(--paper); stroke-width: 2; }
-.funnel-chart .tick.small, .solve-chart .tick.small { font-size: 9px; }
+.funnel-chart .tick.small, .solve-chart .tick.small, .cols-chart .tick.small { font-size: 9px; }
 .solve-chart .hit:hover rect { fill: var(--shade); }
 .solve-chart .solve-line, .solve-chart .solve-dot { pointer-events: none; }
 .solve-chart .solve-line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -164,3 +164,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .explore #filter-add .ms > summary { border-style: dashed; }
 .explore .ms-hint { font-size: 13px; margin: 2px 0 0; }
 /* end Pivot table dropdowns */
+/* Game and Handbook views (monitor.js hbarSvg, chapterBarsSvg): bars under one hover row or column each */
+.hbar-chart .hit:hover rect, .cols-chart .hit:hover rect { fill: var(--shade); }
+.hbar-chart .bar, .cols-chart .bar, .hbar-chart text { pointer-events: none; }
+.hbar-chart .tick { font-size: 11px; }

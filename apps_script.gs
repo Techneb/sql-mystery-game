@@ -236,15 +236,20 @@ function chapters_(run) {
   }
 }
 // --- ?report=<json>&key= for explore.html (the pivot table) ------------------------------------
-// json = {days | start, end, dimensions: [...], metrics: [...], filters: {dimension: [values]}}. Only the whitelisted
-// names below (explore.js DIMENSIONS and METRICS, a test checks they match), at most 9 dimensions and 10 metrics (GA's
-// limits); filters become an andGroup of inListFilters. GA refuses some combinations: its error text comes back as
+// json = {days | start, end, dimensions: [...], metrics: [...], filters: {dimension: [values] | {exact, beginsWith, not}}}.
+// Only the whitelisted names below (shared.js DIMENSIONS and explore.js METRICS, a test checks they match), at most 9
+// dimensions and 10 metrics (GA's limits); filters become an andGroup: a list is an inListFilter, an object matches its
+// exact values or any of its beginsWith prefixes (an orGroup), negated when not is true (monitor.js's page sections).
+// Event-scoped custom metrics come as customEvent:<param> (the sum) and averageCustomEvent:<param> (GA's average per event). GA refuses some combinations: its error text comes back as
 // {ok:false, error} through doGet. Cached 10 minutes per normalised request.
 var REPORT_DIMS = ["date", "eventName", "customEvent:chapter", "customEvent:count", "customEvent:mode", "customEvent:part",
   "customEvent:name", "deviceCategory", "operatingSystem", "browser", "country", "city", "language",
-  "sessionDefaultChannelGroup", "sessionSource", "newVsReturning"];
+  "sessionDefaultChannelGroup", "sessionSource", "newVsReturning", "pagePath", "pageTitle", "customEvent:kind",
+  "customEvent:rule", "customEvent:n", "customEvent:feature", "customEvent:exercise", "customEvent:level", "customEvent:outcome"];
 var REPORT_METRICS = ["activeUsers", "totalUsers", "newUsers", "sessions", "engagedSessions", "eventCount",
-  "userEngagementDuration", "averageSessionDuration", "screenPageViews"];
+  "userEngagementDuration", "averageSessionDuration", "screenPageViews", "customEvent:seconds", "averageCustomEvent:seconds",
+  "customEvent:queries", "averageCustomEvent:queries", "customEvent:runs", "averageCustomEvent:runs", "customEvent:wrong",
+  "averageCustomEvent:wrong"];
 var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function report_(p) {
@@ -274,9 +279,17 @@ function report_(p) {
   var filters = [], f = q.filters && typeof q.filters === "object" ? q.filters : {};
   Object.keys(f).sort().forEach(function (d) {
     if (REPORT_DIMS.indexOf(d) < 0) throw new Error("unknown filter: " + String(d).slice(0, 40));
-    if (!Array.isArray(f[d]) || !f[d].length) return;
-    if (f[d].length > 500) throw new Error("at most 500 values per filter");
-    filters.push({filter: {fieldName: d, inListFilter: {values: f[d].map(function (v) { return String(v).slice(0, 200); })}}});
+    var str = function (v) { return String(v).slice(0, 200); }, list = function (v) { return Array.isArray(v) ? v : []; };
+    var o = f[d], exact = Array.isArray(o) ? o : o && typeof o === "object" ? list(o.exact) : [];
+    var begins = Array.isArray(o) || !o || typeof o !== "object" ? [] : list(o.beginsWith);
+    if (exact.length > 500) throw new Error("at most 500 values per filter");
+    if (begins.length > 20) throw new Error("at most 20 prefixes per filter");
+    var ex = (exact.length ? [{filter: {fieldName: d, inListFilter: {values: exact.map(str)}}}] : []).concat(begins.map(function (v) {
+      return {filter: {fieldName: d, stringFilter: {matchType: "BEGINS_WITH", value: str(v)}}};
+    }));
+    if (!ex.length) return;
+    var e = ex.length === 1 ? ex[0] : {orGroup: {expressions: ex}};
+    filters.push(o && o.not === true ? {notExpression: e} : e);
   });
   var req = {dateRanges: [range], dimensions: dims.map(function (d) { return {name: d}; }),
              metrics: metrics.map(function (m) { return {name: m}; }), metricAggregations: ["TOTAL"],

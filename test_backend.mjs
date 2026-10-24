@@ -191,7 +191,7 @@ test("?report: the admin key gate, the whitelist and limits, filters as an andGr
   assert.equal(rep("{nope").error, "report is not JSON");
   assert.match(rep({ ...ok, dimensions: ["userId"] }).error, /unknown dimension: userId/);
   assert.match(rep({ ...ok, metrics: ["totalRevenue"] }).error, /unknown metric: totalRevenue/);
-  assert.match(rep({ ...ok, filters: { pagePath: ["/"] } }).error, /unknown filter: pagePath/);
+  assert.match(rep({ ...ok, filters: { userId: ["/"] } }).error, /unknown filter: userId/);
   assert.match(rep({ ...ok, dimensions: ["date", "country", "city", "browser", "language", "eventName", "deviceCategory", "operatingSystem", "sessionSource", "newVsReturning"] }).error, /at most 9 dimensions/);
   assert.equal(rep({ ...ok, metrics: [] }).error, "pick at least one metric");
   assert.equal(b.reports.length, 0, "nothing refused reaches GA");
@@ -215,6 +215,26 @@ test("?report: the admin key gate, the whitelist and limits, filters as an andGr
   rep({ ...ok, days: 9999 });
   assert.equal(b.reports.at(-1).req.dateRanges[0].startDate, "424daysAgo");
   assert.equal(rep({ ...ok, dimensions: [] }).rows.length, 1, "metrics alone are a one-row report");
+});
+
+test("?report: a filter object matches exact values or prefixes, negated with not; custom metrics whitelisted", () => {
+  const b = backend();
+  const rep = q => b.get({ report: JSON.stringify(q), key: KEY });
+  const base = { days: 7, dimensions: ["pagePath"], metrics: ["activeUsers", "averageCustomEvent:seconds", "customEvent:runs"] };
+  assert.equal(rep({ ...base, filters: { pagePath: { beginsWith: ["/learn/"] }, eventName: ["page_view"] } }).ok, true);
+  const exprs = JSON.parse(JSON.stringify(b.reports.at(-1).req.dimensionFilter.andGroup.expressions));
+  assert.deepEqual(exprs, [{ filter: { fieldName: "eventName", inListFilter: { values: ["page_view"] } } },
+    { filter: { fieldName: "pagePath", stringFilter: { matchType: "BEGINS_WITH", value: "/learn/" } } }], "one prefix is one stringFilter");
+  rep({ ...base, filters: { pagePath: { exact: ["/", "/admin.html"], beginsWith: ["/learn/"], not: true } } });
+  assert.deepEqual(JSON.parse(JSON.stringify(b.reports.at(-1).req.dimensionFilter.andGroup.expressions[0])), { notExpression: { orGroup: { expressions: [
+    { filter: { fieldName: "pagePath", inListFilter: { values: ["/", "/admin.html"] } } },
+    { filter: { fieldName: "pagePath", stringFilter: { matchType: "BEGINS_WITH", value: "/learn/" } } }] } } }, "exact or prefix, negated");
+  const n = b.reports.length;
+  assert.equal(rep({ ...base, filters: { pagePath: {} } }).ok, true);
+  assert.equal(b.reports.at(-1).req.dimensionFilter, undefined, "an empty object is no filter");
+  assert.match(rep({ ...base, filters: { pagePath: { beginsWith: Array(21).fill("/x") } } }).error, /at most 20 prefixes/);
+  assert.equal(b.reports.length, n + 1);
+  assert.match(rep({ ...base, metrics: ["customEvent:secret"] }).error, /unknown metric/);
 });
 
 test("?report: GA's error text comes back as {ok:false, error}, and totals are read when GA sends them", () => {

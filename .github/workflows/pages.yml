@@ -40,7 +40,7 @@ jobs:
         # shared.js, qr.js or stats.js must be in these lists.
         run: |
           v="${GITHUB_SHA::7}"
-          sed -i -E "s#(src|href)=\"(app\.js|admin\.js|monitor\.js|explore\.js|leaderboard\.js|style\.css|admin\.css|learn/learn\.css)\"#\1=\"\2?v=$v\"#g" site/index.html site/privacy.html site/admin.html site/monitor.html site/explore.html site/leaderboard.html
+          sed -i -E "s#(src|href)=\"(app\.js|admin\.js|monitor\.js|explore\.js|leaderboard\.js|style\.css|admin\.css|learn/learn\.css)\"#\1=\"\2?v=$v\"#g" site/index.html site/privacy.html site/admin.html site/monitor.html site/monitor-game.html site/monitor-handbook.html site/explore.html site/leaderboard.html
           sed -i -E "s#from \"\./(shared|qr|stats)\.js\"#from \"./\1.js?v=$v\"#g" site/app.js site/admin.js site/monitor.js site/explore.js site/leaderboard.js
           # The handbook's exercises page runs exercises.js, which imports app.js (and through it shared.js).
           sed -i -E "s#(src|href)=\"(exercises\.js|learn\.css|\.\./style\.css)\"#\1=\"\2?v=$v\"#g" site/learn/exercises.html
@@ -57,6 +57,8 @@ jobs:
           grep -q "admin.js?v=$v" site/admin.html
           grep -q "leaderboard.js?v=$v" site/leaderboard.html
           grep -q "monitor.js?v=$v" site/monitor.html
+          grep -q "monitor.js?v=$v" site/monitor-game.html
+          grep -q "monitor.js?v=$v" site/monitor-handbook.html
           grep -q "shared.js?v=$v" site/monitor.js
           grep -q "explore.js?v=$v" site/explore.html
           grep -q "shared.js?v=$v" site/explore.js
