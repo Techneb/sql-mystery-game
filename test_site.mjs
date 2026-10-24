@@ -1462,3 +1462,12 @@ test("a missing GA value reads (empty), never null or undefined", () => {
   assert.ok(pv.includes("(empty)") && !bad.test(pv), "pivot");
   assert.ok(!bad.test(explore.pivotCsv(res)), "CSV");
 });
+
+test("monitor donuts: the centre is GA's own total, so both donuts agree on the visitors", () => {
+  const rows = [["desktop", "70"], ["mobile", "40"]];
+  const withTotal = monitor.donutSection("devices", { res: { rows, totals: [100] } }, "visitors");
+  assert.ok(withTotal.includes(">100</text>") && withTotal.includes("the slices add up to 110"), "GA's 100 in the centre, the 110 explained");
+  assert.ok(withTotal.includes("70%"), "shares of the people, not of the slices");
+  const noTotal = monitor.donutSection("devices", { res: { rows } }, "visitors");
+  assert.ok(noTotal.includes(">110</text>") && !noTotal.includes("the slices add up to 110"), "without GA's total, the sum and no note");
+});

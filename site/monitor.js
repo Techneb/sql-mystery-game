@@ -266,16 +266,18 @@ export function arcPath(cx, cy, r0, r, a0, a1) {
   const p = (rad, a) => r1(cx + rad * Math.sin(a)) + "," + r1(cy - rad * Math.cos(a)), big = a1 - a0 > Math.PI ? 1 : 0;
   return "M" + p(r, a0) + "A" + r + "," + r + " 0 " + big + " 1 " + p(r, a1) + "L" + p(r0, a1) + "A" + r0 + "," + r0 + " 0 " + big + " 0 " + p(r0, a0) + "Z";
 }
-export function donutHtml(items, what, aria) {
+// unique: GA's own total (each person once); without it the centre is the slices' sum.
+export function donutHtml(items, what, aria, unique) {
   const s = fold(items);
   if (!s.length) return NONE;
-  const total = s.reduce((t, i) => t + i.value, 0), D = 180, c = D / 2;
+  const sum = s.reduce((t, i) => t + i.value, 0), total = unique > 0 ? unique : sum, D = 180, c = D / 2;
   const svg = '<svg class="chart donut" width="' + D + '" height="' + D + '" viewBox="0 0 ' + D + " " + D + '" role="img" aria-label="' + esc(aria) + '">' +
     arcs(s.map(i => i.value)).map(([a0, a1], j) => '<path class="slice c' + (j + 1) + '"' + tipAttrs(s[j].label, [[s[j].value + " " + what, pct(s[j].value, total)]]) +
       ' d="' + arcPath(c, c, 52, 86, a0, a1) + '"/>').join("") +
     '<text class="val" x="' + c + '" y="' + (c + 2) + '" text-anchor="middle">' + compact(total) + '</text><text class="tick" x="' + c + '" y="' + (c + 18) + '" text-anchor="middle">' + esc(what) + "</text></svg>";
   return '<div class="donut-row">' + svg + '<ul class="donut-legend">' + s.map((i, j) => '<li><i class="c' + (j + 1) + '"></i><span>' + esc(i.label) +
-    '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>";
+    '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>" +
+    (sum > total ? '<p class="muted">' + total + " " + esc(what) + " in all; the slices add up to " + sum + " because some count in more than one.</p>" : "");
 }
 
 // The page's one Count select (beside the period buttons) drives users per day, the countries and both donuts, each read from ?report=
@@ -315,7 +317,8 @@ export function donutSection(kind, sel = {}, m = "visitors") {
   if (!sel.res) return head + '<p class="muted">Reading the ' + kind + "...</p>";
   const list = (sel.res.rows || []).map(([label, v]) => ({ label: gaText(label), value: Number(v) || 0 }));
   if (!list.length) return head + NONE;
-  return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase()) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
+  const unique = sel.res.totals ? Number(sel.res.totals[0]) || 0 : 0;
+  return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase(), unique) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
     raw(barTable(k.head, list.map(i => [i.label, i.value]), d.label));
 }
 
