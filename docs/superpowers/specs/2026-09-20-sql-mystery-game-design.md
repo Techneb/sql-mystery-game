@@ -730,8 +730,14 @@ Everything is deployed (2026-10-20, 9f4e671).
   laid out like Global on /learn/ (countries map, three donuts in a row), Export CSV inside the Raw data toggle, and
   the desk pages in AlephB's fonts (Nunito / Nunito Sans, self-hosted in `site/fonts/`; the game, Handbook,
   leaderboard and privacy notice keep the 1912 type, owner). Site chrome: the header carries only Game . The Clerk's
-  Handbook; The Clerk's Desk moved to every footer. Open: the owner's look on a phone (a 2 px overflow was seen on
-  a test copy of the desk's controls row at 390 px).
+  Handbook; The Clerk's Desk moved to every footer. Later (owner, 2026-10-24): the header's Game link reads The Ritz
+  Affair, with hover titles ("The game", "Training content: SQL lessons and exercises"); COUNTRIES gives GA's total
+  for the top N (one extra ?report= filtered on those countries, so a person in two counts once) and its share of
+  GA's all-countries total; every native confirm()/prompt() is now the site's own dialog (`askDialog` in shared.js:
+  New investigation in learn and compete, the certificate names, the desk's open-a-second-season and close-a-season;
+  the native box only where showModal is missing). Open: the owner's look on a phone (a 2 px overflow was seen on a
+  test copy of the desk's controls row at 390 px); the desk's two dialogs were not clicked through end to end (they
+  need the backend and the passphrase).
 - Ad networks (2026-10-24): Criteo not now (no published minimum, but comparable networks start at 10k-100k page
   views a month; this site gets a few thousand; header bidding and heavier consent). Revisit Ad Manager + Prebid only
   at steady tens of thousands of page views a month. Real ad clicks cannot be seen from the page (Google's iframe;
