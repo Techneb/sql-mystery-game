@@ -1177,16 +1177,17 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
   assert.ok(fresh.includes('<p class="muted">Ran 1 / 5 / 20 queries: new event, GA shows it within about a day.</p>'), "the note when every ran-N is zero");
   assert.equal(monitor.ROMAN[12], "XII");
   assert.equal(monitor.pct(1, 0), "-");
-  const dev = monitor.devicesHtml([{ device: "mobile", event: "chapter_open", users: 10 }, { device: "mobile", event: "chapter_solve", users: 2 },
-    { device: "<b>desktop", event: "chapter_open", users: 20 }]);
-  assert.ok(dev.indexOf("&#60;b&#62;desktop") < dev.indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, most opened first");
-  assert.ok(dev.includes(">20%<") && dev.includes(">67%<"), "solve rate in the table, share in the legend");
+  const dev = monitor.donutSection("devices", { m: "opened", res: { rows: [["<b>desktop", 20], ["mobile", 10]] } });
+  assert.ok(dev.indexOf("&#60;b&#62;desktop") < dev.indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, largest first");
+  assert.ok(dev.includes(">67%<") && dev.includes("<th>Players who opened a chapter</th>") && dev.includes('data-v="20 players'), "share, raw data and tooltip follow the metric");
+  assert.ok(dev.includes('<option value="opened" selected>') && dev.includes("counts in both slices"), "the select and the note");
   const users = monitor.usersHtml([{ date: "20261022", users: 5 }, { date: "20261021", users: 10 }]);
   assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
-  const all = monitor.statsHtml({ users: [], chapters: [], devices: [], countries: [{ country: "<script>", users: 3 }], channels: [{ channel: "Organic Search", users: 1 }] }, 640, null);
+  const dn = { devices: { res: { rows: [["mobile", 1]] } }, channels: { res: { rows: [["Organic Search", 1]] } } };
+  const all = monitor.statsHtml({ users: [], chapters: [], countries: [{ country: "<script>", users: 3 }] }, 640, null, { dn });
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && all.includes("No chapter events"));
-  const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows, devices: [{ device: "mobile", event: "chapter_open", users: 1 }],
-    countries: [{ country: "France", users: 3 }], channels: [{ channel: "Direct", users: 1 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } });
+  const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows,
+    countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } }, { dn });
   assert.equal((full.match(/<svg /g) || []).length, 6, "six charts (the solve rate under the funnel)");
   assert.ok(full.indexOf("CHAPTER FUNNEL") < full.indexOf(">SOLVE RATE<") && full.indexOf(">SOLVE RATE<") < full.indexOf("COUNTRIES"), "the solve rate right under the funnel");
   assert.equal((full.match(/<summary>Raw data<\/summary>/g) || []).length, 6, "each with its raw data under it");
@@ -1246,7 +1247,7 @@ test("monitor donuts and map: folding, arcs, area-proportional bubbles, the proj
   assert.deepEqual(a.map(([x, y]) => [+(x / Math.PI).toFixed(3), +(y / Math.PI).toFixed(3)]), [[0, 0.5], [0.5, 1], [1, 2]]);
   assert.equal(monitor.arcPath(90, 90, 52, 86, 0, Math.PI / 2), "M90,4A86,86 0 0 1 176,90L142,90A52,52 0 0 0 90,38Z");
   assert.equal((monitor.arcPath(90, 90, 52, 86, 0, 2 * Math.PI).match(/M/g) || []).length, 2, "a lone slice is two halves");
-  const ch = monitor.channelsHtml([{ channel: "Direct", users: 3 }, { channel: "<i>x", users: 1 }]);
+  const ch = monitor.donutSection("channels", { res: { rows: [["Direct", 3], ["<i>x", 1]] } });
   assert.ok(ch.includes(">75%<") && ch.includes("&#60;i&#62;x") && !ch.includes("<i>x") && ch.includes('class="slice c2"'));
   assert.equal(monitor.bubbleR(100, 100), 40);
   assert.equal(monitor.bubbleR(25, 100), 20, "area proportional: a quarter of the users, half the radius");
@@ -1367,4 +1368,25 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.ok(all.includes("COUNTRIES (ALL)") && all.includes("&#60;Narnia&#62;") && !all.includes("<Narnia>"), "every row, escaped");
   const t20 = monitor.statsHtml(s, 390, null, { top: { n: 20 } });
   assert.ok(t20.includes("COUNTRIES (TOP 20)") && t20.includes("Reading the countries"));
+});
+
+test("monitor donuts: each picks its metric, Visitors by default, loading and GA errors in place", () => {
+  assert.deepEqual(monitor.donutRequest(7, "devices"), { days: 7, dimensions: ["deviceCategory"], metrics: ["activeUsers"] });
+  assert.deepEqual(monitor.donutRequest(30, "channels", "solved"),
+    { days: 30, dimensions: ["sessionDefaultChannelGroup"], metrics: ["totalUsers"], filters: { eventName: ["chapter_solve"] } });
+  assert.deepEqual(monitor.donutRequest(7, "devices", "opened").filters, { eventName: ["chapter_open"] });
+  assert.deepEqual(monitor.donutRequest(7, "devices", "engaged").metrics, ["engagedSessions"]);
+  // every metric and dimension the donuts ask for is one ?report= accepts
+  const back = fs.readFileSync("apps_script.gs", "utf8");
+  for (const m of Object.values(monitor.DONUT_METRICS)) assert.ok(back.match(/var REPORT_METRICS = [^;]*/)[0].includes('"' + m.metric + '"'), m.metric);
+  for (const d of [...Object.values(monitor.DONUTS).map(k => k.dim), "eventName"]) assert.ok(back.match(/var REPORT_DIMS = [^;]*/)[0].includes('"' + d + '"'), d);
+  const s = { users: [], chapters: [], countries: [] };
+  const html = monitor.statsHtml(s, 390, null);
+  assert.ok(html.includes('id="dn-devices"') && html.includes('id="dn-channels"'), "one select per donut");
+  assert.equal((html.match(/<option value="visitors" selected>Visitors<\/option>/g) || []).length, 2, "Visitors by default in both");
+  assert.ok(html.includes("Reading the devices") && html.includes("Reading the channels"), "loading in place");
+  const err = monitor.statsHtml(s, 390, null, { dn: { channels: { m: "sessions", error: "<i>quota" } } });
+  assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota") && err.includes('<option value="sessions" selected>'), "GA's error, escaped");
+  assert.ok(monitor.donutNote("channels", "sessions").includes("two channels") && monitor.donutNote("devices", "visitors").includes("more than the people"));
+  assert.ok(monitor.donutSection("devices", { res: { rows: [] } }).includes("Nothing in this period"));
 });

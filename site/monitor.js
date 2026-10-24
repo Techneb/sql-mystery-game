@@ -9,10 +9,10 @@ export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
 const NONE = '<p class="muted">Nothing in this period.</p>';
 
 // A table whose last column is a CSS bar scaled to the largest value.
-function barTable(head, rows) {
+function barTable(head, rows, valHead = "Users") {
   if (!rows.length) return NONE;
   const max = Math.max(1, ...rows.map(r => r[1]));
-  return '<table class="detail stats"><thead><tr><th>' + esc(head) + "</th><th>Users</th><th></th></tr></thead><tbody>" +
+  return '<table class="detail stats"><thead><tr><th>' + esc(head) + "</th><th>" + esc(valHead) + "</th><th></th></tr></thead><tbody>" +
     rows.map(([k, v]) => "<tr><td>" + esc(k) + '</td><td class="num">' + esc(v) + '</td><td class="bar-cell"><span class="bar" style="width:' +
       Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody></table>";
 }
@@ -268,24 +268,41 @@ export function donutHtml(items, what, aria) {
     '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>";
 }
 
-export function devicesHtml(rows) {
-  const by = {};
-  for (const r of rows) {
-    const d = (by[r.device] ||= { opened: 0, solved: 0 });
-    if (r.event === "chapter_open") d.opened += Number(r.users) || 0;
-    if (r.event === "chapter_solve") d.solved += Number(r.users) || 0;
-  }
-  const list = Object.entries(by).sort((a, b) => b[1].opened - a[1].opened);
-  if (!list.length) return NONE;
-  return donutHtml(list.map(([d, c]) => ({ label: d, value: c.opened })), "users", "Users who opened a chapter, by device") +
-    raw('<table class="detail stats"><thead><tr><th>Device</th><th>Opened a chapter</th><th>Solved one</th><th>Solve rate</th></tr></thead><tbody>' +
-    list.map(([d, c]) => "<tr><td>" + esc(d) + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' +
-      pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
-}
-export function channelsHtml(rows) {
-  const list = rows.map(c => ({ label: c.channel, value: Number(c.users) || 0 }));
-  if (!list.length) return NONE;
-  return donutHtml(list, "users", "Users by channel") + raw(barTable("Channel", list.map(i => [i.label, i.value])));
+// Each donut counts what its select picks, read from ?report= on its dimension (the backend allows eventName as a filter).
+// A user metric counts a person in every slice they fall in, so the slices may add up to more than the people.
+export const DONUT_METRICS = {
+  visitors: { label: "Visitors", metric: "activeUsers", unit: "visitors", note: "Counts every visitor (active users)" },
+  opened: { label: "Players who opened a chapter", metric: "totalUsers", event: "chapter_open", unit: "players", note: "Counts the users who opened a chapter" },
+  solved: { label: "Players who solved a chapter", metric: "totalUsers", event: "chapter_solve", unit: "players", note: "Counts the users who solved a chapter" },
+  sessions: { label: "Sessions", metric: "sessions", unit: "sessions", note: "Counts sessions" },
+  engaged: { label: "Engaged sessions", metric: "engagedSessions", unit: "sessions", note: "Counts engaged sessions (GA's: 10 s or more, two pages or a key event)" },
+};
+export const DONUTS = {
+  devices: { dim: "deviceCategory", label: "DEVICES", head: "Device", many: "two devices" },
+  channels: { dim: "sessionDefaultChannelGroup", label: "CHANNELS", head: "Channel", many: "two channels" },
+};
+const metricOf = m => DONUT_METRICS[m] || DONUT_METRICS.visitors;
+export const donutRequest = (days, kind, m) => {
+  const d = metricOf(m);
+  return { days, dimensions: [DONUTS[kind].dim], metrics: [d.metric], ...(d.event ? { filters: { eventName: [d.event] } } : {}) };
+};
+export const donutNote = (kind, m) => {
+  const d = metricOf(m), many = DONUTS[kind].many;
+  return d.unit === "sessions"
+    ? d.note + ": each session sits in one slice, but one person's sessions can fall in several (" + many + ")."
+    : d.note + ": a person on " + many + " counts in both slices, so the slices may add up to more than the people.";
+};
+// sel: {m, res, error}, res null while reading.
+export function donutSection(kind, sel = {}) {
+  const k = DONUTS[kind], m = sel.m in DONUT_METRICS ? sel.m : "visitors", d = DONUT_METRICS[m];
+  const head = '<div class="label-row"><span class="label">' + k.label + '</span><label class="pick">Count <select id="dn-' + kind + '">' +
+    optionsHtml(Object.entries(DONUT_METRICS).map(([v, o]) => [v, o.label]), m) + "</select></label></div>";
+  if (sel.error) return head + '<p class="status bad">Google Analytics said: ' + esc(sel.error) + "</p>";
+  if (!sel.res) return head + '<p class="muted">Reading the ' + kind + "...</p>";
+  const list = (sel.res.rows || []).map(([label, v]) => ({ label, value: Number(v) || 0 }));
+  if (!list.length) return head + NONE;
+  return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase()) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
+    raw(barTable(k.head, list.map(i => [i.label, i.value]), d.label));
 }
 
 // --- map: site/world.json (Natural Earth 110m, equirectangular 84N-57S, 1000 units wide; its centroids in lon/lat
@@ -309,14 +326,13 @@ export function mapHtml(countries, world) {
     raw(barTable("Country", list.map(c => [c.label, c.value])));
 }
 
-// opts: {bd, top} as usersSection and countriesSection take them.
+// opts: {bd, top} as usersSection and countriesSection take them, dn: {devices, channels} as donutSection takes them.
 export function statsHtml(s, w, world, opts = {}) {
   return usersSection(s, w, opts.bd) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
     '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
     countriesSection(s, world, opts.top) +
-    '<div class="donuts"><div><div class="label">DEVICES (OPENED A CHAPTER)</div>' + devicesHtml(s.devices || []) +
-    '</div><div><div class="label">CHANNELS</div>' + channelsHtml(s.channels || []) + "</div></div>";
+    '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k]) + "</div>").join("") + "</div>";
 }
 
 // --- page wiring (browser only) ----------------------------------------------------------------
@@ -374,11 +390,14 @@ async function main() {
   const BD_KEY = "ritz.monitor.breakdown";
   const bd = { dim: "", res: null, error: null }, top = { n: 10, rows: null, error: null };
   try { const d = localStorage.getItem(BD_KEY) || ""; if (d in BREAKDOWNS) bd.dim = d; } catch {}
+  // Each donut's metric, remembered per browser in ritz.monitor.devices / ritz.monitor.channels.
+  const dn = {};
+  for (const k in DONUTS) { dn[k] = { m: "visitors", res: null, error: null }; try { const m = localStorage.getItem("ritz.monitor." + k); if (m in DONUT_METRICS) dn[k].m = m; } catch {} }
   const draw = () => {
     wide = $("stats").clientWidth;
     if (!last) return;
     const focus = document.activeElement && document.activeElement.id;
-    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { bd, top });
+    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { bd, top, dn });
     if (focus && $(focus)) $(focus).focus();
   };
   const report = async req => {
@@ -402,7 +421,16 @@ async function main() {
     catch (e) { if (still()) top.error = e.message; }
     if (still()) draw();
   };
+  const loadDn = async k => {
+    const c = dn[k]; c.res = null; c.error = null; draw();
+    const want = days + "|" + c.m, still = () => want === days + "|" + c.m;
+    try { const r = await report(donutRequest(days, k, c.m)); if (still()) c.res = r; }
+    catch (e) { if (still()) c.error = e.message; }
+    if (still()) draw();
+  };
   $("stats").addEventListener("change", e => {
+    const k = e.target.id.slice(3);
+    if (e.target.id.startsWith("dn-") && k in DONUTS) { dn[k].m = e.target.value; try { localStorage.setItem("ritz.monitor." + k, dn[k].m); } catch {} loadDn(k); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
     if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
   });
@@ -420,7 +448,7 @@ async function main() {
       const s = await (await fetch(u, { signal: AbortSignal.timeout(40000) })).json();
       if (mine !== gen) return;
       if (!s || !s.ok) throw new Error((s && s.error) || "no numbers");
-      last = s; loadBd(); loadTop();
+      last = s; loadBd(); loadTop(); for (const k in DONUTS) loadDn(k);
       say("The last " + s.days + " days, from Google Analytics (cached 10 minutes).");
     } catch (e) { if (mine === gen) say("Could not read the numbers: " + e.message, true); }
   }
