@@ -24,7 +24,7 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 20 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 24 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. The page shows advertising from Google AdSense in one box beside the
@@ -43,8 +43,10 @@
   anywhere.</p>
   <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
   questions you have solved and its own query history are kept in its local storage (<code>ritz.exercises</code>,
-  <code>ritz.exercises.history</code>, separate from the game's), never sent. It loads no statistics script; it
-  carries the same advertising box as the game (see Advertising). No other handbook page loads any script.</p>
+  <code>ritz.exercises.history</code>, separate from the game's), never sent. It carries the same advertising
+  box as the game (see Advertising). Every handbook page asks the game's question about usage statistics and
+  loads them under the same rules (see Usage statistics). One answer, kept in <code>ritz.consent</code>, covers
+  the game and the handbook.</p>
 
   <h2>Your consent</h2>
   <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user
@@ -69,7 +71,7 @@
   stands in for it), nothing is sent to Google Analytics before a Yes, in Google's message or in the game's
   question: its script is not even loaded.</p>
   <p>You can change your mind at any time: the <i>Privacy and cookie settings</i> link at the bottom of
-  the game's front page reopens Google's message where it applies, or the game's question while that one
+  the game's front page (<i>Statistics</i> at the bottom of the handbook's pages) reopens Google's message where it applies, or the game's question while that one
   asks. If you withdraw consent to statistics, the page stops sending them and deletes the
   <code>_ga</code> cookies. Outside Europe, opt out of
   personalised ads in Google's <a href="https://www.google.com/settings/ads">Ads Settings</a> (more below),
@@ -78,7 +80,7 @@
   tracking protection.</p>
 
   <h2>Usage statistics</h2>
-  <p>The page loads <b>Google Analytics 4</b> at once outside Europe's time zones. In a European time
+  <p>The game and the handbook load <b>Google Analytics 4</b> at once outside Europe's time zones. In a European time
   zone it is loaded only after your Yes (above), so until then nothing at all reaches Google Analytics. If
   your time zone is outside Europe but Google places you in Europe, the analytics default there is denied:
   until you consent it sets no cookie and sends only cookieless signals (the page viewed and the game
@@ -95,11 +97,26 @@
         <li><code>chapter_solve</code>: chapter number, mode, seconds taken, number of queries, number of wrong answers;</li>
         <li><code>chapter_queries</code>: chapter number, mode, and a count (1, 5 or 20), sent once when you reach that many queries in a chapter you have not solved yet. The queries themselves are never sent;</li>
         <li><code>game_finish</code>: part, mode;</li>
-        <li><code>badge</code>: badge name.</li>
+        <li><code>badge</code>: badge name;</li>
+        <li><code>chapter_leave</code>: chapter number, mode, seconds since the chapter opened and number of queries, sent once when you hide or close the page before solving it;</li>
+        <li><code>query_fail</code>: chapter number, mode, whether the query failed or was refused, and the name of the rule it broke (such as <code>group-by</code>), for the first three failed queries of a chapter;</li>
+        <li><code>answer_wrong</code>: chapter number, mode, and 1 or 3, sent on your first and third wrong answer in a chapter. The answer itself is never sent;</li>
+        <li><code>hint_open</code>: chapter number, mode, sent the first time you open a chapter's Hint;</li>
+        <li><code>landing_begin</code>: mode, when you press Investigate or Join on the front page;</li>
+        <li><code>feature_use</code>: the name of a feature you used and the chapter number (and the part, for a film), once per visit: enlarging the schema, opening the suspects, reusing a query from History, following a refusal's Grammar link, playing or finishing a film, opening the front page's About, switching day and night.</li>
+      </ul>
+    </li>
+    <li>And these handbook events, with only these fields:
+      <ul>
+        <li><code>exercise_run</code>: the exercise's name, its level, and whether the run worked, failed or was refused, for the first run of each exercise in a visit;</li>
+        <li><code>exercise_solve</code>: the exercise's name, its level and how many times you ran a query on it in this visit;</li>
+        <li><code>exercise_level</code>: the level whose button you pressed;</li>
+        <li><code>query_fail</code>: the exercise's name, whether the query failed or was refused, and the rule's name, for the first three failed queries of an exercise in a visit;</li>
+        <li><code>feature_use</code>: the name of a feature you used, once per visit: enlarging the schema, reusing a query from History, following a Grammar link, opening How to use this page or a solution, following a Try it link (with the exercise's name), switching day and night, clicking the handbook's own advertisement.</li>
       </ul>
     </li>
   </ul>
-  <p>Never sent to Google: your team name or pseudo, your answers, your SQL queries, your notes.</p>
+  <p>Never sent to Google: your team name or pseudo, your answers, your SQL queries, your notes, anything you type.</p>
   <p>Why: to improve the course &mdash; which chapters students drop out of, how long each takes, and to tune
   the difficulty and the ranks. Google signals and ad personalisation are off, and the data is not used for
   advertising. Google processes it on the course owner's behalf, and may do so in the United States under

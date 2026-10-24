@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
-import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick } from "./site/learn/exercises.js";
+import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick, levelId, runOutcome } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -551,7 +551,12 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   assert.deepEqual(items.map((m) => m[1]), ["index.html", ...chapters, "exercises.html", "grammar.html"], "menu in table of contents order");
   assert.deepEqual(items.map((m) => m[2]).filter((t) => !/^\d/.test(t)), ["Index", "Exercises", "Grammar"]);
   items.slice(1, -2).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "chapters numbered from 1: " + m[2]));
+  // the game's consent banner and Statistics link, asked by handbook.js (one ritz.consent answer site-wide)
+  assert.ok(foot.includes('<a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span>'), "the consent link in the footer");
+  const banner = one(fs.readFileSync("site/index.html", "utf8"), /(<div id="consent"[\s\S]*?<\/div>)\n/, "the game's banner").replace('href="privacy.html"', 'href="../privacy.html"');
   for (const f of learnPages) {
+    assert.ok(learnHtml[f].includes(banner + '\n<script type="module" src="handbook.js"></script>\n'), f + ": the game's banner, then handbook.js");
+    if (f === "exercises.html") assert.ok(learnHtml[f].indexOf('src="handbook.js"') < learnHtml[f].indexOf('src="exercises.js"'), "consent set up before initAds");
     assert.equal(one(learnHtml[f], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, f + " nav"), nav, f + " nav");
     assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), foot, f + " footer");
     assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
@@ -566,7 +571,7 @@ test("landing: the handbook's header nav under the masthead, the rest of its foo
   assert.deepEqual(labels(one(page, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "landing nav")), nav);
   const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");
   assert.match(landingFoot, /<span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
-  assert.deepEqual(labels(landingFoot).filter((t) => t !== "Statistics"), foot.filter((t) => !nav.includes(t)));
+  assert.deepEqual(labels(landingFoot).filter((t) => t !== "Statistics"), foot.filter((t) => !nav.includes(t) && t !== "Statistics"));
 });
 
 test("Day/Night button: the game's button on every handbook page, the desk and the board, theme.js draws the game's icons", () => {
@@ -797,10 +802,12 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, the d
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
   const yml = fs.readFileSync(".github/workflows/pages.yml", "utf8");
   for (const f of ["site/admin.html", "site/leaderboard.html", "site/admin.js", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/app.js", "site/learn/exercises.html", "site/learn/exercises.js"]) assert.ok(yml.includes(f), f);
-  // every module importing app.js, shared.js or qr.js is one the deploy versions
+  // every module importing app.js, shared.js, qr.js or stats.js is one the deploy versions
   const importers = ["site", "site/learn"].flatMap((d) => fs.readdirSync(d).filter((f) => f.endsWith(".js")).map((f) => d + "/" + f))
-    .filter((f) => /from "\.\.?\/(app|shared|qr)\.js"/.test(fs.readFileSync(f, "utf8")));
-  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/explore.js", "site/leaderboard.js", "site/learn/exercises.js", "site/monitor.js"]);
+    .filter((f) => /from "\.\.?\/(app|shared|qr|stats)\.js"/.test(fs.readFileSync(f, "utf8")));
+  assert.deepEqual(importers.sort(), ["site/admin.js", "site/app.js", "site/explore.js", "site/leaderboard.js", "site/learn/exercises.js", "site/learn/handbook.js", "site/monitor.js"]);
+  assert.match(yml, /\(shared\|qr\|stats\)/, "app.js's stats.js import is versioned");
+  assert.match(yml, /src=\\"handbook\\.js\\"[^\n]*site\/learn\/\*\.html/, "every handbook page's handbook.js is versioned");
   for (const f of importers) assert.ok(yml.includes(f), f + " is versioned by the deploy");
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/world.json"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
@@ -1149,6 +1156,45 @@ test("chapter_queries milestones: 1, 5 and 20 queries, once each, catching up on
   assert.equal(queryMilestone(40, 20), 0, "nothing past 20");
   assert.equal(queryMilestone(7, undefined), 1, "a chapter begun before the tracker sends the lowest missing one first");
   assert.deepEqual(freshState().milestones, {}, "kept in the saved state");
+});
+
+test("GA guards: once per key per page load, the first three failed runs, the leave payload", () => {
+  const seen = new Set();
+  assert.equal(firstTime(seen, "a"), true);
+  assert.equal(firstTime(seen, "a"), false, "once");
+  assert.equal(firstTime(seen, "b"), true);
+  const calls = [];
+  globalThis.window = { gtag: (...a) => calls.push(a) };
+  const ls = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: { getItem: () => null } });
+  try {
+    assert.equal(useFeature("schema_enlarge", { chapter: 2 }), true);
+    assert.equal(useFeature("schema_enlarge", { chapter: 3 }), false, "once per feature per page load");
+    assert.equal(useFeature("try_it", { exercise: "x" }, "try_it:x"), true);
+    assert.equal(useFeature("try_it", { exercise: "y" }, "try_it:y"), true, "try_it: once per slug");
+    assert.equal(useFeature("try_it", { exercise: "x" }, "try_it:x"), false);
+    assert.equal(trackOnce("leave:4", "chapter_leave", { chapter: 4 }), true);
+    assert.equal(trackOnce("leave:4", "chapter_leave", { chapter: 4 }), false);
+    assert.deepEqual(calls.map((c) => c[2]), [{ feature: "schema_enlarge", chapter: 2 }, { feature: "try_it", exercise: "x" }, { feature: "try_it", exercise: "y" }, { chapter: 4 }]);
+  } finally {
+    delete globalThis.window;
+    if (ls) Object.defineProperty(globalThis, "localStorage", ls); else delete globalThis.localStorage;
+  }
+  const fails = {};
+  assert.deepEqual(queryFail(fails, 1, null, false), { kind: "error", rule: "" });
+  assert.deepEqual(queryFail(fails, 1, { anchor: "group-by" }, false), { kind: "refused", rule: "group-by" });
+  assert.deepEqual(queryFail(fails, 1, null, true), { kind: "refused", rule: "cartesian" });
+  assert.equal(queryFail(fails, 1, null, false), null, "only the first " + QUERY_FAILS);
+  assert.deepEqual(queryFail(fails, 2, null, false), { kind: "error", rule: "" }, "counted per chapter");
+  assert.deepEqual(freshState().fails, {}, "kept in the saved state");
+  assert.deepEqual(freshState().hints, [], "hint_open once per chapter, kept in the saved state");
+  const chapters = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ n }));
+  const s = { ...freshState(), solved: [1, 2], opened: { 3: 1000 }, queries: { 3: 7 } };
+  assert.deepEqual(chapterLeave(s, chapters, 61000), { chapter: 3, mode: "learn", seconds: 60, queries: 7 });
+  assert.equal(chapterLeave({ ...s, opened: {} }, chapters, 61000), null, "a chapter never opened");
+  assert.equal(chapterLeave({ ...s, solved: [1, 2, 3, 4, 5, 6, 7, 8], opened: { 8: 1 } }, chapters), null, "Part I done, the code not given: nothing open");
+  assert.equal(levelId("Warm-up"), "warm-up");
+  assert.deepEqual([runOutcome(null, null), runOutcome("e", null), runOutcome("e", { anchor: "x" }), runOutcome("e", true)], ["ok", "error", "refused", "refused"]);
 });
 
 const monitor = await import("./site/monitor.js");

@@ -2,7 +2,7 @@
 // browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
 // and a check of the last result against the chosen question's solution, run on the same database.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml } from "../app.js";
+import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail } from "../app.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -57,6 +57,11 @@ export function startLevel(items, solved, slug) {
   const e = items.find(x => x.slug === slug) || items.find(x => !solved.includes(x.slug)) || items[0];
   return e.level;
 }
+// GA's name for a level: its heading in lower case (warm-up, practice, challenge).
+export const levelId = level => level.toLowerCase();
+// exercise_run's outcome for a run: refused (strictCheck or the comma-join guard), error (SQLite's own) or ok.
+export const runOutcome = (error, refused) => refused ? "refused" : error ? "error" : "ok";
+
 export function levelPick(items, level, solved) {
   const list = items.filter(x => x.level === level);
   return list.find(x => !solved.includes(x.slug)) || list[0];
@@ -107,7 +112,7 @@ async function boot() {
   }
   const choose = e => { show(e); history.replaceState(null, "", "#" + e.slug); };
   pick.onchange = () => choose(items.find(e => e.slug === pick.value));
-  buttons.forEach((b, i) => { b.onclick = () => { setLevel(levels[i]); choose(levelPick(items, levels[i], solved)); }; });
+  buttons.forEach((b, i) => { b.onclick = () => { track("exercise_level", { level: levelId(levels[i]) }); setLevel(levels[i]); choose(levelPick(items, levels[i], solved)); }; });
 
   // A #slug link ("Try it" on the other pages) lands on the workbench, its question chosen. The static questions
   // are hidden once the workbench is up (they stay in the HTML for readers without JavaScript), so the browser's
@@ -133,7 +138,7 @@ async function boot() {
     erdBtn.innerHTML = html; erdBtn.title = label; erdBtn.setAttribute("aria-label", label);
   };
   setErd(false);
-  erdBtn.onclick = () => setErd(!erdBox.classList.contains("large"));
+  erdBtn.onclick = () => { const large = !erdBox.classList.contains("large"); setErd(large); if (large) useFeature("schema_enlarge"); };
   document.addEventListener("keydown", ev => { if (ev.key === "Escape" && erdBox.classList.contains("large")) { setErd(false); erdBtn.focus(); } });
   const linked = fromHash();
   setLevel(startLevel(items, solved, linked && linked.slug));
@@ -151,7 +156,7 @@ async function boot() {
   // History, as in the game: most recent first, 20 at most, a query that errors or is refused never kept; per browser.
   function renderHistory() {
     $("history").innerHTML = hist.history.map(q => "<li>" + escapeHtml(q) + "</li>").join("");
-    [...$("history").children].forEach((li, i) => btnLike(li, () => { ta.value = hist.history[i]; sync(); ta.focus(); }));
+    [...$("history").children].forEach((li, i) => btnLike(li, () => { ta.value = hist.history[i]; sync(); ta.focus(); useFeature("history_reuse"); }));
   }
   renderHistory();
   ta.addEventListener("input", sync);
@@ -169,22 +174,28 @@ async function boot() {
   sync();
   $("ex-run").onclick = run;
 
-  const solutions = {};
+  const solutions = {}, runs = {}, fails = {};   // this page load's runs and failed runs per question (GA)
   function run() {
     const sql = ta.value.trim();
     if (!sql || !db) return;
-    let res = null, error = null, strict = null;
-    if (cartesian(sql)) error = "Two tables side by side with nothing to match them: say what joins them (ON or WHERE).";
+    let res = null, error = null, strict = null, cart = false;
+    if ((cart = cartesian(sql))) error = "Two tables side by side with nothing to match them: say what joins them (ON or WHERE).";
     else if ((strict = strictCheck(sql, schema))) error = strict.error;
     else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; } catch (e) { error = e.message; }
     $("ex-results").innerHTML = strict ? strictHtml(strict, "") : error ? '<div class="error">' + escapeHtml(error) + "</div>" : renderResults(res);
     $("ex-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows";
+    const ex = cur.slug, level = levelId(cur.level);
+    runs[ex] = (runs[ex] || 0) + 1;
+    trackOnce("run:" + ex, "exercise_run", { exercise: ex, level, outcome: runOutcome(error, strict || cart) });
+    const fail = error && queryFail(fails, ex, strict, cart);
+    if (fail) track("query_fail", { exercise: ex, ...fail });
     if (error) return status("wrong", "Fix the error first, then run it again.");
     pushHistory(hist, sql);
     save(HISTORY_STORE, hist.history);
     renderHistory();
     const hits = items.filter(e => sameResult(res, solutions[e.slug], e.opts));
     hits.forEach(e => { if (!solved.includes(e.slug)) solved.push(e.slug); });
+    hits.forEach(e => trackOnce("solve:" + e.slug, "exercise_solve", { exercise: e.slug, level: levelId(e.level), runs: runs[e.slug] || 0 }));
     if (hits.length) { save(STORE, solved); refreshTicks(); markSolved(); }
     const rows = res ? res.values.length : 0, want = solutions[cur.slug] ? solutions[cur.slug].values.length : 0;
     if (hits.includes(cur)) status("", "");
