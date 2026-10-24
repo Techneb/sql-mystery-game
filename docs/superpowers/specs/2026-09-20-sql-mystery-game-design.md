@@ -639,7 +639,7 @@ Everything is deployed (2026-10-20, 9f4e671).
   question does not ask to round). Solved questions get a tick, kept in `ritz.exercises`; `#<slug>` selects a
   question. The deploy versions `exercises.html`'s scripts and `exercises.js`'s `../app.js` import.
 - ~~Handbook chrome, grammar and exercises pass~~ Done 2026-10-19/20 (course owner, 2026-10-19; merged b028951, live):
-  the masthead nav keeps Game, The Clerk's Handbook and The Clerk's Desk, the footer keeps all six links
+  the masthead nav keeps Game, The Clerk's Handbook and The Clerk's Desk, the footer keeps all six links (since 2026-10-24, owner: the header only Game and The Clerk's Handbook on every page, the footer Privacy notice, Statistics, The Clerk's Desk, AlephB and Contact)
   (learn pages and `admin.html`); the numbered menu becomes "Index . Learning chapters . Exercises . Grammar",
   Learning chapters a `<details>` dropdown that works without JavaScript. The grammar rules move to their
   construct pages with their anchors and wrong examples (`colour_learn.mjs` writes refusals on any page);
