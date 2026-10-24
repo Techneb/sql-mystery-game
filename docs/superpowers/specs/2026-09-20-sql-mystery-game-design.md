@@ -708,3 +708,13 @@ Everything is deployed (2026-10-20, 9f4e671).
   devices and channels as donuts; every chart with a closed Raw data table. `chapter_queries` reaches GA (Realtime,
   2026-10-23) but the Data API shows a new event only after up to a day; the funnel notes it while ran-N is empty.
   Open: the owner's look at the live pages with real data; archive the old backend project once no old link uses it.
+- Trackers everywhere and monitoring split (owner, 2026-10-24): new game events (chapter_leave, query_fail, answer_wrong,
+  hint_open, feature_use, landing_begin) and GA on every handbook page under the same consent (`site/stats.js` split out
+  of app.js, `learn/handbook.js`; exercise_run, exercise_solve, exercise_level, query_fail, feature_use); GA custom
+  definitions registered 2026-10-24 (kind, rule, n, feature, exercise, level, outcome; metric runs). The desk's
+  monitoring is three pages, Global, Game, Handbook (`monitor.html`, `monitor-game.html`, `monitor-handbook.html`);
+  empty data stays empty and people totals are GA's own (owner: "I want correct counts"). Open, to fix once Google's
+  consent message is live (after AdSense approval): an answer given only in Google's message is not written to
+  `ritz.consent`, so the banner would ask that European visitor again on handbook pages without the ad box. Also
+  untested: the `averageCustomEvent:` / `customEvent:` metric names against the live Data API (a refused one shows
+  GA's error in its panel).
