@@ -18,9 +18,9 @@ function barTable(head, rows, valHead = "Users") {
       Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody></table>";
 }
 // Every chart keeps its numbers under it, closed.
-// Raw data under a chart, with an Export CSV button beside the toggle (wireCsv reads the table it holds).
-const raw = (name, table) => '<details class="numbers"><summary>Raw data <button type="button" class="quiet csv" data-csv="' + esc(name) +
-  '">Export CSV</button></summary>' + table + "</details>";
+// Raw data under a chart, its Export CSV button inside the toggle, over the table (wireCsv reads the table it holds; owner 2026-10-24).
+const raw = (name, table) => '<details class="numbers"><summary>Raw data</summary><button type="button" class="quiet csv" data-csv="' + esc(name) +
+  '">Export CSV</button>' + table + "</details>";
 const csvCell = v => /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
 // cells: rows of cell texts (the header row first), as read from a Raw data table.
 export const tableCsv = cells => cells.map(r => r.map(c => csvCell(String(c).trim())).join(",")).join("\r\n") + "\r\n";
@@ -28,7 +28,7 @@ function wireCsv(box) {
   box.addEventListener("click", e => {
     const b = e.target.closest && e.target.closest("button.csv");
     if (!b || !box.contains(b)) return;
-    e.preventDefault();   // inside <summary>: export without toggling the table
+    e.preventDefault();
     const t = b.closest("details").querySelector("table");
     const cells = [...t.rows].map(r => [...r.cells].map(c => c.textContent));
     const a = document.createElement("a");
