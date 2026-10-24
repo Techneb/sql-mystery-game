@@ -732,6 +732,10 @@ Everything is deployed (2026-10-20, 9f4e671).
   blur-detection scripts are unreliable and a policy risk): the way is linking AdSense to GA4 (a Google setting, owner's
   call), then `publisherAdClicks` / `publisherAdImpressions` / `totalAdRevenue` in the backend whitelist and an "ad
   clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Open: the owner making the link.
+- Competitor study (owner, 2026-10-24): research SQL Noir (https://www.sqlnoir.com/), a detective-themed SQL game,
+  and note what it does well to borrow: onboarding, case structure and difficulty, hints, the editor and results,
+  progress and accounts, how it earns money, SEO and sharing. Output: a short findings note with what to adopt here.
+  Not started.
 - Strix security test (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
   throwaway season, never during a class, with request caps; Google's services out; findings in the uncommitted
   `docs/audits/`. It starts only after Compromise's Strix run (planned the night of 2026-10-24); Compromise Main will
