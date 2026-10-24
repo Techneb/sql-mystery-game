@@ -1,8 +1,9 @@
 // site/admin.js -- the teacher's page (admin.html): create, open and close compete seasons, share their link and QR
 // code, watch who joined, export the rows. Pure helpers are exported for test_site.mjs; the page wiring runs only in a
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
-// passphrase stays in memory and goes to the backend as `key` (apps_script.gs compares it with ADMIN_KEY).
-import { BOARD_KEY, deskLinks, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+// passphrase stays in sessionStorage for the tab (shared.js deskPassphrase) and goes to the backend as `key` (apps_script.gs
+// compares it with ADMIN_KEY).
+import { BOARD_KEY, deskBoard, deskLinks, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
@@ -190,15 +191,13 @@ function setBoard(value) {
   board = "";
   const v = value.trim();
   try { if (v) { new URL(v); board = v; } } catch { say("That board URL is not a URL.", true); }
-  try { if (board) localStorage.setItem(BOARD_KEY, board); } catch {}
-  deskLinks(board);
+  let stored = true;
+  try { if (board) localStorage.setItem(BOARD_KEY, board); } catch { stored = false; }
+  deskLinks(board, stored);
 }
 
 async function main() {
-  const fromLink = new URLSearchParams(location.search).get("board") || "";
-  let stored = "";
-  try { stored = localStorage.getItem(BOARD_KEY) || ""; } catch {}
-  setBoard(fromLink || stored);
+  setBoard(deskBoard().board);
   $("board-url").value = board;
   $("c-date").value = new Date().toLocaleDateString("sv");   // YYYY-MM-DD in the teacher's time zone
   $("qr").querySelector("button").onclick = () => $("qr").close();

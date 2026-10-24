@@ -42,15 +42,25 @@ export function fmtTime(ms) {
 // Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
 // The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
 // The Clerk's Desk pages (admin.html, the monitor pages, explore.html): the board URL saved under this key, and the #passgate dialog
-// asked again until the passphrase matches; resolves the passphrase (kept in memory only), or "" on Cancel.
+// asked again until the passphrase matches; resolves the passphrase, or "" on Cancel. An accepted passphrase is kept for the
+// tab's session in sessionStorage DESK_KEY (never localStorage: it must die with the tab), so moving between desk pages asks once;
+// a stored one that no longer matches the hash (the passphrase changed) is dropped and the gate asks again.
 export const BOARD_KEY = "ritz.admin.board";
-export function deskPassphrase(d) {
+export const DESK_KEY = "ritz.desk.key";
+export async function deskPassphrase(d, store = globalThis.sessionStorage) {
+  let kept = "";
+  try { kept = store.getItem(DESK_KEY) || ""; } catch {}
+  if (kept && (await sha256(kept)) === ADMIN_PASS_SHA256) return kept;
+  try { store.removeItem(DESK_KEY); } catch {}
   const input = d.querySelector("input"), msg = d.querySelector(".gate-msg");
   return new Promise(resolve => {
     d.onclose = async () => {
       if (d.returnValue !== "ok") return resolve("");
       const pass = input.value.trim().toLowerCase();
-      if (pass && (await sha256(pass)) === ADMIN_PASS_SHA256) return resolve(pass);
+      if (pass && (await sha256(pass)) === ADMIN_PASS_SHA256) {
+        try { store.setItem(DESK_KEY, pass); } catch {}
+        return resolve(pass);
+      }
       msg.textContent = "Wrong passphrase. Try again.";
       d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake");
       input.value = ""; d.returnValue = ""; d.showModal();
@@ -59,10 +69,24 @@ export function deskPassphrase(d) {
   });
 }
 
-// The desk's menu row (admin.html, monitor.html, monitor-game.html, monitor-handbook.html, explore.html): every other page's link carries the board as ?board=.
-export function deskLinks(board) {
-  for (const a of document.querySelectorAll(".learn-menu a"))
-    a.href = a.getAttribute("href").split("?")[0] + (board ? "?board=" + encodeURIComponent(board) : "");
+// The desk's board URL: ?board= wins over localStorage BOARD_KEY; a link's board is saved there and taken out of the address
+// bar (other params and the hash kept), so desk URLs stay short. stored is false when storage is blocked; deskLinks then
+// carries the board as ?board= instead.
+export function deskBoard(loc = globalThis.location, store = globalThis.localStorage, hist = globalThis.history) {
+  const u = new URL(loc.href), fromLink = u.searchParams.get("board") || "";
+  let board = fromLink, stored = false;
+  try {
+    if (fromLink) store.setItem(BOARD_KEY, fromLink); else board = store.getItem(BOARD_KEY) || "";
+    stored = true;
+  } catch {}
+  if (fromLink && stored) { u.searchParams.delete("board"); hist.replaceState(hist.state, "", u.pathname + u.search + u.hash); }
+  return { board, stored };
+}
+// The desk's menu row (admin.html, monitor.html, monitor-game.html, monitor-handbook.html, explore.html): bare links, or
+// ?board= on each when the board could not be stored.
+export function deskLinks(board, stored = true, links = document.querySelectorAll(".learn-menu a")) {
+  for (const a of links)
+    a.href = a.getAttribute("href").split("?")[0] + (board && !stored ? "?board=" + encodeURIComponent(board) : "");
 }
 
 export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);

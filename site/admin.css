@@ -176,3 +176,5 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .hbar-chart .hit:hover rect, .cols-chart .hit:hover rect { fill: var(--shade); }
 .hbar-chart .bar, .cols-chart .bar, .hbar-chart text { pointer-events: none; }
 .hbar-chart .tick { font-size: 11px; }
+/* the desk's menu row: the current page in the red, bold, with a light underline (the handbook keeps learn.css's plain look) */
+.learn-menu .current { color: var(--rel); font-weight: 700; text-decoration: underline 1px color-mix(in srgb, var(--rel) 45%, transparent); text-underline-offset: 4px; }

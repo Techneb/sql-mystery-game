@@ -1438,7 +1438,7 @@ test("monitor donuts: each picks its metric, Visitors by default, loading and GA
 
 test("monitor: one Count select drives users per day and both donuts; the five counts compared", () => {
   assert.match(fs.readFileSync("site/monitor.html", "utf8"), /<span id="days"[^]*<label class="pick">Count <select id="count"><\/select><\/label>/, "one Count select beside the period buttons");
-  assert.deepEqual(Object.values(monitor.COUNT_METRICS).map(d => d.short), ["Visitors", "Opened", "Solved", "Sessions", "Engaged"]);
+  assert.deepEqual(Object.values(monitor.COUNT_METRICS).map(d => d.short), ["Visitors", "Opened", "Solved", "Sessions", "Engaged", "Views"]);
   assert.deepEqual(monitor.countRequest(7, ["date"], "opened"), { days: 7, dimensions: ["date"], metrics: ["totalUsers"], filters: { eventName: ["chapter_open"] } });
   assert.deepEqual(monitor.breakdownRequest(30, "browser", "sessions"), { days: 30, dimensions: ["date", "browser"], metrics: ["sessions"] });
   const s = { users: [{ date: "20261022", users: 5 }], chapters: [], countries: [] };
@@ -1453,12 +1453,13 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.ok(monitor.statsHtml(s, 390, null, { m: "engaged", dn }).includes("3 sessions") && monitor.statsHtml(s, 390, null, { m: "engaged", dn }).includes("Counts engaged sessions"), "the donuts follow the same count");
   // the comparison
   assert.deepEqual(monitor.compareRequests(7, "country").map(([m, q]) => [m, q.metrics[0], q.dimensions[0]]),
-    [["visitors", "activeUsers", "country"], ["opened", "totalUsers", "country"], ["solved", "totalUsers", "country"], ["sessions", "sessions", "country"], ["engaged", "engagedSessions", "country"]]);
+    [["visitors", "activeUsers", "country"], ["opened", "totalUsers", "country"], ["solved", "totalUsers", "country"], ["sessions", "sessions", "country"], ["engaged", "engagedSessions", "country"], ["views", "screenPageViews", "country"]]);
   const res = { visitors: { rows: [["desktop", 60], ["mobile", 30]] }, opened: { rows: [["desktop", 20], ["mobile", 25]] }, solved: { rows: [["mobile", 5]] },
     sessions: { rows: [["desktop", 90], ["mobile", 40], ["<b>tablet", 2]] }, engaged: { rows: [["desktop", 50]] } };
   const st = monitor.stackData(res);
   assert.deepEqual(st.segs, ["desktop", "mobile", "<b>tablet"], "one order for every bar, by the sum over the bars");
-  assert.deepEqual(st.bars.map(b => [b.m, b.values, b.total]), [["visitors", [60, 30, 0], 90], ["opened", [20, 25, 0], 45], ["solved", [0, 5, 0], 5], ["sessions", [90, 40, 2], 132], ["engaged", [50, 0, 0], 50]]);
+  assert.deepEqual(st.bars.map(b => [b.m, b.values, b.total]), [["visitors", [60, 30, 0], 90], ["opened", [20, 25, 0], 45], ["solved", [0, 5, 0], 5], ["sessions", [90, 40, 2], 132], ["engaged", [50, 0, 0], 50], ["views", [0, 0, 0], 0]]);
+  assert.ok(monitor.donutNote("devices", "views").includes("each page view sits in one slice") && monitor.statsHtml(s, 390, null, { m: "views", dn }).includes("3 page views"), "page views: own unit, no overlap");
   const many = monitor.stackData({ visitors: { rows: ["a", "b", "c", "d", "e", "f", "g"].map((c, i) => [c, 10 - i]) } });
   assert.deepEqual(many.segs, ["a", "b", "c", "d", "e", "Other"]);
   assert.deepEqual(many.bars[0].values, [10, 9, 8, 7, 6, 9], "past six, the rest folds into Other");
@@ -1576,6 +1577,8 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(fails.includes('data-k="&#60;b&#62;group-by" data-v="12\tfailures\tc6\n5\tusers"') && fails.includes("<td>III</td>") && !fails.includes("<b>group"));
   assert.ok(fails.indexOf("SQLite error") < fails.indexOf("Refused by") && fails.includes('data-k="Refused by the grammar check" data-v="12 failures\t75%"'), "kinds in a fixed order and colour");
   assert.ok(!monitor.failsHtml([empty, empty], 390).includes("BY KIND"), "the handbook's failures have no kind donut");
+  const plain = monitor.failsHtml([{ rows: [["", 4, 2]] }, { rows: [["", "error", "1", 4, 2]] }], 390);
+  assert.ok(plain.includes('data-k="SQL error"') && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
   const wrong = monitor.wrongHintsHtml([{ rows: [["1", "1", 9], ["1", "3", 2]] }, { rows: [["1", 4, 6]] }], 390);
   assert.ok(wrong.includes('data-v="9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens"') && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
   const modes = monitor.modesHtml([{ rows: [["compete", 3], ["learn", 6]], totals: [8] }, { rows: [["learn", 6], ["compete", 3]], totals: [8] }, { rows: [[20]] }]);
@@ -1612,4 +1615,31 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(monitor.stackSvg(st, 390).includes('text-anchor="middle">9</text>'));
   const cb = monitor.chapterBarsSvg(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]], 390);
   assert.equal((cb.match(/class="bar c1"/g) || []).length, 1, "one bar, the zeros drawn as nothing");
+});
+
+test("desk: ?board= is stored and leaves the address bar, links stay bare unless storage is blocked; a stale passphrase is dropped", async () => {
+  const mem = () => { const m = {}; return { m, getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; };
+  const hist = { state: null, url: null, replaceState(s, t, u) { this.url = u; } };
+  const s = mem(), board = "https://x.invalid/macros/s/ID/exec";
+  assert.deepEqual(shared.deskBoard({ href: "http://h/monitor.html?board=" + encodeURIComponent(board) + "&n=1#top" }, s, hist), { board, stored: true });
+  assert.equal(s.m[shared.BOARD_KEY], board);
+  assert.equal(hist.url, "/monitor.html?n=1#top", "board gone, other params and the hash kept");
+  hist.url = null;
+  assert.deepEqual(shared.deskBoard({ href: "http://h/explore.html" }, s, hist), { board, stored: true }, "read back from storage");
+  assert.equal(hist.url, null, "nothing to strip");
+  const blocked = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+  assert.deepEqual(shared.deskBoard({ href: "http://h/admin.html?board=" + encodeURIComponent(board) }, blocked, hist), { board, stored: false });
+  assert.equal(hist.url, null, "kept in the address bar when it could not be stored");
+  const a = { getAttribute: () => "monitor-game.html", href: "" };
+  shared.deskLinks(board, true, [a]); assert.equal(a.href, "monitor-game.html");
+  shared.deskLinks(board, false, [a]); assert.equal(a.href, "monitor-game.html?board=" + encodeURIComponent(board));
+  // a stored passphrase that does not match the hash is dropped and the gate opens
+  const ss = mem(); ss.setItem(shared.DESK_KEY, "not the passphrase");
+  let shown = 0;
+  const d = { querySelector: () => ({ textContent: "", value: "" }), showModal: () => { shown++; } };
+  const p = shared.deskPassphrase(d, ss);
+  await new Promise(r => setTimeout(r, 50));
+  assert.equal(shown, 1); assert.equal(ss.getItem(shared.DESK_KEY), null);
+  d.returnValue = "cancel"; d.onclose();
+  assert.equal(await p, "");
 });

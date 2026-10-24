@@ -4,8 +4,8 @@
 // the solve rate, leaving, wrong answers and hints on the same I-XII grid, failures, modes, features) and Handbook
 // (monitor-handbook.html: its pages as a donut, the exercises, level choice and run outcome, failures, features,
 // Try it), read from the Apps Script's ?stats=<days>&key= and ?report= (apps_script.gs stats_, report_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
-// The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
-import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+// The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
+import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 export const DAYS = [7, 30, 90];
 export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
@@ -320,7 +320,7 @@ export function donutBody(items, what, aria, res, note, name, head, valHead, fix
 }
 
 // The page's one Count select (beside the period buttons) drives users per day, the countries and both donuts, each read from ?report=
-// (the backend allows eventName as a filter); the comparison chart draws all five. A user metric counts a person in
+// (the backend allows eventName as a filter); the comparison chart draws all six. A user metric counts a person in
 // every slice they fall in, so the slices may add up to more than the people. short: the comparison's x labels.
 export const COUNT_METRICS = {
   visitors: { label: "Visitors", short: "Visitors", metric: "activeUsers", unit: "visitors", note: "Counts every visitor (active users)" },
@@ -328,14 +328,17 @@ export const COUNT_METRICS = {
   solved: { label: "Players who solved a chapter", short: "Solved", metric: "totalUsers", event: "chapter_solve", unit: "players", note: "Counts the users who solved a chapter" },
   sessions: { label: "Sessions", short: "Sessions", metric: "sessions", unit: "sessions", note: "Counts sessions" },
   engaged: { label: "Engaged sessions", short: "Engaged", metric: "engagedSessions", unit: "sessions", note: "Counts engaged sessions (GA's: 10 s or more, two pages or a key event)" },
+  views: { label: "Page views", short: "Views", metric: "screenPageViews", unit: "page views", note: "Counts page views" },
 };
+// A Count of events (page views) puts each one in exactly one slice, unlike people and sessions.
+const isViews = d => d.unit === "page views";
 // The handbook's own people counts (not in the comparison, which draws COUNT_METRICS).
 export const HANDBOOK_COUNTS = {
   ran: { label: "Readers who ran an exercise", short: "Ran", metric: "totalUsers", event: "exercise_run", unit: "readers", note: "Counts the users who ran an exercise" },
   exsolved: { label: "Readers who solved an exercise", short: "Solved", metric: "totalUsers", event: "exercise_solve", unit: "readers", note: "Counts the users who solved an exercise" },
 };
 // Each view's Count select, in order.
-export const VIEW_COUNTS = { global: Object.keys(COUNT_METRICS), game: Object.keys(COUNT_METRICS), handbook: ["visitors", "ran", "exsolved", "sessions", "engaged"] };
+export const VIEW_COUNTS = { global: Object.keys(COUNT_METRICS), game: Object.keys(COUNT_METRICS), handbook: ["visitors", "ran", "exsolved", "sessions", "engaged", "views"] };
 export const DONUTS = {
   devices: { dim: "deviceCategory", label: "DEVICES", head: "Device", many: "on two devices" },
   channels: { dim: "sessionDefaultChannelGroup", label: "CHANNELS", head: "Channel", many: "through two channels" },
@@ -351,6 +354,7 @@ export const donutNote = (kind, m) => overlapNote(DONUTS[kind].many, m);
 // What a Count counts and how one person can fall in several slices (many: "two devices").
 export const overlapNote = (many, m, part = "slices") => {
   const d = metricOf(m);
+  if (isViews(d)) return d.note + ": each page view sits in one " + part.slice(0, -1) + ", so the " + part + " add up to the total.";
   return d.unit === "sessions"
     ? d.note + ": each session sits in one " + part.slice(0, -1) + ", but one person's sessions can fall in several (" + many + ")."
     : d.note + ": a person " + many + " counts in both " + part + ", so the " + part + " may add up to more than the people.";
@@ -421,7 +425,7 @@ export function compareSection(cmp = {}, w) {
   if (!cmp.res) return head + '<p class="muted">Reading the five counts...</p>';
   const st = stackData(cmp.res);
   return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
-    '<p class="muted">Visitors and players are people, sessions are visits: the bars do not share a unit. The number over a bar is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a bar&#39;s segments can stack higher than its total.</p>' +
+    '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a bar is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a bar&#39;s segments can stack higher than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
@@ -535,7 +539,8 @@ export const chapterGrid = (res, k = 1) => { const m = byFirst(res); return Arra
 export function pagesSection(p, m) {
   const d = metricOf(m);
   return panel("PAGES", p, res => donutBody(SECTIONS.map(([l], i) => ({ label: l, value: gaTotal(res[i]) })), d.unit, d.label + " by section", res[4],
-    "Game is /, Handbook the /learn/ pages, Desk the teacher's pages (GA does not run there), Other the rest. The centre is GA's own count over every page; a person can visit both the game and the handbook, so the slices may add up to more.",
+    "Game is /, Handbook the /learn/ pages, Desk the teacher's pages (GA does not run there), Other the rest. The centre is GA's own count over every page; " +
+      (isViews(d) ? "each page view sits in one section." : "a person can visit both the game and the handbook, so the slices may add up to more."),
     "pages", "Section", d.label, true));
 }
 
@@ -603,14 +608,15 @@ export function leaveHtml(res, w) {
     raw("chapter-leave", tableHtml(["Chapter", "Users who left", "Avg seconds (per leave)", "Avg queries (per leave)"], g.map(c => [roman(c.chapter), c.values[0], has(c) ? avg(c.values[1]) : "-", has(c) ? avg(c.values[2]) : "-"])));
 }
 // res: [by rule, by rule x kind x where, by kind (game only)]: the kind as a donut of failures, bars per rule from
-// GA's own [rule] rows; the split as raw data.
+// GA's own [rule] rows; the split as raw data. An empty rule is a plain SQL error (no Grammar section to link).
+const ruleText = r => (r == null || r === "" ? "SQL error" : String(r));
 export function failsHtml(res, w, where = "Chapter", name = "query-failures") {
-  const rows = ((res[0] && res[0].rows) || []).map(([r, e, u]) => ({ label: gaText(r), values: [Number(e) || 0], tip: [[Number(u) || 0, "users"]] }));
-  const split = ((res[1] && res[1].rows) || []).map(([r, k, c, e, u]) => [gaText(r), gaText(k), where === "Chapter" && ROMAN[Number(c)] ? roman(Number(c)) : gaText(c), Number(e) || 0, Number(u) || 0]);
+  const rows = ((res[0] && res[0].rows) || []).map(([r, e, u]) => ({ label: ruleText(r), values: [Number(e) || 0], tip: [[Number(u) || 0, "users"]] }));
+  const split = ((res[1] && res[1].rows) || []).map(([r, k, c, e, u]) => [ruleText(r), gaText(k), where === "Chapter" && ROMAN[Number(c)] ? roman(Number(c)) : gaText(c), Number(e) || 0, Number(u) || 0]);
   return (res.length > 2 ? '<div class="label sub">BY KIND</div>' + donutBody(fixedItems(res[2], KINDS), "failures", "Query failures by kind", res[2], "", name + "-kind", "Kind", "Failures", true) +
       '<div class="label sub">BY GRAMMAR RULE</div>' : "") +
     hbarSvg(rows, [["failures", "c6"]], w, compact, "Query failures by grammar rule") +
-    '<p class="muted">Failed or refused runs, the first 3 per ' + (where === "Chapter" ? "chapter" : "exercise") + " per page load; the rule is the Grammar section the refusal links ((empty) for a plain error).</p>" +
+    '<p class="muted">Failed or refused runs, the first 3 per ' + (where === "Chapter" ? "chapter" : "exercise") + " per page load; the rule is the Grammar section a refusal links; SQL error is a plain SQLite error, with no rule.</p>" +
     raw(name, tableHtml(["Rule", "Kind", where, "Failures", "Users"], split));
 }
 // res: [answer_wrong by chapter x n, hint_open by chapter]: users with a 1st and a 3rd wrong answer and users who
@@ -682,7 +688,7 @@ export function exercisesHtml(res, w) {
 // The handbook's pages by title (top 5 + Other, its suffix dropped), the page's Count, GA's total in the centre.
 export function handbookPagesHtml(res, m) {
   const d = metricOf(m), items = ((res && res.rows) || []).map(([t, v]) => ({ label: pageName(t), value: Number(v) || 0 }));
-  return donutBody(items, d.unit, d.label + " by handbook page", res, d.note + " on the /learn/ pages: a person who read two pages counts in both slices.", "handbook-pages", "Page", d.label);
+  return donutBody(items, d.unit, d.label + " by handbook page", res, d.note + " on the /learn/ pages: " + (isViews(d) ? "each view is of one page." : "a person who read two pages counts in both slices."), "handbook-pages", "Page", d.label);
 }
 // res: [exercise_level by level (users, presses), exercise_run by outcome (first runs)]: two donuts.
 export function choicesHtml(res) {
@@ -748,10 +754,9 @@ function wireTips(box) {
 }
 
 async function main() {
-  let board = new URLSearchParams(location.search).get("board") || "";
-  try { board ||= localStorage.getItem(BOARD_KEY) || ""; } catch {}
+  let { board, stored } = deskBoard();
   try { new URL(board); } catch { board = ""; }
-  deskLinks(board);
+  deskLinks(board, stored);
   if (!board) { $("nob").hidden = false; return; }
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
