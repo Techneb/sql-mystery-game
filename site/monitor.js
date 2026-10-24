@@ -634,7 +634,8 @@ export function wrongHintsHtml(res, w) {
 // Every known feature (zeros included) in its list's order, then any other GA reports.
 export function featuresHtml(res, w, names, name = "feature-use") {
   const m = byFirst(res[0]), keys = [...Object.keys(names), ...[...m.keys()].filter(k => !(k in names))];
-  const rows = keys.map(k => ({ key: k, label: names[k] || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }));
+  const rows = keys.map(k => ({ key: k, label: names[k] || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }))
+    .sort((a, b) => b.values[0] - a.values[0] || b.ev - a.ev); // most users first; ties keep the names' order (stable sort)
   return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] })), [["users", "c3"]], w, compact, "Feature use") +
     raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], rows.map(r => [r.label, r.key, r.values[0], r.ev])));
 }
