@@ -1,4 +1,4 @@
-// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the chapter funnel with its retention, the solve rate, a map
+// site/monitor.js -- the teacher's GA4 numbers (monitor.html): users per day, the five counts compared, the chapter funnel with its retention, the solve rate, a map
 // of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
 // stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
@@ -43,7 +43,7 @@ const yAxis = (tk, y, L, x2, fmt, title) => '<text class="axis-title" x="2" y="1
 // One series as a line (no legend, the label names it): 2 px line over a 10% wash, hairline grid, the last value
 // labelled at its end dot; each point owns a full-height hover strip (crosshair and dot on :hover, the tooltip from
 // its data-k/data-v).
-export function lineSvg(points, w = 640) {
+export function lineSvg(points, w = 640, title = "Users", unit = "users") {
   const H = 200, L = 40, R = 44, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
   const tk = ticks(Math.max(...points.map(p => p.value))), top = tk.at(-1);
   const x = i => r1(L + (points.length < 2 ? pw / 2 : (i * pw) / (points.length - 1)));
@@ -53,30 +53,33 @@ export function lineSvg(points, w = 640) {
   const step = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(pw / 70))));
   const strip = r1(points.length < 2 ? pw : pw / (points.length - 1));
   const last = xy.at(-1);
-  return '<svg class="chart line-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Users per day">' +
-    yAxis(tk, y, L, L + pw, compact, "Users") +
+  return '<svg class="chart line-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(title) + ' per day">' +
+    yAxis(tk, y, L, L + pw, compact, title) +
     points.map((p, i) => (i % step && i !== points.length - 1) || (i !== points.length - 1 && points.length - 1 - i < step / 2) ? "" :
       '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(p.label.slice(5)) + "</text>").join("") +
     '<path class="area" d="' + line + "L" + last[0] + "," + (T + ph) + "L" + xy[0][0] + "," + (T + ph) + 'Z"/><path class="line" d="' + line + '"/>' +
     '<circle class="dot end" cx="' + last[0] + '" cy="' + last[1] + '" r="4"/><text class="val" x="' + (last[0] + 8) + '" y="' + (last[1] + 4) + '">' + esc(compact(points.at(-1).value)) + "</text>" +
-    points.map((p, i) => '<g class="hit"' + tipAttrs(p.label, [[compact(p.value), "users"]]) + '><rect x="' + r1(xy[i][0] - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph + '"/><line class="cross" x1="' + xy[i][0] + '" x2="' + xy[i][0] + '" y1="' + T + '" y2="' + (T + ph) +
+    points.map((p, i) => '<g class="hit"' + tipAttrs(p.label, [[compact(p.value), unit]]) + '><rect x="' + r1(xy[i][0] - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph + '"/><line class="cross" x1="' + xy[i][0] + '" x2="' + xy[i][0] + '" y1="' + T + '" y2="' + (T + ph) +
       '"/><circle class="dot" cx="' + xy[i][0] + '" cy="' + xy[i][1] + '" r="4"/></g>').join("") + "</svg>";
 }
-// GA dates come as YYYYMMDD. The line, then the same numbers as raw data.
-export function usersHtml(users, w) {
+// GA dates come as YYYYMMDD. The line, then the same numbers as raw data; m picks the axis title and the unit.
+export function usersHtml(users, w, m) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
   if (!pts.length) return NONE;
-  return lineSvg(pts, w) + raw(barTable("Day", pts.map(p => [p.label, p.value])));
+  const d = metricOf(m);
+  return lineSvg(pts, w, d.label, d.unit) + raw(barTable("Day", pts.map(p => [p.label, p.value]), d.label));
 }
+// A ?report= on [date] as usersHtml's [{date, users}].
+export const daysFrom = res => (res.rows || []).map(([date, users]) => ({ date, users }));
 
 // --- users per day broken down by one dimension (the select by its label): ?report= with dimensions [date, X] and
-// activeUsers, one line per value for the top TOP values by users summed over the days (a user active on two days
+// the page's Count metric, one line per value for the top TOP values by users summed over the days (a user active on two days
 // counts twice: a ranking, not a head count), in --c1..--c5, over the page's own users-per-day total as a neutral line.
 export const TOP = 5;
 // The dimensions that make sense per day (names from shared.js DIMENSIONS), and the plural the note uses.
 export const BREAKDOWNS = { country: "countries", deviceCategory: "devices", sessionDefaultChannelGroup: "channels", sessionSource: "sources",
   operatingSystem: "operating systems", browser: "browsers", language: "languages", newVsReturning: "values", "customEvent:mode": "modes" };
-export const breakdownRequest = (days, dim) => ({ days, dimensions: ["date", dim], metrics: ["activeUsers"] });
+export const breakdownRequest = (days, dim, m) => countRequest(days, ["date", dim], m);
 // rows [date, value, users] -> {dates (sorted, the union with the total's days), series [{label, values, cls}] for the
 // top n values, most users first, a missing day counting 0; count: how many values there were}.
 export function pivotSeries(rows, totalDates = [], n = TOP) {
@@ -94,14 +97,14 @@ export function pivotSeries(rows, totalDates = [], n = TOP) {
 export const dayTip = (series, i) => series.map(s => [s.values[i], s.label, s.cls]).sort((a, b) => b[0] - a[0]).map(([v, l, c]) => [compact(v), l, c]);
 // Several lines on one axis, lineSvg's frame; the total (cls "total") drawn first, under the others. Each day's hover
 // strip shows the crosshair and a dot per series.
-export function multiLineSvg(labels, series, w = 640) {
+export function multiLineSvg(labels, series, w = 640, title = "Users") {
   const H = 200, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B, n = labels.length;
   const tk = ticks(Math.max(1, ...series.flatMap(s => s.values))), top = tk.at(-1);
   const x = i => r1(L + (n < 2 ? pw / 2 : (i * pw) / (n - 1))), y = v => r1(T + ph - (v * ph) / top);
   const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(pw / 70)))), strip = r1(n < 2 ? pw : pw / (n - 1));
   const col = s => "var(--" + (s.cls === "total" ? "ink" : s.cls) + ")";
-  return '<svg class="chart line-chart multi-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Users per day by value">' +
-    yAxis(tk, y, L, L + pw, compact, "Users") +
+  return '<svg class="chart line-chart multi-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(title) + ' per day by value">' +
+    yAxis(tk, y, L, L + pw, compact, title) +
     labels.map((l, i) => (i % step && i !== n - 1) || (i !== n - 1 && n - 1 - i < step / 2) ? "" :
       '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(l.slice(5)) + "</text>").join("") +
     series.map(s => '<path class="sl ' + esc(s.cls) + '" style="stroke:' + col(s) + '" d="M' + s.values.map((v, i) => x(i) + "," + y(v)).join("L") + '"/>').join("") +
@@ -110,29 +113,33 @@ export function multiLineSvg(labels, series, w = 640) {
       series.map(s => '<circle class="dot" style="fill:' + col(s) + '" cx="' + x(i) + '" cy="' + y(s.values[i]) + '" r="4"/>').join("") + "</g>").join("") + "</svg>";
 }
 // The breakdown: legend, lines, the "Top 5 of N" note, and the date x series table as raw data.
-export function breakdownHtml(res, users, dim, w) {
+export function breakdownHtml(res, users, dim, w, m) {
+  const d = metricOf(m);
   const total = [...users].sort((a, b) => (a.date < b.date ? -1 : 1));
   const p = pivotSeries(res.rows || [], total.map(u => u.date));
   if (!p.series.length) return NONE;
   const tot = new Map(total.map(u => [String(u.date), Number(u.users) || 0]));
-  const all = { label: "All users", values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
+  const all = { label: "All " + d.unit, values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
   const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values";
   return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
-    multiLineSvg(labels, series, w) +
-    (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by users summed over the days).</p>" : "") +
+    multiLineSvg(labels, series, w, d.label) +
+    (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by " + esc(d.unit) + " summed over the days).</p>" : "") +
     raw('<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
       labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>");
 }
 const optionsHtml = (pairs, cur) => pairs.map(([v, l]) => '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(l) + "</option>").join("");
 const breakdownSelect = cur => '<label class="pick">Breakdown <select id="bd-dim">' +
   optionsHtml([["", "None"], ...Object.keys(BREAKDOWNS).map(k => [k, DIMENSIONS[k] || k])], cur) + "</select></label>";
-// opts.bd: {dim, res, error} (res null while reading); none or no dim: the single line.
-export function usersSection(s, w, bd = {}) {
+// bd: {dim, total, res, error}: total the ?report= on [date] for the metric m (Visitors uses ?stats' users instead),
+// res the [date, dim] breakdown; either null while reading.
+export function usersSection(s, w, bd = {}, m = "visitors") {
   const head = '<div class="label-row"><span class="label">USERS PER DAY</span>' + breakdownSelect(bd.dim || "") + "</div>";
-  if (!bd.dim) return head + usersHtml(s.users || [], w);
   if (bd.error) return head + '<p class="status bad">Google Analytics said: ' + esc(bd.error) + "</p>";
+  const total = bd.total ? daysFrom(bd.total) : metricOf(m) === COUNT_METRICS.visitors ? s.users || [] : null;
+  if (!total) return head + '<p class="muted">Reading the days...</p>';
+  if (!bd.dim) return head + usersHtml(total, w, m);
   if (!bd.res) return head + '<p class="muted">Reading the breakdown...</p>';
-  return head + breakdownHtml(bd.res, s.users || [], bd.dim, w);
+  return head + breakdownHtml(bd.res, total, bd.dim, w, m);
 }
 
 // The countries' N: 10 comes with ?stats; any other is a ?report= on country (GA orders it by users, 0 = all).
@@ -268,41 +275,100 @@ export function donutHtml(items, what, aria) {
     '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>";
 }
 
-// Each donut counts what its select picks, read from ?report= on its dimension (the backend allows eventName as a filter).
-// A user metric counts a person in every slice they fall in, so the slices may add up to more than the people.
-export const DONUT_METRICS = {
-  visitors: { label: "Visitors", metric: "activeUsers", unit: "visitors", note: "Counts every visitor (active users)" },
-  opened: { label: "Players who opened a chapter", metric: "totalUsers", event: "chapter_open", unit: "players", note: "Counts the users who opened a chapter" },
-  solved: { label: "Players who solved a chapter", metric: "totalUsers", event: "chapter_solve", unit: "players", note: "Counts the users who solved a chapter" },
-  sessions: { label: "Sessions", metric: "sessions", unit: "sessions", note: "Counts sessions" },
-  engaged: { label: "Engaged sessions", metric: "engagedSessions", unit: "sessions", note: "Counts engaged sessions (GA's: 10 s or more, two pages or a key event)" },
+// The page's one Count select (beside the period buttons) drives users per day and both donuts, each read from ?report=
+// (the backend allows eventName as a filter); the comparison chart draws all five. A user metric counts a person in
+// every slice they fall in, so the slices may add up to more than the people. short: the comparison's x labels.
+export const COUNT_METRICS = {
+  visitors: { label: "Visitors", short: "Visitors", metric: "activeUsers", unit: "visitors", note: "Counts every visitor (active users)" },
+  opened: { label: "Players who opened a chapter", short: "Opened", metric: "totalUsers", event: "chapter_open", unit: "players", note: "Counts the users who opened a chapter" },
+  solved: { label: "Players who solved a chapter", short: "Solved", metric: "totalUsers", event: "chapter_solve", unit: "players", note: "Counts the users who solved a chapter" },
+  sessions: { label: "Sessions", short: "Sessions", metric: "sessions", unit: "sessions", note: "Counts sessions" },
+  engaged: { label: "Engaged sessions", short: "Engaged", metric: "engagedSessions", unit: "sessions", note: "Counts engaged sessions (GA's: 10 s or more, two pages or a key event)" },
 };
 export const DONUTS = {
   devices: { dim: "deviceCategory", label: "DEVICES", head: "Device", many: "two devices" },
   channels: { dim: "sessionDefaultChannelGroup", label: "CHANNELS", head: "Channel", many: "two channels" },
 };
-const metricOf = m => DONUT_METRICS[m] || DONUT_METRICS.visitors;
-export const donutRequest = (days, kind, m) => {
+// (declarations, hoisted: usersHtml above uses them)
+function metricOf(m) { return COUNT_METRICS[m] || COUNT_METRICS.visitors; }
+export function countRequest(days, dimensions, m) {
   const d = metricOf(m);
-  return { days, dimensions: [DONUTS[kind].dim], metrics: [d.metric], ...(d.event ? { filters: { eventName: [d.event] } } : {}) };
-};
+  return { days, dimensions, metrics: [d.metric], ...(d.event ? { filters: { eventName: [d.event] } } : {}) };
+}
+export const donutRequest = (days, kind, m) => countRequest(days, [DONUTS[kind].dim], m);
 export const donutNote = (kind, m) => {
   const d = metricOf(m), many = DONUTS[kind].many;
   return d.unit === "sessions"
     ? d.note + ": each session sits in one slice, but one person's sessions can fall in several (" + many + ")."
     : d.note + ": a person on " + many + " counts in both slices, so the slices may add up to more than the people.";
 };
-// sel: {m, res, error}, res null while reading.
-export function donutSection(kind, sel = {}) {
-  const k = DONUTS[kind], m = sel.m in DONUT_METRICS ? sel.m : "visitors", d = DONUT_METRICS[m];
-  const head = '<div class="label-row"><span class="label">' + k.label + '</span><label class="pick">Count <select id="dn-' + kind + '">' +
-    optionsHtml(Object.entries(DONUT_METRICS).map(([v, o]) => [v, o.label]), m) + "</select></label></div>";
+// sel: {res, error}, res null while reading; m the page's Count.
+export function donutSection(kind, sel = {}, m = "visitors") {
+  const k = DONUTS[kind], d = metricOf(m);
+  const head = '<div class="label-row"><span class="label">' + k.label + "</span></div>";
   if (sel.error) return head + '<p class="status bad">Google Analytics said: ' + esc(sel.error) + "</p>";
   if (!sel.res) return head + '<p class="muted">Reading the ' + kind + "...</p>";
   const list = (sel.res.rows || []).map(([label, v]) => ({ label, value: Number(v) || 0 }));
   if (!list.length) return head + NONE;
   return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase()) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
     raw(barTable(k.head, list.map(i => [i.label, i.value]), d.label));
+}
+
+// --- the five Count metrics side by side: one bar each, stacked by a dimension (its own select), so the heights show
+// how the metrics differ and the segments the mix. One ?report= per metric on [dim] (countRequest, the donuts' shape).
+export const STACKS = { deviceCategory: "Device", sessionDefaultChannelGroup: "Channel", country: "Country", newVsReturning: "New vs returning" };
+export const compareRequests = (days, dim) => Object.keys(COUNT_METRICS).map(m => [m, countRequest(days, [dim], m)]);
+// byMetric {m: res}: the segments ranked by their value summed over every bar (one order and colour for all bars;
+// past n + 1 the rest fold into Other, as on the donuts), each bar's values in that order.
+export function stackData(byMetric, n = 5) {
+  const per = Object.keys(COUNT_METRICS).map(m => [m, new Map(((byMetric[m] || {}).rows || []).map(([l, v]) => [String(l), Number(v) || 0]))]);
+  const sum = new Map();
+  for (const [, mp] of per) for (const [l, v] of mp) sum.set(l, (sum.get(l) || 0) + v);
+  const ranked = [...sum].filter(e => e[1] > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(e => e[0]);
+  const keep = ranked.length <= n + 1 ? ranked : ranked.slice(0, n), other = ranked.length > keep.length;
+  const segs = other ? [...keep, "Other"] : keep;
+  const bars = per.map(([m, mp]) => {
+    const values = keep.map(l => mp.get(l) || 0);
+    if (other) values.push([...mp].filter(e => !keep.includes(e[0])).reduce((t, e) => t + e[1], 0));
+    return { m, values, total: values.reduce((a, b) => a + b, 0) };
+  });
+  return { segs, bars };
+}
+// Vertical bars on one count axis, segments from the baseline up in --c1..--c6 with a 2 px gap, the top one's corners
+// rounded, the total over each bar; each segment its own tooltip (metric, segment, value, share of the bar).
+export function stackSvg(st, w = 640) {
+  const H = 240, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
+  const tk = ticks(Math.max(1, ...st.bars.map(b => b.total))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
+  const gw = pw / st.bars.length, bw = r1(Math.min(56, gw * 0.6));
+  return '<svg class="chart stack-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Count metrics compared">' +
+    yAxis(tk, y, L, L + pw, compact, "Count") +
+    st.bars.map((b, i) => {
+      const d = metricOf(b.m), cx = L + (i + 0.5) * gw, x0 = r1(cx - bw / 2), last = b.values.findLastIndex(v => v > 0);
+      let cum = 0, drawn = false;
+      const segs = b.values.map((v, j) => {
+        if (!v) return "";
+        const y0 = y(cum), y1 = y(cum += v), h = r1(Math.max(1, y0 - y1 - (drawn ? 2 : 0))), tip = tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.total), "of the bar"]]);
+        drawn = true;
+        return j === last ? '<path class="seg c' + (j + 1) + '"' + tip + ' d="' + barPath(x0, y1, bw, h) + '"/>'
+          : '<rect class="seg c' + (j + 1) + '"' + tip + ' x="' + x0 + '" y="' + y1 + '" width="' + bw + '" height="' + h + '"/>';
+      }).join("");
+      return segs + '<text class="val" x="' + r1(cx) + '" y="' + (y(b.total) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
+        '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(d.short) + "</text>";
+    }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
+}
+// cmp: {dim, res: {m: res} (null while reading), error}.
+export function compareSection(cmp = {}, w) {
+  const dim = cmp.dim in STACKS ? cmp.dim : "deviceCategory";
+  const head = '<div class="label-row"><span class="label">COUNT METRICS COMPARED</span><label class="pick">Stack by <select id="stack-dim">' +
+    optionsHtml(Object.entries(STACKS), dim) + "</select></label></div>";
+  if (cmp.error) return head + '<p class="status bad">Google Analytics said: ' + esc(cmp.error) + "</p>";
+  if (!cmp.res) return head + '<p class="muted">Reading the five counts...</p>';
+  const st = stackData(cmp.res);
+  if (!st.segs.length) return head + NONE;
+  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
+    '<p class="muted">Visitors and players are people, sessions are visits: the bars do not share a unit. A person in two segments (two devices, say) counts in both, so a bar can add up to more than its people.</p>' +
+    raw('<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
+      st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
 
 // --- map: site/world.json (Natural Earth 110m, equirectangular 84N-57S, 1000 units wide; its centroids in lon/lat
@@ -326,13 +392,14 @@ export function mapHtml(countries, world) {
     raw(barTable("Country", list.map(c => [c.label, c.value])));
 }
 
-// opts: {bd, top} as usersSection and countriesSection take them, dn: {devices, channels} as donutSection takes them.
+// opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
+// dn: {devices, channels} as donutSection takes them.
 export function statsHtml(s, w, world, opts = {}) {
-  return usersSection(s, w, opts.bd) +
+  return usersSection(s, w, opts.bd, opts.m) + compareSection(opts.cmp, w) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
     '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
     countriesSection(s, world, opts.top) +
-    '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k]) + "</div>").join("") + "</div>";
+    '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
 }
 
 // --- page wiring (browser only) ----------------------------------------------------------------
@@ -387,17 +454,21 @@ async function main() {
   let gen = 0, last = null, wide = 0, world = null, days = DAYS[0];
   // The breakdown (remembered per browser) and the countries' N; each extra report checks on return that it still
   // answers the current choice, so a late reply for an older one is dropped.
-  const BD_KEY = "ritz.monitor.breakdown";
-  const bd = { dim: "", res: null, error: null }, top = { n: 10, rows: null, error: null };
+  const BD_KEY = "ritz.monitor.breakdown", COUNT_KEY = "ritz.monitor.count";
+  const bd = { dim: "", total: null, res: null, error: null }, top = { n: 10, rows: null, error: null };
+  const cmp = { dim: "deviceCategory", res: null, error: null };
   try { const d = localStorage.getItem(BD_KEY) || ""; if (d in BREAKDOWNS) bd.dim = d; } catch {}
-  // Each donut's metric, remembered per browser in ritz.monitor.devices / ritz.monitor.channels.
+  // The page's Count (beside the period buttons), remembered per browser; it drives users per day and both donuts.
+  let m = "visitors";
+  try { const c = localStorage.getItem(COUNT_KEY); if (c in COUNT_METRICS) m = c; } catch {}
+  $("count").innerHTML = optionsHtml(Object.entries(COUNT_METRICS).map(([v, o]) => [v, o.label]), m);
   const dn = {};
-  for (const k in DONUTS) { dn[k] = { m: "visitors", res: null, error: null }; try { const m = localStorage.getItem("ritz.monitor." + k); if (m in DONUT_METRICS) dn[k].m = m; } catch {} }
+  for (const k in DONUTS) dn[k] = { res: null, error: null };
   const draw = () => {
     wide = $("stats").clientWidth;
     if (!last) return;
     const focus = document.activeElement && document.activeElement.id;
-    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { bd, top, dn });
+    $("stats").innerHTML = statsHtml(last, Math.max(280, wide), world, { m, bd, cmp, top, dn });
     if (focus && $(focus)) $(focus).focus();
   };
   const report = async req => {
@@ -405,12 +476,24 @@ async function main() {
     if (!r || !r.ok) throw new Error((r && r.error) || "no numbers");
     return r;
   };
+  // Users per day: the [date] total (Visitors takes ?stats' users) and the [date, dim] breakdown, in parallel.
   const loadBd = async () => {
-    bd.res = null; bd.error = null; draw();
-    if (!bd.dim) return;
-    const want = days + "|" + bd.dim, still = () => want === days + "|" + bd.dim;
-    try { const r = await report(breakdownRequest(days, bd.dim)); if (still()) bd.res = r; }
-    catch (e) { if (still()) bd.error = e.message; }
+    bd.total = null; bd.res = null; bd.error = null; draw();
+    if (m === "visitors" && !bd.dim) return;
+    const want = days + "|" + m + "|" + bd.dim, still = () => want === days + "|" + m + "|" + bd.dim;
+    try {
+      const [t, r] = await Promise.all([m === "visitors" ? null : report(countRequest(days, ["date"], m)), bd.dim ? report(breakdownRequest(days, bd.dim, m)) : null]);
+      if (still()) { bd.total = t; bd.res = r; }
+    } catch (e) { if (still()) bd.error = e.message; }
+    if (still()) draw();
+  };
+  const loadCmp = async () => {
+    cmp.res = null; cmp.error = null; draw();
+    const want = days + "|" + cmp.dim, still = () => want === days + "|" + cmp.dim;
+    try {
+      const got = await Promise.all(compareRequests(days, cmp.dim).map(async ([k, q]) => [k, await report(q)]));
+      if (still()) cmp.res = Object.fromEntries(got);
+    } catch (e) { if (still()) cmp.error = e.message; }
     if (still()) draw();
   };
   const loadTop = async () => {
@@ -423,16 +506,20 @@ async function main() {
   };
   const loadDn = async k => {
     const c = dn[k]; c.res = null; c.error = null; draw();
-    const want = days + "|" + c.m, still = () => want === days + "|" + c.m;
-    try { const r = await report(donutRequest(days, k, c.m)); if (still()) c.res = r; }
+    const want = days + "|" + m, still = () => want === days + "|" + m;
+    try { const r = await report(donutRequest(days, k, m)); if (still()) c.res = r; }
     catch (e) { if (still()) c.error = e.message; }
     if (still()) draw();
   };
   $("stats").addEventListener("change", e => {
-    const k = e.target.id.slice(3);
-    if (e.target.id.startsWith("dn-") && k in DONUTS) { dn[k].m = e.target.value; try { localStorage.setItem("ritz.monitor." + k, dn[k].m); } catch {} loadDn(k); }
+    if (e.target.id === "stack-dim") { cmp.dim = e.target.value; loadCmp(); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
     if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
+  });
+  $("count").addEventListener("change", e => {
+    m = e.target.value;
+    try { localStorage.setItem(COUNT_KEY, m); } catch {}
+    if (last) { loadBd(); for (const k in DONUTS) loadDn(k); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
   fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
@@ -448,7 +535,7 @@ async function main() {
       const s = await (await fetch(u, { signal: AbortSignal.timeout(40000) })).json();
       if (mine !== gen) return;
       if (!s || !s.ok) throw new Error((s && s.error) || "no numbers");
-      last = s; loadBd(); loadTop(); for (const k in DONUTS) loadDn(k);
+      last = s; loadBd(); loadCmp(); loadTop(); for (const k in DONUTS) loadDn(k);
       say("The last " + s.days + " days, from Google Analytics (cached 10 minutes).");
     } catch (e) { if (mine === gen) say("Could not read the numbers: " + e.message, true); }
   }
