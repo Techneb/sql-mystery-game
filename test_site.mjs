@@ -1470,6 +1470,7 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.ok(svg.includes('data-k="Players who opened a chapter" data-v="25\tmobile\tc2\n56%\tof the total"'), "tooltip: metric, segment, value, share of the total");
   assert.ok(svg.includes('text-anchor="middle">132</text>') && svg.includes(">Engaged</text>") && svg.includes(">Count</text>"), "totals on top, short names below, the axis titled");
   assert.equal((svg.match(/class="val"/g) || []).length, 6, "one total per group");
+  assert.ok(svg.includes(">Visitors</text>") && /y="234"[^>]*>Visitors</.test(svg) && /y="246"[^>]*>Opened</.test(svg) && monitor.groupSvg(st, 1200).includes('height="240"'), "narrow groups: names on two staggered lines");
   const bars = [...svg.matchAll(/<path class="seg c\d"[^>]* d="M([\d.]+),([\d.]+)/g)];
   assert.ok(bars.every(m => Math.abs(Number(m[2]) - 216) < 0.2), "every bar stands on the baseline (240 - 24)");
   const xs = bars.slice(0, 2).map(m => Number(m[1]));
@@ -1568,7 +1569,17 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const h = monitor.handbookHtml(390, Object.fromEntries(Object.entries(monitor.PANELS.handbook).map(([k, f]) => [k, { res: f(7, "ran").map(() => empty) }])), { total: empty }, "ran");
   assert.ok(!bad.test(h) && h.includes('data-k="20. Word of mouth"') && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
   assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && h.includes(">Readers who ran an exercise</text>"), "the handbook's breakdowns and Count");
-  assert.equal((h.match(/class="slice empty"/g) || []).length, 3, "pages, level and outcome donuts: empty rings");
+  assert.equal((h.match(/class="slice empty"/g) || []).length, 5, "pages, devices, channels, level and outcome donuts: empty rings");
+  // Global's layout on /learn/: the countries map, then PAGES, devices and channels on one row, all following the Count
+  assert.ok(h.indexOf("USERS PER DAY") < h.indexOf("COUNTRIES (TOP 10)") && h.indexOf("COUNTRIES (TOP 10)") < h.indexOf('<div class="donuts three"><div>') &&
+    h.indexOf('<div class="donuts three"><div>') < h.indexOf(">PAGES<") && h.indexOf("CHANNELS") < h.indexOf("EXERCISES"), "users, countries, the three donuts, then the exercises");
+  assert.ok(h.includes("Counts the users who ran an exercise: a person on two devices"), "the donuts' overlap note follows the Count");
+  for (const k of ["countries", "devices", "channels"]) {
+    assert.ok(monitor.COUNTED.includes(k), k + " follows the Count");
+    assert.deepEqual(monitor.PANELS.handbook[k](7, "ran")[0].filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
+  }
+  const hc = monitor.handbookHtml(390, { countries: { res: [{ rows: [["France", 4], ["Spain", 3], ["Italy", 1]] }] }, devices: { res: [{ rows: [["mobile", 3]], totals: [2] }] } }, { total: empty }, "visitors", null, 5);
+  assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && hc.includes(">2</text>") && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
   assert.ok(monitor.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
   // the leave block reads GA's averages as they come, labelled as averages, no dot where nobody left
   const leave = monitor.leaveHtml([{ rows: [["2", 7, 95.25, 4.5], ["(not set)", 1, 1, 1]] }], 640);

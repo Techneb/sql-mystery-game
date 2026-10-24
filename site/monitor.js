@@ -173,11 +173,11 @@ export const countriesRequest = (days, m) => countRequest(days, ["country"], m);
 export const countriesFromStats = (n, m) => n === 10 && metricOf(m) === COUNT_METRICS.visitors;
 export const countriesFrom = (res, n) => (res.rows || []).slice(0, n || Infinity).map(([country, users]) => ({ country, users }));
 const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
-// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list; m the page's Count.
+// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list (s null: always top.rows); m the page's Count.
 export function countriesSection(s, world, top = {}, m = "visitors") {
   const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
   const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
-  if (countriesFromStats(n, m)) return head + show(s.countries || []);
+  if (s && countriesFromStats(n, m)) return head + show(s.countries || []);
   if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
   if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
   return head + show(top.rows);
@@ -398,9 +398,10 @@ export function stackData(byMetric, n = 5) {
 // side in --c1..--c6, GA's total once centred over the group; each bar its own tooltip (metric, segment, value, share
 // of the metric's total).
 export function groupSvg(st, w = 640) {
-  const H = 240, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
+  // groups too narrow for their names (390 px): every other name drops to a second line under the axis
+  const L = 40, R = 16, T = 22, pw = Math.max(1, w - L - R), gw = pw / st.bars.length, two = gw < 64, B = two ? 36 : 24, H = 216 + B, ph = H - T - B;
   const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.total, ...b.values)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
-  const gw = pw / st.bars.length, n = Math.max(1, st.segs.length), inner = Math.min(gw * 0.8, n * 18), gap = inner / n > 4 ? 1 : 0, bw = (inner - gap * (n - 1)) / n;
+  const n = Math.max(1, st.segs.length), inner = Math.min(gw * 0.8, n * 18), gap = inner / n > 4 ? 1 : 0, bw = (inner - gap * (n - 1)) / n;
   return '<svg class="chart stack-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Count metrics compared">' +
     yAxis(tk, y, L, L + pw, compact, "Count") +
     st.bars.map((b, i) => {
@@ -408,7 +409,7 @@ export function groupSvg(st, w = 640) {
       const bars = b.values.map((v, j) => !v ? "" : '<path class="seg c' + (j + 1) + '"' + tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.total), "of the total"]]) +
         ' d="' + barPath(r1(x0 + j * (bw + gap)), y(v), r1(bw), r1(Math.max(1, T + ph - y(v)))) + '"/>').join("");
       return bars + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.total, ...b.values)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
-        '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(d.short) + "</text>";
+        '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6 - (two && i % 2 === 0 ? 12 : 0)) + '" text-anchor="middle">' + esc(d.short) + "</text>";
     }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
 }
 // cmp: {dim, res: {m: res} (null while reading), error}.
@@ -550,7 +551,7 @@ export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
 // in COUNTED follow the Count (reloaded when it changes); the others count what their events say.
-export const COUNTED = ["pages"];
+export const COUNTED = ["pages", "countries", "devices", "channels"];
 export const PANELS = {
   global: {
     pages: (d, m) => sectionRequests(d, m),
@@ -568,6 +569,10 @@ export const PANELS = {
   },
   handbook: {
     pages: (d, m) => [scoped(countRequest(d, ["pageTitle"], m), LEARN)],
+    // as on Global, on the /learn/ pages: every country (the Top select slices it), devices, channels
+    countries: (d, m) => [scoped(countriesRequest(d, m), LEARN)],
+    devices: (d, m) => [scoped(donutRequest(d, "devices", m), LEARN)],
+    channels: (d, m) => [scoped(donutRequest(d, "channels", m), LEARN)],
     exercises: d => [ev(d, ["customEvent:exercise"], ["totalUsers"], { eventName: ["exercise_run"] }),
       ev(d, ["customEvent:exercise", "customEvent:outcome"], ["totalUsers"], { eventName: ["exercise_run"] }),
       ev(d, ["customEvent:exercise"], ["totalUsers", "averageCustomEvent:runs"], { eventName: ["exercise_solve"] })],
@@ -699,9 +704,15 @@ export function tryItHtml(res, w) {
   return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "clicks"]] })), [["users", "c5"]], w, compact, "Try it links per exercise") +
     raw("try-it", tableHtml(["Exercise", "Users", "Clicks"], rows.map(r => [r.label, r.values[0], r.ev])));
 }
-export function handbookHtml(w, P = {}, bd, m) {
+// Global's layout on the /learn/ pages: users per day, the countries map, then PAGES, devices and channels as three
+// donuts on one row, all following the Count. world: the map outline; n: the countries' Top.
+const first = p => p && { res: p.res && p.res[0], error: p.error };
+export function handbookHtml(w, P = {}, bd, m, world = null, n = 10) {
+  const c = P.countries || {};
   return usersSection(null, w, bd, m, VIEW_BREAKDOWNS.handbook) +
-    panel("PAGES", P.pages, res => handbookPagesHtml(res[0], m)) +
+    countriesSection(null, world, { n, rows: c.res ? countriesFrom(c.res[0], n) : null, error: c.error }, m) +
+    '<div class="donuts three"><div>' + panel("PAGES", P.pages, res => handbookPagesHtml(res[0], m)) + "</div>" +
+    Object.keys(DONUTS).map(k => "<div>" + donutSection(k, first(P[k]), m) + "</div>").join("") + "</div>" +
     panel("EXERCISES", P.exercises, res => exercisesHtml(res, w)) +
     (P.choices && P.choices.res ? choicesHtml(P.choices.res) : panel("LEVEL CHOICE", P.choices, () => "")) +
     panel("QUERY FAILURES BY RULE", P.fails, res => failsHtml(res, w, "Exercise", "exercise-failures")) +
@@ -777,7 +788,7 @@ async function main() {
     wide = $("stats").clientWidth;
     if (!last && view === "global") return;
     const focus = document.activeElement && document.activeElement.id, w = Math.max(280, wide);
-    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m)
+    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m, world, top.n)
       : statsHtml(last, w, world, { m, bd, cmp, top, dn, pages: P.pages });
     if (focus && $(focus)) $(focus).focus();
   };
@@ -835,7 +846,7 @@ async function main() {
   $("stats").addEventListener("change", e => {
     if (e.target.id === "stack-dim") { cmp.dim = e.target.value; loadCmp(); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
-    if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(); }
+    if (e.target.id === "top-n") { top.n = Number(e.target.value); if (view === "global") loadTop(); else draw(); }
   });
   $("count").addEventListener("change", e => {
     m = e.target.value;
@@ -845,7 +856,7 @@ async function main() {
     else if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
-  if (view === "global") fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
+  if (view !== "game") fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
   async function load(d) {
     const mine = ++gen;
