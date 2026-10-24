@@ -66,6 +66,8 @@ export function deskLinks(board) {
 }
 
 export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);
+// A GA value as text: a missing one (null, undefined, empty) reads "(empty)", never "null".
+export const gaText = v => (v == null || v === "" ? "(empty)" : String(v));
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 
 // Rows are a season's backend rows (doGet ?season=<id>: timestamp, event, team, chapter, wrong, queries, elapsedMs...);

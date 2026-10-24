@@ -1432,3 +1432,33 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.ok(monitor.compareSection({ error: "<i>x" }, 390).includes("&#60;i&#62;x"));
   for (const d of Object.keys(monitor.STACKS)) assert.ok(fs.readFileSync("apps_script.gs", "utf8").match(/var REPORT_DIMS = [^;]*/)[0].includes('"' + d + '"'), d);
 });
+
+test("monitor countries follow the Count: ?stats only for Visitors top 10, units, labels and the overlap note", () => {
+  assert.deepEqual(monitor.countriesRequest(30, "solved"), { days: 30, dimensions: ["country"], metrics: ["totalUsers"], filters: { eventName: ["chapter_solve"] } });
+  assert.deepEqual(monitor.countriesRequest(7, "sessions"), { days: 7, dimensions: ["country"], metrics: ["sessions"] });
+  assert.ok(monitor.countriesFromStats(10, "visitors") && monitor.countriesFromStats(10) && !monitor.countriesFromStats(10, "sessions") && !monitor.countriesFromStats(5, "visitors"));
+  const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
+  const s = { users: [], chapters: [], countries: [{ country: "France", users: 3 }] };
+  const vis = monitor.countriesSection(s, world, { n: 10 }, "visitors");
+  assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("two countries"), "Visitors from ?stats");
+  assert.ok(monitor.countriesSection(s, world, { n: 10 }, "sessions").includes("Reading the countries"), "another Count reads ?report= even at 10");
+  const ses = monitor.countriesSection(s, world, { n: 10, rows: monitor.countriesFrom({ rows: [["France", 12], ["Spain", 4]] }, 10) }, "sessions");
+  assert.ok(ses.includes("12 sessions") && ses.includes("<th>Sessions</th>") && ses.includes('aria-label="Sessions by country"') && !ses.includes(" users"), "units follow");
+  assert.ok(ses.includes(monitor.overlapNote("two countries", "sessions").slice(0, 30)) && ses.includes("one person&#39;s sessions"), "the donuts' note");
+  assert.ok(monitor.statsHtml(s, 390, world, { m: "opened", top: { n: 10 } }).includes("Reading the countries"), "statsHtml passes the Count");
+});
+
+test("a missing GA value reads (empty), never null or undefined", () => {
+  const bad = /\bnull\b|\bundefined\b/;
+  const map = monitor.mapHtml([{ country: null, users: 2 }, { country: undefined, users: 1 }], null);
+  assert.ok(map.includes("(empty)") && !bad.test(map), "map raw data");
+  const dn = monitor.donutSection("devices", { res: { rows: [[null, 3], ["mobile", 1]] } });
+  assert.ok(dn.includes("(empty)") && !bad.test(dn), "donut");
+  const st = monitor.compareSection({ dim: "country", res: { visitors: { rows: [[null, 2]] } } }, 390);
+  assert.ok(st.includes("(empty)") && !bad.test(st), "stacked bars");
+  assert.equal(monitor.pivotSeries([["20261021", null, 2]]).series[0].label, "(empty)");
+  const res = { dimensions: ["date", "country"], metrics: ["activeUsers"], rowCount: 1, totals: null, rows: [["20261021", null, null]] };
+  const pv = explore.pivotHtml(res);
+  assert.ok(pv.includes("(empty)") && !bad.test(pv), "pivot");
+  assert.ok(!bad.test(explore.pivotCsv(res)), "CSV");
+});

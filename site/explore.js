@@ -2,7 +2,7 @@
 // and filters, read from the Apps Script's ?report=<json>&key=<passphrase> (apps_script.gs report_, the same whitelist).
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
-import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, reportUrl } from "./shared.js";
+import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 // The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
 export { DIMENSIONS, reportUrl };
@@ -27,8 +27,8 @@ export function buildRequest(s) {
 export const valuesRequest = (s, dim) => buildRequest({ ...s, dims: [dim], metrics: ["activeUsers"], filters: {} });
 
 export const label = (name, dict) => dict[name] || name;
-const cell = (name, v) => (name === "date" ? String(v).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3") : String(v));
-export const fmtNum = n => (Number.isInteger(n) ? n.toLocaleString("en-GB") : Number(n).toFixed(1));
+const cell = (name, v) => (name === "date" ? gaText(v).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3") : gaText(v));
+export const fmtNum = n => (n == null ? "(empty)" : Number.isInteger(n) ? n.toLocaleString("en-GB") : Number(n).toFixed(1));
 
 // Sort a copy of res.rows by column i (dimensions as text, metrics as numbers).
 export function sortRows(res, col, desc) {
@@ -52,7 +52,7 @@ export function pivotHtml(res, sort = { col: res.dimensions.length, desc: true }
   return '<table class="detail stats"><thead><tr>' + th + "</tr></thead><tbody>" + body + "</tbody>" + foot + "</table>" + more;
 }
 
-const csvCell = v => (/[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v));
+const csvCell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
 export function pivotCsv(res, sort) {
   const heads = res.dimensions.map(d => label(d, DIMENSIONS)).concat(res.metrics.map(m => label(m, METRICS)));
   const rows = sort ? sortRows(res, sort.col, sort.desc) : res.rows;

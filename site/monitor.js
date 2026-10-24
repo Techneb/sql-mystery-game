@@ -2,7 +2,7 @@
 // of countries, devices and channels, read from the Apps Script's ?stats=<days>&key=<passphrase> (apps_script.gs
 // stats_), so nobody opens GA. Pure renderers are exported for test_site.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in memory.
-import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, reportUrl } from "./shared.js";
+import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 export const DAYS = [7, 30, 90];
 export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
@@ -91,7 +91,7 @@ export function pivotSeries(rows, totalDates = [], n = TOP) {
   }
   const ds = [...dates].sort(), sum = m => [...m.values()].reduce((a, b) => a + b, 0);
   const top = [...by].sort((a, b) => sum(b[1]) - sum(a[1]) || String(a[0]).localeCompare(String(b[0]))).slice(0, n);
-  return { dates: ds, count: by.size, series: top.map(([label, m], j) => ({ label: String(label), values: ds.map(d => m.get(d) || 0), cls: "c" + (j + 1) })) };
+  return { dates: ds, count: by.size, series: top.map(([label, m], j) => ({ label: gaText(label), values: ds.map(d => m.get(d) || 0), cls: "c" + (j + 1) })) };
 }
 // One day's tooltip rows, the largest first: [value, label, key class].
 export const dayTip = (series, i) => series.map(s => [s.values[i], s.label, s.cls]).sort((a, b) => b[0] - a[0]).map(([v, l, c]) => [compact(v), l, c]);
@@ -142,18 +142,21 @@ export function usersSection(s, w, bd = {}, m = "visitors") {
   return head + breakdownHtml(bd.res, total, bd.dim, w, m);
 }
 
-// The countries' N: 10 comes with ?stats; any other is a ?report= on country (GA orders it by users, 0 = all).
+// The countries follow the page's Count: Visitors with N 10 comes with ?stats; anything else is a ?report= on country
+// with the Count's metric (countRequest; GA orders it by that metric, 0 = all).
 export const TOP_COUNTRIES = [5, 10, 20, 50, 0];
-export const countriesRequest = days => ({ days, dimensions: ["country"], metrics: ["activeUsers"] });
+export const countriesRequest = (days, m) => countRequest(days, ["country"], m);
+export const countriesFromStats = (n, m) => n === 10 && metricOf(m) === COUNT_METRICS.visitors;
 export const countriesFrom = (res, n) => (res.rows || []).slice(0, n || Infinity).map(([country, users]) => ({ country, users }));
 const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
-// opts.top: {n, rows, error}; n 10 (or none) uses the ?stats list.
-export function countriesSection(s, world, top = {}) {
+// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list; m the page's Count.
+export function countriesSection(s, world, top = {}, m = "visitors") {
   const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
-  if (n === 10) return head + mapHtml(s.countries || [], world);
+  const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("two countries", m)) + "</p>" : "");
+  if (countriesFromStats(n, m)) return head + show(s.countries || []);
   if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
   if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
-  return head + mapHtml(top.rows, world);
+  return head + show(top.rows);
 }
 
 // One line per chapter: opened, ran 1 / 5 / 20 queries (chapter_queries by count), solved, solved / opened.
@@ -275,7 +278,7 @@ export function donutHtml(items, what, aria) {
     '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>";
 }
 
-// The page's one Count select (beside the period buttons) drives users per day and both donuts, each read from ?report=
+// The page's one Count select (beside the period buttons) drives users per day, the countries and both donuts, each read from ?report=
 // (the backend allows eventName as a filter); the comparison chart draws all five. A user metric counts a person in
 // every slice they fall in, so the slices may add up to more than the people. short: the comparison's x labels.
 export const COUNT_METRICS = {
@@ -296,8 +299,10 @@ export function countRequest(days, dimensions, m) {
   return { days, dimensions, metrics: [d.metric], ...(d.event ? { filters: { eventName: [d.event] } } : {}) };
 }
 export const donutRequest = (days, kind, m) => countRequest(days, [DONUTS[kind].dim], m);
-export const donutNote = (kind, m) => {
-  const d = metricOf(m), many = DONUTS[kind].many;
+export const donutNote = (kind, m) => overlapNote(DONUTS[kind].many, m);
+// What a Count counts and how one person can fall in several slices (many: "two devices").
+export const overlapNote = (many, m) => {
+  const d = metricOf(m);
   return d.unit === "sessions"
     ? d.note + ": each session sits in one slice, but one person's sessions can fall in several (" + many + ")."
     : d.note + ": a person on " + many + " counts in both slices, so the slices may add up to more than the people.";
@@ -308,7 +313,7 @@ export function donutSection(kind, sel = {}, m = "visitors") {
   const head = '<div class="label-row"><span class="label">' + k.label + "</span></div>";
   if (sel.error) return head + '<p class="status bad">Google Analytics said: ' + esc(sel.error) + "</p>";
   if (!sel.res) return head + '<p class="muted">Reading the ' + kind + "...</p>";
-  const list = (sel.res.rows || []).map(([label, v]) => ({ label, value: Number(v) || 0 }));
+  const list = (sel.res.rows || []).map(([label, v]) => ({ label: gaText(label), value: Number(v) || 0 }));
   if (!list.length) return head + NONE;
   return head + donutHtml(list, d.unit, d.label + " by " + k.head.toLowerCase()) + '<p class="muted">' + esc(donutNote(kind, m)) + "</p>" +
     raw(barTable(k.head, list.map(i => [i.label, i.value]), d.label));
@@ -321,7 +326,7 @@ export const compareRequests = (days, dim) => Object.keys(COUNT_METRICS).map(m =
 // byMetric {m: res}: the segments ranked by their value summed over every bar (one order and colour for all bars;
 // past n + 1 the rest fold into Other, as on the donuts), each bar's values in that order.
 export function stackData(byMetric, n = 5) {
-  const per = Object.keys(COUNT_METRICS).map(m => [m, new Map(((byMetric[m] || {}).rows || []).map(([l, v]) => [String(l), Number(v) || 0]))]);
+  const per = Object.keys(COUNT_METRICS).map(m => [m, new Map(((byMetric[m] || {}).rows || []).map(([l, v]) => [gaText(l), Number(v) || 0]))]);
   const sum = new Map();
   for (const [, mp] of per) for (const [l, v] of mp) sum.set(l, (sum.get(l) || 0) + v);
   const ranked = [...sum].filter(e => e[1] > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(e => e[0]);
@@ -378,18 +383,18 @@ MAP.H = Math.round((MAP.W * (MAP.N - MAP.S)) / 360);
 export const project = (lon, lat) => [r1(((lon + 180) * MAP.W) / 360), r1(((MAP.N - lat) * MAP.H) / (MAP.N - MAP.S))];
 export const countryKey = s => String(s).normalize("NFD").replace(/\p{M}/gu, "").replace(/\p{Pi}|\p{Pf}/gu, "'");
 export const bubbleR = (v, max, rMax = 40) => (max > 0 && v > 0 ? r1(Math.max(3, rMax * Math.sqrt(v / max))) : 0);
-export function mapHtml(countries, world) {
-  const list = countries.map(c => ({ label: c.country, value: Number(c.users) || 0 }));
+export function mapHtml(countries, world, m) {
+  const d = metricOf(m), list = countries.map(c => ({ label: gaText(c.country), value: Number(c.users) || 0 }));
   if (!list.length) return NONE;
   const max = Math.max(...list.map(c => c.value));
   const placed = [], off = [];
   for (const c of list) { const ll = world && world.centroids[countryKey(c.label)]; (ll && c.value > 0 ? placed : off).push({ ...c, xy: ll && project(...ll) }); }
-  const svg = !world ? "" : '<svg class="chart map" viewBox="0 0 ' + MAP.W + " " + MAP.H + '" role="img" aria-label="Users by country">' +
+  const svg = !world ? "" : '<svg class="chart map" viewBox="0 0 ' + MAP.W + " " + MAP.H + '" role="img" aria-label="' + esc(d.label) + ' by country">' +
     '<path class="land" d="' + world.land + '"/>' +
-    placed.sort((a, b) => b.value - a.value).map(c => { const r = bubbleR(c.value, max); return '<g class="bubble"' + tipAttrs(c.label, [[c.value + " users", ""]]) +
+    placed.sort((a, b) => b.value - a.value).map(c => { const r = bubbleR(c.value, max); return '<g class="bubble"' + tipAttrs(c.label, [[c.value + " " + d.unit, ""]]) +
       '><circle class="hitzone" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + Math.max(r, 18) + '"/><circle class="b" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + r + '"/></g>'; }).join("") + "</svg>";
   return svg + (world && off.length ? '<p class="muted">Not on the map: ' + off.map(c => esc(c.label) + " (" + c.value + ")").join(", ") + ".</p>" : "") +
-    raw(barTable("Country", list.map(c => [c.label, c.value])));
+    raw(barTable("Country", list.map(c => [c.label, c.value]), d.label));
 }
 
 // opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
@@ -398,7 +403,7 @@ export function statsHtml(s, w, world, opts = {}) {
   return usersSection(s, w, opts.bd, opts.m) + compareSection(opts.cmp, w) +
     '<div class="label">CHAPTER FUNNEL</div>' + funnelHtml(s.chapters || [], w) +
     '<div class="label">SOLVE RATE</div>' + solveRateHtml(s.chapters || [], w) +
-    countriesSection(s, world, opts.top) +
+    countriesSection(s, world, opts.top, opts.m) +
     '<div class="donuts">' + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
 }
 
@@ -458,7 +463,7 @@ async function main() {
   const bd = { dim: "", total: null, res: null, error: null }, top = { n: 10, rows: null, error: null };
   const cmp = { dim: "deviceCategory", res: null, error: null };
   try { const d = localStorage.getItem(BD_KEY) || ""; if (d in BREAKDOWNS) bd.dim = d; } catch {}
-  // The page's Count (beside the period buttons), remembered per browser; it drives users per day and both donuts.
+  // The page's Count (beside the period buttons), remembered per browser; it drives users per day, the countries and both donuts.
   let m = "visitors";
   try { const c = localStorage.getItem(COUNT_KEY); if (c in COUNT_METRICS) m = c; } catch {}
   $("count").innerHTML = optionsHtml(Object.entries(COUNT_METRICS).map(([v, o]) => [v, o.label]), m);
@@ -498,9 +503,9 @@ async function main() {
   };
   const loadTop = async () => {
     top.rows = null; top.error = null; draw();
-    if (top.n === 10) return;
-    const want = days + "|" + top.n, still = () => want === days + "|" + top.n;
-    try { const r = await report(countriesRequest(days)); if (still()) top.rows = countriesFrom(r, top.n); }
+    if (countriesFromStats(top.n, m)) return;
+    const want = days + "|" + top.n + "|" + m, still = () => want === days + "|" + top.n + "|" + m;
+    try { const r = await report(countriesRequest(days, m)); if (still()) top.rows = countriesFrom(r, top.n); }
     catch (e) { if (still()) top.error = e.message; }
     if (still()) draw();
   };
@@ -519,7 +524,7 @@ async function main() {
   $("count").addEventListener("change", e => {
     m = e.target.value;
     try { localStorage.setItem(COUNT_KEY, m); } catch {}
-    if (last) { loadBd(); for (const k in DONUTS) loadDn(k); }
+    if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
   fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
