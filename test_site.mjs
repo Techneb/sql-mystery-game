@@ -513,8 +513,8 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
   assert.deepEqual([...readingOrder].sort(), learnPages, "the index's table of contents lists every page once");
   const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
   const foot = one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer");
-  const links = (h) => [...h.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)].map((m) => m[2]);
-  assert.deepEqual(links(nav), ["Game", "The Clerk's Handbook"], "the header: the game and the handbook only (owner, 2026-10-24)");
+  const links = (h) => [...h.matchAll(/<a href="([^"]+)"(?: title="[^"]*")?>([^<]*)<\/a>/g)].map((m) => m[2]);
+  assert.deepEqual(links(nav), ["The Ritz Affair", "The Clerk's Handbook"], "the header: the game and the handbook only (owner, 2026-10-24)");
   assert.deepEqual(links(foot), ["Privacy notice", "The Clerk's Desk", "AlephB", "Contact"], "the footer: the rest, the desk included (Statistics has an id)");
   const admin = fs.readFileSync("site/admin.html", "utf8");
   assert.deepEqual(links(one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav")), links(nav), "the admin page's header");
