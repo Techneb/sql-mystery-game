@@ -2,7 +2,7 @@
 // and filters, read from the Apps Script's ?report=<json>&key=<passphrase> (apps_script.gs report_, the same whitelist).
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
-import { BOARD_KEY, DIMENSIONS, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 // The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
 export { DIMENSIONS, reportUrl };
@@ -110,10 +110,9 @@ const $ = id => document.getElementById(id);
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
 async function main() {
-  let board = new URLSearchParams(location.search).get("board") || "";
-  try { board ||= localStorage.getItem(BOARD_KEY) || ""; } catch {}
+  let { board, stored } = deskBoard();
   try { new URL(board); } catch { board = ""; }
-  deskLinks(board);
+  deskLinks(board, stored);
   if (!board) { $("nob").hidden = false; return; }
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
