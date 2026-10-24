@@ -9,7 +9,9 @@ export { DIMENSIONS, reportUrl };
 export const METRICS = {
   activeUsers: "Active users", totalUsers: "Total users", newUsers: "New users", sessions: "Sessions",
   engagedSessions: "Engaged sessions", eventCount: "Events", userEngagementDuration: "Engagement time (s)",
-  averageSessionDuration: "Avg session (s)", screenPageViews: "Page views",
+  averageSessionDuration: "Avg session (s)", screenPageViews: "Page views", "customEvent:seconds": "Seconds (sum)",
+  "averageCustomEvent:seconds": "Seconds (avg per event)", "customEvent:queries": "Queries (sum)", "averageCustomEvent:queries": "Queries (avg per event)",
+  "customEvent:runs": "Runs (sum)", "averageCustomEvent:runs": "Runs (avg per event)", "customEvent:wrong": "Wrong (sum)", "averageCustomEvent:wrong": "Wrong (avg per event)",
 };
 export const MAX_DIMS = 9, MAX_METRICS = 10;
 

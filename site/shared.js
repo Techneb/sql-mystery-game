@@ -41,7 +41,7 @@ export function fmtTime(ms) {
 
 // Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
 // The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
-// The Clerk's Desk pages (admin.html, monitor.html): the board URL saved under this key, and the #passgate dialog
+// The Clerk's Desk pages (admin.html, the monitor pages, explore.html): the board URL saved under this key, and the #passgate dialog
 // asked again until the passphrase matches; resolves the passphrase (kept in memory only), or "" on Cancel.
 export const BOARD_KEY = "ritz.admin.board";
 export function deskPassphrase(d) {
@@ -59,7 +59,7 @@ export function deskPassphrase(d) {
   });
 }
 
-// The desk's menu row (admin.html, monitor.html, explore.html): every other page's link carries the board as ?board=.
+// The desk's menu row (admin.html, monitor.html, monitor-game.html, monitor-handbook.html, explore.html): every other page's link carries the board as ?board=.
 export function deskLinks(board) {
   for (const a of document.querySelectorAll(".learn-menu a"))
     a.href = a.getAttribute("href").split("?")[0] + (board ? "?board=" + encodeURIComponent(board) : "");
@@ -154,7 +154,9 @@ export const DIMENSIONS = {
   date: "Date", eventName: "Event", "customEvent:chapter": "Chapter", "customEvent:count": "Query milestone",
   "customEvent:mode": "Mode", "customEvent:part": "Part finished", "customEvent:name": "Badge", deviceCategory: "Device",
   operatingSystem: "Operating system", browser: "Browser", country: "Country", city: "City", language: "Language",
-  sessionDefaultChannelGroup: "Channel", sessionSource: "Source", newVsReturning: "New or returning",
+  sessionDefaultChannelGroup: "Channel", sessionSource: "Source", newVsReturning: "New or returning", pagePath: "Page path",
+  pageTitle: "Page title", "customEvent:kind": "Failure kind", "customEvent:rule": "Grammar rule", "customEvent:n": "Wrong answer #",
+  "customEvent:feature": "Feature", "customEvent:exercise": "Exercise", "customEvent:level": "Level", "customEvent:outcome": "Run outcome",
 };
 export function reportUrl(board, req, key) {
   const u = new URL(board);
