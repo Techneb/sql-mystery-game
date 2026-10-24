@@ -722,10 +722,16 @@ Everything is deployed (2026-10-20, 9f4e671).
   every Raw data toggle, one common Count select (users per day, countries, donuts) and a "Count metrics compared"
   stacked bar chart. Shipped the same day (f803e39): Global's PAGES as a donut and TOP PAGES removed; Game and
   Handbook redrawn in Global's style (Count select and users-per-day line with Breakdown at the top, donuts for splits,
-  bars for comparisons). In progress (owner, 2026-10-24): desk links without `?board=` (the board URL kept in
-  localStorage and stripped from the address bar), the passphrase kept for the tab's session (sessionStorage) instead
-  of asked on every page, the current page red in the desk menu, "SQL error" for an empty rule in QUERY FAILURES, and
-  Page views (`screenPageViews`) in the Count select.
+  bars for comparisons). Shipped later the same day (owner): desk links without `?board=` (the board URL kept in
+  localStorage and stripped from the address bar), the passphrase kept for the tab's session (sessionStorage), the
+  current page red in the desk menu, "SQL error" for an empty rule in QUERY FAILURES, Page views (`screenPageViews`) in
+  the Count select, FEATURE USE sorted by users, desk pages up to 1600 px wide, Global's PAGES / devices / channels
+  donuts on one row, COUNT METRICS COMPARED as grouped bars (Channel by default, GA's total over each group), Handbook
+  laid out like Global on /learn/ (countries map, three donuts in a row), Export CSV inside the Raw data toggle, and
+  the desk pages in AlephB's fonts (Nunito / Nunito Sans, self-hosted in `site/fonts/`; the game, Handbook,
+  leaderboard and privacy notice keep the 1912 type, owner). Site chrome: the header carries only Game . The Clerk's
+  Handbook; The Clerk's Desk moved to every footer. Open: the owner's look on a phone (a 2 px overflow was seen on
+  a test copy of the desk's controls row at 390 px).
 - Ad networks (2026-10-24): Criteo not now (no published minimum, but comparable networks start at 10k-100k page
   views a month; this site gets a few thousand; header bidding and heavier consent). Revisit Ad Manager + Prebid only
   at steady tens of thousands of page views a month. Real ad clicks cannot be seen from the page (Google's iframe;
