@@ -210,6 +210,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 .part2 h2 { font: 900 30px/1.15 "Playfair Display", serif; margin: 10px 0 14px; padding-top: 10px; border-top: 3px double var(--ink); }
 .part2 p { text-align: left; margin: 0 0 16px; }
 .part2 button, .part2 a.btn { padding: 8px 22px; }
+#names-input { width: 100%; box-sizing: border-box; margin-top: 6px; }
 .part2 .closed-time { text-align: center; font: 700 15px "Playfair Display", serif; letter-spacing: 1px; }
 /* a newly met suspect (#newsuspects): the Part II pop-up's frame, the gallery's cards side by side */
 .newsuspects { max-width: min(640px, calc(100vw - 32px)); }

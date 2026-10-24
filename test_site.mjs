@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -1691,4 +1691,30 @@ test("desk type: the five desk pages get Nunito through admin.css; the game, the
     assert.match(h, /fonts\.googleapis\.com\/css2\?family=Playfair\+Display/, f + " still loads the 1912 faces");
   }
   for (const f of ["site/style.css", "site/learn/learn.css"]) assert.doesNotMatch(fs.readFileSync(f, "utf8"), /Nunito/, f + " stays 1912");
+});
+
+test("New investigation asks in the #reset dialog: Cancel first and focused, erasing only on its own value", () => {
+  assert.equal(resetMessage("learn"), "Start a new investigation? Progress, notes and badges are erased.");
+  assert.match(resetMessage("compete"), /^Abandon the season\?.*erased/);
+  const d = fs.readFileSync("site/index.html", "utf8").match(/<dialog id="reset"[^>]*aria-labelledby="reset-title"[^]*?<\/dialog>/);
+  assert.ok(d, "#reset is a labelled native <dialog>");
+  assert.match(d[0], /<button value="" class="quiet" autofocus>Cancel<\/button>\s*<button value="ok">/);
+  const ask = fs.readFileSync("site/admin.html", "utf8").match(/<dialog id="ask"[^]*?<\/dialog>/);
+  assert.match(ask[0], /<button value="" class="quiet" autofocus>Cancel<\/button>\s*<button value="ok">/);
+  // #names: Enter in the field submits the first button, which must be Print
+  assert.match(fs.readFileSync("site/index.html", "utf8"), /<dialog id="names"[^]*?<label for="names-input">[^]*?<\/p>\s*<button value="ok">Print/);
+  // the browser's own boxes survive only as askDialog's fallbacks, and on no other page
+  for (const f of ["site/app.js", "site/admin.js", "site/explore.js", "site/monitor.js", "site/leaderboard.js", "site/learn/exercises.js", "site/learn/handbook.js", "site/learn/theme.js", "site/shared.js", "site/stats.js", "site/qr.js"])
+    for (const m of fs.readFileSync(f, "utf8").matchAll(/^.*\b(confirm|prompt|alert)\([^)].*$/gm))
+      assert.match(m[0], /askDialog\(/, f + ": " + m[0].trim());
+});
+
+test("askDialog resolves with the closing button's value, Escape's stale value cleared, fallback without <dialog>", async () => {
+  const p = { textContent: "" };
+  const d = { returnValue: "ok", querySelector: () => p, showModal() { assert.equal(this.returnValue, ""); this.returnValue = "ok"; this.onclose(); } };
+  assert.equal(await shared.askDialog(d, "Sure?", () => assert.fail("no fallback")), "ok");
+  assert.equal(p.textContent, "Sure?");
+  const esc = { returnValue: "ok", querySelector: () => null, showModal() { this.onclose(); } };
+  assert.equal(await shared.askDialog(esc, "x", () => "no"), "");
+  assert.equal(await shared.askDialog({ querySelector: () => null }, "x", () => "fallback"), "fallback");
 });

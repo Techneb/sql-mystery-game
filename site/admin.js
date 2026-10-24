@@ -3,7 +3,7 @@
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in sessionStorage for the tab (shared.js deskPassphrase) and goes to the backend as `key` (apps_script.gs
 // compares it with ADMIN_KEY).
-import { BOARD_KEY, deskBoard, deskLinks, deskPassphrase, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+import { BOARD_KEY, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
@@ -135,15 +135,22 @@ async function showDetail(id) {
 
 const gameUrl = () => new URL("./", location.href).href;
 
+// #ask: the desk's own question box (Cancel focused, Escape cancels; textContent, so season names stay text)
+async function ask(text, yes) {
+  const d = $("ask");
+  d.querySelector('button[value="ok"]').textContent = yes;
+  return (await askDialog(d, text, () => confirm(text) ? "ok" : "")) === "ok";
+}
+
 async function act(a, id) {
   const s = seasons.find(x => x.id === id);
   if (!s) return;
   if (a === "open") {
     const other = seasons.find(x => x.state === "open" && x.id !== id);
-    if (other && !confirm('"' + other.name + '" is already open. Open "' + s.name + '" as well?')) return;
+    if (other && !await ask('"' + other.name + '" is already open. Open "' + s.name + '" as well?', "Open it too")) return;
     if ((await post({ admin: "open", season: id })).ok) say('"' + s.name + '" is open: every clock is running.');
   } else if (a === "close") {
-    if (!confirm('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.')) return;
+    if (!await ask('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.', "Close the season")) return;
     if ((await post({ admin: "close", season: id })).ok) say('"' + s.name + '" is closed.');
   } else if (a === "copy") {
     const link = studentLink(gameUrl(), id, board);

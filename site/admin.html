@@ -51,7 +51,12 @@
   <p class="gate-msg" aria-live="polite"></p>
   <button value="ok">Unlock</button> <button value="" class="quiet" formnovalidate>Cancel</button>
 </form></dialog>
-<dialog id="qr" class="part2 qr-dialog">
+<dialog id="ask" class="part2" aria-labelledby="ask-title" aria-describedby="ask-msg"><form method="dialog">
+  <div class="label" id="ask-title">THE CLERK'S DESK</div>
+  <p id="ask-msg" class="ask-msg"></p>
+  <button value="" class="quiet" autofocus>Cancel</button> <button value="ok">OK</button>
+</form></dialog>
+<dialog id="qr"class="part2 qr-dialog">
   <div class="label">JOIN THE SEASON</div>
   <h2 class="qr-name"></h2>
   <div class="qr-code"></div>

@@ -47,6 +47,17 @@ export function fmtTime(ms) {
 // a stored one that no longer matches the hash (the passphrase changed) is dropped and the gate asks again.
 export const BOARD_KEY = "ritz.admin.board";
 export const DESK_KEY = "ritz.desk.key";
+// The pages' own question boxes instead of confirm()/prompt(): opens the native <dialog> d (its .ask-msg reads text
+// when given) and resolves with the value of the button that closed it, "" on Cancel or Escape. Where <dialog> cannot
+// open it resolves with fallback(), the browser's own box.
+export function askDialog(d, text, fallback) {
+  if (!d.showModal) return Promise.resolve(fallback());
+  const p = d.querySelector(".ask-msg");
+  if (p && text != null) p.textContent = text;
+  d.returnValue = "";   // Escape keeps the last returnValue: clear it so Escape cancels
+  return new Promise(resolve => { d.onclose = () => resolve(d.returnValue); d.showModal(); });
+}
+
 export async function deskPassphrase(d, store = globalThis.sessionStorage) {
   let kept = "";
   try { kept = store.getItem(DESK_KEY) || ""; } catch {}

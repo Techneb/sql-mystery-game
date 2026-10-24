@@ -1,5 +1,5 @@
 // site/app.js -- The Ritz Affair. ES module: pure functions exported for node --test, boot() only in a browser.
-import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime, resultsLink } from "./shared.js";
+import { normalise, sha256, teamKey, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 export { normalise, sha256, teamKey, STOP_WORDS, fmtTime, resultsLink, escapeHtml } from "./shared.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
 export { track, trackOnce, useFeature, firstTime, queryFail, QUERY_FAILS, initConsent, initAds, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS } from "./stats.js";
@@ -22,6 +22,11 @@ export function currentChapter(state, chapters) {
   return chapters.find(c => c.n === Math.min(next, cap));
 }
 export function part1Done(state) { return state.solved.includes(8); }
+const NAMES_ASK = "Names for the certificate (both of you):";   // #names' label, and prompt()'s where <dialog> cannot open
+export function resetMessage(mode) {   // the New investigation question (#reset, or confirm() as the fallback)
+  return mode === "compete" ? "Abandon the season? The clock, notes and badges are erased; rows already on the leaderboard stay."
+                            : "Start a new investigation? Progress, notes and badges are erased.";
+}
 export function awaitingCode(state) { return state.mode !== "compete" && part1Done(state) && !state.part2; }
 export function competeDone(state) { return state.mode === "compete" && part1Done(state); }
 
@@ -1896,13 +1901,19 @@ async function boot() {
   $("btn-suspects").onclick = () => { useFeature("suspects_open", { chapter: curChapter() }); renderSuspects(); $("suspects").hidden = false; award(detectBadges(ctx({ event: "suspects" }), state.badges)); };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
-  $("btn-reset").onclick = () => {
-    const msg = state.mode === "compete" ? "Abandon the season? The clock, notes and badges are erased; rows already on the leaderboard stay."
-                                         : "Start a new investigation? Progress, notes and badges are erased.";
-    if (confirm(msg)) { state = freshState(); save(state); location.reload(); }
+  // #reset and #names: native <dialog>s in the game's look (askDialog); the browser's own box where they cannot open
+  $("btn-reset").onclick = async () => {
+    const msg = resetMessage(state.mode);
+    if (await askDialog($("reset"), msg, () => confirm(msg) ? "ok" : "") === "ok") { state = freshState(); save(state); location.reload(); }
   };
-  $("btn-print").onclick = () => {
-    if (!state.names) { state.names = prompt("Names for the certificate (both of you):") || ""; save(state); }
+  $("btn-print").onclick = async () => {
+    if (!state.names) {
+      const d = $("names"), input = d.querySelector("input");
+      input.value = "";
+      const v = await askDialog(d, null, () => prompt(NAMES_ASK) || "");
+      state.names = d.showModal ? (v === "ok" ? input.value.trim() : "") : v;
+      save(state);
+    }
     renderCertificate();
     window.print();
   };
