@@ -11,11 +11,13 @@ export const DAYS = [7, 30, 90];
 export const pct = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "-");
 
 // A table whose last column is a CSS bar scaled to the largest value.
-function barTable(head, rows, valHead = "Users") {
+// foot: [label, value] rows (totals) under the bars, without a bar.
+function barTable(head, rows, valHead = "Users", foot = []) {
   const max = Math.max(1, ...rows.map(r => r[1]));
   return '<table class="detail stats"><thead><tr><th>' + esc(head) + "</th><th>" + esc(valHead) + "</th><th></th></tr></thead><tbody>" +
     rows.map(([k, v]) => "<tr><td>" + esc(k) + '</td><td class="num">' + esc(v) + '</td><td class="bar-cell"><span class="bar" style="width:' +
-      Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody></table>";
+      Math.round((100 * v) / max) + '%"></span></td></tr>').join("") + "</tbody>" +
+    (foot.length ? "<tfoot>" + foot.map(([k, v]) => "<tr><td>" + esc(k) + '</td><td class="num">' + esc(v) + "</td><td></td></tr>").join("") + "</tfoot>" : "") + "</table>";
 }
 // Every chart keeps its numbers under it, closed.
 // Raw data under a chart, its Export CSV button inside the toggle, over the table (wireCsv reads the table it holds; owner 2026-10-24).
@@ -166,21 +168,36 @@ export function usersSection(s, w, bd = {}, m = "visitors", keys = VIEW_BREAKDOW
   return head + breakdownHtml(bd.res, total, bd.dim, w, m);
 }
 
-// The countries follow the page's Count: Visitors with N 10 comes with ?stats; anything else is a ?report= on country
-// with the Count's metric (countRequest; GA orders it by that metric, 0 = all).
+// The countries follow the page's Count: one ?report= on country with the Count's metric (countRequest; GA orders it
+// by that metric, 0 = all) gives the bubbles and GA's total over every country; when the Top cuts the list, a second
+// one with the top N as a country filter gives GA's own total for them (a person in two of them counts once).
 export const TOP_COUNTRIES = [5, 10, 20, 50, 0];
-export const countriesRequest = (days, m) => countRequest(days, ["country"], m);
-export const countriesFromStats = (n, m) => n === 10 && metricOf(m) === COUNT_METRICS.visitors;
+export const countriesRequest = (days, m, scope = null) => scoped(countRequest(days, ["country"], m), scope);
 export const countriesFrom = (res, n) => (res.rows || []).slice(0, n || Infinity).map(([country, users]) => ({ country, users }));
+// The top N's total request, or null when the Top keeps every country (GA's total already covers them).
+export const topTotalRequest = (req, res, n) => {
+  const rows = (res && res.rows) || [];
+  return n && rows.length > n ? withFilters({ ...req, dimensions: [] }, { country: rows.slice(0, n).map(r => String(r[0])) }) : null;
+};
+const num = v => Number(v).toLocaleString("en");
+// The line under the label: the top N's total and its share of every country's, both GA's own; sub null while reading.
+export function countriesTotal(res, sub, n, m) {
+  const d = metricOf(m), all = gaTotal(res), count = ((res && res.rows) || []).length;
+  if (!n || count <= n) return (count === 1 ? "The one country" : "All " + count + " countries") + ": " + num(all) + " " + d.unit + ".";
+  if (!sub) return "Top " + n + ": reading GA's total...";
+  const t = gaTotal(sub);
+  return "Top " + n + ": " + num(t) + " " + d.unit + ", " + pct(t, all) + " of " + num(all) + " in all " + count + " countries.";
+}
 const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
-// opts.top: {n, rows, error}; Visitors with n 10 (or none) uses the ?stats list (s null: always top.rows); m the page's Count.
-export function countriesSection(s, world, top = {}, m = "visitors") {
+// top: {n, res, sub, error}: res the country reply (null while reading), sub the top N's total reply; m the page's Count.
+export function countriesSection(world, top = {}, m = "visitors") {
   const n = top.n ?? 10, head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
-  const show = list => mapHtml(list, world, m) + (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
-  if (s && countriesFromStats(n, m)) return head + show(s.countries || []);
   if (top.error) return head + '<p class="status bad">Google Analytics said: ' + esc(top.error) + "</p>";
-  if (!top.rows) return head + '<p class="muted">Reading the countries...</p>';
-  return head + show(top.rows);
+  if (!top.res) return head + '<p class="muted">Reading the countries...</p>';
+  const list = countriesFrom(top.res, n), cut = topTotalRequest({}, top.res, n);
+  const foot = [...(cut && top.sub ? [["Top " + n + " (GA's total)", gaTotal(top.sub)]] : []), ["All countries (GA's total)", gaTotal(top.res)]];
+  return head + '<p>' + esc(countriesTotal(top.res, top.sub, n, m)) + "</p>" + mapHtml(list, world, m, foot) +
+    (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
 }
 
 // One line per chapter: opened, ran 1 / 5 / 20 queries (chapter_queries by count), solved, solved / opened.
@@ -433,7 +450,7 @@ MAP.H = Math.round((MAP.W * (MAP.N - MAP.S)) / 360);
 export const project = (lon, lat) => [r1(((lon + 180) * MAP.W) / 360), r1(((MAP.N - lat) * MAP.H) / (MAP.N - MAP.S))];
 export const countryKey = s => String(s).normalize("NFD").replace(/\p{M}/gu, "").replace(/\p{Pi}|\p{Pf}/gu, "'");
 export const bubbleR = (v, max, rMax = 40) => (max > 0 && v > 0 ? r1(Math.max(3, rMax * Math.sqrt(v / max))) : 0);
-export function mapHtml(countries, world, m) {
+export function mapHtml(countries, world, m, foot = []) {
   const d = metricOf(m), list = countries.map(c => ({ label: gaText(c.country), value: Number(c.users) || 0 }));
   const max = Math.max(...list.map(c => c.value));
   const placed = [], off = [];
@@ -443,7 +460,7 @@ export function mapHtml(countries, world, m) {
     placed.sort((a, b) => b.value - a.value).map(c => { const r = bubbleR(c.value, max); return '<g class="bubble"' + tipAttrs(c.label, [[c.value + " " + d.unit, ""]]) +
       '><circle class="hitzone" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + Math.max(r, 18) + '"/><circle class="b" cx="' + c.xy[0] + '" cy="' + c.xy[1] + '" r="' + r + '"/></g>'; }).join("") + "</svg>";
   return svg + (world && off.length ? '<p class="muted">Not on the map: ' + off.map(c => esc(c.label) + " (" + c.value + ")").join(", ") + ".</p>" : "") +
-    raw("countries", barTable("Country", list.map(c => [c.label, c.value]), d.label));
+    raw("countries", barTable("Country", list.map(c => [c.label, c.value]), d.label, foot));
 }
 
 // opts: {m, bd, cmp, top} as usersSection, compareSection and countriesSection take them (m the page's Count),
@@ -451,7 +468,7 @@ export function mapHtml(countries, world, m) {
 // The Global view (monitor.html). opts.pages: a panel state ({res: [replies] | null, error}); PAGES, devices and channels share one row.
 export function statsHtml(s, w, world, opts = {}) {
   return usersSection(s, w, opts.bd, opts.m) + compareSection(opts.cmp, w) +
-    countriesSection(s, world, opts.top, opts.m) +
+    countriesSection(world, opts.top, opts.m) +
     '<div class="donuts three"><div>' + pagesSection(opts.pages, opts.m) + "</div>" + Object.keys(DONUTS).map(k => "<div>" + donutSection(k, (opts.dn || {})[k], opts.m) + "</div>").join("") + "</div>";
 }
 
@@ -551,7 +568,7 @@ export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
 // in COUNTED follow the Count (reloaded when it changes); the others count what their events say.
-export const COUNTED = ["pages", "countries", "devices", "channels"];
+export const COUNTED = ["pages", "devices", "channels"];
 export const PANELS = {
   global: {
     pages: (d, m) => sectionRequests(d, m),
@@ -569,8 +586,7 @@ export const PANELS = {
   },
   handbook: {
     pages: (d, m) => [scoped(countRequest(d, ["pageTitle"], m), LEARN)],
-    // as on Global, on the /learn/ pages: every country (the Top select slices it), devices, channels
-    countries: (d, m) => [scoped(countriesRequest(d, m), LEARN)],
+    // as on Global, on the /learn/ pages: devices, channels (the countries load as on Global, scoped)
     devices: (d, m) => [scoped(donutRequest(d, "devices", m), LEARN)],
     channels: (d, m) => [scoped(donutRequest(d, "channels", m), LEARN)],
     exercises: d => [ev(d, ["customEvent:exercise"], ["totalUsers"], { eventName: ["exercise_run"] }),
@@ -705,12 +721,11 @@ export function tryItHtml(res, w) {
     raw("try-it", tableHtml(["Exercise", "Users", "Clicks"], rows.map(r => [r.label, r.values[0], r.ev])));
 }
 // Global's layout on the /learn/ pages: users per day, the countries map, then PAGES, devices and channels as three
-// donuts on one row, all following the Count. world: the map outline; n: the countries' Top.
+// donuts on one row, all following the Count. world: the map outline; top: the countries as countriesSection takes them.
 const first = p => p && { res: p.res && p.res[0], error: p.error };
-export function handbookHtml(w, P = {}, bd, m, world = null, n = 10) {
-  const c = P.countries || {};
+export function handbookHtml(w, P = {}, bd, m, world = null, top = {}) {
   return usersSection(null, w, bd, m, VIEW_BREAKDOWNS.handbook) +
-    countriesSection(null, world, { n, rows: c.res ? countriesFrom(c.res[0], n) : null, error: c.error }, m) +
+    countriesSection(world, top, m) +
     '<div class="donuts three"><div>' + panel("PAGES", P.pages, res => handbookPagesHtml(res[0], m)) + "</div>" +
     Object.keys(DONUTS).map(k => "<div>" + donutSection(k, first(P[k]), m) + "</div>").join("") + "</div>" +
     panel("EXERCISES", P.exercises, res => exercisesHtml(res, w)) +
@@ -775,7 +790,7 @@ async function main() {
   // the breakdown are remembered per view (Global keeps the original keys).
   const view = document.body.dataset.view in PANELS ? document.body.dataset.view : "global", P = {}, scope = SCOPES[view];
   const sfx = view === "global" ? "" : "." + view, BD_KEY = "ritz.monitor.breakdown" + sfx, COUNT_KEY = "ritz.monitor.count" + sfx;
-  const bd = { dim: "", total: null, res: null, error: null }, top = { n: 10, rows: null, error: null };
+  const bd = { dim: "", total: null, res: null, error: null }, top = { n: 10, res: null, sub: null, error: null };
   const cmp = { dim: "sessionDefaultChannelGroup", res: null, error: null };
   try { const d = localStorage.getItem(BD_KEY) || ""; if (VIEW_BREAKDOWNS[view].includes(d)) bd.dim = d; } catch {}
   // The page's Count (beside the period buttons), remembered per browser; it drives users per day, the countries and the donuts.
@@ -788,7 +803,7 @@ async function main() {
     wide = $("stats").clientWidth;
     if (!last && view === "global") return;
     const focus = document.activeElement && document.activeElement.id, w = Math.max(280, wide);
-    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m, world, top.n)
+    $("stats").innerHTML = view === "game" ? gameHtml(last, w, P, bd, m) : view === "handbook" ? handbookHtml(w, P, bd, m, world, top)
       : statsHtml(last, w, world, { m, bd, cmp, top, dn, pages: P.pages });
     if (focus && $(focus)) $(focus).focus();
   };
@@ -819,12 +834,17 @@ async function main() {
     } catch (e) { if (still()) cmp.error = e.message; }
     if (still()) draw();
   };
-  const loadTop = async () => {
-    top.rows = null; top.error = null; draw();
-    if (countriesFromStats(top.n, m)) return;
-    const want = days + "|" + top.n + "|" + m, still = () => want === days + "|" + top.n + "|" + m;
-    try { const r = await report(countriesRequest(days, m)); if (still()) top.rows = countriesFrom(r, top.n); }
-    catch (e) { if (still()) top.error = e.message; }
+  // The countries (on the view's pages), then GA's total for the top N when the Top cuts the list; a new Top
+  // (keep: the country reply stays) only refetches that total.
+  const loadTop = async (keep = false) => {
+    if (!keep) top.res = null;
+    top.sub = null; top.error = null; draw();
+    const want = days + "|" + top.n + "|" + m, still = () => want === days + "|" + top.n + "|" + m, req = countriesRequest(days, m, scope);
+    try {
+      if (!top.res) { const r = await report(req); if (!still()) return; top.res = r; draw(); }
+      const q = topTotalRequest(req, top.res, top.n);
+      if (q) { const t = await report(q); if (still()) top.sub = t; }
+    } catch (e) { if (still()) top.error = e.message; }
     if (still()) draw();
   };
   const loadDn = async k => {
@@ -846,13 +866,13 @@ async function main() {
   $("stats").addEventListener("change", e => {
     if (e.target.id === "stack-dim") { cmp.dim = e.target.value; loadCmp(); }
     if (e.target.id === "bd-dim") { bd.dim = e.target.value; try { localStorage.setItem(BD_KEY, bd.dim); } catch {} loadBd(); }
-    if (e.target.id === "top-n") { top.n = Number(e.target.value); if (view === "global") loadTop(); else draw(); }
+    if (e.target.id === "top-n") { top.n = Number(e.target.value); loadTop(true); }
   });
   $("count").addEventListener("change", e => {
     m = e.target.value;
     try { localStorage.setItem(COUNT_KEY, m); } catch {}
     for (const id of COUNTED) if (id in PANELS[view]) loadPanel(id);
-    if (view !== "global") loadBd();
+    if (view !== "global") { loadBd(); if (view === "handbook") loadTop(); }
     else if (last) { loadBd(); loadTop(); for (const k in DONUTS) loadDn(k); }
   });
   // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
@@ -865,7 +885,7 @@ async function main() {
     say("Reading the last " + days + " days...");
     last = null; loadPanels();
     if (view !== "global") loadBd();
-    if (view === "handbook") { say("The last " + days + " days, from Google Analytics (cached 10 minutes)."); return; }
+    if (view === "handbook") { loadTop(); say("The last " + days + " days, from Google Analytics (cached 10 minutes)."); return; }
     try {
       const u = new URL(board);
       u.searchParams.set("stats", days); u.searchParams.set("key", key);

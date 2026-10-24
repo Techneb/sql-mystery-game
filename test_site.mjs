@@ -1235,7 +1235,7 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && !all.includes("CHAPTER FUNNEL"), "Global has no funnel any more");
   const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows,
     countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } },
-    { dn, pages: { res: [{ totals: [5] }, { totals: [3] }, { rows: [] }, { totals: [1] }, { totals: [7] }] } });
+    { dn, top: { res: { rows: [["France", 3]], totals: [3] } }, pages: { res: [{ totals: [5] }, { totals: [3] }, { rows: [] }, { totals: [1] }, { totals: [7] }] } });
   assert.equal((full.match(/<svg /g) || []).length, 5, "users, the pages donut, map, two donuts");
   assert.ok(full.indexOf(">PAGES<") > full.indexOf("COUNTRIES") && full.includes("donuts three") && !full.includes("TOP PAGES"), "PAGES shares the donuts row, the top pages table is gone (owner, 2026-10-24)");
   assert.equal((full.match(/<summary>Raw data<\/summary><button[^>]*class="quiet csv"/g) || []).length, 5, "each with its raw data under it");
@@ -1408,13 +1408,13 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   const err = monitor.statsHtml(s, 390, null, { bd: { dim: "country", error: "<i>quota" } });
   assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota"), "GA's error, escaped");
   assert.ok(monitor.statsHtml(s, 390, null, { bd: { dim: "browser", res: { rows: [["20261021", "Chrome", 4]] } } }).includes('<option value="browser" selected>Browser</option>'));
-  // countries: N 10 from ?stats, any other from ?report=
+  // countries: always from ?report=
   assert.ok(monitor.statsHtml(s, 390, null).includes("COUNTRIES (TOP 10)"));
   const res = { rows: [["France", 9], ["Spain", 4], ["<Narnia>", 1]] };
   assert.deepEqual(monitor.countriesFrom(res, 2), [{ country: "France", users: 9 }, { country: "Spain", users: 4 }]);
   assert.equal(monitor.countriesFrom(res, 0).length, 3, "0 = all");
   assert.deepEqual(monitor.countriesRequest(7), { days: 7, dimensions: ["country"], metrics: ["activeUsers"] });
-  const all = monitor.statsHtml(s, 390, null, { top: { n: 0, rows: monitor.countriesFrom(res, 0) } });
+  const all = monitor.statsHtml(s, 390, null, { top: { n: 0, res } });
   assert.ok(all.includes("COUNTRIES (ALL)") && all.includes("&#60;Narnia&#62;") && !all.includes("<Narnia>"), "every row, escaped");
   const t20 = monitor.statsHtml(s, 390, null, { top: { n: 20 } });
   assert.ok(t20.includes("COUNTRIES (TOP 20)") && t20.includes("Reading the countries"));
@@ -1488,16 +1488,27 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   for (const d of Object.keys(monitor.STACKS)) assert.ok(fs.readFileSync("apps_script.gs", "utf8").match(/var REPORT_DIMS = [^;]*/)[0].includes('"' + d + '"'), d);
 });
 
-test("monitor countries follow the Count: ?stats only for Visitors top 10, units, labels and the overlap note", () => {
+test("monitor countries follow the Count: units, labels, the overlap note, GA's totals for the top N and for all", () => {
   assert.deepEqual(monitor.countriesRequest(30, "solved"), { days: 30, dimensions: ["country"], metrics: ["totalUsers"], filters: { eventName: ["chapter_solve"] } });
   assert.deepEqual(monitor.countriesRequest(7, "sessions"), { days: 7, dimensions: ["country"], metrics: ["sessions"] });
-  assert.ok(monitor.countriesFromStats(10, "visitors") && monitor.countriesFromStats(10) && !monitor.countriesFromStats(10, "sessions") && !monitor.countriesFromStats(5, "visitors"));
+  assert.deepEqual(monitor.countriesRequest(7, "ran", monitor.LEARN).filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, "scoped");
   const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
   const s = { users: [], chapters: [], countries: [{ country: "France", users: 3 }] };
-  const vis = monitor.countriesSection(s, world, { n: 10 }, "visitors");
-  assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("in two countries counts in both bubbles"), "Visitors from ?stats");
-  assert.ok(monitor.countriesSection(s, world, { n: 10 }, "sessions").includes("Reading the countries"), "another Count reads ?report= even at 10");
-  const ses = monitor.countriesSection(s, world, { n: 10, rows: monitor.countriesFrom({ rows: [["France", 12], ["Spain", 4]] }, 10) }, "sessions");
+  assert.ok(monitor.countriesSection(world, { n: 10 }, "visitors").includes("Reading the countries"), "Visitors too reads ?report=");
+  const vis = monitor.countriesSection(world, { n: 10, res: { rows: [["France", 3]], totals: [3] } }, "visitors");
+  assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("in two countries counts in both bubbles"), "Visitors");
+  assert.ok(vis.includes("<p>The one country: 3 visitors.</p>") && vis.includes("<tfoot><tr><td>All countries (GA&#39;s total)</td><td class=\"num\">3</td>"), "every country shown: GA's total alone");
+  // the Top cuts the list: GA's own total for the top N (a country filter), its share of GA's total for all
+  const big = { rows: [["France", 900], ["Spain", 300], ["Italy", 2]], totals: [1100] }, req = monitor.countriesRequest(7, "solved", monitor.LEARN);
+  assert.deepEqual(monitor.topTotalRequest(req, big, 2), { days: 7, dimensions: [], metrics: ["totalUsers"],
+    filters: { eventName: ["chapter_solve"], pagePath: { beginsWith: ["/learn/"] }, country: ["France", "Spain"] } }, "the top N as a filter, the Count's own");
+  assert.equal(monitor.topTotalRequest(req, big, 3), null, "nothing cut, no request");
+  assert.equal(monitor.topTotalRequest(req, big, 0), null, "All, no request");
+  const cut = monitor.countriesSection(world, { n: 2, res: big, sub: { rows: [[1050]], totals: [1050] } }, "solved");
+  assert.ok(cut.includes("<p>Top 2: 1,050 players, 95% of 1,100 in all 3 countries.</p>"), "GA's numbers, never the rows' sum (1,200)");
+  assert.ok(cut.includes("<td>Top 2 (GA&#39;s total)</td><td class=\"num\">1050</td>") && cut.includes("<td>All countries (GA&#39;s total)</td><td class=\"num\">1100</td>"), "both totals in the raw data");
+  assert.ok(monitor.countriesSection(world, { n: 2, res: big }, "solved").includes("Top 2: reading GA&#39;s total..."), "reading in place");
+  const ses = monitor.countriesSection(world, { n: 10, res: { rows: [["France", 12], ["Spain", 4]] } }, "sessions");
   assert.ok(ses.includes("12 sessions") && ses.includes("<th>Sessions</th>") && ses.includes('aria-label="Sessions by country"') && !ses.includes(" users"), "units follow");
   assert.ok(ses.includes(monitor.overlapNote("in two countries", "sessions", "bubbles").slice(0, 30)) && ses.includes("one person&#39;s sessions"), "the donuts' note");
   assert.ok(monitor.statsHtml(s, 390, world, { m: "opened", top: { n: 10 } }).includes("Reading the countries"), "statsHtml passes the Count");
@@ -1578,11 +1589,11 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(h.indexOf("USERS PER DAY") < h.indexOf("COUNTRIES (TOP 10)") && h.indexOf("COUNTRIES (TOP 10)") < h.indexOf('<div class="donuts three"><div>') &&
     h.indexOf('<div class="donuts three"><div>') < h.indexOf(">PAGES<") && h.indexOf("CHANNELS") < h.indexOf("EXERCISES"), "users, countries, the three donuts, then the exercises");
   assert.ok(h.includes("Counts the users who ran an exercise: a person on two devices"), "the donuts' overlap note follows the Count");
-  for (const k of ["countries", "devices", "channels"]) {
+  for (const k of ["devices", "channels"]) {
     assert.ok(monitor.COUNTED.includes(k), k + " follows the Count");
     assert.deepEqual(monitor.PANELS.handbook[k](7, "ran")[0].filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
   }
-  const hc = monitor.handbookHtml(390, { countries: { res: [{ rows: [["France", 4], ["Spain", 3], ["Italy", 1]] }] }, devices: { res: [{ rows: [["mobile", 3]], totals: [2] }] } }, { total: empty }, "visitors", null, 5);
+  const hc = monitor.handbookHtml(390, { devices: { res: [{ rows: [["mobile", 3]], totals: [2] }] } }, { total: empty }, "visitors", null, { n: 5, res: { rows: [["France", 4], ["Spain", 3], ["Italy", 1]] } });
   assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && hc.includes(">2</text>") && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
   assert.ok(monitor.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
   // the leave block reads GA's averages as they come, labelled as averages, no dot where nobody left
