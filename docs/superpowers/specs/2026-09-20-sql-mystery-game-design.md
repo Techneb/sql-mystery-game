@@ -718,3 +718,8 @@ Everything is deployed (2026-10-20, 9f4e671).
   `ritz.consent`, so the banner would ask that European visitor again on handbook pages without the ad box. Also
   untested: the `averageCustomEvent:` / `customEvent:` metric names against the live Data API (a refused one shows
   GA's error in its panel).
+  Since then (owner, 2026-10-24): the donuts' centre is GA's own total (devices and channels agree), Export CSV beside
+  every Raw data toggle, one common Count select (users per day, countries, donuts) and a "Count metrics compared"
+  stacked bar chart. In progress the same day: Global's PAGES as a donut and TOP PAGES removed; Game and Handbook
+  redrawn in Global's style (Count select and users-per-day line with Breakdown at the top, donuts for splits, bars
+  for comparisons).
