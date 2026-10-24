@@ -371,12 +371,12 @@ export function donutSection(kind, sel = {}, m = "visitors") {
     raw(k.label.toLowerCase(), barTable(k.head, list.map(i => [i.label, i.value]), d.label));
 }
 
-// --- the five Count metrics side by side: one bar each, stacked by a dimension (its own select), so the heights show
-// how the metrics differ and the segments the mix. One ?report= per metric on [dim] (countRequest, the donuts' shape).
+// --- the Count metrics side by side: one group each, a bar per segment of a dimension (its own select), so the totals
+// show how the metrics differ and the bars the mix. One ?report= per metric on [dim] (countRequest, the donuts' shape).
 export const STACKS = { deviceCategory: "Device", sessionDefaultChannelGroup: "Channel", country: "Country", newVsReturning: "New vs returning" };
 export const compareRequests = (days, dim) => Object.keys(COUNT_METRICS).map(m => [m, countRequest(days, [dim], m)]);
 // byMetric {m: res}: the segments ranked by their value summed over every bar (one order and colour for all bars;
-// past n + 1 the rest fold into Other, as on the donuts), each bar's values in that order.
+// past n + 1 the rest fold into Other, as on the donuts), each metric's values in that order.
 export function stackData(byMetric, n = 5) {
   const per = Object.keys(COUNT_METRICS).map(m => [m, new Map(((byMetric[m] || {}).rows || []).map(([l, v]) => [gaText(l), Number(v) || 0]))]);
   const sum = new Map();
@@ -387,32 +387,27 @@ export function stackData(byMetric, n = 5) {
   const bars = per.map(([m, mp]) => {
     const values = keep.map(l => mp.get(l) || 0);
     if (other) values.push([...mp].filter(e => !keep.includes(e[0])).reduce((t, e) => t + e[1], 0));
-    // sum: the segments stacked (a person in two segments counts twice); total: GA's own total (each person once)
+    // sum: the segments added (a person in two segments counts twice); total: GA's own total (each person once)
     // when the reply carries it, else the sum.
     const sum = values.reduce((a, b) => a + b, 0), t = (byMetric[m] || {}).totals;
     return { m, values, sum, total: t ? Number(t[0]) || 0 : sum };
   });
   return { segs, bars };
 }
-// Vertical bars on one count axis, segments from the baseline up in --c1..--c6 with a 2 px gap, the top one's corners
-// rounded, the total over each bar; each segment its own tooltip (metric, segment, value, share of the bar).
-export function stackSvg(st, w = 640) {
+// Grouped vertical bars on one count axis: per metric (x group, its short name below) one bar per segment side by
+// side in --c1..--c6, GA's total once centred over the group; each bar its own tooltip (metric, segment, value, share
+// of the metric's total).
+export function groupSvg(st, w = 640) {
   const H = 240, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
-  const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.sum, b.total)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
-  const gw = pw / st.bars.length, bw = r1(Math.min(56, gw * 0.6));
+  const tk = ticks(Math.max(1, ...st.bars.map(b => Math.max(b.total, ...b.values)))), top = tk.at(-1), y = v => r1(T + ph - (v * ph) / top);
+  const gw = pw / st.bars.length, n = Math.max(1, st.segs.length), inner = Math.min(gw * 0.8, n * 18), gap = inner / n > 4 ? 1 : 0, bw = (inner - gap * (n - 1)) / n;
   return '<svg class="chart stack-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="Count metrics compared">' +
     yAxis(tk, y, L, L + pw, compact, "Count") +
     st.bars.map((b, i) => {
-      const d = metricOf(b.m), cx = L + (i + 0.5) * gw, x0 = r1(cx - bw / 2), last = b.values.findLastIndex(v => v > 0);
-      let cum = 0, drawn = false;
-      const segs = b.values.map((v, j) => {
-        if (!v) return "";
-        const y0 = y(cum), y1 = y(cum += v), h = r1(Math.max(1, y0 - y1 - (drawn ? 2 : 0))), tip = tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.sum), "of the bar"]]);
-        drawn = true;
-        return j === last ? '<path class="seg c' + (j + 1) + '"' + tip + ' d="' + barPath(x0, y1, bw, h) + '"/>'
-          : '<rect class="seg c' + (j + 1) + '"' + tip + ' x="' + x0 + '" y="' + y1 + '" width="' + bw + '" height="' + h + '"/>';
-      }).join("");
-      return segs + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.sum, b.total)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
+      const d = metricOf(b.m), cx = L + (i + 0.5) * gw, x0 = cx - inner / 2;
+      const bars = b.values.map((v, j) => !v ? "" : '<path class="seg c' + (j + 1) + '"' + tipAttrs(d.label, [[compact(v), st.segs[j], "c" + (j + 1)], [pct(v, b.total), "of the total"]]) +
+        ' d="' + barPath(r1(x0 + j * (bw + gap)), y(v), r1(bw), r1(Math.max(1, T + ph - y(v)))) + '"/>').join("");
+      return bars + '<text class="val" x="' + r1(cx) + '" y="' + (y(Math.max(b.total, ...b.values)) - 6) + '" text-anchor="middle">' + compact(b.total) + "</text>" +
         '<text class="tick" x="' + r1(cx) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(d.short) + "</text>";
     }).join("") + '<line class="axis" x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '"/></svg>';
 }
@@ -424,8 +419,8 @@ export function compareSection(cmp = {}, w) {
   if (cmp.error) return head + '<p class="status bad">Google Analytics said: ' + esc(cmp.error) + "</p>";
   if (!cmp.res) return head + '<p class="muted">Reading the five counts...</p>';
   const st = stackData(cmp.res);
-  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + stackSvg(st, w) +
-    '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a bar is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a bar&#39;s segments can stack higher than its total.</p>' +
+  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + groupSvg(st, w) +
+    '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a group is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a group&#39;s bars can add up to more than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(metricOf(b.m).label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
 }
