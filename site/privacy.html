@@ -101,7 +101,7 @@
         <li><code>game_finish</code>: part, mode;</li>
         <li><code>badge</code>: badge name;</li>
         <li><code>chapter_leave</code>: chapter number, mode, seconds since the chapter opened and number of queries, sent once when you hide or close the page before solving it;</li>
-        <li><code>query_fail</code>: chapter number, mode, whether the query failed or was refused, and the name of the rule it broke (such as <code>group-by</code>), for the first three failed queries of a chapter;</li>
+        <li><code>query_fail</code>: chapter number, mode, whether the query failed or was refused, the name of the rule it broke (such as <code>group-by</code>) and the kind of error (such as <code>syntax</code> or <code>no_table</code>, a fixed category, never the query or a name you typed), for the first three failed queries of a chapter;</li>
         <li><code>answer_wrong</code>: chapter number, mode, and 1 or 3, sent on your first and third wrong answer in a chapter. The answer itself is never sent;</li>
         <li><code>hint_open</code>: chapter number, mode, sent the first time you open a chapter's Hint;</li>
         <li><code>landing_begin</code>: mode, when you press Investigate or Join on the front page;</li>
@@ -113,7 +113,7 @@
         <li><code>exercise_run</code>: the exercise's name, its level, and whether the run worked, failed or was refused, for the first run of each exercise in a visit;</li>
         <li><code>exercise_solve</code>: the exercise's name, its level and how many times you ran a query on it in this visit;</li>
         <li><code>exercise_level</code>: the level whose button you pressed;</li>
-        <li><code>query_fail</code>: the exercise's name, whether the query failed or was refused, and the rule's name, for the first three failed queries of an exercise in a visit;</li>
+        <li><code>query_fail</code>: the exercise's name, whether the query failed or was refused, the rule's name and the kind of error (a fixed category, as above), for the first three failed queries of an exercise in a visit;</li>
         <li><code>feature_use</code>: the name of a feature you used, once per visit: enlarging the schema, reusing a query from History, following a Grammar link, opening How to use this page or a solution, following a Try it link (with the exercise's name), switching day and night, clicking the handbook's own advertisement.</li>
       </ul>
     </li>

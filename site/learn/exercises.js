@@ -2,7 +2,7 @@
 // browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
 // and a check of the last result against the chosen question's solution, run on the same database.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, wireSuggest, erdButtonHtml, track, trackOnce, useFeature, queryFail } from "../app.js";
+import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, sqliteHelp, errorHtml, dateArithmeticNote, EMPTY_RUN, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail, wireSuggest } from "../app.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -178,17 +178,20 @@ async function boot() {
   const solutions = {}, runs = {}, fails = {};   // this page load's runs and failed runs per question (GA)
   function run() {
     const sql = ta.value.trim();
-    if (!sql || !db) return;
+    if (!db) return;
+    if (!sql) { $("ex-results").innerHTML = EMPTY_RUN; $("ex-info").textContent = ""; return; }   // not a run
     let res = null, error = null, strict = null, cart = false;
     if ((cart = cartesian(sql))) error = "Two tables side by side with nothing to match them: say what joins them (ON or WHERE).";
     else if ((strict = strictCheck(sql, schema))) error = strict.error;
     else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; } catch (e) { error = e.message; }
-    $("ex-results").innerHTML = strict ? strictHtml(strict, "") : error ? '<div class="error">' + escapeHtml(error) + "</div>" : renderResults(res);
+    const help = error && !strict && !cart ? sqliteHelp(error, sql, Object.fromEntries(Object.entries(schema).map(([t, cs]) => [t, cs.map(c => c[0])]))) : null;
+    const note = !error && !res ? dateArithmeticNote(sql, schema) : "";
+    $("ex-results").innerHTML = strict ? strictHtml(strict, "") : error ? errorHtml(error, help) : renderResults(res) + (note ? '<p class="muted">' + escapeHtml(note) + "</p>" : "");
     $("ex-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows";
     const ex = cur.slug, level = levelId(cur.level);
     runs[ex] = (runs[ex] || 0) + 1;
     trackOnce("run:" + ex, "exercise_run", { exercise: ex, level, outcome: runOutcome(error, strict || cart) });
-    const fail = error && queryFail(fails, ex, strict, cart);
+    const fail = error && queryFail(fails, ex, strict, cart, help);
     if (fail) track("query_fail", { exercise: ex, ...fail });
     if (error) return status("wrong", "Fix the error first, then run it again.");
     pushHistory(hist, sql);

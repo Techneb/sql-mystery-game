@@ -152,11 +152,17 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 | Clean Sweep | Part I with zero hints |
 | Ganimard | all 12 chapters |
 
-- **Rank** (learning mode, end of Part I, from queries; thresholds are one constant, `RANKS`): <= 45
-  queries: *Ganimard himself*; <= 70: *Chief Inspector*; <= 110: *Inspector*; else *Constable*. Tuned
-  2026-10-19 from the trial (GA4 `chapter_solve`, consenting players only: mean queries per solve, ch1-8,
-  9.5 / 22.4 / 15.7 / 7.6 / 6.5 / 4.9 / 7.9 / 7.3, about 82 for Part I, 14 players solving ch1 and 6 ch8;
-  played before errors counted as queries, so set generously). Was 25 / 40 / 60. Part II ranked separately.
+- **Rank** (learning mode, end of Part I, from queries; thresholds are one constant, `RANKS`): <= 30
+  queries: *Ganimard himself*; <= 80: *Chief Inspector*; <= 130: *Inspector*; else *Constable*. Retuned
+  2026-10-25 (owner 2026-10-25: "keep ranks tuned to my student performance: only the best student should be
+  Ganimard"). The shortest path in `solution.sql`, chapters 1-8, is 21 queries (13 discovery queries plus the 8
+  solutions; chapter I's prefilled look-up makes 22), so 30 leaves a near-optimal student about one spare query a
+  chapter and nobody else. The trial (2026-10-19 note: GA4 `chapter_solve`, consenting players only, mean
+  queries per solve ch1-8 9.5 / 22.4 / 15.7 / 7.6 / 6.5 / 4.9 / 7.9 / 7.3, about 82 for Part I, 14 players
+  solving ch1 and 6 ch8) was played before errors counted as queries; with errors counted the class mean sits
+  nearer 90-100, so Chief Inspector ends at the trial mean (80) and Inspector covers the rest of the class up to
+  about 1.6 times it (130): the class spreads over the two middle ranks, Constable is the long tail. Was
+  45 / 70 / 110 (2026-10-19), 25 / 40 / 60 before. Part II ranked separately.
 - **Certificate**: `@media print` stylesheet, one page: pair names (typed at the end), rank, badges,
   chapters solved, date, in the newspaper style.
 - **Notepad**: a `textarea` in the right column, autosaved to `localStorage`, printed on the certificate.
@@ -334,7 +340,7 @@ Waiting on the owner: linking AdSense to GA4 (ad clicks), archiving the old pers
 at the desk on a phone. Ready: the chapter 1 drop-off (GA, 30 days to 2026-10-25: 1,026 opened chapter I, 283 solved
 it, 28%; then 60% for II and 78-91% for III-VIII; 46 finished Part I, 9 Part II; among chapter I players since
 2026-10-24, double-quoted text and type clashes are the most frequent refusals, 31 and 26 users, besides 77 with
-plain SQL errors), the `RANKS` retune, the SQL Noir study, and clicking the desk's two dialogs through.
+plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query that runs on chapter I, a message on an empty Run, a plain line under SQLite's commonest errors, the YYYYMMDD why on quoted dates, the unquoted-date note, curly quotes, `query_fail.type`; re-read GA a week after the push, split by device; held: answer-shape feedback), the `RANKS` retune (done 2026-10-25, section 3), the SQL Noir study, and clicking the desk's two dialogs through.
 
 ## 8. Backlog (not scheduled)
 

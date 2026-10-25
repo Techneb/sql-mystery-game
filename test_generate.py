@@ -195,6 +195,20 @@ class PartI(unittest.TestCase):
         self.assertNotIn(self.V["report_id"], first("SELECT id FROM police_report WHERE date BETWEEN 19120501 AND 19120531"))
         self.assertNotIn(self.V["neighbour"], first("SELECT guest_name FROM hotel_register"))
 
+    def test_first_query_shows_noise_only(self):
+        # chapter I's box starts with app.js FIRST_QUERY (learn and compete): its rows must be plain noise in every build
+        js = open("site/app.js").read()
+        query = re.search(r'export const FIRST_QUERY = "([^"]+)"', js).group(1)
+        self.assertEqual(query, "SELECT * FROM police_report LIMIT 5")
+        for seed in [1912] + list(range(1, g.SEASONS + 1)):
+            conn, V = built(seed)
+            dates = {v for v in V.values() if isinstance(v, int) and 19120000 < v < 19130000}   # the nights, eves and windows
+            ids = {V["report_id"], V["compete_report_id"], V["decoy_report_id"]}
+            for row in conn.execute(query):
+                self.assertNotIn(row[0], ids, seed)
+                self.assertNotIn(row[1], dates, (seed, row))
+                self.assertIn(row[5], g.REPORT_TEXT, (seed, row))   # a noise line, never a planted report
+
     def test_pinned_ids_hide_among_the_noise(self):
         # D2: MAX(id), ORDER BY id DESC and id ranges land on noise (scatter_planted swaps every planted id but the
         # ones pinned in V, which are drawn inside the noise range); only the Part II code wire (9001) is meant to be found that way
