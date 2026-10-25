@@ -161,6 +161,7 @@ function renderChapter() {
   $("chapter-title").textContent = ch.title;
   $("story").innerHTML = richText(ch.story);
   $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form, ch);
+  if (ch.n === 1 && !state.queries[1] && !$("sql").value) { $("sql").value = FIRST_QUERY; syncSql(); }   // a first query that runs
   const last = data.chapters.find(c => c.n === state.solved[state.solved.length - 1]);   // the bridge to this chapter stays in view
   if (last) showTelegram(last.telegram);
   if (awaitingCode(state)) {
@@ -689,7 +690,8 @@ function analyse(stmts, schema, src) {
     const [num, str] = isNum(a) && b === "str" ? [l, r] : isNum(b) && a === "str" ? [r, l] : [null, null];
     const msg = "operator does not exist: " + pgT(a) + " " + op + " " + pgT(b);
     if (num) {
-      const v = text(str).slice(1, -1);
+      const v = text(str).slice(1, -1), day = ymd(v);
+      if (day) refuse(msg, text(num) + " holds dates as numbers written YYYYMMDD, and " + text(str) + " is quoted text: drop the quotes and write it as one number, as in " + text(num) + " " + op + " " + day + ".", "types");
       refuse(msg, text(num) + " holds numbers and " + text(str) + " is quoted text: " + (/^-?\d+(\.\d+)?$/.test(v) ? "drop the quotes, as in " + text(num) + " " + op + " " + v + "." : "compare it with a number."), "types");
     }
     const [t, n] = a === "text" ? [l, r] : [r, l];
@@ -956,11 +958,75 @@ export function ilike(pattern, value, escape) {
   }
   return new RegExp("^" + re + "$", "i").test(String(value)) ? 1 : 0;
 }
+// '1912-05-18', '18/05/1912', '05/18/1912' -> "19120518" (day first, unless the second part is over 12); else "".
+export function ymd(v) {
+  let m = v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/), y, mo, d;
+  if (m) [y, mo, d] = [m[1], +m[2], +m[3]];
+  else if ((m = v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/))) [y, d, mo] = +m[2] > 12 ? [m[3], +m[2], +m[1]] : [m[3], +m[1], +m[2]];
+  else return "";
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? y + String(mo).padStart(2, "0") + String(d).padStart(2, "0") : "";
+}
 export function strictHtml(r, base = "learn/") {   // base: the handbook folder as the caller links it (learn/exercises.js: "")
   const [page, label] = STRICT_SECTIONS[r.anchor];
   return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + base + page + ".html#" + r.anchor +
     '" target="_blank" rel="noopener">Grammar: ' + esc(label) + "</a></div>";
 }
+
+// SQLite's own errors, explained in one plain line built from the player's words and the tables on screen (the game
+// passes only the revealed ones, so a line never names a hidden table). Wording only: what runs is unchanged.
+// { type, why }: type is query_fail's fixed category (GA), never the query or a name the player typed; why may be "".
+const CURLY = /[\u2018\u2019\u201C\u201D]/;
+const HELP_STOP = new Set(["and", "or", "not", "order", "group", "by", "limit", "where", "from", "join", "on", "is", "null", "as", "select", "having", "in", "like", "ilike", "between", "union"]);
+export function sqliteHelp(message, sql, tables) {
+  const bare = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
+  const names = Object.keys(tables), list = a => a.join(", ");
+  const quote = (col, op, value) => "If " + value + " is a value, put it in single quotes, as in " + col + " " + op + " '" + value.replace(/'/g, "''") + "'.";
+  const valueAfter = w => {   // col = Hotel Ritz: the words after a comparison, up to w, none of them a keyword
+    const m = bare.match(new RegExp("([A-Za-z_][\\w.]*)\\s*(=|<>|!=|<=|>=|<|>|\\blike\\b|\\bilike\\b)\\s*((?:[A-Za-z_]\\w*\\s+)*?)" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\w])", "i"));
+    return m && !m[3].split(/\s+/).some(x => HELP_STOP.has(x.toLowerCase())) ? quote(m[1], m[2], (m[3] + w).trim()) : "";
+  };
+  if (CURLY.test(bare)) return { type: "curly_quote", why: "Your keyboard typed curly quotes (\u2018 \u2019 or \u201C \u201D). SQL reads only the straight quote ': " +
+    "retype it with the plain ' key, or turn off smart punctuation." };
+  let m;
+  if (/unrecognized token: "'/.test(message)) return { type: "unterminated", why: "A text value opens with ' and never closes: end it with a second ', as in 'Paris'." };
+  if (/incomplete input/.test(message)) return { type: "incomplete", why: "The query ends before it is finished: look for a missing closing bracket or quote, or an unfinished clause." };
+  if ((m = message.match(/no such table: (?:main\.)?(\S+)/))) {
+    const x = m[1].toLowerCase(), next = (bare.match(new RegExp("\\b" + x + "\\s+([A-Za-z_]\\w*)", "i")) || [])[1];
+    const near = names.find(t => next && t === x + "_" + next.toLowerCase()) || names.find(t => t === x.replace(/e?s$/, "") || t + "s" === x || t.replace(/_/g, "") === x.replace(/_/g, ""));
+    return { type: "no_table", why: near ? "The table is called " + near + (near.includes("_") && next ? ", written with an underscore and no space." : ".") :
+      "There is no table called " + m[1] + ". The tables on the schema are: " + list(names) + "." };
+  }
+  if ((m = message.match(/no such column: "?([^"\s]+)"?/))) {
+    const x = m[1], q = valueAfter(x.split(".").pop());
+    const from = tablesIn(sql).filter(t => tables[t]);
+    const cols = from.map(t => (from.length > 1 ? t + ": " : "") + list(tables[t])).join("; ");
+    return { type: "no_column", why: (from.length ? x + " is not a column of " + list(from) + (q ? "." : ", whose columns are " + cols + ".") : x + " is not a column of any table in the query.") + (q ? " " + q : "") };
+  }
+  if ((m = message.match(/near "([^"]*)": syntax error/))) {
+    const w = m[1];
+    const why = /^\w+$/.test(w) && valueAfter(w) ? valueAfter(w).replace(/^If /, "SQL stopped at " + w + ". If ") :
+      new RegExp(",\\s*" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i").test(bare) && /^[a-z]+$/i.test(w) ? "There is a comma just before " + w + ": remove it, or add what was meant to follow it." :
+      "SQL stopped reading at " + (w ? w : "the end") + ". The mistake is there or just before it: often a missing comma or quote, a misspelt keyword, or clauses in the wrong order.";
+    return { type: "syntax", why };
+  }
+  return { type: "other", why: "" };
+}
+export function errorHtml(error, help) {
+  return help && help.why ? '<div class="error strict"><div class="pg-error">' + esc(error) + '</div><p class="why">' + esc(help.why) + "</p></div>" : '<div class="error">' + esc(error) + "</div>";
+}
+// No rows, and the WHERE compares a column with 1912-05-18 unquoted: SQL read a subtraction (owner, 2026-10-25).
+export function dateArithmeticNote(sql, schema) {
+  const bare = sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\/|'(?:[^']|'')*'/g, " ");
+  const m = bare.match(/([A-Za-z_][\w.]*)\s*(?:=|<>|!=|<=|>=|<|>)\s*(\d{4})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})(?![\d.])/);
+  if (!m) return "";
+  const col = m[1].split(".").pop().toLowerCase(), [y, mo, d] = [m[2], m[3], m[4]];
+  const int = Object.values(schema).some(cs => cs.some(([n, t]) => n.toLowerCase() === col && /INT/i.test(t)));
+  return y + "-" + mo + "-" + d + " without quotes is arithmetic: " + y + " minus " + +mo + " minus " + +d + ", which is " + (y - mo - d) + "." +
+    (int ? " " + m[1] + " holds dates as numbers written YYYYMMDD, as in " + m[1] + " = " + y + mo.padStart(2, "0") + d.padStart(2, "0") + "." : "");
+}
+// Chapter I's box on first arrival: a plain look-up, noise only (test_generate pins its rows, learn and seasons).
+export const FIRST_QUERY = "SELECT * FROM police_report LIMIT 5";
+export const EMPTY_RUN = '<p class="muted">Type a query in the box, then press Run.</p>';
 
 export function pushHistory(state, sql) {
   if (state.history[0] !== sql) state.history.unshift(sql);
@@ -993,7 +1059,7 @@ const curChapter = () => state && data ? currentChapter(state, data.chapters).n 
 
 function runQuery() {
   const sql = $("sql").value.trim();
-  if (!sql) return;
+  if (!sql) { $("results").innerHTML = EMPTY_RUN; $("run-info").textContent = ""; return; }   // not a query: not counted
   const ch = currentChapter(state, data.chapters);
   let res = null, error = null, strict = null, t0 = performance.now(), cart = false;
   if ((cart = cartesian(sql))) error = "Two ledgers side by side with nothing to match them: say what joins them (ON or WHERE).";
@@ -1003,10 +1069,12 @@ function runQuery() {
   recordQuery(state, ch.n, sql, error);
   const m = state.solved.includes(ch.n) ? 0 : queryMilestone(state.queries[ch.n], (state.milestones ||= {})[ch.n]);
   if (m) { state.milestones[ch.n] = m; track("chapter_queries", { chapter: ch.n, mode: state.mode, count: m }); }
-  const fail = error && queryFail(state.fails ||= {}, ch.n, strict, cart);
+  const help = error && !strict && !cart ? sqliteHelp(error, sql, revealedColumns()) : null;
+  const fail = error && queryFail(state.fails ||= {}, ch.n, strict, cart, help);
   if (fail) track("query_fail", { chapter: ch.n, mode: state.mode, ...fail });
   const ms = Math.round(performance.now() - t0);
-  $("results").innerHTML = strict ? strictHtml(strict) : error ? '<div class="error">' + esc(error) + "</div>" : renderResults(res);
+  const note = !error && !res ? dateArithmeticNote(sql, schema) : "";
+  $("results").innerHTML = strict ? strictHtml(strict) : error ? errorHtml(error, help) : renderResults(res) + (note ? '<p class="muted">' + esc(note) + "</p>" : "");
   $("run-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows - " + ms + " ms";
   renderHistory();
   const text = eggText(res);
@@ -1017,6 +1085,9 @@ function runQuery() {
   save(state);
   return { sql, res, error };
 }
+
+// The tables on the schema now -> their columns, for sqliteHelp (never a table the player has not been shown).
+const revealedColumns = () => Object.fromEntries([...visibleTables(data.chapters, state)].filter(t => schema[t]).map(t => [t, schema[t].map(c => c[0])]));
 
 function renderHistory() {
   $("history").innerHTML = state.history.map(q => "<li>" + esc(q) + "</li>").join("");
@@ -1143,7 +1214,7 @@ function award(list) {
   if (list.length) save(state);
 }
 
-const RANKS = [[45, "Ganimard himself"], [70, "Chief Inspector"], [110, "Inspector"], [Infinity, "Constable"]];  // from the 2026-10 trial (spec, Rank)
+const RANKS = [[30, "Ganimard himself"], [80, "Chief Inspector"], [130, "Inspector"], [Infinity, "Constable"]];  // owner 2026-10-25: 21 is the shortest path (spec, Rank)
 export function rank(queries) { return RANKS.find(([q]) => queries <= q)[1]; }
 
 // Seconds per wrong answer on the board; a compete game takes its season record's penalty.

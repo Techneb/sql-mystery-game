@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage, sqliteHelp, errorHtml, dateArithmeticNote, ymd, FIRST_QUERY } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -129,12 +129,13 @@ test("badges fire on the right query shapes and only once", () => {
 });
 
 test("rank thresholds", () => {
-  assert.equal(rank(45), "Ganimard himself");
-  assert.equal(rank(46), "Chief Inspector");
-  assert.equal(rank(70), "Chief Inspector");
-  assert.equal(rank(71), "Inspector");
-  assert.equal(rank(110), "Inspector");
-  assert.equal(rank(111), "Constable");
+  assert.equal(rank(21), "Ganimard himself", "the shortest path of solution.sql, chapters 1-8");
+  assert.equal(rank(30), "Ganimard himself");
+  assert.equal(rank(31), "Chief Inspector");
+  assert.equal(rank(80), "Chief Inspector");
+  assert.equal(rank(81), "Inspector");
+  assert.equal(rank(130), "Inspector");
+  assert.equal(rank(131), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12 });
 });
@@ -1183,11 +1184,11 @@ test("GA guards: once per key per page load, the first three failed runs, the le
     if (ls) Object.defineProperty(globalThis, "localStorage", ls); else delete globalThis.localStorage;
   }
   const fails = {};
-  assert.deepEqual(queryFail(fails, 1, null, false), { kind: "error", rule: "" });
-  assert.deepEqual(queryFail(fails, 1, { anchor: "group-by" }, false), { kind: "refused", rule: "group-by" });
-  assert.deepEqual(queryFail(fails, 1, null, true), { kind: "refused", rule: "cartesian" });
+  assert.deepEqual(queryFail(fails, 1, null, false, { type: "no_table", why: "x" }), { kind: "error", rule: "", type: "no_table" });
+  assert.deepEqual(queryFail(fails, 1, { anchor: "group-by" }, false), { kind: "refused", rule: "group-by", type: "refused" });
+  assert.deepEqual(queryFail(fails, 1, null, true), { kind: "refused", rule: "cartesian", type: "refused" });
   assert.equal(queryFail(fails, 1, null, false), null, "only the first " + QUERY_FAILS);
-  assert.deepEqual(queryFail(fails, 2, null, false), { kind: "error", rule: "" }, "counted per chapter");
+  assert.deepEqual(queryFail(fails, 2, null, false), { kind: "error", rule: "", type: "other" }, "counted per chapter");
   assert.deepEqual(freshState().fails, {}, "kept in the saved state");
   assert.deepEqual(freshState().hints, [], "hint_open once per chapter, kept in the saved state");
   const chapters = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ n }));
@@ -1717,4 +1718,39 @@ test("askDialog resolves with the closing button's value, Escape's stale value c
   const esc = { returnValue: "ok", querySelector: () => null, showModal() { this.onclose(); } };
   assert.equal(await shared.askDialog(esc, "x", () => "no"), "");
   assert.equal(await shared.askDialog({ querySelector: () => null }, "x", () => "fallback"), "fallback");
+});
+
+test("SQLite's errors get one plain line from the player's words and the tables on screen", () => {
+  const T = { police_report: ["id", "date", "place"], interview: ["id", "person_name"] };
+  const h = (m, q) => sqliteHelp(m, q, T);
+  assert.deepEqual(h('near "Ritz": syntax error', "SELECT * FROM police_report WHERE place = Hotel Ritz"),
+    { type: "syntax", why: "SQL stopped at Ritz. If Hotel Ritz is a value, put it in single quotes, as in place = 'Hotel Ritz'." });
+  assert.match(h("no such column: Ritz", "SELECT * FROM police_report WHERE place = Ritz").why, /place = 'Ritz'/);
+  assert.match(h("no such column: name", "SELECT * FROM interview WHERE name = 'x'").why, /columns are id, person_name\./);
+  assert.equal(h("no such table: interviews", "SELECT * FROM interviews").why, "The table is called interview.");
+  assert.match(h("no such table: police", "SELECT * FROM police report").why, /police_report, written with an underscore/);
+  assert.equal(h("no such table: suspects", "SELECT * FROM suspects").why, "There is no table called suspects. The tables on the schema are: police_report, interview.");
+  assert.equal(h("no such table: telegrams", "SELECT * FROM telegrams").why.includes("telegram,"), false, "a hidden table is never named");
+  assert.doesNotMatch(h("no such table: telegrams", "SELECT * FROM telegrams").why, /The table is called/);
+  assert.equal(h('unrecognized token: "\'Ritz"', "SELECT 1 WHERE 'Ritz").type, "unterminated");
+  assert.equal(h("incomplete input", "SELECT (1").type, "incomplete");
+  assert.match(h('near "FROM": syntax error', "SELECT id, FROM police_report").why, /comma just before FROM/);
+  assert.equal(h('near "\u2019": syntax error', "SELECT * FROM police_report WHERE place = \u2018Ritz\u2019").type, "curly_quote");
+  assert.equal(h('near "x": syntax error', "SELECT '\u2019' x x").type, "syntax", "a curly quote inside a string is fine");
+  assert.equal(h("out of memory", "SELECT 1").type, "other");
+  assert.equal(errorHtml("no such table: a<b", null), '<div class="error">no such table: a&lt;b</div>');
+  assert.match(errorHtml("e", { why: "<i>" }), /<p class="why">&lt;i&gt;/);
+});
+
+test("date mistakes: a quoted date names the YYYYMMDD number, an unquoted one is arithmetic", () => {
+  assert.equal(ymd("1912-05-18"), "19120518"); assert.equal(ymd("18/05/1912"), "19120518"); assert.equal(ymd("05/18/1912"), "19120518");
+  assert.equal(ymd("1912-13-01"), ""); assert.equal(ymd("May 18"), "");
+  assert.match(strictCheck("SELECT * FROM police_report WHERE date = '1912-05-17'", GAME).why, /YYYYMMDD.*as in date = 19120517\.$/, "built from what was typed");
+  assert.equal(strictCheck("SELECT * FROM police_report WHERE date = '1912-05-17'", GAME).anchor, "types", "the rule is unchanged");
+  assert.equal(strictCheck("SELECT * FROM police_report WHERE date = 1912-05-17", GAME), null, "valid SQL still runs");
+  assert.equal(dateArithmeticNote("SELECT * FROM police_report WHERE date = 1912-05-17", GAME),
+    "1912-05-17 without quotes is arithmetic: 1912 minus 5 minus 17, which is 1890. date holds dates as numbers written YYYYMMDD, as in date = 19120517.");
+  assert.equal(dateArithmeticNote("SELECT * FROM police_report WHERE place = '1912-05-17'", GAME), "");
+  assert.equal(FIRST_QUERY, "SELECT * FROM police_report LIMIT 5");
+  assert.equal(strictCheck(FIRST_QUERY, GAME), null);
 });

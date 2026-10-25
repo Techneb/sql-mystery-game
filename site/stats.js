@@ -66,13 +66,15 @@ export function firstTime(seen, key) {
 }
 const seenOnce = new Set();
 export function trackOnce(key, name, params) { return firstTime(seenOnce, key) && track(name, params); }
-// query_fail's kind and rule, for the first QUERY_FAILS failed runs per key (a chapter, an exercise; `fails` counts
-// them, the game keeps it in its state), else null. strict: strictCheck's refusal; cart: the comma-join refusal.
+// query_fail's kind, rule and type, for the first QUERY_FAILS failed runs per key (a chapter, an exercise; `fails` counts
+// them, the game keeps it in its state), else null. strict: strictCheck's refusal; cart: the comma-join refusal;
+// help: sqliteHelp's reading of SQLite's own error, whose fixed category is the type (refusals: "refused").
 export const QUERY_FAILS = 3;
-export function queryFail(fails, key, strict, cart) {
+export function queryFail(fails, key, strict, cart, help) {
   if ((fails[key] || 0) >= QUERY_FAILS) return null;
   fails[key] = (fails[key] || 0) + 1;
-  return strict ? { kind: "refused", rule: strict.anchor } : cart ? { kind: "refused", rule: "cartesian" } : { kind: "error", rule: "" };
+  return strict ? { kind: "refused", rule: strict.anchor, type: "refused" } : cart ? { kind: "refused", rule: "cartesian", type: "refused" } :
+    { kind: "error", rule: "", type: help ? help.type : "other" };
 }
 // feature_use, once per feature (per extra key, such as try_it's slug) per page load.
 export function useFeature(feature, params = {}, key = feature) { return trackOnce("feature:" + key, "feature_use", { feature, ...params }); }
