@@ -690,6 +690,9 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   written by `colour_learn.mjs`, pinned by a test; hidden under 1000 px, where the menu row's dropdown serves);
   every h2 has an id unique across the handbook; inline code as chips, key terms bold at first use, Grammar sections
   with a gold edge, Common mistakes and refusals tinted red, Try it with a gold edge. Wording unchanged.
+- ~~Handbook navigation by hand~~ Done 2026-10-25 (owner, review F5): one table of contents, `CHAPTERS` in
+  `colour_learn.mjs`, writes the menu row, the pagers, the side menus, the index's chapter list and the handbook's
+  sitemap entries between marker comments; pages byte-identical but for the markers; a test fails on a stale page.
 - ~~Blind check of the five new exercises~~ Done 2026-10-20: two independent solvers, 10 of 10 answers match the official
   results under the page's own check; The price rise now says one row per product and price paid.
 - Query funnel and monitoring page (2026-10-23; GA showed 474 players opening chapter 1 and 127 solving it, with no way

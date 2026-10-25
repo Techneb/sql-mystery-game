@@ -2,25 +2,43 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { strictCheck, strictHtml, STRICT_SECTIONS, themeButtonHtml, erdButtonHtml } from "./site/app.js";
-import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage } from "./colour_learn.mjs";
+import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPages, sitemapXml, READING, CHAPTERS } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
-// The Clerk's Handbook (site/learn/): every page repeats its chrome by hand, so these pin it.
+// The Clerk's Handbook (site/learn/): colour_learn.mjs writes its menu row, pagers, side menus and index list from
+// CHAPTERS; the masthead nav and footer are repeated by hand, so these pin them.
 const LEARN = "site/learn/";
 const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
 const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
 // the index lists its pages in three groups (chapters, exercises, grammar), in reading order
-// Reading order (the pagers): the chapters list, then the exercises card, then grammar, whatever order the index shows its groups in.
+// Reading order (the pagers): the chapters list, then the exercises card, then grammar; checked against colour_learn.mjs READING.
 const tocGroups = learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1];
 const tocLinks = (html) => [...html.matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1]);
 const chapterLinks = tocLinks(tocGroups.match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1]);
 const readingOrder = ["index.html", ...chapterLinks, ...tocLinks(tocGroups).filter((h) => !chapterLinks.includes(h))];
+
+test("handbook: the generated blocks are fresh (node colour_learn.mjs changes nothing) and follow CHAPTERS", () => {
+  assert.deepEqual(readingOrder, READING, "the index's table of contents is CHAPTERS, then exercises and grammar");
+  assert.deepEqual(chapterLinks, CHAPTERS.map((c) => c[0]));
+  const built = buildPages(learnHtml);
+  for (const f of learnPages) assert.equal(built[f], learnHtml[f], f + ": run node colour_learn.mjs");
+  // the blocks really are generated: a page whose menu, pager and side menu were emptied is rebuilt to the same bytes
+  const blank = learnHtml["like.html"].replace(/(<!-- (menu|pager): colour_learn\.mjs -->\n)[\s\S]*?(<!-- \/\2 -->\n)/g, "$1$3")
+    .replace(/<!-- side menu: colour_learn.mjs -->\n[\s\S]*?<!-- \/side menu -->\n/, "").replace('<main class="learn with-side">', '<main class="learn">');
+  assert.notEqual(blank, learnHtml["like.html"]);
+  assert.equal(buildPages({ ...learnHtml, "like.html": blank })["like.html"], learnHtml["like.html"]);
+  assert.throws(() => buildPages({ ...learnHtml, "new.html": "" }), /CHAPTERS and site\/learn\/ disagree/);
+  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
+  assert.equal(sitemapXml(xml, "today"), xml, "sitemap.xml: run node colour_learn.mjs");
+  const dropped = xml.replace(/ {2}<url><loc>[^<]*\/learn\/like\.html<[^\n]*\n/, "");
+  assert.ok(sitemapXml(dropped, "2099-01-01").includes("learn/like.html</loc><lastmod>2099-01-01<"), "a new page gets today's date");
+});
 const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
 const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
-test("handbook: every page carries the same masthead nav, footer and chapter menu, only the current item differs", () => {
+test("handbook: every page carries the same masthead nav and footer; the generated menu has one current item, in order", () => {
   assert.deepEqual([...readingOrder].sort(), learnPages, "the index's table of contents lists every page once");
   const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
   const foot = one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer");
@@ -68,7 +86,7 @@ test("handbook: every page carries the same masthead nav, footer and chapter men
     if (f === "exercises.html") assert.ok(learnHtml[f].indexOf('src="handbook.js"') < learnHtml[f].indexOf('src="exercises.js"'), "consent set up before initAds");
     assert.equal(one(learnHtml[f], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, f + " nav"), nav, f + " nav");
     assert.equal(one(learnHtml[f], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, f + " footer"), foot, f + " footer");
-    assert.equal(linked(f), ref, f + " menu (the current item must be the page itself)");
+    assert.equal(linked(f), ref, f + " menu (the current item is the page itself)");
   }
 });
 
@@ -173,7 +191,7 @@ test("handbook: each learning chapter's side menu lists the fourteen in order, i
   const ids = [];
   for (const f of learnPages) {
     const h = learnHtml[f];
-    assert.equal(sideMenuPage(h), h, f + ": run node colour_learn.mjs");
+    assert.equal(sideMenuPage(h, f), h, f + ": run node colour_learn.mjs");
     const heads = [...h.matchAll(/<h2( id="([\w-]+)")?[^>]*>/g)];
     if (!["index.html", "exercises.html"].includes(f)) heads.forEach((m) => { assert.ok(m[2], f + ": every h2 has an id"); ids.push(m[2]); });
     const nav = h.match(/<nav class="side-menu" aria-label="Learning chapters"><ol>([\s\S]*?)<\/ol><\/nav>/);
