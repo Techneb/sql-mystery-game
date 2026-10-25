@@ -60,7 +60,7 @@
 <p>An order line does carry a price, <code>unit_price</code>, but it is a different fact: the price paid that day. <code>product.price</code> is today's price, and three products cost more from Monday 16 March, so the lines sold before that date keep the old price. Before you decide two columns say the same thing, ask what each one records.</p>
 
 <h2>Primary keys</h2>
-<p>A primary key is a column whose value identifies one row and only one. In the bakery, every table but <code>order_item</code> has an <code>id</code> column for that purpose. An id is a label, not a measure: id 7 is not "later" or "bigger" than id 6 in any meaningful sense, even if it often happens to have been inserted later. Never read meaning into an id that the data does not promise.</p>
+<p>A primary key is a column whose value identifies one row and only one. In the bakery, every table but <code>order_item</code> has an <code>id</code> column for that purpose. An id is a label, not a measure: id 7 is not "later" or "bigger" than id 6, even if it was probably inserted later. Never read meaning into an id that the data does not promise.</p>
 
 <h2>Foreign keys and relationships</h2>
 <p>A foreign key is a column that holds the primary key of another table: <code>orders.customer_id</code> holds a <code>customer.id</code>. It expresses a relationship, and most relationships are one-to-many: one customer, many orders; one order, many lines. Schema diagrams draw this as a line between the two tables, often marked 1 at the parent end and N (or a crow's foot) at the child end. When you read a diagram, follow the lines: they are the joins you will write.</p>

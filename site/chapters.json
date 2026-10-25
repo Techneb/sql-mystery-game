@@ -270,7 +270,7 @@
   {
    "title": "The Cab's Week",
    "story": "**Ganimard** snorts at the plate. *'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'*\n\nThe book holds some sixty fares for that cab in the week of the theft, from the 13th to the 19th of May. *'A thief with a plan visits his fence before the job. Find me **the address this cab kept going back to**. I do not want the list. I want the address.'*",
-   "objective": "Where did the cab from chapter 3 keep going the week of the theft?",
+   "objective": "Where did the cab from chapter 3 keep going, the week of the theft?",
    "answer_form": "the address",
    "telegram": "MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L",
    "board": "Fence's address",

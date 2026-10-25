@@ -1517,7 +1517,7 @@ export const PROLOGUE_STEPS = [
   "The query below asks for every row of the book. Press Run. Each row is one thing a guest left behind.",
   "Well read. Now keep only what was found in the garden: add WHERE found_in = 'Garden' at the end of the query and press Run again.",
   "One row is left. What did the guest leave in the garden? Type it in the answer box and press Submit.",
-  "Correct. That is the job: query, read, answer. The Inspector's archives are bigger, and their answers are not on the first page."];
+  "Correct. That is the job: query, read, answer. The inspector's archives are bigger, and their answers are not on the first page."];
 export const prologueOn = state => state.mode !== "compete" && !state.prologue && !state.solved.length && !state.totalQueries;
 // The step a successful run leads to: the whole book moves on from step 0, the garden's lone row from step 1.
 export function prologueAdvance(step, res) {
@@ -1979,7 +1979,7 @@ function waitForOpen() {
 }
 const JOIN_REFUSED = { "pseudo taken": "Someone already plays this season under that pseudo. Pick another.",
   "session closed": "This session is closed.", "no such season": "This season does not exist.",
-  "busy, try again": "The archives are busy, press Join again." };
+  "busy, try again": "The archives are busy. Press Join again." };
 
 async function joinCompete() {
   const team = $("team").value.trim();
