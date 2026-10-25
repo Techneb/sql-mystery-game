@@ -83,6 +83,8 @@ test("seasons: create, open, close; close from created; never reopened; admin ke
   assert.equal(b.admin("open", { season: t.id }).ok, false);
   const u = b.create();
   assert.equal(b.admin("update", { season: u.id, name: "y", date: "2026-10-15" }).error, "unknown admin action", "no edit: a season is created as it plays");
+  assert.equal(b.admin("toString", { season: u.id }).error, "unknown admin action", "the action table's inherited keys are no action");
+  assert.equal(b.admin("nope", { season: "missing" }).error, "no such season", "the season is looked up before the action");
 });
 
 test("join: one per pseudo after NFKC folding; '007' stays text and finishes after its seven progress rows", () => {

@@ -90,10 +90,9 @@ function withNow_(s) {
   return o;
 }
 
-function admin_(data) {
-  if (!adminOk_(data)) return {ok: false, error: "wrong admin key"};
-  var list = seasons_(), act = String(data.admin), now = Date.now(), s;
-  if (act === "create") {
+// The desk's season actions, each a small function of (s, list, data, now) returning the reply. create has no s yet.
+var ADMIN_ACTS = {
+  create: function (s, list, data, now) {
     var f = fields_(data);
     if (f.error) return f;
     getLogSheet_();   // creates the log tab now, under the lock, so joins never race to create it
@@ -101,34 +100,41 @@ function admin_(data) {
          penalty: f.penalty, state: "created", createdAt: now, openedAt: null, closedAt: null};
     list.push(s);
     return save_(list, s);
-  }
-  s = find_(list, String(data.season || ""));
-  if (!s) return {ok: false, error: "no such season"};
-  if (act === "open") {
+  },
+  open: function (s, list, data, now) {
     if (s.state === "open") return {ok: true, season: s};
     if (s.state !== "created") return {ok: false, error: "a closed season cannot reopen"};
     s.state = "open"; s.openedAt = now;
     return save_(list, s);
-  }
-  if (act === "close") {
+  },
+  close: function (s, list, data, now) {
     if (s.state === "closed") return {ok: true, season: s};
     s.state = "closed"; s.closedAt = now;   // from open, or from created (a season created by mistake frees its database)
     return save_(list, s);
-  }
-  if (act === "rename") {   // any state: only the name changes, never the id, the database or the rows
+  },
+  rename: function (s, list, data) {   // any state: only the name changes, never the id, the database or the rows
     var n = name_(data);
     if (n.error) return n;
     s.name = n.name;
     return save_(list, s);
-  }
-  if (act === "delete") {
+  },
+  delete: function (s, list) {
     if (s.state === "open") return {ok: false, error: "close the season before deleting it"};
     var removed = deleteRows_(getLogSheet_(), s.id);
     var out = save_(list.filter(function (x) { return x.id !== s.id; }), s);   // pickDb_ no longer sees its database
     out.removedRows = removed;
     return out;
   }
-  return {ok: false, error: "unknown admin action"};
+};
+
+function admin_(data) {
+  if (!adminOk_(data)) return {ok: false, error: "wrong admin key"};
+  var list = seasons_(), act = String(data.admin), now = Date.now();
+  if (act === "create") return ADMIN_ACTS.create(null, list, data, now);
+  var s = find_(list, String(data.season || ""));
+  if (!s) return {ok: false, error: "no such season"};
+  var fn = Object.prototype.hasOwnProperty.call(ADMIN_ACTS, act) ? ADMIN_ACTS[act] : null;
+  return fn ? fn(s, list, data, now) : {ok: false, error: "unknown admin action"};
 }
 
 function name_(data) {
@@ -187,8 +193,9 @@ function locked_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
-// ?seasons=1 -> every season record; ?meta=<id> -> one record plus the server's `now`; ?season=<id> -> that
-// season's rows; nothing -> every row (the admin page's export).
+// ?seasons=1&key= -> every season record (the desk only); ?report= and ?stats= with the key -> GA numbers;
+// ?meta=<id> -> one record plus the server's `now` (public); ?season=<id> -> that season's rows (public, the board);
+// no parameter but the key -> every row (the desk's counts and export).
 function get_(e) {
   var p = (e && e.parameter) || {};
   if (p.seasons) return adminOk_({key: p.key}) ? seasons_() : {ok: false, error: "wrong admin key"};
