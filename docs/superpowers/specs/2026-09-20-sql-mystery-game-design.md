@@ -752,7 +752,10 @@ plain SQL errors), the `RANKS` retune, the SQL Noir study, and clicking the desk
   at steady tens of thousands of page views a month. Real ad clicks cannot be seen from the page (Google's iframe;
   blur-detection scripts are unreliable and a policy risk): the way is linking AdSense to GA4 (a Google setting, owner's
   call), then `publisherAdClicks` / `publisherAdImpressions` / `totalAdRevenue` in the backend whitelist and an "ad
-  clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Open: the owner making the link.
+  clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Done 2026-10-25: the owner linked AdSense to
+  GA4; the three metrics are in the whitelist (and the pivot table), and both the Game and Handbook FEATURE USE show
+  "Ad clicks (Google)" (GA's own total on their pages, impressions in its tooltip, zero until GA has data, about a day
+  after the link). Needs the backend redeployed (`deploy.sh`) once on main.
 - Competitor study (owner, 2026-10-24): research SQL Noir (https://www.sqlnoir.com/), a detective-themed SQL game,
   and note what it does well to borrow: onboarding, case structure and difficulty, hints, the editor and results,
   progress and accounts, how it earns money, SEO and sharing. Output: a short findings note with what to adopt here.

@@ -507,7 +507,7 @@ export function hbarSvg(rows, series, w = 640, fmt = compact, aria = "Bars") {
   return '<svg class="chart hbar-chart" width="' + w + '" height="' + H + '" viewBox="0 0 ' + w + " " + H + '" role="img" aria-label="' + esc(aria) + '">' +
     rows.map((r, i) => {
       const y0 = i * rh;
-      return '<g class="hit"' + tipAttrs(r.label, series.map(([n, c], j) => [fmt(r.values[j]), n, c]).concat(r.tip || [])) + '><rect x="0" y="' + y0 + '" width="' + w + '" height="' + rh + '"/></g>' +
+      return '<g class="hit"' + tipAttrs(r.label, series.map(([n, c], j) => [fmt(r.values[j]), r.unit || n, c]).concat(r.tip || [])) + '><rect x="0" y="' + y0 + '" width="' + w + '" height="' + rh + '"/></g>' +
         '<text x="0" y="' + (y0 + 12) + '">' + esc(cut(r.label)) + "</text>" +
         series.map(([, c], j) => {
           const v = r.values[j] || 0, y = y0 + LH + j * (BH + G), bw = r1((v * pw) / max);
@@ -566,6 +566,8 @@ export const KINDS = { error: "SQLite error", refused: "Refused by the grammar c
 export const LEVELS = { "warm-up": "Warm-up", practice: "Practice", challenge: "Challenge" };
 export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by the grammar check" };
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
+// AdSense's own clicks and impressions on the view's pages (GA has them once AdSense is linked, 2026-10-25).
+const adRequest = (days, pagePath) => ev(days, [], ["publisherAdClicks", "publisherAdImpressions"], { pagePath });
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
 // in COUNTED follow the Count (reloaded when it changes); the others count what their events say.
 export const COUNTED = ["pages", "devices", "channels"];
@@ -582,7 +584,7 @@ export const PANELS = {
       ev(d, ["customEvent:kind"], ["eventCount"], { eventName: ["query_fail"], pagePath: GAME_PATHS })],
     modes: d => [ev(d, ["customEvent:mode"], ["totalUsers"], { eventName: ["chapter_open"] }), ev(d, ["customEvent:mode"], ["totalUsers"], { eventName: ["landing_begin"] }),
       ev(d, [], ["activeUsers"], { pagePath: GAME_PATHS })],
-    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: GAME_PATHS })],
+    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: GAME_PATHS }), adRequest(d, GAME_PATHS)],
   },
   handbook: {
     pages: (d, m) => [scoped(countRequest(d, ["pageTitle"], m), LEARN)],
@@ -596,7 +598,7 @@ export const PANELS = {
       ev(d, ["customEvent:outcome"], ["eventCount"], { eventName: ["exercise_run"] })],
     fails: d => [ev(d, ["customEvent:rule"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN }),
       ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:exercise"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN })],
-    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: LEARN })],
+    features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: LEARN }), adRequest(d, LEARN)],
     tryIt: d => [ev(d, ["customEvent:exercise"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], "customEvent:feature": ["try_it"] })],
   },
 };
@@ -646,13 +648,20 @@ export function wrongHintsHtml(res, w) {
     raw("wrong-answers-hints", tableHtml(["Chapter", "Users with a 1st wrong answer", "Users with a 3rd", "Users who opened the hint", "Hint opens"],
       g.map(c => [roman(c.chapter), ...c.values, c.tip[0][0]])));
 }
-// Every known feature (zeros included) in its list's order, then any other GA reports.
+// Every known feature (zeros included) in its list's order, then any other GA reports, and Google's ad clicks.
 export function featuresHtml(res, w, names, name = "feature-use") {
   const m = byFirst(res[0]), keys = [...Object.keys(names), ...[...m.keys()].filter(k => !(k in names))];
   const rows = keys.map(k => ({ key: k, label: names[k] || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }))
     .sort((a, b) => b.values[0] - a.values[0] || b.ev - a.ev); // most users first; ties keep the names' order (stable sort)
-  return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] })), [["users", "c3"]], w, compact, "Feature use") +
-    raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], rows.map(r => [r.label, r.key, r.values[0], r.ev])));
+  const bars = rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] }));
+  // res[1]: GA's AdSense totals (no dimension), zero when GA has none; a click count, not users, beside the house ad.
+  const t = (res[1] && res[1].totals) || (res[1] && res[1].rows && res[1].rows[0]) || [], clicks = Number(t[0]) || 0, shown = Number(t[1]) || 0;
+  const ad = { key: "publisherAdClicks", label: "Ad clicks (Google)", values: [clicks], ev: shown, unit: "clicks", tip: [[shown, "impressions"]] };
+  const at = bars.findIndex(r => r.key === "ad_house_click");
+  bars.splice(at < 0 ? bars.length : at + 1, 0, ad);
+  return hbarSvg(bars, [["users", "c3"]], w, compact, "Feature use") +
+    '<p class="muted">Users per feature; Ad clicks (Google) is GA&#39;s count of clicks on Google&#39;s ads on these pages (impressions in its tooltip), not users. GA shows AdSense data about a day after the link.</p>' +
+    raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], bars.map(r => [r.label, r.key, r.unit ? r.values[0] + " clicks" : r.values[0], r.unit ? r.ev + " impressions" : r.ev])));
 }
 // res: [chapter_open by mode, landing_begin by mode, activeUsers on the game page]: two donuts, GA's totals in the centre.
 export function modesHtml(res) {

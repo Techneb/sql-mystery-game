@@ -250,7 +250,7 @@ var REPORT_DIMS = ["date", "eventName", "customEvent:chapter", "customEvent:coun
 var REPORT_METRICS = ["activeUsers", "totalUsers", "newUsers", "sessions", "engagedSessions", "eventCount",
   "userEngagementDuration", "averageSessionDuration", "screenPageViews", "customEvent:seconds", "averageCustomEvent:seconds",
   "customEvent:queries", "averageCustomEvent:queries", "customEvent:runs", "averageCustomEvent:runs", "customEvent:wrong",
-  "averageCustomEvent:wrong"];
+  "averageCustomEvent:wrong", "publisherAdClicks", "publisherAdImpressions", "totalAdRevenue"];
 var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function report_(p) {

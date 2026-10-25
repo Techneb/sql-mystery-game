@@ -614,6 +614,28 @@ test("handbook: sitemap lists the landing page, privacy and every learn page, an
   assert.deepEqual([...new Set(files)].sort(), ["index.html", "privacy.html", ...learnPages.map((f) => "learn/" + f)].sort());
 });
 
+test("search and previews: every indexed page has its own title, a description, a canonical at its sitemap URL, og tags and JSON-LD that parses", () => {
+  const locs = [...fs.readFileSync("site/sitemap.xml", "utf8").matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
+  const titles = new Set();
+  for (const loc of locs) {
+    const rel = loc.replace("https://mystery.alephb.uk/", ""), f = "site/" + (rel === "" || rel.endsWith("/") ? rel + "index.html" : rel);
+    const h = fs.readFileSync(f, "utf8"), meta = (re) => (h.match(re) || [])[1];
+    const title = meta(/<title>([^<]+)<\/title>/);
+    assert.ok(title && !titles.has(title), f + " has a unique title");
+    titles.add(title);
+    assert.equal(meta(/<link rel="canonical" href="([^"]+)">/), loc, f + " canonical is its sitemap URL");
+    if (rel === "privacy.html") continue;
+    assert.ok(meta(/<meta name="description" content="([^"]{50,})">/), f + " description");
+    assert.ok(meta(/<meta property="og:title" content="([^"]+)">/), f + " og:title");
+    assert.equal(meta(/<meta property="og:url" content="([^"]+)">/), loc, f + " og:url");
+    assert.equal(meta(/<meta property="og:image" content="([^"]+)">/), "https://mystery.alephb.uk/landing-pillow.jpg", f + " og:image");
+    assert.ok(fs.existsSync("site/landing-pillow.jpg") && h.includes('<meta name="twitter:card" content="summary_large_image">'), f + " twitter card");
+    const ld = JSON.parse(meta(/<script type="application\/ld\+json">([^<]+)<\/script>/));
+    assert.equal(ld["@context"], "https://schema.org", f + " JSON-LD");
+  }
+  for (const f of ["admin.html", "leaderboard.html", "monitor.html", "explore.html"]) assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /canonical|og:title/, f + " stays out of search");
+});
+
 test("handbook: no page names a game table or a cast member", () => {
   const tables = [...new Set(data.chapters.flatMap((c) => c.tables))];
   const cast = data.cast.flatMap((c) => [c.name, c.name.split(" ").pop()]);
@@ -1579,6 +1601,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(g.includes("LEFT AN UNSOLVED CHAPTER") && g.includes("AVERAGE TIME BEFORE LEAVING") && g.includes("AVERAGE QUERIES BEFORE LEAVING") && g.includes("WRONG ANSWERS AND HINTS"));
   assert.equal((g.match(/data-k="Chapter XII"/g) || []).length, 4, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints");
   assert.ok(g.includes('data-k="Suspects opened" data-v="0\tusers\tc3\n0\tuses"'), "known features listed at zero");
+  assert.ok(g.includes('data-k="Ad clicks (Google)" data-v="0\tclicks\tc3\n0\timpressions"'), "Google's ad clicks at zero");
+  const fu = monitor.featuresHtml([{ rows: [["ad_house_click", 4, 5]] }, { rows: [[7, 300]], totals: [9, 310] }], 390, monitor.HANDBOOK_FEATURES);
+  assert.ok(fu.includes('data-k="Ad clicks (Google)" data-v="9\tclicks\tc3\n310\timpressions"'), "GA's own totals");
+  assert.ok(fu.indexOf("House ad clicked") < fu.indexOf("Ad clicks (Google)") && fu.indexOf("Ad clicks (Google)") < fu.indexOf("Schema enlarged"), "right after the house ad");
   assert.equal((g.match(/class="slice empty"/g) || []).length, 3, "the failure kind and both mode donuts: empty rings");
   assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
   const h = monitor.handbookHtml(390, Object.fromEntries(Object.entries(monitor.PANELS.handbook).map(([k, f]) => [k, { res: f(7, "ran").map(() => empty) }])), { total: empty }, "ran");
