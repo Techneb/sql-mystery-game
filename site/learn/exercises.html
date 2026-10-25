@@ -57,7 +57,7 @@
 <details class="howto"><summary class="label">HOW TO USE THIS PAGE</summary>
 <ol>
 <li>Pick a level, <b>Warm-up</b>, <b>Practice</b> or <b>Challenge</b>, then a question from the list.</li>
-<li>Write your query in the terminal and press <b>Run</b> (Ctrl+Enter; Ctrl+F tidies the layout). The schema shows the tables and their keys; its button enlarges it.</li>
+<li>Write your query in the terminal and press <b>Run</b> (Ctrl+Enter; Tab completes a name, Ctrl+F tidies the layout). The schema shows the tables and their keys; its button enlarges it.</li>
 <li>The page checks every result: the same rows and values as the solution, whatever you name the columns. Order counts only when the question asks for one. A solved question gets a tick, kept in this browser.</li>
 <li>Stuck? <b>Show solution</b> opens the worked answer. A refused query says why and links to the rule it broke: the terminal follows PostgreSQL's rules.</li>
 <li>To work elsewhere, the <a href="database.html">bakery database page</a> has the script that recreates the data in any SQLite tool (write <code>lower(name) LIKE</code> there instead of <code>ILIKE</code>).</li>
@@ -186,7 +186,7 @@
     </details>
   </div>
   <div class="wb-terminal">
-    <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Ctrl+F to format</span><a class="dialect" href="grammar.html" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
+    <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Tab to complete, Ctrl+F to format</span><a class="dialect" href="grammar.html" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
     <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="SQL query" placeholder="SELECT * FROM product"></textarea></div>
     <div class="row"><button id="ex-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="ex-info" class="muted" aria-live="polite">Loading the SQL engine...</span></div>
     <div id="ex-results" class="results" aria-live="polite"></div>
