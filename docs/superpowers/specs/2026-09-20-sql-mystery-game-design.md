@@ -325,7 +325,16 @@ framework, no bundler.
 Since phase 4 (2026-10-19/20, details in section 8): ads live with the house-ad fallback (verdict pending), the
 handbook restructured (header, chapter dropdown, grammar in the chapters), the interactive exercises page, the
 handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-10-19-bakery-v2-and-review.md`.
-Everything is deployed (2026-10-20, 9f4e671).
+Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
+GA on the handbook, the site's own dialogs, and the Strix audit and its fixes.
+
+**Open right now (2026-10-25).** Everything is deployed (fc1ea75; site and backend @6). Waiting on Google: the AdSense
+re-review (requested 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue.
+Waiting on the owner: linking AdSense to GA4 (ad clicks), archiving the old personal-account backend project, a look
+at the desk on a phone. Ready: the chapter 1 drop-off (GA, 30 days to 2026-10-25: 1,026 opened chapter I, 283 solved
+it, 28%; then 60% for II and 78-91% for III-VIII; 46 finished Part I, 9 Part II; among chapter I players since
+2026-10-24, double-quoted text and type clashes are the most frequent refusals, 31 and 26 users, besides 77 with
+plain SQL errors), the `RANKS` retune, the SQL Noir study, and clicking the desk's two dialogs through.
 
 ## 8. Backlog (not scheduled)
 
@@ -716,8 +725,8 @@ Everything is deployed (2026-10-20, 9f4e671).
   empty data stays empty and people totals are GA's own (owner: "I want correct counts"). Open, to fix once Google's
   consent message is live (after AdSense approval): an answer given only in Google's message is not written to
   `ritz.consent`, so the banner would ask that European visitor again on handbook pages without the ad box. Also
-  untested: the `averageCustomEvent:` / `customEvent:` metric names against the live Data API (a refused one shows
-  GA's error in its panel).
+  checked live 2026-10-25: the `averageCustomEvent:` / `customEvent:` metric names (seconds, queries) are accepted by
+  the Data API.
   Since then (owner, 2026-10-24): the donuts' centre is GA's own total (devices and channels agree), Export CSV beside
   every Raw data toggle, one common Count select (users per day, countries, donuts) and a "Count metrics compared"
   stacked bar chart. Shipped the same day (f803e39): Global's PAGES as a donut and TOP PAGES removed; Game and
@@ -748,7 +757,7 @@ Everything is deployed (2026-10-20, 9f4e671).
   and note what it does well to borrow: onboarding, case structure and difficulty, hints, the editor and results,
   progress and accounts, how it earns money, SEO and sharing. Output: a short findings note with what to adopt here.
   Not started.
-- Strix security test (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
+- ~~Strix security test~~ Done 2026-10-24, fixed 2026-10-25 (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
   throwaway season, never during a class, with request caps; Google's services out; findings in the uncommitted
   `docs/audits/`. It starts only after Compromise's Strix run (planned the night of 2026-10-24); Compromise Main will
   message this session with its reusable setup (Colima, strix 1.7.0 via pipx, a Keychain launcher; litellm needs
