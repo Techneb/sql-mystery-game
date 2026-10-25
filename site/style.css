@@ -363,3 +363,5 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .landing-warmup a { font-weight: 700; color: var(--rel); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .share .share-text { font-style: italic; margin: 6px 0 8px; }
 .share a.btn { text-decoration: none; } .share a.btn.quiet { background: transparent; color: var(--ink); }
+
+.feedback-status a { color: inherit; }

@@ -36,3 +36,9 @@ function feedback_(b) {
     return { ok: true };
   } finally { lock.releaseLock(); }
 }
+
+// Run once from the editor after setting SHEET_ID: Google asks the owner to allow the Sheet access, and the tab is made.
+function setup() {
+  var book = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
+  if (!book.getSheetByName(FEEDBACK_TAB)) book.insertSheet(FEEDBACK_TAB).appendRow(["at", "page", "message", "email"]);
+}

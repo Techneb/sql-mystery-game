@@ -3,7 +3,7 @@
 // compete backend), which appends a row to the owner's Sheet. Side-effect free at import; wireFeedback() wires a page.
 
 // The feedback script's /exec URL (public by design: it only appends feedback rows). Empty: Send points to the email.
-export const FEEDBACK_URL = "";
+export const FEEDBACK_URL = "https://script.google.com/macros/s/AKfycbzR-3ijpW9RIFeR1zZg_zFdQ99nalwuxi0Lp8gTZZi7skItyNMSxoBqCJWcD1Rwj7NC/exec";
 export const FEEDBACK_MAX = 2000, EMAIL_MAX = 120, PAGE_MAX = 200;
 export const FEEDBACK_EMAIL = "contact@alephb.uk";
 
