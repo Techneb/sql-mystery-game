@@ -825,7 +825,7 @@ test("admin seasons table: newest first, counts per season, actions by state, va
 
 test("admin seasons table: action buttons are icons named by title and aria-label, no visible text", () => {
   const html = admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state: "created", createdAt: 1 }], {}, "");
-  const names = { open: "Open", close: "Close", copy: "Copy link", qr: "QR", board: "Board", csv: "Export CSV", delete: "Delete the season" };
+  const names = { open: "Open", close: "Close", copy: "Copy link", qr: "QR", board: "Board", csv: "Export CSV", rename: "Rename the season", delete: "Delete the season" };
   const btns = [...html.matchAll(/<button ([^>]*)>([\s\S]*?)<\/button>/g)];
   assert.deepEqual(btns.map(b => b[1].match(/data-act="(\w+)"/)[1]), Object.keys(names));
   for (const [, attrs, inner] of btns) {
@@ -837,6 +837,7 @@ test("admin seasons table: action buttons are icons named by title and aria-labe
   const acts = state => [...admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state, createdAt: 1 }], {}, "")
     .matchAll(/data-act="(\w+)"/g)].map(m => m[1]);
   assert.ok(!acts("open").includes("delete"), "an open season cannot be deleted");
+  assert.ok(["created", "open", "closed"].every(st => acts(st).includes("rename")), "every season can be renamed");
   assert.ok(acts("closed").includes("delete") && !acts("closed").includes("close"));
 });
 

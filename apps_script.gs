@@ -5,7 +5,7 @@
 //
 // Script Properties (Project Settings > Script Properties):
 //   SHEET_ID      the log sheet's id (required)
-//   ADMIN_KEY     the admin passphrase: lets admin.html create, open, close and delete seasons (required for that)
+//   ADMIN_KEY     the admin passphrase: lets admin.html create, open, close, rename and delete seasons (required for that)
 //   TOKEN_SECRET  optional; signs the per-player tokens (falls back to ADMIN_KEY, then SHEET_ID)
 //   SEASONS       written by this script (the season records), never by hand
 //
@@ -20,7 +20,7 @@
 // a season (one join per pseudo), then post "progress"
 // and "finish" with the token "join" returned, only while the season is open; a "finish" needs its seven
 // "progress" rows first. Answers are checked in the browser (the season files carry their hashes), so the
-// game stays honour-based and off the marks. A season that is not open can be deleted: its record and every log
+// game stays honour-based and off the marks. Any season can be renamed (its name only). A season that is not open can be deleted: its record and every log
 // row of it go for good, and its database is free for the next season.
 
 var DBS = 5;   // generate_db.SEASONS: the pre-built databases site/season-1..5.*
@@ -115,6 +115,12 @@ function admin_(data) {
     s.state = "closed"; s.closedAt = now;   // from open, or from created (a season created by mistake frees its database)
     return save_(list, s);
   }
+  if (act === "rename") {   // any state: only the name changes, never the id, the database or the rows
+    var n = name_(data);
+    if (n.error) return n;
+    s.name = n.name;
+    return save_(list, s);
+  }
   if (act === "delete") {
     if (s.state === "open") return {ok: false, error: "close the season before deleting it"};
     var removed = deleteRows_(getLogSheet_(), s.id);
@@ -125,10 +131,15 @@ function admin_(data) {
   return {ok: false, error: "unknown admin action"};
 }
 
+function name_(data) {
+  var name = String(data.name || "").trim();
+  return !name || name.length > 60 ? {error: "name must be 1 to 60 characters", ok: false} : {name: name};
+}
+
 function fields_(data) {
-  var name = String(data.name || "").trim(), date = String(data.date || "");
+  var n = name_(data), name = n.name, date = String(data.date || "");
   var penalty = data.penalty === undefined || data.penalty === "" ? 10 : int_(data.penalty, 0, 3600);
-  if (!name || name.length > 60) return {error: "name must be 1 to 60 characters", ok: false};
+  if (n.error) return n;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return {error: "date must be YYYY-MM-DD", ok: false};
   if (penalty === null) return {error: "penalty must be 0 to 3600 seconds", ok: false};
   return {name: name, date: date, penalty: penalty};

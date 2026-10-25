@@ -782,3 +782,7 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   it removes the record from `SEASONS` and the season's log rows (bottom-up `deleteRows`, so the other rows keep their
   text cells), returns `removedRows`, and frees the database for the next create. The desk shows a bin button on
   created and closed rows and asks in `#ask` first, suggesting the CSV export. Needs `deploy.sh` once on main.
+- Rename a season (owner, 2026-10-25). Built 2026-10-25 on a branch, not yet merged or deployed: admin action
+  `rename` {season, name} (key, under the script lock, any state), the name validated as on create (1 to 60
+  characters), only `name` changes. The desk shows a pencil button on every row and asks in `#rename`, a labelled
+  field prefilled with the current name. Board and game follow through `?meta`. Needs `deploy.sh` once on main.

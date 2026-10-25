@@ -175,6 +175,28 @@ test("delete: created or closed seasons go with their rows, open ones are refuse
   assert.equal(b.admin("delete", { season: t.id }).error, "no such season", "gone for good");
 });
 
+test("rename: any state, the name only, validated like create, key required", () => {
+  const b = backend();
+  const s = b.create();
+  assert.ok(b.post({ event: "join", team: "007", season: s.id }).ok);
+  const before = JSON.parse(b.props.get("SEASONS"))[0];
+  assert.equal(b.post({ admin: "rename", key: "wrong", season: s.id, name: "X" }).error, "wrong admin key");
+  assert.equal(b.post({ admin: "rename", season: s.id, name: "X" }).error, "wrong admin key", "no key");
+  assert.equal(b.admin("rename", { season: "nope", name: "X" }).error, "no such season");
+  for (const name of ["", "   ", "x".repeat(61), undefined])
+    assert.equal(b.admin("rename", { season: s.id, name }).error, "name must be 1 to 60 characters", String(name));
+  for (const step of [null, "open", "close"]) {
+    if (step) b.admin(step, { season: s.id });
+    const r = b.admin("rename", { season: s.id, name: "  Group B " + step + "  " });
+    assert.ok(r.ok, String(step));
+    assert.equal(r.season.name, "Group B " + step);
+  }
+  const after = JSON.parse(b.props.get("SEASONS"))[0];
+  assert.deepEqual({ ...after, name: before.name, state: before.state, openedAt: null, closedAt: null }, before, "only the name (and open/close) changed");
+  assert.equal(b.get({ meta: s.id }).name, "Group B close", "?meta follows");
+  assert.deepEqual(b.get({ season: s.id }).map(r => [r.team, r.season]), [["007", s.id]], "rows untouched");
+});
+
 test("bodies that are not JSON objects, and our own exceptions, come back as {ok:false} JSON", () => {
   const b = backend();
   for (const body of ["null", "5", "not json", '"s"']) assert.equal(b.post(body).ok, false, body);
