@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -338,6 +338,51 @@ test("story markup: bold and italic only, everything else escaped", () => {
   if (fs.existsSync("site/season-1.json"))   // compete has its own Part I stories (story_compete), same markup rules
     for (const c of JSON.parse(fs.readFileSync("site/season-1.json", "utf8")).chapters)
       assert.ok(!/\*/.test(richText(c.story).replace(/<\/?[bi]>/g, "")), "unbalanced markup in compete chapter " + c.n);
+});
+
+test("suggestSql: contexts, the player's case, no values", () => {
+  const T = { police_report: ["id", "date", "type"], hotel_register: ["guest", "suite"] };
+  const at = (q, t = T) => { const r = suggestSql(q, q.length, t); return r ? r.items.map(i => i.text) : []; };
+  assert.deepEqual(at("SELECT * FROM po"), ["police_report"]);
+  assert.deepEqual(at("select * from police_report JOIN h"), ["hotel_register"]);
+  assert.deepEqual(at("SELECT pr. FROM police_report pr"), []);   // caret at the end, not after pr.
+  const q = "SELECT pr. FROM police_report AS pr", r = suggestSql(q, 10, T);
+  assert.deepEqual(r.items.map(i => i.text), ["id", "date", "type"]);
+  assert.equal(r.start, 10);
+  assert.deepEqual(at("SELECT hotel_register.s"), ["suite"]);
+  assert.equal(at("SELECT * FROM police_report WHERE d")[0], "date");   // columns of the query's tables first
+  assert.deepEqual(at("sel"), ["select"]);
+  assert.deepEqual(at("SEL"), ["SELECT"]);
+  assert.ok(at("SELECT co").includes("count()"));
+  assert.ok(at("SELECT CO").includes("COUNT()"));
+  assert.equal(suggestSql("SELECT co", 9, T).items.find(i => i.kind === "function").insert, "count(");
+  assert.deepEqual(at("SELECT * FROM police_report WHERE type = 'bu"), []);   // never inside a string
+  assert.deepEqual(at("-- se"), []);
+  assert.deepEqual(at("SELECT 12"), []);
+  assert.equal(suggestSql("SELECT dat", 9, T), null);   // mid-word
+  assert.deepEqual(at("SELECT select"), []);           // a complete word is not offered again
+  assert.ok(at("SELECT * FROM police_report WHERE ").length === 0);
+  for (const p of ["a", "s", "c", "d", "l", "o", "r", "t", "u"]) assert.ok(at("SELECT " + p).length <= SUGGEST_MAX);
+});
+
+test("suggestSql offers only the revealed tables, and only functions the strict terminal runs", () => {
+  const sch = {};
+  for (const t of Object.keys(data.chapters.flatMap(c => c.tables).reduce((o, t) => (o[t] = 1, o), {}))) sch[t] = ["x"];
+  for (const ch of data.chapters) {
+    const vis = visibleTables(data.chapters, { solved: data.chapters.filter(c => c.n < ch.n).map(c => c.n), part2: ch.n > 8 });
+    const T = Object.fromEntries([...vis].map(t => [t, ["x"]]));
+    for (const c of "abcdefghijklmnopqrstuvwxyz_") {
+      for (const it of (suggestSql("SELECT * FROM " + c, 15, T) || { items: [] }).items) assert.ok(vis.has(it.text), it.text + " in chapter " + ch.n);
+      for (const it of (suggestSql("SELECT " + c, 8, T) || { items: [] }).items) if (it.kind === "table") assert.ok(vis.has(it.text));
+    }
+  }
+  const s = { t: [["a", "TEXT", 0], ["n", "INTEGER", 0]] };
+  for (const f of SUGGEST_FUNCS) {
+    assert.ok(!Object.hasOwn(SQLITE_FUNCS, f), f);
+    const ok = arg => { const r = strictCheck("SELECT " + f + "(" + arg + ") FROM t", s); return !r || !/does not exist/.test(r.error); };
+    assert.ok(ok("a") || ok("n"), f);
+  }
+  for (const f of ["ifnull", "iif", "strftime", "group_concat", "instr", "printf"]) assert.ok(!SUGGEST_FUNCS.includes(f) && !SUGGEST_KEYWORDS.includes(f.toUpperCase()));
 });
 
 test("formatSql changes only whitespace and keyword case, and is stable", () => {

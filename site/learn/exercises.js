@@ -2,7 +2,7 @@
 // browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
 // and a check of the last result against the chosen question's solution, run on the same database.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail } from "../app.js";
+import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, wireSuggest, erdButtonHtml, track, trackOnce, useFeature, queryFail } from "../app.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -160,6 +160,7 @@ async function boot() {
   }
   renderHistory();
   ta.addEventListener("input", sync);
+  wireSuggest(ta, () => Object.fromEntries(names.map(t => [t, schema[t].map(c => c[0])])), sync);   // the whole bakery
   ta.addEventListener("keydown", ev => {
     if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") { ev.preventDefault(); run(); }
     else if (ev.ctrlKey && !ev.metaKey && ev.key.toLowerCase() === "f") { ev.preventDefault(); ta.value = formatSql(ta.value); sync(); }

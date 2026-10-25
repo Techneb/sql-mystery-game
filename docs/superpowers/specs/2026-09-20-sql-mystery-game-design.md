@@ -326,7 +326,7 @@ Since phase 4 (2026-10-19/20, details in section 8): ads live with the house-ad 
 handbook restructured (header, chapter dropdown, grammar in the chapters), the interactive exercises page, the
 handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-10-19-bakery-v2-and-review.md`.
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
-GA on the handbook, the site's own dialogs, and the Strix audit and its fixes.
+GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
 **Open right now (2026-10-25).** Everything is deployed (fc1ea75; site and backend @6). Waiting on Google: the AdSense
 re-review (requested 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue.

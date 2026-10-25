@@ -247,6 +247,103 @@ function syncSql() {
   ta.style.height = "auto"; ta.style.height = Math.max(160, ta.scrollHeight + 2) + "px";   // grows instead of scrolling: nothing to keep in sync
 }
 
+// --- Tab completion (owner, 2026-10-25) -------------------------------------------------------------------------
+// suggestSql(text, caret, tables) -> { start, items: [{ text, kind, insert }] } or null. `tables` maps each table the
+// player may see (the revealed schema in the game, the bakery on exercises.html) to its column names, so nothing
+// unrevealed is ever offered; never a value (nothing inside a string or comment). Functions are only ones the strict
+// terminal accepts and SQLite runs (a test checks against SQLITE_FUNCS and strictCheck).
+export const SUGGEST_KEYWORDS = ["SELECT", "FROM", "WHERE", "GROUP BY", "HAVING", "ORDER BY", "LIMIT", "OFFSET", "JOIN", "LEFT JOIN",
+  "INNER JOIN", "ON", "USING", "AS", "AND", "OR", "NOT", "IN", "IS NULL", "IS NOT NULL", "NULL", "LIKE", "ILIKE", "BETWEEN", "CASE", "WHEN",
+  "THEN", "ELSE", "END", "WITH", "DISTINCT", "UNION", "UNION ALL", "INTERSECT", "EXCEPT", "EXISTS", "OVER", "PARTITION BY", "ASC", "DESC", "CAST"];
+export const SUGGEST_FUNCS = ["count", "sum", "avg", "min", "max", "abs", "round", "length", "lower", "upper", "substr", "trim", "replace",
+  "coalesce", "nullif", "string_agg", "rank", "dense_rank", "row_number", "lag", "lead", "ntile", "first_value", "last_value"];
+export const SUGGEST_MAX = 6;
+export function suggestSql(text, caret, tables) {
+  if (/\w/.test(text[caret] || "")) return null;                       // mid-word: leave it alone
+  const strip = s => s.replace(/'(?:[^']|'')*'|"(?:[^"]|"")*"|--[^\n]*\n|\/\*[\s\S]*?\*\//g, m => " ".repeat(m.length));
+  const before = strip(text.slice(0, caret));
+  if (/['"]|--|\/\*/.test(before)) return null;                        // inside a string or a comment: values are never suggested
+  const m = before.match(/(?:([A-Za-z_]\w*)\.)?([A-Za-z_]\w*)?$/);
+  const qual = m[1], word = m[2] || "";
+  if (!qual && !word) return null;
+  const pre = word.toLowerCase(), start = caret - word.length;
+  const fits = s => s.toLowerCase().startsWith(pre) && s.toLowerCase() !== pre;
+  const names = Object.keys(tables), all = strip(text);
+  const col = t => c => ({ text: c, kind: "column", insert: c, t });
+  let items;
+  if (qual) {                                                          // alias.col or table.col
+    const q = qual.toLowerCase();
+    let t = names.find(n => n.toLowerCase() === q);
+    for (const a of all.matchAll(/\b([A-Za-z_]\w*)\s+(?:as\s+)?(?=([A-Za-z_]\w*))/gi))
+      if (!t && a[2].toLowerCase() === q) t = names.find(n => n.toLowerCase() === a[1].toLowerCase());
+    items = t ? tables[t].filter(c => !pre || fits(c)).map(col(t)) : [];
+  } else {
+    const prev = (before.slice(0, start).match(/([A-Za-z_]\w*)\s*$/) || [])[1];
+    const tbl = names.filter(fits).map(t => ({ text: t, kind: "table", insert: t }));
+    if (prev && /^(from|join)$/i.test(prev)) items = tbl;
+    else {
+      const used = new Set((all.match(/[A-Za-z_]\w*/g) || []).map(w => w.toLowerCase()));
+      const cols = names.filter(t => used.has(t.toLowerCase())).flatMap(t => tables[t].filter(fits).map(col(t)));
+      const lower = word === pre;                                       // keep the player's keyword case
+      const kws = SUGGEST_KEYWORDS.filter(fits).map(k => ({ text: lower ? k.toLowerCase() : k, kind: "keyword", insert: lower ? k.toLowerCase() : k }));
+      const fns = SUGGEST_FUNCS.filter(fits).map(f => { const n = lower ? f : f.toUpperCase(); return { text: n + "()", kind: "function", insert: n + "(" }; });
+      items = [...cols, ...kws, ...fns, ...tbl];
+    }
+  }
+  const seen = new Set();
+  items = items.filter(i => !seen.has(i.text) && seen.add(i.text)).slice(0, SUGGEST_MAX);
+  return items.length ? { start, items } : null;
+}
+// The list under the caret, tied to the textarea as an aria listbox. tables() gives the visible schema; sync() redraws
+// the highlight. Its keydown listener must be added before the box's own one: it takes Tab, Up, Down and Escape only
+// while the list shows (Tab indents otherwise, Enter stays a newline).
+export function wireSuggest(ta, tables, sync) {
+  const ul = document.createElement("ul");
+  ul.id = ta.id + "-suggest"; ul.className = "sql-suggest"; ul.setAttribute("role", "listbox"); ul.setAttribute("aria-label", "Suggestions"); ul.hidden = true;
+  document.body.appendChild(ul);
+  ta.setAttribute("aria-autocomplete", "list"); ta.setAttribute("aria-controls", ul.id);
+  let cur = null, sel = 0;
+  const hide = () => { cur = null; ul.hidden = true; ta.removeAttribute("aria-activedescendant"); };
+  const mark = () => {
+    [...ul.children].forEach((li, i) => li.setAttribute("aria-selected", String(i === sel)));
+    ta.setAttribute("aria-activedescendant", ul.id + "-" + sel);
+  };
+  const accept = i => {
+    const it = cur.items[i], s = cur.start, e = ta.selectionStart;
+    ta.value = ta.value.slice(0, s) + it.insert + ta.value.slice(e);
+    ta.selectionStart = ta.selectionEnd = s + it.insert.length;
+    hide(); sync(); ta.focus();
+  };
+  const show = () => {
+    sync();                                                            // the highlight must hold the new text before it is measured
+    cur = ta.selectionStart === ta.selectionEnd ? suggestSql(ta.value, ta.selectionStart, tables()) : null;
+    if (!cur) return hide();
+    sel = 0;
+    ul.innerHTML = cur.items.map((it, i) => '<li role="option" id="' + ul.id + "-" + i + '">' + esc(it.text) + ' <span class="k">' + it.kind + "</span></li>").join("");
+    [...ul.children].forEach((li, i) => li.addEventListener("pointerdown", ev => { ev.preventDefault(); accept(i); }));   // taps work on phones too
+    // The caret's place: the highlight <pre> holds the same text in the same layout, so a Range on it measures the caret.
+    const hl = ta.parentNode.querySelector(".sql-hl"), walk = document.createTreeWalker(hl, NodeFilter.SHOW_TEXT);
+    let left = ta.selectionStart, node, r = null;
+    while ((node = walk.nextNode())) { if (left <= node.length) { const g = document.createRange(); g.setStart(node, left); g.collapse(true); r = g.getClientRects()[0] || g.getBoundingClientRect(); break; } left -= node.length; }
+    const box = ta.getBoundingClientRect();
+    ul.hidden = false;
+    ul.style.left = Math.max(4, Math.min((r ? r.left : box.left), innerWidth - ul.offsetWidth - 4)) + "px";
+    ul.style.top = (r ? r.bottom : box.top) + 2 + "px";
+    mark();
+  };
+  ta.addEventListener("input", show);
+  ta.addEventListener("blur", hide);
+  window.addEventListener("scroll", hide, true);
+  ta.addEventListener("keydown", e => {
+    if (!cur) return;
+    if (e.key === "Tab" && !e.shiftKey) accept(sel);
+    else if (e.key === "ArrowDown" || e.key === "ArrowUp") { sel = (sel + (e.key === "ArrowDown" ? 1 : cur.items.length - 1)) % cur.items.length; mark(); }
+    else if (e.key === "Escape") hide();
+    else return hide();
+    e.preventDefault(); e.stopImmediatePropagation();
+  });
+}
+
 export const ROW_CAP = 200;
 const esc = s => String(s === null || s === undefined ? "NULL" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -1859,6 +1956,8 @@ async function boot() {
   };
   window.addEventListener("pagehide", leave);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") leave(); });
+  // Only the tables the schema shows for this chapter (learn or compete): never one the evidence has not reached.
+  wireSuggest($("sql"), () => !data || !state ? {} : Object.fromEntries([...visibleTables(data.chapters, state)].filter(t => schema[t]).map(t => [t, schema[t].map(c => c[0])])), syncSql);
   $("sql").addEventListener("keydown", e => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQuery(); }
     else if (e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "f") {   // Ctrl only: Cmd+F stays the browser's find
