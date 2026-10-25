@@ -51,6 +51,7 @@ const ACTIONS = [
   ["qr", "QR", '<rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><rect x="9.5" y="9.5" width="4" height="4"/>'],
   ["board", "Board", '<path d="M2.5 13.5V9H6V13.5M6 13.5V4.5H10V13.5M10 13.5V10.5H13.5V13.5M1.5 13.5H14.5"/>'],
   ["csv", "Export CSV", '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>'],
+  ["rename", "Rename the season", '<path d="M10.5 2.5L13.5 5.5L5.5 13.5H2.5V10.5Z"/>'],
   ["delete", "Delete the season", '<path d="M2.5 4.5H13.5M6 4.5V2.5H10V4.5M4 4.5L4.75 13.5H11.25L12 4.5M6.75 7V11M9.25 7V11"/>']];
 export function seasonsTableHtml(seasons, counts, selected) {
   if (!seasons.length) return '<p class="muted">No season yet: create one above.</p>';
@@ -158,6 +159,14 @@ async function act(a, id) {
   } else if (a === "close") {
     if (!await ask('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.', "Close the season")) return;
     if ((await post({ admin: "close", season: id })).ok) say('"' + s.name + '" is closed.');
+  } else if (a === "rename") {
+    // #rename: Enter = Rename (its first button), Escape or Cancel = nothing; the name goes in .value, never as markup
+    const d = $("rename"), input = d.querySelector("input");
+    input.value = s.name;
+    const answer = await askDialog(d, null, () => { const v = prompt("New name for the season:", s.name); input.value = v || ""; return v == null ? "" : "ok"; });
+    const name = answer === "ok" ? input.value.trim() : "";
+    if (!name || name === s.name) return;
+    if ((await post({ admin: "rename", season: id, name })).ok) say('"' + s.name + '" is now "' + name + '".');
   } else if (a === "delete") {
     if (!await ask(deleteMessage(s.name, (counts[id] || { joined: 0 }).joined), "Delete the season")) return;
     const out = await post({ admin: "delete", season: id });
