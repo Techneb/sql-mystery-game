@@ -3,19 +3,14 @@
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in sessionStorage for the tab (shared.js deskPassphrase) and goes to the backend as `key` (apps_script.gs
 // compares it with ADMIN_KEY).
-import { BOARD_KEY, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+import { BOARD_KEY, csvText as csv, downloadText, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 
 export const POLL_MS = 10000;
 export const CSV_COLUMNS = ["timestamp", "event", "team", "season", "chapter", "wrong", "queries", "clientAt", "elapsedMs"];
 
-// RFC 4180: a field with a comma, a quote or a line break goes in quotes, its quotes doubled; lines end CRLF.
-const csvField = v => {
-  const s = v === null || v === undefined ? "" : String(v);
-  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-};
-export const csvText = rows => [CSV_COLUMNS, ...rows.map(r => CSV_COLUMNS.map(c => r[c]))]
-  .map(cells => cells.map(csvField).join(",")).join("\r\n") + "\r\n";
+// The Sheet's columns as CSV (shared.js csvText: RFC 4180, CRLF).
+export const csvText = rows => csv([CSV_COLUMNS, ...rows.map(r => CSV_COLUMNS.map(c => r[c]))]);
 export const csvFilename = name => (String(name).replace(/[\\/:*?"<>|\x00-\x1f]+/g, "-").trim() || "season") + ".csv";
 
 // The link students open: the game next to this page. The board URL stays readable (it is shown in big type and
@@ -44,22 +39,67 @@ export const newestFirst = seasons => [...seasons].sort((a, b) => Number(b.creat
 // Buttons in the game's icon style (app.js erdButtonHtml): a 16 px glyph stroked in currentColor over a one-word
 // caption (owner, 2026-10-25), the action's full name in title (the tooltip) and aria-label.
 const ICON_ATTRS = 'width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+// One row per action: when (which seasons show it) and run (the click; true when the seasons table should reload).
+// run reads the page wiring below, at click time.
+const always = () => true;
 const ACTIONS = [
-  ["open", "Open", "Open", '<path d="M4.5 2.5L13 8L4.5 13.5Z"/>'],
-  ["close", "Close", "Close", '<rect x="3.5" y="3.5" width="9" height="9" rx="1"/>'],
-  ["copy", "Copy link", "Link", '<path d="M6.5 9.5L9.5 6.5M8.5 4.5L9.5 3.5A2.5 2.5 0 0 1 13 7L12 8M7.5 11.5L6.5 12.5A2.5 2.5 0 0 1 3 9L4 8"/>'],
-  ["qr", "QR", "QR", '<rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><rect x="9.5" y="9.5" width="4" height="4"/>'],
-  ["board", "Board", "Board", '<path d="M2.5 13.5V9H6V13.5M6 13.5V4.5H10V13.5M10 13.5V10.5H13.5V13.5M1.5 13.5H14.5"/>'],
-  ["csv", "Export CSV", "CSV", '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>'],
-  ["rename", "Rename the season", "Rename", '<path d="M10.5 2.5L13.5 5.5L5.5 13.5H2.5V10.5Z"/>'],
-  ["delete", "Delete the season", "Delete", '<path d="M2.5 4.5H13.5M6 4.5V2.5H10V4.5M4 4.5L4.75 13.5H11.25L12 4.5M6.75 7V11M9.25 7V11"/>']];
+  { id: "open", label: "Open", word: "Open", glyph: '<path d="M4.5 2.5L13 8L4.5 13.5Z"/>', when: s => s.state === "created", run: async s => {
+    const other = seasons.find(x => x.state === "open" && x.id !== s.id);
+    if (other && !await ask('"' + other.name + '" is already open. Open "' + s.name + '" as well?', "Open it too")) return false;
+    if ((await post({ admin: "open", season: s.id })).ok) say('"' + s.name + '" is open: every clock is running.');
+    return true;
+  } },
+  { id: "close", label: "Close", word: "Close", glyph: '<rect x="3.5" y="3.5" width="9" height="9" rx="1"/>', when: s => s.state !== "closed", run: async s => {
+    if (!await ask('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.', "Close the season")) return false;
+    if ((await post({ admin: "close", season: s.id })).ok) say('"' + s.name + '" is closed.');
+    return true;
+  } },
+  { id: "copy", label: "Copy link", word: "Link", glyph: '<path d="M6.5 9.5L9.5 6.5M8.5 4.5L9.5 3.5A2.5 2.5 0 0 1 13 7L12 8M7.5 11.5L6.5 12.5A2.5 2.5 0 0 1 3 9L4 8"/>', when: always, run: async s => {
+    const link = studentLink(gameUrl(), s.id, board);
+    try { await navigator.clipboard.writeText(link); say("Link copied: " + link); } catch { say("Copy this link: " + link); }
+  } },
+  { id: "qr", label: "QR", word: "QR", glyph: '<rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><rect x="9.5" y="9.5" width="4" height="4"/>', when: always, run: async s => {
+    const link = studentLink(gameUrl(), s.id, board), d = $("qr");
+    d.querySelector(".qr-name").textContent = s.name;
+    d.querySelector(".qr-code").innerHTML = qrSvg(link, { size: 560 });
+    d.querySelector(".qr-link").textContent = link;
+    d.showModal();
+  } },
+  { id: "board", label: "Board", word: "Board", glyph: '<path d="M2.5 13.5V9H6V13.5M6 13.5V4.5H10V13.5M10 13.5V10.5H13.5V13.5M1.5 13.5H14.5"/>', when: always, run: async s => {
+    window.open(boardLink(s.id, board), "_blank", "noopener");
+  } },
+  { id: "csv", label: "Export CSV", word: "CSV", glyph: '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>', when: always, run: async s => {
+    try {
+      const rows = await getJson({ season: s.id }), list = Array.isArray(rows) ? rows : [];
+      downloadText(csvFilename(s.name), csvText(list));
+      say("Exported " + list.length + " rows of \"" + s.name + "\".");
+    } catch (e) { say("Could not export: " + e.message, true); }
+  } },
+  { id: "rename", label: "Rename the season", word: "Rename", glyph: '<path d="M10.5 2.5L13.5 5.5L5.5 13.5H2.5V10.5Z"/>', when: always, run: async s => {
+    // #rename: Enter = Rename (its first button), Escape or Cancel = nothing; the name goes in .value, never as markup
+    const d = $("rename"), input = d.querySelector("input");
+    input.value = s.name;
+    const answer = await askDialog(d, null, () => { const v = prompt("New name for the season:", s.name); input.value = v || ""; return v == null ? "" : "ok"; });
+    const name = answer === "ok" ? input.value.trim() : "";
+    if (!name || name === s.name) return false;
+    if ((await post({ admin: "rename", season: s.id, name })).ok) say('"' + s.name + '" is now "' + name + '".');
+    return true;
+  } },
+  { id: "delete", label: "Delete the season", word: "Delete", glyph: '<path d="M2.5 4.5H13.5M6 4.5V2.5H10V4.5M4 4.5L4.75 13.5H11.25L12 4.5M6.75 7V11M9.25 7V11"/>', when: s => s.state !== "open", run: async s => {
+    if (!await ask(deleteMessage(s.name, (counts[s.id] || { joined: 0 }).joined), "Delete the season")) return false;
+    const out = await post({ admin: "delete", season: s.id });
+    if (!out.ok) return false;
+    say('"' + s.name + '" is deleted (' + out.removedRows + " rows).");
+    if (selected === s.id) { clearTimeout(pollTimer); detailGen++; selected = ""; $("detail").innerHTML = ""; }
+    return true;
+  } }];
 export function seasonsTableHtml(seasons, counts, selected) {
   if (!seasons.length) return '<p class="muted">No season yet: create one above.</p>';
   return '<table class="seasons"><thead><tr><th>Name</th><th>Date</th><th>State</th><th>Database</th><th>Joined</th><th>Finished</th><th></th></tr></thead><tbody>' +
     seasons.map(s => {
       const c = counts[s.id] || { joined: 0, finished: 0 }, id = esc(s.id);
-      const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state !== "closed") && (a !== "delete" || s.state !== "open"))
-        .map(([a, label, word, glyph]) => '<button class="quiet icon-btn" data-act="' + a + '" data-id="' + id + '" title="' + label +
+      const btns = ACTIONS.filter(a => a.when(s))
+        .map(({ id: a, label, word, glyph }) => '<button class="quiet icon-btn" data-act="' + a + '" data-id="' + id + '" title="' + label +
           '" aria-label="' + label + '"><svg class="icon" ' + ICON_ATTRS + ">" + glyph + '</svg><span class="act-word" aria-hidden="true">' + word + "</span></button>").join(" ");
       return '<tr data-id="' + id + '" class="' + (s.id === selected ? "selected" : "") + '" tabindex="0"><td>' + esc(s.name) +
         "</td><td>" + esc(s.date) + '</td><td class="state-' + esc(s.state) + '">' + esc(s.state) + "</td><td>" + esc(s.db) +
@@ -150,56 +190,8 @@ async function ask(text, yes) {
 }
 
 async function act(a, id) {
-  const s = seasons.find(x => x.id === id);
-  if (!s) return;
-  if (a === "open") {
-    const other = seasons.find(x => x.state === "open" && x.id !== id);
-    if (other && !await ask('"' + other.name + '" is already open. Open "' + s.name + '" as well?', "Open it too")) return;
-    if ((await post({ admin: "open", season: id })).ok) say('"' + s.name + '" is open: every clock is running.');
-  } else if (a === "close") {
-    if (!await ask('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.', "Close the season")) return;
-    if ((await post({ admin: "close", season: id })).ok) say('"' + s.name + '" is closed.');
-  } else if (a === "rename") {
-    // #rename: Enter = Rename (its first button), Escape or Cancel = nothing; the name goes in .value, never as markup
-    const d = $("rename"), input = d.querySelector("input");
-    input.value = s.name;
-    const answer = await askDialog(d, null, () => { const v = prompt("New name for the season:", s.name); input.value = v || ""; return v == null ? "" : "ok"; });
-    const name = answer === "ok" ? input.value.trim() : "";
-    if (!name || name === s.name) return;
-    if ((await post({ admin: "rename", season: id, name })).ok) say('"' + s.name + '" is now "' + name + '".');
-  } else if (a === "delete") {
-    if (!await ask(deleteMessage(s.name, (counts[id] || { joined: 0 }).joined), "Delete the season")) return;
-    const out = await post({ admin: "delete", season: id });
-    if (!out.ok) return;
-    say('"' + s.name + '" is deleted (' + out.removedRows + " rows).");
-    if (selected === id) { clearTimeout(pollTimer); detailGen++; selected = ""; $("detail").innerHTML = ""; }
-    await loadSeasons();
-    return;
-  } else if (a === "copy") {
-    const link = studentLink(gameUrl(), id, board);
-    try { await navigator.clipboard.writeText(link); say("Link copied: " + link); } catch { say("Copy this link: " + link); }
-    return;
-  } else if (a === "qr") {
-    const link = studentLink(gameUrl(), id, board), d = $("qr");
-    d.querySelector(".qr-name").textContent = s.name;
-    d.querySelector(".qr-code").innerHTML = qrSvg(link, { size: 560 });
-    d.querySelector(".qr-link").textContent = link;
-    d.showModal();
-    return;
-  } else if (a === "board") {
-    window.open(boardLink(id, board), "_blank", "noopener");
-    return;
-  } else if (a === "csv") {
-    try {
-      const rows = await getJson({ season: id });
-      const url = URL.createObjectURL(new Blob([csvText(Array.isArray(rows) ? rows : [])], { type: "text/csv;charset=utf-8" }));
-      const link = Object.assign(document.createElement("a"), { href: url, download: csvFilename(s.name) });
-      document.body.appendChild(link); link.click(); link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      say("Exported " + (Array.isArray(rows) ? rows.length : 0) + " rows of \"" + s.name + "\".");
-    } catch (e) { say("Could not export: " + e.message, true); }
-    return;
-  }
+  const s = seasons.find(x => x.id === id), A = ACTIONS.find(x => x.id === a);
+  if (!s || !A || !(await A.run(s))) return;
   await loadSeasons();
   if (selected === id) showDetail(id);
 }

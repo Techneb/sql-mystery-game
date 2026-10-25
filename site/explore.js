@@ -2,7 +2,7 @@
 // and filters, read from the Apps Script's ?report=<json>&key=<passphrase> (apps_script.gs report_, the same whitelist).
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
-import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+import { DIMENSIONS, csvText, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 // The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
 export { DIMENSIONS, reportUrl };
@@ -55,12 +55,10 @@ export function pivotHtml(res, sort = { col: res.dimensions.length, desc: true }
   return '<table class="detail stats"><thead><tr>' + th + "</tr></thead><tbody>" + body + "</tbody>" + foot + "</table>" + more;
 }
 
-const csvCell = v => { const t = v == null ? "" : String(v); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
 export function pivotCsv(res, sort) {
   const heads = res.dimensions.map(d => label(d, DIMENSIONS)).concat(res.metrics.map(m => label(m, METRICS)));
   const rows = sort ? sortRows(res, sort.col, sort.desc) : res.rows;
-  return [heads, ...rows.map(r => r.map((v, i) => (i < res.dimensions.length ? cell(res.dimensions[i], v) : v)))]
-    .map(r => r.map(csvCell).join(",")).join("\n") + "\n";
+  return csvText([heads, ...rows.map(r => r.map((v, i) => (i < res.dimensions.length ? cell(res.dimensions[i], v) : v)))]);
 }
 
 // The side panel's dropdowns: a <details class="ms"> whose <summary> is the button and whose panel holds checkboxes
@@ -203,11 +201,7 @@ async function main() {
     sort = { col, desc: sort && sort.col === col ? !sort.desc : col >= res.dimensions.length };
     draw();
   };
-  $("csv").onclick = () => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([pivotCsv(res, sort)], { type: "text/csv" }));
-    a.download = "ga-pivot.csv"; a.click(); URL.revokeObjectURL(a.href);
-  };
+  $("csv").onclick = () => downloadText("ga-pivot.csv", pivotCsv(res, sort));
   $("run").onclick = async () => {
     if (!s.metrics.length) return say("Pick at least one metric.", true);
     const mine = ++gen;
