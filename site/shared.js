@@ -31,7 +31,7 @@ export const teamKey = name => String(name).normalize("NFKC").trim().toLowerCase
 
 // sha256 of the trimmed, lowercased admin passphrase (the form apps_script.gs compares with ADMIN_KEY); the passphrase
 // itself is never in the repo. New hash: printf '%s' 'phrase' | tr 'A-Z' 'a-z' | shasum -a 256
-export const ADMIN_PASS_SHA256 = "9f955a0544ad84b27900a9818179cf4e53a5a362f911f69217afbe530d3c5c81";
+export const ADMIN_PASS_SHA256 = "5f10cf9194d132ca0cc919ee34004def01e814cfa9ea6d4856846f987a122720";
 
 // mm:ss (past an hour the minutes keep counting: 75:00), never negative.
 export function fmtTime(ms) {

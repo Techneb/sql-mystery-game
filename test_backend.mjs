@@ -136,13 +136,15 @@ test("doGet reads: seasons, meta with now, unknown meta, rows of one season or a
   const s = b.create(), t = b.create();
   b.post({ event: "join", team: "A", season: s.id });
   b.post({ event: "join", team: "B", season: t.id });
-  assert.deepEqual(b.get({ seasons: "1" }).map(x => x.id), [s.id, t.id]);
+  assert.deepEqual(b.get({ seasons: "1", key: KEY }).map(x => x.id), [s.id, t.id]);
+  assert.equal(b.get({ seasons: "1" }).ok, false, "the season list needs the key");
   const m = b.get({ meta: s.id });
   assert.equal(m.id, s.id);
   assert.ok(Math.abs(m.now - Date.now()) < 5000, "meta carries the server's now");
   assert.equal(b.get({ meta: "nope" }).ok, false);
   assert.deepEqual(b.get({ season: t.id }).map(r => r.team), ["B"]);
-  assert.equal(b.get({}).length, 2);
+  assert.equal(b.get({ key: KEY }).length, 2);
+  assert.equal(b.get({}).ok, false, "every season's rows need the key");
   assert.equal(JSON.parse(b.props.get("SEASONS")).some(x => "now" in x), false, "now is never stored");
 });
 

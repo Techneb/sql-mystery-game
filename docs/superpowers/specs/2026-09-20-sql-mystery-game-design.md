@@ -754,3 +754,7 @@ Everything is deployed (2026-10-20, 9f4e671).
   message this session with its reusable setup (Colima, strix 1.7.0 via pipx, a Keychain launcher; litellm needs
   `ANTHROPIC_API_KEY` exported, and a workspace-scoped key). The Keychain key `strix-anthropic` answered 200 on
   2026-10-24 (value never read).
+  Done 2026-10-24 (about 9.4 USD: repo standard, live site quick; backend not probed). Fixed 2026-10-25 (owner: "ok
+  for all fixes"): a five-word random passphrase (new `ADMIN_PASS_SHA256`, same value as `ADMIN_KEY`), its own
+  random `TOKEN_SECRET`, and `?seasons=1` and the all-rows `doGet` now need the key. Accepted: compete answers checked in
+  the browser (honour-based), `erd.py` unescaped names (build time, our own names).

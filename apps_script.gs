@@ -172,7 +172,7 @@ function locked_(fn) {
 // season's rows; nothing -> every row (the admin page's export).
 function get_(e) {
   var p = (e && e.parameter) || {};
-  if (p.seasons) return seasons_();
+  if (p.seasons) return adminOk_({key: p.key}) ? seasons_() : {ok: false, error: "wrong admin key"};
   if (p.report) return report_(p);
   if (p.stats) return stats_(p);
   if (p.meta) {
@@ -182,6 +182,7 @@ function get_(e) {
   var sheet = getLogSheet_();
   var rows = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, 10).getValues() : [];
   var id = p.season ? String(p.season) : null;
+  if (id === null && !adminOk_({key: p.key})) return {ok: false, error: "wrong admin key"};   // every season's rows: the desk only
   var out = [];
   rows.forEach(function (r) {
     if (id !== null && String(r[3]) !== id) return;

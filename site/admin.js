@@ -102,7 +102,7 @@ async function post(body) {
 async function loadSeasons() {
   if (!board) { $("seasons").innerHTML = '<p class="muted">Paste the board URL above first.</p>'; return; }
   try {
-    const [list, rows] = await Promise.all([getJson({ seasons: 1 }), getJson({})]);
+    const [list, rows] = await Promise.all([getJson({ seasons: 1, key }), getJson({ key })]);
     if (!Array.isArray(list)) throw new Error(list && list.error || "not a season list");
     seasons = newestFirst(list);
     $("seasons").innerHTML = seasonsTableHtml(seasons, seasonCounts(Array.isArray(rows) ? rows : []), selected);
