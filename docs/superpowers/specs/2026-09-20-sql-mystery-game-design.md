@@ -753,6 +753,10 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   the native box only where showModal is missing). Open: the owner's look on a phone (a 2 px overflow was seen on a
   test copy of the desk's controls row at 390 px); the desk's two dialogs were not clicked through end to end (they
   need the backend and the passphrase).
+  2026-10-25 (owner registered `type` and `route` as GA custom dimensions): Game monitor's SOLVE ROUTE per chapter
+  (same result, answer seen in a result, answer never on screen) and SQLite errors by type in QUERY FAILURES (the
+  handbook's too); both dimensions whitelisted for the pivot table. Not yet seen with live data (needs the backend
+  deployed and a day of GA).
 - Ad networks (2026-10-24): Criteo not now (no published minimum, but comparable networks start at 10k-100k page
   views a month; this site gets a few thousand; header bidding and heavier consent). Revisit Ad Manager + Prebid only
   at steady tens of thousands of page views a month. Real ad clicks cannot be seen from the page (Google's iframe;
