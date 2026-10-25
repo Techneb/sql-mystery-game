@@ -265,7 +265,8 @@ function chapters_(run) {
 var REPORT_DIMS = ["date", "eventName", "customEvent:chapter", "customEvent:count", "customEvent:mode", "customEvent:part",
   "customEvent:name", "deviceCategory", "operatingSystem", "browser", "country", "city", "language",
   "sessionDefaultChannelGroup", "sessionSource", "newVsReturning", "pagePath", "pageTitle", "customEvent:kind",
-  "customEvent:rule", "customEvent:n", "customEvent:feature", "customEvent:exercise", "customEvent:level", "customEvent:outcome"];
+  "customEvent:rule", "customEvent:n", "customEvent:feature", "customEvent:exercise", "customEvent:level", "customEvent:outcome",
+  "customEvent:type", "customEvent:route"];
 var REPORT_METRICS = ["activeUsers", "totalUsers", "newUsers", "sessions", "engagedSessions", "eventCount",
   "userEngagementDuration", "averageSessionDuration", "screenPageViews", "customEvent:seconds", "averageCustomEvent:seconds",
   "customEvent:queries", "averageCustomEvent:queries", "customEvent:runs", "averageCustomEvent:runs", "customEvent:wrong",

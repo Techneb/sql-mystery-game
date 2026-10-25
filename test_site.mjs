@@ -1715,7 +1715,8 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const g = monitor.gameHtml(null, 390, Object.fromEntries(Object.entries(monitor.PANELS.game).map(([k, f]) => [k, { res: f(7).map(() => empty) }])), { total: empty });
   assert.ok(!bad.test(g) && !g.includes("No data yet") && !g.includes("within about a day") && !g.includes("Nothing in this period"));
   assert.ok(g.includes("LEFT AN UNSOLVED CHAPTER") && g.includes("AVERAGE TIME BEFORE LEAVING") && g.includes("AVERAGE QUERIES BEFORE LEAVING") && g.includes("WRONG ANSWERS AND HINTS"));
-  assert.equal((g.match(/data-k="Chapter XII"/g) || []).length, 4, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints");
+  assert.equal((g.match(/data-k="Chapter XII"/g) || []).length, 5, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints, solve route");
+  assert.ok(g.includes("SOLVE ROUTE") && g.includes('data-k="Unknown table" data-v="0\terrors\tc2\n0\tusers"') && g.includes("<td>Curly quotes</td>"), "the route grid and every error type at zero");
   assert.ok(g.includes('data-k="Suspects opened" data-v="0\tusers\tc3\n0\tuses"'), "known features listed at zero");
   assert.ok(g.includes('data-k="Ad clicks (Google)" data-v="0\tclicks\tc3\n0\timpressions"'), "Google's ad clicks at zero");
   const fu = monitor.featuresHtml([{ rows: [["ad_house_click", 4, 5]] }, { rows: [[7, 300]], totals: [9, 310] }], 390, monitor.HANDBOOK_FEATURES);
@@ -1744,10 +1745,16 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(leave.includes('data-v="7\tusers who left\tc1\n95.3 s\tavg seconds\n4.5\tavg queries"') && leave.includes("an average, not a median") && leave.includes(">Avg seconds</text>"));
   assert.equal((leave.match(/class="avg-dot"/g) || []).length, 2, "one dot per average line, chapter II only");
   // failures: the kind as a donut of GA's totals, bars from the [rule] reply, never summed from the split
-  const fails = monitor.failsHtml([{ rows: [["<b>group-by", 12, 5]] }, { rows: [["group-by", "refused", "3", 7, 3], ["group-by", "refused", "4", 5, 4]] }, { rows: [["refused", 12], ["error", 4]], totals: [16] }], 390);
+  const fails = monitor.failsHtml([{ rows: [["<b>group-by", 12, 5]] }, { rows: [["group-by", "refused", "3", 7, 3], ["group-by", "refused", "4", 5, 4]] }, { rows: [["syntax", 9, 4], ["weird", 1, 1]] }, { rows: [["refused", 12], ["error", 4]], totals: [16] }], 390);
+  assert.ok(fails.includes('data-k="Syntax" data-v="9\terrors\tc2\n4\tusers"') && fails.includes('<td>Unknown column</td><td class="num">0</td><td class="num">0</td>') &&
+    fails.indexOf("<td>Other</td>") < fails.indexOf("<td>weird</td>"), "error types in a fixed order, zeros listed, GA's other values after");
   assert.ok(fails.includes('data-k="&#60;b&#62;group-by" data-v="12\tfailures\tc6\n5\tusers"') && fails.includes("<td>III</td>") && !fails.includes("<b>group"));
   assert.ok(fails.indexOf("SQLite error") < fails.indexOf("Refused by") && fails.includes('data-k="Refused by the grammar check" data-v="12 failures\t75%"'), "kinds in a fixed order and colour");
-  assert.ok(!monitor.failsHtml([empty, empty], 390).includes("BY KIND"), "the handbook's failures have no kind donut");
+  const hf = monitor.failsHtml([empty, empty, empty], 390, "Exercise", "exercise-failures");
+  assert.ok(!hf.includes("BY KIND") && hf.includes("SQLITE ERRORS BY TYPE") && hf.includes("<td>Syntax</td>"), "the handbook's failures: by type, no kind donut");
+  const routes = monitor.routesHtml([{ rows: [["3", "unseen", 2], ["3", "same_result", 7], ["(not set)", "found", 1]] }], 390);
+  assert.ok(routes.includes('data-k="Chapter III" data-v="7\tSame result as the solution\tc3\n0\tAnswer seen in a result\tc1\n2\tAnswer never on screen\tc6"') &&
+    routes.includes('<td>III</td><td class="num">7</td><td class="num">0</td><td class="num">2</td>') && routes.includes("Data starts 2026-10-25"), "users per route per chapter, GA's rows");
   const plain = monitor.failsHtml([{ rows: [["", 4, 2]] }, { rows: [["", "error", "1", 4, 2]] }], 390);
   assert.ok(plain.includes('data-k="SQL error"') && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
   const wrong = monitor.wrongHintsHtml([{ rows: [["1", "1", 9], ["1", "3", 2]] }, { rows: [["1", 4, 6]] }], 390);

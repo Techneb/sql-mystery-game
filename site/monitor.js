@@ -567,8 +567,13 @@ export const HANDBOOK_FEATURES = { schema_enlarge: "Schema enlarged", history_re
 export const MODES = { learn: "Learn", compete: "Compete" };
 export const KINDS = { error: "SQLite error", refused: "Refused by the grammar check" };
 export const LEVELS = { "warm-up": "Warm-up", practice: "Practice", challenge: "Challenge" };
+// query_fail's type for a SQLite error (kind error; a refusal's type is "refused") and chapter_solve's route.
+export const ERROR_TYPES = { syntax: "Syntax", no_table: "Unknown table", no_column: "Unknown column", unterminated: "Unclosed quote",
+  incomplete: "Incomplete query", curly_quote: "Curly quotes", other: "Other" };
+export const ROUTES = { same_result: "Same result as the solution", found: "Answer seen in a result", unseen: "Answer never on screen" };
 export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by the grammar check" };
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
+const typeRequest = (d, pagePath) => ev(d, ["customEvent:type"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], "customEvent:kind": ["error"], pagePath });
 // AdSense's own clicks and impressions on the view's pages (GA has them once AdSense is linked, 2026-10-25).
 const adRequest = (days, pagePath) => ev(days, [], ["publisherAdClicks", "publisherAdImpressions"], { pagePath });
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
@@ -584,7 +589,8 @@ export const PANELS = {
       ev(d, ["customEvent:chapter"], ["totalUsers", "eventCount"], { eventName: ["hint_open"] })],
     fails: d => [ev(d, ["customEvent:rule"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: GAME_PATHS }),
       ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:chapter"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: GAME_PATHS }),
-      ev(d, ["customEvent:kind"], ["eventCount"], { eventName: ["query_fail"], pagePath: GAME_PATHS })],
+      typeRequest(d, GAME_PATHS), ev(d, ["customEvent:kind"], ["eventCount"], { eventName: ["query_fail"], pagePath: GAME_PATHS })],
+    routes: d => [ev(d, ["customEvent:chapter", "customEvent:route"], ["totalUsers"], { eventName: ["chapter_solve"] })],
     modes: d => [ev(d, ["customEvent:mode"], ["totalUsers"], { eventName: ["chapter_open"] }), ev(d, ["customEvent:mode"], ["totalUsers"], { eventName: ["landing_begin"] }),
       ev(d, [], ["activeUsers"], { pagePath: GAME_PATHS })],
     features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: GAME_PATHS }), adRequest(d, GAME_PATHS)],
@@ -600,7 +606,7 @@ export const PANELS = {
     choices: d => [ev(d, ["customEvent:level"], ["totalUsers", "eventCount"], { eventName: ["exercise_level"] }),
       ev(d, ["customEvent:outcome"], ["eventCount"], { eventName: ["exercise_run"] })],
     fails: d => [ev(d, ["customEvent:rule"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN }),
-      ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:exercise"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN })],
+      ev(d, ["customEvent:rule", "customEvent:kind", "customEvent:exercise"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], pagePath: LEARN }), typeRequest(d, LEARN)],
     features: d => [ev(d, ["customEvent:feature"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], pagePath: LEARN }), adRequest(d, LEARN)],
     tryIt: d => [ev(d, ["customEvent:exercise"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], "customEvent:feature": ["try_it"] })],
   },
@@ -627,17 +633,30 @@ export function leaveHtml(res, w) {
     '<p class="muted">Users who left a chapter they had not solved, and GA&#39;s average per leave event of the seconds spent and the queries run in it (an average, not a median).</p>' +
     raw("chapter-leave", tableHtml(["Chapter", "Users who left", "Avg seconds (per leave)", "Avg queries (per leave)"], g.map(c => [roman(c.chapter), c.values[0], has(c) ? avg(c.values[1]) : "-", has(c) ? avg(c.values[2]) : "-"])));
 }
-// res: [by rule, by rule x kind x where, by kind (game only)]: the kind as a donut of failures, bars per rule from
-// GA's own [rule] rows; the split as raw data. An empty rule is a plain SQL error (no Grammar section to link).
+// res: [by rule, by rule x kind x where, SQLite errors by type, by kind (game only)]: the kind as a donut of failures,
+// the SQLite errors per type (ERROR_TYPES' order, zeros listed) and per rule as bars of GA's own rows; the split as raw data.
+// An empty rule is a plain SQL error (no Grammar section to link).
 const ruleText = r => (r == null || r === "" ? "SQL error" : String(r));
 export function failsHtml(res, w, where = "Chapter", name = "query-failures") {
   const rows = ((res[0] && res[0].rows) || []).map(([r, e, u]) => ({ label: ruleText(r), values: [Number(e) || 0], tip: [[Number(u) || 0, "users"]] }));
   const split = ((res[1] && res[1].rows) || []).map(([r, k, c, e, u]) => [ruleText(r), gaText(k), where === "Chapter" && ROMAN[Number(c)] ? roman(Number(c)) : gaText(c), Number(e) || 0, Number(u) || 0]);
-  return (res.length > 2 ? '<div class="label sub">BY KIND</div>' + donutBody(fixedItems(res[2], KINDS), "failures", "Query failures by kind", res[2], "", name + "-kind", "Kind", "Failures", true) +
-      '<div class="label sub">BY GRAMMAR RULE</div>' : "") +
+  const users = fixedItems(res[2], ERROR_TYPES, 2), types = fixedItems(res[2], ERROR_TYPES).map((t, i) => ({ ...t, values: [t.value], tip: [[users[i].value, "users"]] }));
+  return (res.length > 3 ? '<div class="label sub">BY KIND</div>' + donutBody(fixedItems(res[3], KINDS), "failures", "Query failures by kind", res[3], "", name + "-kind", "Kind", "Failures", true) : "") +
+    (res.length > 2 ? '<div class="label sub">SQLITE ERRORS BY TYPE</div>' + hbarSvg(types, [["errors", "c2"]], w, compact, "SQLite errors by type") +
+      raw(name + "-type", tableHtml(["Type", "Errors", "Users"], types.map((t, i) => [t.label, t.value, users[i].value]))) + '<div class="label sub">BY GRAMMAR RULE</div>' : "") +
     hbarSvg(rows, [["failures", "c6"]], w, compact, "Query failures by grammar rule") +
     '<p class="muted">Failed or refused runs, the first 3 per ' + (where === "Chapter" ? "chapter" : "exercise") + " per page load; the rule is the Grammar section a refusal links; SQL error is a plain SQLite error, with no rule.</p>" +
     raw(name, tableHtml(["Rule", "Kind", where, "Failures", "Users"], split));
+}
+// res: [chapter_solve by chapter x route]: users per route per chapter, side by side on the funnel's grid.
+export function routesHtml(res, w) {
+  const by = new Map();
+  for (const [c, r, u] of (res[0] && res[0].rows) || []) by.set(c + "|" + r, Number(u) || 0);
+  const keys = Object.keys(ROUTES), series = keys.map((k, j) => [ROUTES[k], ["c3", "c1", "c6"][j]]);
+  const g = Array.from({ length: CHAPTERS }, (_, i) => ({ chapter: i + 1, values: keys.map(k => by.get(i + 1 + "|" + k) || 0) }));
+  return legendOf(series) + chapterBarsSvg(g, series, w, "Users") +
+    '<p class="muted">Answer never on screen means no query run in the chapter showed the answer before it was typed: a guess or a copied answer. Data starts 2026-10-25.</p>' +
+    raw("solve-route", tableHtml(["Chapter", ...keys.map(k => ROUTES[k])], g.map(c => [roman(c.chapter), ...c.values])));
 }
 // res: [answer_wrong by chapter x n, hint_open by chapter]: users with a 1st and a 3rd wrong answer and users who
 // opened the hint, side by side per chapter on the funnel's grid.
@@ -683,6 +702,7 @@ export function gameHtml(s, w, P = {}, bd, m) {
     '<div class="label">SOLVE RATE</div>' + (ch ? solveRateHtml(ch, w) : reading) +
     panel("LEFT AN UNSOLVED CHAPTER", P.leave, res => leaveHtml(res, w)) +
     panel("WRONG ANSWERS AND HINTS", P.wrongHints, res => wrongHintsHtml(res, w)) +
+    panel("SOLVE ROUTE", P.routes, res => routesHtml(res, w)) +
     panel("QUERY FAILURES", P.fails, res => failsHtml(res, w)) +
     (P.modes && P.modes.res ? modesHtml(P.modes.res) : panel("PLAYERS BY MODE", P.modes, () => "")) +
     panel("FEATURE USE", P.features, res => featuresHtml(res, w, GAME_FEATURES));
