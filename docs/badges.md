@@ -74,6 +74,6 @@ none of them out: the student has to search.
 
 | Badge | How to get it |
 |---|---|
-| Paparazzo | Open the Suspects gallery. |
+| Paparazzo | Open the Suspects gallery once it shows at least one suspect. |
 | Lamplighter | Switch between the Day and Night editions (top-right button). |
 | Insomniac | Run a query between midnight and five in the morning (the student's own clock). |

@@ -317,7 +317,8 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   const s = freshState(); s.film = FILM_LINES.slice(0, 5);
   assert.ok(detectBadges({ ...base(), state: s }, []).map(b => b.name).includes("Film Buff"));
   const ev = (event, extra = {}) => detectBadges({ ...base(), event, ...extra }, []).map(b => b.name);
-  assert.deepEqual(ev("suspects"), ["Paparazzo"]);
+  assert.deepEqual(ev("suspects", { faces: 1 }), ["Paparazzo"]);
+  assert.deepEqual(ev("suspects", { faces: 0 }), [], "an empty gallery earns nothing");
   const quick = { ...freshState(), queries: { 1: 2 } };
   assert.ok(ev("solve", { elapsed: 90000, state: quick }).includes("Speed Reader"));
   assert.ok(!ev("solve", { elapsed: 200000, state: quick }).includes("Speed Reader"));

@@ -1263,7 +1263,7 @@ export const BADGES = [
   ["Rosebud", "Found the man in the cape. The sledge was never recovered either.", c => c.event === "query" && c.text.includes("rosebud")],
   ["Film Buff", "Five films quoted in the archives. Cinema was invented in Paris, after all.", c => c.event === "query" && c.state.film.length >= 5],
   ["Time Traveller", "Searched for a date after 1912. The banknote from 2000 was a hint.", c => c.event === "query" && /\b(19(1[3-9]|[2-9]\d)|20\d\d)\d{4}\b/.test(c.sql)],
-  ["Paparazzo", "Opened the Suspects gallery. Faces, at last.", c => c.event === "suspects"],
+  ["Paparazzo", "Opened the Suspects gallery. Faces, at last.", c => c.event === "suspects" && c.faces > 0],   // an empty gallery shows no face
   ["Speed Reader", "A chapter solved within two minutes of opening it.", c => c.event === "solve" && c.elapsed < 120000 && (c.state.queries[c.chapter] || 0) > 0],
   ["Filed Under the 17th", "Filed the case under the wrong night. Duroc never sleeps, but he does count.",
     c => c.event === "answer" && c.chapter === 1 && c.decoy != null && c.norm === String(c.decoy)],
@@ -2068,7 +2068,7 @@ async function boot() {
     fitErd();
     if (large) useFeature("schema_enlarge", { chapter: curChapter() });
   };
-  $("btn-suspects").onclick = () => { useFeature("suspects_open", { chapter: curChapter() }); renderSuspects(); $("suspects").hidden = false; award(detectBadges(ctx({ event: "suspects" }), state.badges)); };
+  $("btn-suspects").onclick = () => { useFeature("suspects_open", { chapter: curChapter() }); renderSuspects(); $("suspects").hidden = false; award(detectBadges(ctx({ event: "suspects", faces: metSuspects(data.cast, state, data.chapters).length }), state.badges)); };
   $("notes").value = state.notes;
   $("notes").oninput = () => { state.notes = $("notes").value; save(state); };
   // #reset and #names: native <dialog>s in the game's look (askDialog); the browser's own box where they cannot open
