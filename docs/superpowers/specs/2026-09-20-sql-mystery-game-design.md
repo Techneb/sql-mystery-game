@@ -334,16 +334,29 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-10-25).** Everything is deployed (fc1ea75; site and backend @6). Waiting on Google: the AdSense
-re-review (requested 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue.
-Waiting on the owner: linking AdSense to GA4 (ad clicks), archiving the old personal-account backend project, a look
-at the desk on a phone. Ready: the chapter 1 drop-off (GA, 30 days to 2026-10-25: 1,026 opened chapter I, 283 solved
-it, 28%; then 60% for II and 78-91% for III-VIII; 46 finished Part I, 9 Part II; among chapter I players since
-2026-10-24, double-quoted text and type clashes are the most frequent refusals, 31 and 26 users, besides 77 with
-plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query that runs on chapter I, a message on an empty Run, a plain line under SQLite's commonest errors, the YYYYMMDD why on quoted dates, the unquoted-date note, curly quotes, `query_fail.type`; re-read GA a week after the push, split by device; held: answer-shape feedback), the `RANKS` retune (done 2026-10-25, section 3), the SQL Noir study, and clicking the desk's two dialogs through.
+**Open right now (2026-10-25, evening).** Everything is deployed (f6a75ee; compete backend @11, feedback script @1).
+Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
+query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
+queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
+into modules, one terminal, `version_site.mjs`, generated handbook chrome, named monitor panels), the handbook index
+and Grammar redesign, SHARES BY NETWORK (GA dimensions `type`, `route` and `network` registered by the owner) and the
+Send feedback form (rows in the Sheet's Feedback tab). Waiting on Google: the AdSense re-review (requested
+2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue. Waiting on the owner:
+a look at the new monitoring panels once GA has data, the desk controls on a phone, archiving the old
+personal-account backend project. Not verified end to end since the module split: a real compete season (the owner
+declined a test run on 2026-10-25), the Part I/II extra editions and films, the certificate print, the gated
+`?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
+device); the SQL Noir study.
 
 ## 8. Backlog (not scheduled)
 
+- ~~Send feedback.~~ Done 2026-10-25 (owner): a Feedback button beside Day/Night on every page opens a form
+  (message, optional email, the page path) posting to its own Apps Script, `feedback_script.gs`, which appends to the
+  Sheet's Feedback tab; the owner chose the in-site form over a mailto link. Tested end to end with the owner.
+- ~~Handbook index and Grammar UI/UX pass.~~ Done 2026-10-25: Where to start step cards and numbered chapter cards on
+  the index (`tocHtml` writes title and blurb), Practice and reference cards; Grammar's order of execution as eight
+  numbered cards and the rules grouped by their page. Not done: grouping the chapters into themes (it would need a
+  field in `CHAPTERS`).
 - ~~Desk front-end clean-up (thermo-nuclear review 2026-10-25, batch 2).~~ Done 2026-10-25: monitor panels
   with named replies and one loader (F4), the chart toolkit split into `site/charts.js` (F14), one CSV encoder in
   `shared.js` (F16), the desk's season actions as one table (F8, admin.js); owner decision for F7: Google's ad
@@ -740,9 +753,8 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
 - Monitoring for the 2026-10-25 onboarding (done 2026-10-25): the Game page's CHAPTER I ONBOARDING bars (learn mode:
   Investigate pressed, prologue finished / skipped, tour finished / skipped, a first query in chapter I, chapter I
   solved, each GA's own users count). FEATURE USE already lists prologue, tour, share, warm-up link, case card
-  reopened, house ad and Google's ad clicks (game) and the exercises tour (handbook). Open: SHARES by network needs
-  `network` registered in GA as an event-scoped custom dimension and `customEvent:network` added to REPORT_DIMS /
-  DIMENSIONS; until then FEATURE USE shows only the share total. Would add: prologue and tour done/skip split by
+  reopened, house ad and Google's ad clicks (game) and the exercises tour (handbook). SHARES BY NETWORK (users per
+  share button) is on the Game page since 2026-10-25, after the owner registered `network` in GA. Would add: prologue and tour done/skip split by
   device (mobile readers may skip more), and the onboarding steps per day once a week of data exists.
 - Trackers everywhere and monitoring split (owner, 2026-10-24): new game events (chapter_leave, query_fail, answer_wrong,
   hint_open, feature_use, landing_begin) and GA on every handbook page under the same consent (`site/stats.js` split out
