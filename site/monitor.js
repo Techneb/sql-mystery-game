@@ -558,7 +558,8 @@ export function pagesSection(p, m) {
 
 // --- Game ---------------------------------------------------------------------------------------
 export const GAME_FEATURES = { schema_enlarge: "Schema enlarged", suspects_open: "Suspects opened", history_reuse: "History query reused",
-  grammar_link: "Grammar link followed", film_play: "Film played", film_end: "Film watched to the end", landing_about: "Landing about opened", theme_toggle: "Day/Night toggled" };
+  grammar_link: "Grammar link followed", film_play: "Film played", film_end: "Film watched to the end", landing_about: "Landing about opened", theme_toggle: "Day/Night toggled",
+  prologue_done: "Prologue finished", prologue_skip: "Prologue skipped", share: "Shared the result" };
 export const HANDBOOK_FEATURES = { schema_enlarge: "Schema enlarged", history_reuse: "History query reused", grammar_link: "Grammar link followed",
   howto_open: "How to use opened", solution_open: "Solution opened", try_it: "Try it link followed", theme_toggle: "Day/Night toggled", ad_house_click: "House ad clicked" };
 export const MODES = { learn: "Learn", compete: "Compete" };

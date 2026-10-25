@@ -782,3 +782,12 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   it removes the record from `SEASONS` and the season's log rows (bottom-up `deleteRows`, so the other rows keep their
   text cells), returns `removedRows`, and frees the database for the next create. The desk shows a bin button on
   created and closed rows and asks in `#ask` first, suggesting the CSV export. Needs `deploy.sh` once on main.
+- Chapter I onboarding (owner, 2026-10-25, all three practice options plus a share line, after the drop-off
+  diagnosis: 45% of chapter I openers never ran a query). Built 2026-10-25 on a branch, not yet merged or deployed:
+  A. "The clerk's first morning", a one-screen prologue in learn mode on an invented lost-property book built in the
+  browser (run, add a WHERE, answer; skippable, shown once, offered again only by New investigation; `feature_use`
+  prologue_done / prologue_skip); B. four callouts on chapter I's first visit (schema, terminal, objective, case
+  board; shown once); C. a landing line linking the handbook's first warm-up exercise; D. a share line at the end of
+  the game only (Part II extra edition: X, LinkedIn, Copy link, the device's Share; `feature_use` share with the
+  network); E. both terminals' hint lines mention Tab to complete. Re-read GA a week after the push: prologue done vs
+  skipped, and chapter I's ran-1 share.

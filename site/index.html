@@ -44,6 +44,7 @@
       <button id="btn-investigate" disabled>Investigate</button>
       <button id="btn-compete" disabled title="Ask your teacher for the season link.">Compete</button>
     </div>
+    <p class="muted landing-warmup">New to SQL? <a href="learn/exercises.html#the-cheap-shelf">Try a two-minute warm-up first.</a></p>
     <div id="compete-form" class="compete-form" hidden>
       <div class="row"><span class="label">PSEUDO</span><input id="team" autocomplete="off" maxlength="40" placeholder="Your pseudo"><button id="btn-start">Join</button></div>
       <p id="compete-note" class="muted"></p>
@@ -111,7 +112,7 @@
   </aside>
 
   <section class="col-terminal">
-    <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Ctrl+F to format, Shift+Tab to leave the box</span><a class="dialect" href="learn/grammar.html" target="_blank" rel="noopener" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
+    <div class="label-row"><span class="label">TERMINAL</span><span class="term-meta"><span class="muted">Ctrl+Enter to run, Tab to complete, Ctrl+F to format, Shift+Tab to leave the box</span><a class="dialect" href="learn/grammar.html" target="_blank" rel="noopener" title="This terminal follows PostgreSQL's rules: The Grammar of SQL">PostgreSQL</a></span></div>
     <div class="editor"><pre id="sql-hl" class="sql-hl" aria-hidden="true"></pre><textarea id="sql" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="SQL query" placeholder="SELECT * FROM police_report WHERE ..."></textarea></div>
     <div class="row"><button id="btn-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="run-info" class="muted" aria-live="polite"></span></div>
     <div id="results" class="results" aria-live="polite"></div>
@@ -168,6 +169,18 @@
   <button value="ok">Print</button> <button value="" class="quiet">Cancel</button>
 </form></dialog>
 <div id="badges" class="suspects" hidden></div>
+<!-- The clerk's first morning (learn mode, first visit): app.js showPrologue builds lost_property in the browser -->
+<dialog id="prologue" class="part2 prologue" aria-labelledby="prologue-title">
+  <div class="label">BEFORE THE INSPECTOR ARRIVES</div><h2 id="prologue-title">The clerk's first morning</h2>
+  <p>The head porter hands you the hotel's lost-property book while Ganimard finishes his coffee. Practise on it: nothing in it is evidence.</p>
+  <p id="prologue-step" class="prologue-step" aria-live="polite"></p>
+  <div class="editor"><pre class="sql-hl" aria-hidden="true"></pre><textarea id="prologue-sql" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="SQL query"></textarea></div>
+  <div class="row"><button type="button" id="prologue-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="prologue-info" class="muted" aria-live="polite"></span></div>
+  <div id="prologue-results" class="results" aria-live="polite"></div>
+  <div id="prologue-answer" class="row prologue-answer" hidden><span class="label">ANSWER</span><input id="prologue-input" autocomplete="off" aria-label="Answer"><button type="button" id="prologue-submit">Submit</button></div>
+  <p id="prologue-reply" class="reply" aria-live="polite"></p>
+  <button type="button" id="prologue-done" hidden>To chapter I</button> <button type="button" id="prologue-skip" class="quiet">Skip, I know SQL</button>
+</dialog>
 <dialog id="passgate" class="part2"><form method="dialog">
   <div class="label">ADMIN</div>
   <p><label for="pass">Passphrase</label> <input id="pass" type="password" autocomplete="current-password"></p>

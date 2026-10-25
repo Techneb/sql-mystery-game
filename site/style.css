@@ -88,11 +88,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 
 /* terminal */
 .editor { position: relative; background: var(--term); border: 1px solid #6b5a33; border-radius: var(--r-panel); overflow: hidden; }
-#sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
+#sql, #prologue-sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
   tab-size: 4; white-space: pre-wrap; overflow-wrap: anywhere; letter-spacing: normal; }
-#sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
+#sql, #prologue-sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
 #sql::placeholder { color: var(--term-text); opacity: .45; }
-#sql::selection { background: rgba(201,163,90,.35); color: transparent; }
+#sql::selection, #prologue-sql::selection { background: rgba(201,163,90,.35); color: transparent; }
 .sql-hl { position: absolute; inset: 0; color: var(--term-text); pointer-events: none; overflow: hidden; }
 .sql-kw { color: var(--sql-kw); } .sql-fn { color: var(--sql-fn); } .sql-str { color: var(--sql-str); }
 .sql-num { color: var(--sql-num); } .sql-com { color: var(--sql-com); font-style: italic; }
@@ -311,3 +311,21 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+/* The clerk's first morning (#prologue) and chapter I's callouts (owner, 2026-10-25) */
+.prologue { max-width: min(640px, calc(100vw - 32px)); }
+.prologue p.prologue-step { font-weight: 700; }
+#prologue-sql { min-height: 48px; }
+.prologue .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.prologue .results { max-height: 30vh; text-align: left; } .prologue .results:empty { display: none; }
+.prologue .editor { text-align: left; }
+.prologue-answer[hidden] { display: none; }
+.prologue-answer input { flex: 1; min-width: 120px; font-family: "Special Elite", monospace; }
+.callout { position: absolute; z-index: 18; width: min(300px, calc(100vw - 32px)); box-sizing: border-box; background: var(--card); color: var(--ink);
+  border: 2px solid var(--accent); border-radius: var(--r-panel); box-shadow: 0 3px 8px rgba(0,0,0,.25); padding: 10px 12px; font-size: 16px; }
+.callout p { margin: 0 0 8px; }
+.callout::before { content: ""; position: absolute; top: -10px; left: 18px; border: 8px solid transparent; border-top: 0; border-bottom: 9px solid var(--accent); }
+.callout .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+.callout .row .muted { margin-right: auto; font-size: 13px; }
+.landing-warmup { margin: 0 0 8px; }
+.share .share-text { font-style: italic; margin: 6px 0 8px; }
+.share a.btn { text-decoration: none; } .share a.btn.quiet { background: transparent; color: var(--ink); }

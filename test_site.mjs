@@ -1835,3 +1835,69 @@ test("date mistakes: a quoted date names the YYYYMMDD number, an unquoted one is
   assert.equal(FIRST_QUERY, "SELECT * FROM police_report LIMIT 5");
   assert.equal(strictCheck(FIRST_QUERY, GAME), null);
 });
+
+// --- Onboarding (owner, 2026-10-25): the clerk's first morning, chapter I's callouts, the landing warm-up, the share line.
+import * as onb from "./site/app.js";
+test("prologue: learn mode's first visit only, and its three steps work on the invented book", () => {
+  const s = freshState();
+  assert.equal(onb.prologueOn(s), true);
+  assert.equal(onb.prologueOn({ ...s, mode: "compete" }), false, "never in compete");
+  assert.equal(onb.prologueOn({ ...s, prologue: "skip" }), false, "shown once");
+  assert.equal(onb.prologueOn({ ...s, totalQueries: 3 }), false, "not for a game already under way");
+  assert.equal(onb.tourOn(s), false, "the callouts come after the prologue");
+  assert.equal(onb.tourOn({ ...s, prologue: "done" }), true);
+  assert.equal(onb.tourOn({ ...s, prologue: "done", tour: true }), false);
+  assert.equal(onb.tourOn({ ...s, prologue: "skip", mode: "compete" }), false);
+  const where = onb.PROLOGUE_QUERY + " WHERE found_in = 'Garden'";
+  assert.equal(strictCheck(onb.PROLOGUE_QUERY, onb.PROLOGUE_SCHEMA), null);
+  assert.equal(strictCheck(where, onb.PROLOGUE_SCHEMA), null);
+  assert.ok(onb.PROLOGUE_STEPS[1].includes("WHERE found_in = 'Garden'"), "step 2 says what to filter");
+  const all = { columns: ["id", "item", "found_in", "day"], values: onb.PROLOGUE_ROWS };
+  const garden = { ...all, values: onb.PROLOGUE_ROWS.filter(r => r[2] === "Garden") };
+  assert.equal(onb.prologueAdvance(0, all), 1);
+  assert.equal(onb.prologueAdvance(0, null), 0);
+  assert.equal(onb.prologueAdvance(1, all), 1, "the whole book again does not move on");
+  assert.equal(onb.prologueAdvance(1, garden), 2);
+  for (const a of ["birdcage", "A birdcage", "Bird cage", "the BIRDCAGE"]) assert.ok(onb.prologueAnswer(a), a);
+  for (const a of ["umbrella", "5", ""]) assert.ok(!onb.prologueAnswer(a), a);
+  const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
+  const names = data.cast.flatMap(c => c.name.toLowerCase().split(" ")).filter(w => w.length > 3);
+  const words = onb.PROLOGUE_ROWS.flat().join(" ").toLowerCase() + " " + onb.PROLOGUE_STEPS.join(" ").toLowerCase();
+  for (const n of names) assert.ok(!words.includes(n), "no cast name in the prologue: " + n);
+  const html = fs.readFileSync("site/index.html", "utf8");
+  for (const id of ["prologue", "prologue-sql", "prologue-run", "prologue-results", "prologue-answer", "prologue-input", "prologue-submit", "prologue-done", "prologue-skip", "prologue-step"])
+    assert.ok(html.includes('id="' + id + '"'), id);
+  assert.ok(html.includes("Skip, I know SQL"));
+});
+test("callouts point at parts of the page, never at a table", () => {
+  const html = fs.readFileSync("site/index.html", "utf8");
+  const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
+  const tables = data.chapters.flatMap(c => c.tables);
+  assert.ok(onb.CALLOUTS.length >= 3 && onb.CALLOUTS.length <= 4);
+  for (const [sel, text] of onb.CALLOUTS) {
+    const id = sel.match(/#([\w-]+)/)?.[1], cls = sel.match(/\.([\w-]+)$/)?.[1];
+    assert.ok(id ? html.includes('id="' + id + '"') : html.includes('class="' + cls + '"'), sel);
+    for (const t of tables) assert.ok(!text.toLowerCase().includes(t), text + " names " + t);
+  }
+  assert.equal(onb.calloutLeft({ left: 300 }, 200, 390), 182, "kept inside the viewport");
+  assert.equal(onb.calloutLeft({ left: -20 }, 200, 390), 8);
+  assert.equal(onb.calloutLeft({ left: 50 }, 200, 1200), 50);
+});
+test("landing warm-up line links the handbook's first warm-up exercise; terminal hints mention Tab", () => {
+  const html = fs.readFileSync("site/index.html", "utf8"), ex = fs.readFileSync("site/learn/exercises.html", "utf8");
+  const slug = html.match(/class="muted landing-warmup">[^<]*<a href="learn\/exercises\.html#([\w-]+)"/)[1];
+  const first = ex.slice(ex.indexOf("<h2>Warm-up</h2>")).match(/class="exercise" id="([\w-]+)"/)[1];
+  assert.equal(slug, first);
+  assert.match(html, /Ctrl\+Enter to run, Tab to complete/);
+  assert.match(ex, /Ctrl\+Enter to run, Tab to complete/);
+});
+test("share line: rank and count only, X and LinkedIn links carry the site", () => {
+  const t = onb.shareText(rank(25), 140);
+  assert.equal(t, "I solved The Ritz Affair, a free SQL detective game, as Ganimard himself in 140 queries.");
+  const l = onb.shareLinks(t);
+  assert.ok(l.x.startsWith("https://x.com/intent/post?text=") && l.x.includes(encodeURIComponent(t)) && l.x.endsWith(encodeURIComponent(onb.SHARE_URL)));
+  assert.equal(l.linkedin, "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent("https://mystery.alephb.uk/"));
+  const h = onb.shareHtml(t);
+  for (const n of ["x", "linkedin", "copy", "native"]) assert.ok(h.includes('data-net="' + n + '"'), n);
+  assert.ok(!/&(?!amp;)/.test(h), "ampersands escaped in the markup");
+});

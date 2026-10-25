@@ -8,14 +8,16 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, milestones: {}, fails: {}, hints: [], suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
+           film: [], opened: {}, milestones: {}, fails: {}, hints: [], suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0,
+           prologue: "", tour: false };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
 // in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
 // token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection
 // never loses a row; over is set once the backend says the session is closed, and stoppedAt freezes the clock then;
-// closedSeen once the #closed pop-up has been shown for it.
+// closedSeen once the #closed pop-up has been shown for it. prologue: "done" or "skip" once the clerk's first morning
+// is behind (learn only); tour once chapter I's callouts are dismissed.
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
   const cap = state.part2 ? 12 : 8;
@@ -91,11 +93,11 @@ const PORTRAIT_FILE = { "Lord Ashcombe": "ashcombe", "Paul Sernine": "sernine", 
 
 const $ = id => document.getElementById(id);
 
-let db, data, state, tableSizes = {}, schema = {};
+let db, data, state, tableSizes = {}, schema = {}, sqlModule = null;
 let seasonId = "", seasonMeta = null, metaUnreachable = false, boardUrl = "";
 
 async function loadDb(stem) {
-  const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
+  const SQL = sqlModule = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
   const buf = await (await fetch(stem + ".sqlite" + VERSION)).arrayBuffer();
   if (db) db.close();
   db = new SQL.Database(new Uint8Array(buf));
@@ -1409,12 +1411,151 @@ function showExtra2() {
       ? "You found " + got + " of " + BADGES.length + " badges. " + left + (left > 1 ? " are" : " is") +
         " still hidden in the archives: start a new investigation to hunt for the rest."
       : "You found all " + BADGES.length + " badges. Ganimard has nothing left to teach you.") + "</div>" +
+    shareHtml(shareText(rank(partStats(state, 1, 8).queries), partStats(state, 1, 12).queries)) +
     (left ? '<button id="btn-replay">New investigation</button> ' : "") + '<button id="btn-extra2">Close</button></div>';
   el.hidden = false;
   const film = wireFilm(el, 2);
+  wireShare(el);
   const close = () => { film.pause(); el.hidden = true; state.extraSeen2 = true; save(state); };
   $("btn-extra2").onclick = close;
   if (left) $("btn-replay").onclick = () => { close(); $("btn-reset").click(); };   // the same confirm, then the reset
+}
+
+// --- Share, at the end of the game only (owner, 2026-10-25): never a clue or an answer, only the rank and the count.
+// The rank is Part I's (RANKS are tuned on it, as on the certificate); the count is the whole game's.
+export const SHARE_URL = "https://mystery.alephb.uk/";
+export const shareText = (rankName, queries) => "I solved The Ritz Affair, a free SQL detective game, as " + rankName + " in " + queries + " queries.";
+export function shareLinks(text, url = SHARE_URL) {
+  return { x: "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url),
+           linkedin: "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url) };
+}
+export function shareHtml(text) {
+  const l = shareLinks(text);
+  return '<div class="extra-badge share"><div class="label">SHARE</div><p class="share-text">' + esc(text) + "</p>" +
+    '<button class="quiet" data-net="native" hidden>Share</button> ' +
+    '<a class="btn quiet" data-net="x" href="' + l.x.replace(/&/g, "&amp;") + '" target="_blank" rel="noopener">X</a> ' +
+    '<a class="btn quiet" data-net="linkedin" href="' + l.linkedin + '" target="_blank" rel="noopener">LinkedIn</a> ' +
+    '<button class="quiet" data-net="copy">Copy link</button> <span class="muted share-done" aria-live="polite"></span></div>';
+}
+function wireShare(root) {
+  const box = root.querySelector(".share"); if (!box) return;
+  const text = box.querySelector(".share-text").textContent, done = box.querySelector(".share-done");
+  if (navigator.share) box.querySelector('[data-net="native"]').hidden = false;
+  box.querySelectorAll("[data-net]").forEach(b => b.addEventListener("click", () => {
+    const net = b.dataset.net;
+    useFeature("share", { chapter: curChapter(), network: net }, "share_" + net);
+    if (net === "native") navigator.share({ title: "The Ritz Affair", text, url: SHARE_URL }).catch(() => {});
+    if (net === "copy") (navigator.clipboard ? navigator.clipboard.writeText(SHARE_URL) : Promise.reject())
+      .then(() => { done.textContent = "Link copied."; }, () => { done.textContent = SHARE_URL; });
+  }));
+}
+
+// --- The clerk's first morning (owner, 2026-10-25): a prologue before chapter I in learn mode, on a tiny book built in
+// the browser (never in mystery.sqlite; no cast, no planted value). Three steps: run the query, add a WHERE, answer.
+// Shown once (state.prologue "done" or "skip"); only New investigation (freshState) offers it again.
+export const PROLOGUE_QUERY = "SELECT * FROM lost_property";
+export const PROLOGUE_ROWS = [[1, "umbrella", "Lobby", "Monday"], [2, "opera glasses", "Bar", "Monday"], [3, "left glove", "Dining room", "Tuesday"],
+  [4, "walking stick", "Lobby", "Wednesday"], [5, "birdcage", "Garden", "Wednesday"], [6, "pocket watch", "Bar", "Thursday"]];
+export const PROLOGUE_SCHEMA = { lost_property: [["id", "INTEGER", 1], ["item", "TEXT", 0], ["found_in", "TEXT", 0], ["day", "TEXT", 0]] };
+export const PROLOGUE_STEPS = [
+  "The query below asks for every row of the book. Press Run. Each row is one thing a guest left behind.",
+  "Well read. Now keep only what was found in the garden: add WHERE found_in = 'Garden' at the end of the query and press Run again.",
+  "One row is left. What did the guest leave in the garden? Type it in the answer box and press Submit.",
+  "Correct. That is the job: query, read, answer. The Inspector's archives are bigger, and their answers are not on the first page."];
+export const prologueOn = state => state.mode !== "compete" && !state.prologue && !state.solved.length && !state.totalQueries;
+// The step a successful run leads to: the whole book moves on from step 0, the garden's lone row from step 1.
+export function prologueAdvance(step, res) {
+  if (!res) return step;
+  if (step === 0 && res.values.length === PROLOGUE_ROWS.length) return 1;
+  if (step === 1 && res.values.length === 1 && res.values[0].includes("birdcage")) return 2;
+  return step;
+}
+export const prologueAnswer = a => normalise(a).replace(/ /g, "").includes("birdcage");
+function showPrologue(then) {
+  const d = $("prologue");
+  if (!d.showModal || !sqlModule) return then();
+  const pdb = new sqlModule.Database();
+  pdb.run("CREATE TABLE lost_property (id INTEGER PRIMARY KEY, item TEXT, found_in TEXT, day TEXT)");
+  for (const r of PROLOGUE_ROWS) pdb.run("INSERT INTO lost_property VALUES (?, ?, ?, ?)", r);
+  terminalDb(pdb);
+  const ta = $("prologue-sql"), hl = d.querySelector(".sql-hl");
+  const sync = () => { hl.innerHTML = highlightSql(ta.value); ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
+  let step = 0;
+  const show = () => {
+    $("prologue-step").textContent = PROLOGUE_STEPS[step];
+    $("prologue-answer").hidden = step !== 2;
+    $("prologue-done").hidden = step < 3;
+    $("prologue-skip").hidden = step >= 3;
+    if (step === 2) $("prologue-input").focus();
+    if (step === 3) $("prologue-done").focus();
+  };
+  const run = () => {
+    const sql = ta.value.trim();
+    if (!sql) { $("prologue-results").innerHTML = EMPTY_RUN; return; }
+    let res = null, error = null;
+    const strict = strictCheck(sql, PROLOGUE_SCHEMA);
+    if (strict) error = "ERROR: " + strict.error;
+    else try { const all = pdb.exec(toSqlite(sql)); res = all[all.length - 1] || null; } catch (e) { error = e.message; }
+    const cols = { lost_property: PROLOGUE_SCHEMA.lost_property.map(c => c[0]) };
+    $("prologue-results").innerHTML = strict ? strictHtml(strict) : error ? errorHtml(error, sqliteHelp(error, sql, cols)) : renderResults(res);
+    $("prologue-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows";
+    const next = error ? step : prologueAdvance(step, res);
+    if (next !== step) { step = next; show(); }
+  };
+  const close = how => { pdb.close(); d.close(); state.prologue = how; save(state); useFeature("prologue_" + how, { chapter: 1 }); then(); };
+  ta.value = PROLOGUE_QUERY; show();
+  ta.oninput = sync;
+  ta.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); } };
+  $("prologue-run").onclick = run;
+  const answer = () => {
+    if (prologueAnswer($("prologue-input").value)) { step = 3; $("prologue-reply").textContent = ""; show(); }
+    else $("prologue-reply").textContent = "Not quite. Look at the item column of the row you found.";
+  };
+  $("prologue-submit").onclick = answer;
+  $("prologue-input").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); answer(); } };
+  $("prologue-done").onclick = () => close("done");
+  $("prologue-skip").onclick = () => close("skip");
+  d.oncancel = e => { e.preventDefault(); close(step >= 3 ? "done" : "skip"); };   // Escape skips
+  d.showModal();
+  sync();   // measured once the dialog is open
+  ta.focus();
+}
+
+// --- Chapter I's callouts (owner, 2026-10-25): shown once (state.tour) after the prologue or its skip. They point at the
+// parts of the page, never at a table or anything that hints at the answer.
+export const CALLOUTS = [
+  ["#erd", "The schema lists the tables you can query and their columns. More appear as the case goes on."],
+  ["#btn-run", "Write SQL in the box above and press Run (or Ctrl+Enter). The results appear underneath."],
+  ["#objective", "The objective says what to find. Your answer goes in the box under the terminal."],
+  ["#board", "Every answer you find is pinned to the case board."]];
+export const tourOn = state => state.mode !== "compete" && !!state.prologue && !state.tour && !state.solved.length;
+// The callout's left edge under a target rect, kept inside a viewport of width vw.
+export const calloutLeft = (rect, w, vw) => Math.max(8, Math.min(rect.left, vw - w - 8));
+function showTour() {
+  let i = 0;
+  const el = document.createElement("div");
+  el.className = "callout"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "A quick tour");
+  document.body.appendChild(el);
+  const place = () => {
+    const t = document.querySelector(CALLOUTS[i][0]); if (!t) return;
+    const r = t.getBoundingClientRect();
+    el.style.left = calloutLeft(r, el.offsetWidth, document.documentElement.clientWidth) + scrollX + "px";
+    el.style.top = Math.min(r.bottom, r.top + 200) + scrollY + 8 + "px";   // under the target, or inside a tall one
+  };
+  const end = () => { el.remove(); removeEventListener("resize", place); state.tour = true; save(state); };
+  const step = () => {
+    const last = i === CALLOUTS.length - 1;
+    el.innerHTML = "<p>" + esc(CALLOUTS[i][1]) + '</p><div class="row"><span class="muted">' + (i + 1) + " of " + CALLOUTS.length + "</span>" +
+      (last ? "" : '<button class="quiet callout-skip">Skip</button>') + '<button class="callout-next">' + (last ? "Got it" : "Next") + "</button></div>";
+    if (!last) el.querySelector(".callout-skip").onclick = end;
+    el.querySelector(".callout-next").onclick = () => { if (last) end(); else { i++; step(); } };
+    document.querySelector(CALLOUTS[i][0])?.scrollIntoView({ block: "center", behavior: "smooth" });
+    place(); setTimeout(place, 500);   // again once the smooth scroll has settled
+    el.querySelector(".callout-next").focus({ preventScroll: true });
+  };
+  addEventListener("resize", place);
+  el.addEventListener("keydown", e => { if (e.key === "Escape") end(); });
+  step();
 }
 
 // A suspect is met once an unlocked chapter's story names them (cast.meet) or a result the student saw showed
@@ -1925,6 +2066,8 @@ function enterGame() {
   $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel();
   if (awaitingCode(state) && !state.extraSeen) showExtra();   // solved chapter VIII, closed the page before the extra edition
   if (state.mode !== "compete" && state.solved.includes(12) && !state.extraSeen2) showExtra2();   // the same for chapter XII
+  if (!noPersist && prologueOn(state)) showPrologue(() => tourOn(state) && showTour());   // learn mode's first visit
+  else if (!noPersist && tourOn(state)) showTour();
   showClosed();   // the season closed while the page was shut
 }
 
