@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { strictCheck, strictHtml, STRICT_SECTIONS, themeButtonHtml, erdButtonHtml } from "./site/app.js";
+import { strictCheck, STRICT_SECTIONS } from "./site/strict.js";
+import { strictHtml } from "./site/terminal.js";
+import { themeButtonHtml, erdButtonHtml } from "./site/ui.js";
 import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
-import { sameResult, sameValue, checkOptions, tablesIn, startLevel, levelPick } from "./site/learn/exercises.js";
+import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 // The Clerk's Handbook (site/learn/): every page repeats its chrome by hand, so these pin it.
@@ -98,7 +100,7 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
     assert.ok(head.includes(f.startsWith("../") ? '<script src="learn/theme.js"></script>' : '<script src="theme.js"></script>'), f + ": theme.js in <head>, no defer (no flash)");
   }
   const js = fs.readFileSync("site/learn/theme.js", "utf8").replace(/' \+ A \+ '/g, one(themeButtonHtml("day"), /<svg class="icon moon" ([^>]*)>/, "attrs"));
-  for (const mood of ["day", "night"]) assert.ok(js.includes(one(themeButtonHtml(mood), /^(<svg[\s\S]*<\/svg>)/, mood)), mood + " icon matches app.js");
+  for (const mood of ["day", "night"]) assert.ok(js.includes(one(themeButtonHtml(mood), /^(<svg[\s\S]*<\/svg>)/, mood)), mood + " icon matches ui.js");
   assert.match(js, /"ritz\.theme"/, "the game's key");
 });
 
@@ -246,7 +248,7 @@ test("exercises: each solution's result marks its own question solved, and no ot
     assert.equal(res.values.length, e.rows, e.slug + ": the expected row count");
     assert.ok(sameResult(e.page, res, e.opts), e.slug + ": the page's printed result is the real one");
     exercises.forEach((o, j) => assert.equal(sameResult(res, exRun[j], o.opts), i === j, `${e.slug} result against ${o.slug}`));
-    assert.ok(tablesIn(e.sql, Object.keys(bakerySchema(learnHtml["database.html"]))).length >= 1, e.slug);
+    assert.ok(tablesNamed(e.sql, Object.keys(bakerySchema(learnHtml["database.html"]))).length >= 1, e.slug);
     const flipped = { ...res, values: [...res.values].reverse() };
     if (res.values.length > 1) assert.equal(sameResult(flipped, res, e.opts), !e.opts.ordered, e.slug + ": row order counts only when asked");
     assert.equal(sameResult({ ...res, values: res.values.slice(1) }, res, e.opts), false, e.slug + ": a missing row");
@@ -265,7 +267,7 @@ test("exercises: the order rule, the needed columns, the number tolerance", () =
   assert.ok(sameResult({ columns: ["name"], values: [["Almond croissant"], ["Croissant"]] }, sol, { need: [1] }), "only the name is asked");
   assert.ok(!sameResult({ columns: ["name"], values: [["Almond croissant"], ["Croissant"]] }, sol), "the id too, by default");
   assert.ok(sameResult(null, { columns: ["a"], values: [] }) && !sameResult(null, sol));
-  assert.deepEqual(tablesIn("SELECT 1 FROM orders o JOIN order_item oi ON 1 ORDER BY 1", ["customer", "order_item", "orders", "product"]), ["order_item", "orders"]);
+  assert.deepEqual(tablesNamed("SELECT 1 FROM orders o JOIN order_item oi ON 1 ORDER BY 1", ["customer", "order_item", "orders", "product"]), ["order_item", "orders"]);
 });
 
 test("exercises: every Try it link names a question; the page keeps its static content and loads its module", () => {

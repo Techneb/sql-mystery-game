@@ -3,11 +3,20 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage, sqliteHelp, errorHtml, dateArithmeticNote, ymd, FIRST_QUERY, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, boardSuspects, scanRun, solveRoute, winningQuery, crackedHtml, cardPicture } from "./site/app.js";
+import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables } from "./site/state.js";
+import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml } from "./site/app.js";
+import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
+import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
+import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
+import { metSuspects, foundSuspects, suspectsOn, boardSuspects, cardPicture } from "./site/suspects.js";
+import { richText, themeButtonHtml, erdButtonHtml, calloutLeft, showCallouts } from "./site/ui.js";
+import { track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS } from "./site/stats.js";
+import * as onb from "./site/onboarding.js";
+import { shareText, shareLinks, shareHtml, SHARE_URL } from "./site/endings.js";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
-import { levelId, runOutcome } from "./site/learn/exercises.js";
-import * as onb from "./site/app.js";
+import { levelId } from "./site/learn/exercises.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -175,13 +184,6 @@ test("pseudos fold to one key per player, whatever the case or width", () => {
   assert.equal(teamKey(" Alice "), "alice");
   assert.equal(teamKey("\uFF21lice"), "alice", "look-alikes fold to the same key");
   assert.equal(PENALTY.wrong, 10, "the default until a season record sets it");
-});
-
-test("shared.js is what app.js re-exports", () => {
-  assert.equal(normalise, shared.normalise);
-  assert.equal(sha256, shared.sha256);
-  assert.equal(teamKey, shared.teamKey);
-  assert.match(shared.ADMIN_PASS_SHA256, /^[0-9a-f]{64}$/);
 });
 
 test("clockMs runs, then freezes at the finish or when the session closed", () => {
@@ -559,7 +561,7 @@ test("compete has no Suspects gallery: learn's cards would point at learn's trap
   assert.equal(suspectsOn({ ...freshState(), mode: "compete" }), false);
 });
 
-// --- The strict terminal (PostgreSQL's rules, site/app.js strictCheck) --------------------------------------
+// --- The strict terminal (PostgreSQL's rules, site/strict.js strictCheck) --------------------------------------
 // The plot's queries and the game schema come from generate_db.py --queries (plant_values and site/mystery.sqlite's schema, no build: fast).
 const plotDump = JSON.parse(execFileSync("python3", ["generate_db.py", "--queries"], { encoding: "utf8" }));
 const GAME = plotDump.schema;
@@ -789,11 +791,13 @@ test("GA guards: once per key per page load, the first three failed runs, the le
     if (ls) Object.defineProperty(globalThis, "localStorage", ls); else delete globalThis.localStorage;
   }
   const fails = {};
-  assert.deepEqual(queryFail(fails, 1, null, false, { type: "no_table", why: "x" }), { kind: "error", rule: "", type: "no_table" });
-  assert.deepEqual(queryFail(fails, 1, { anchor: "group-by" }, false), { kind: "refused", rule: "group-by", type: "refused" });
-  assert.deepEqual(queryFail(fails, 1, null, true), { kind: "refused", rule: "cartesian", type: "refused" });
-  assert.equal(queryFail(fails, 1, null, false), null, "only the first " + QUERY_FAILS);
-  assert.deepEqual(queryFail(fails, 2, null, false), { kind: "error", rule: "", type: "other" }, "counted per chapter");
+  const err = t => ({ kind: "error", rule: "", type: t }), refused = rule => ({ kind: "refused", rule, type: "refused" });
+  assert.equal(queryFail(fails, 1, { kind: "ok" }), null, "a run that worked is no failure");
+  assert.deepEqual(queryFail(fails, 1, err("no_table")), err("no_table"));
+  assert.deepEqual(queryFail(fails, 1, refused("group-by")), refused("group-by"));
+  assert.deepEqual(queryFail(fails, 1, refused("cartesian")), refused("cartesian"));
+  assert.equal(queryFail(fails, 1, err("other")), null, "only the first " + QUERY_FAILS);
+  assert.deepEqual(queryFail(fails, 2, err("other")), err("other"), "counted per chapter");
   assert.deepEqual(freshState().fails, {}, "kept in the saved state");
   assert.deepEqual(freshState().hints, [], "hint_open once per chapter, kept in the saved state");
   const chapters = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ n }));
@@ -802,7 +806,6 @@ test("GA guards: once per key per page load, the first three failed runs, the le
   assert.equal(chapterLeave({ ...s, opened: {} }, chapters, 61000), null, "a chapter never opened");
   assert.equal(chapterLeave({ ...s, solved: [1, 2, 3, 4, 5, 6, 7, 8], opened: { 8: 1 } }, chapters), null, "Part I done, the code not given: nothing open");
   assert.equal(levelId("Warm-up"), "warm-up");
-  assert.deepEqual([runOutcome(null, null), runOutcome("e", null), runOutcome("e", { anchor: "x" }), runOutcome("e", true)], ["ok", "error", "refused", "refused"]);
 });
 
 test("New investigation asks in the #reset dialog: Cancel first and focused, erasing only on its own value", () => {
@@ -816,7 +819,7 @@ test("New investigation asks in the #reset dialog: Cancel first and focused, era
   // #names: Enter in the field submits the first button, which must be Print
   assert.match(fs.readFileSync("site/index.html", "utf8"), /<dialog id="names"[^]*?<label for="names-input">[^]*?<\/p>\s*<button value="ok">Print/);
   // the browser's own boxes survive only as askDialog's fallbacks, and on no other page
-  for (const f of ["site/app.js", "site/admin.js", "site/explore.js", "site/monitor.js", "site/leaderboard.js", "site/learn/exercises.js", "site/learn/handbook.js", "site/learn/theme.js", "site/shared.js", "site/stats.js", "site/qr.js"])
+  for (const f of [...fs.readdirSync("site").map(f => "site/" + f), ...fs.readdirSync("site/learn").map(f => "site/learn/" + f)].filter(f => f.endsWith(".js")))
     for (const m of fs.readFileSync(f, "utf8").matchAll(/^.*\b(confirm|prompt|alert)\([^)].*$/gm))
       assert.match(m[0], /askDialog\(/, f + ": " + m[0].trim());
 });
@@ -866,17 +869,88 @@ test("date mistakes: a quoted date names the YYYYMMDD number, an unquoted one is
   assert.equal(strictCheck(FIRST_QUERY, GAME), null);
 });
 
+test("starterSql: chapter I's first query until a first chapter I run or a solve", () => {
+  assert.equal(starterSql(freshState()), FIRST_QUERY);
+  assert.equal(starterSql({ ...freshState(), queries: { 1: 1 } }), "");
+  assert.equal(starterSql({ ...freshState(), solved: [1] }), "", "a reviewed or later chapter starts empty");
+});
+
+test("runSql: one outcome model for every terminal (comma join, refusal, SQLite error, rows, the date note)", () => {
+  const T = { police_report: [["id", "INTEGER", 1], ["date", "INTEGER", 0], ["place", "TEXT", 0]], interview: [["id", "INTEGER", 1], ["person_name", "TEXT", 0]] };
+  const db = q => ({ exec: sql => { if (/nope/.test(sql)) throw new Error("no such table: nope"); return q; } });
+  const cols = columns(T, ["police_report"]);
+  assert.deepEqual(cols, { police_report: ["id", "date", "place"] }, "columns() keeps only the tables named");
+  const cart = runSql(db([]), "SELECT * FROM police_report, interview", T, cols);
+  assert.deepEqual(cart.outcome, { kind: "refused", rule: "cartesian", type: "refused" });
+  assert.match(cart.error, /^Two ledgers side by side/);
+  assert.match(runSql(db([]), "SELECT * FROM police_report, interview", T, cols, "tables").error, /^Two tables/);
+  const ref = runSql(db([]), "SELECT * FROM police_report WHERE place == 'x'", T, cols);
+  assert.deepEqual(ref.outcome, { kind: "refused", rule: "double-equals", type: "refused" });
+  assert.equal(ref.error, "ERROR: " + ref.strict.error);
+  assert.equal(runHtml(ref, ""), strictHtml(ref.strict, ""));
+  const bad = runSql(db([]), "SELECT * FROM nope", T, cols);
+  assert.deepEqual(bad.outcome, { kind: "error", rule: "", type: "no_table" });
+  assert.match(runHtml(bad), /There is no table called nope\. The tables on the schema are: police_report\./, "only the tables passed are named");
+  const rows = { columns: ["id"], values: [[1]] };
+  assert.deepEqual(runSql(db([rows]), "SELECT id FROM police_report", T, cols), { res: rows, error: null, note: "", outcome: { kind: "ok" } });
+  const none = runSql(db([]), "SELECT * FROM police_report WHERE date = 1912-05-17", T, cols);
+  assert.equal(none.res, null);
+  assert.match(none.note, /^1912-05-17 without quotes is arithmetic/);
+  assert.match(runHtml(none), /No rows\.<\/p><p class="muted">1912-05-17/);
+  assert.equal(blankLiterals("a 'b' \"c\" -- d\ne /* f */"), "a             \ne        ", "strings, names and comments blanked in place");
+});
+
+test("the three terminals share one run pipeline and one editor", () => {
+  for (const f of ["site/app.js", "site/onboarding.js", "site/learn/exercises.js"]) {
+    const src = fs.readFileSync(f, "utf8");
+    assert.match(src, /\brunSql\(/, f + " runs through runSql");
+    assert.match(src, /\bwireEditor\(/, f + " wires its box with wireEditor");
+    for (const own of ["strictCheck(", "sqliteHelp(", "cartesian(", "dateArithmeticNote(", "formatSql(", "wireSuggest("])
+      assert.ok(!src.includes(own), f + " calls " + own + " itself");
+    assert.ok(!/\.innerHTML = highlightSql/.test(src), f + " colours the box itself");
+  }
+  assert.ok(!fs.readFileSync("site/learn/exercises.js", "utf8").includes("app.js"), "the handbook never loads the game");
+});
+
+test("migrateSave: an old save gets every field and its onboarding step; a fresh one starts at the prologue", () => {
+  assert.deepEqual(migrateSave({}), freshState());
+  const old = { solved: [], totalQueries: 0, prologue: "skip", tour: false };
+  assert.equal(migrateSave(old).onboarding, "tour");
+  assert.ok(!("prologue" in migrateSave(old)) && !("tour" in migrateSave(old)));
+  assert.equal(migrateSave({ ...old, tour: true }).onboarding, "done");
+  assert.equal(migrateSave({ solved: [1, 2], prologue: "" }).onboarding, "done", "played before the prologue: never offered it");
+  assert.equal(migrateSave({ solved: [], totalQueries: 4 }).onboarding, "done");
+  assert.equal(migrateSave({ solved: [], totalQueries: 0, prologue: "" }).onboarding, "prologue");
+  assert.equal(migrateSave({ solved: [3] }).introduced, null, "no introduced yet: the first look seeds it");
+  assert.deepEqual(migrateSave({ solved: [3] }).cracked, {}, "every field of freshState");
+  assert.equal(migrateSave({ onboarding: "tour", prologue: "done" }).onboarding, "tour", "a new save keeps its step");
+});
+
+test("GA feature names are literals the monitor lists", async () => {
+  const monitor = await import("./site/monitor.js");
+  const names = f => [...fs.readFileSync(f, "utf8").matchAll(/useFeature\(\s*([^,)]+)/g)].map(m => m[1].trim());
+  const check = (files, known) => {
+    for (const f of files) for (const n of names(f)) {
+      const lits = n.split("?").pop().match(/"[^"]*"/g) || [];   // a name, or a ternary picking one: never built by concatenation
+      assert.ok(lits.length && !n.includes("+"), f + ": a literal name, not " + n);
+      for (const l of lits) assert.ok(JSON.parse(l) in known, f + ": " + l + " is not listed in monitor.js");
+    }
+  };
+  check(["site/app.js", "site/endings.js", "site/onboarding.js", "site/ui.js", "site/terminal.js", "site/badges.js", "site/suspects.js", "site/state.js"], monitor.GAME_FEATURES);
+  check(fs.readdirSync("site/learn").filter(f => f.endsWith(".js")).map(f => "site/learn/" + f), monitor.HANDBOOK_FEATURES);
+});
+
 // --- Onboarding (owner, 2026-10-25): the clerk's first morning, chapter I's callouts, the landing warm-up, the share line.
 test("prologue: learn mode's first visit only, and its three steps work on the invented book", () => {
   const s = freshState();
   assert.equal(onb.prologueOn(s), true);
   assert.equal(onb.prologueOn({ ...s, mode: "compete" }), false, "never in compete");
-  assert.equal(onb.prologueOn({ ...s, prologue: "skip" }), false, "shown once");
+  assert.equal(onb.prologueOn({ ...s, onboarding: "tour" }), false, "shown once");
   assert.equal(onb.prologueOn({ ...s, totalQueries: 3 }), false, "not for a game already under way");
   assert.equal(onb.tourOn(s), false, "the callouts come after the prologue");
-  assert.equal(onb.tourOn({ ...s, prologue: "done" }), true);
-  assert.equal(onb.tourOn({ ...s, prologue: "done", tour: true }), false);
-  assert.equal(onb.tourOn({ ...s, prologue: "skip", mode: "compete" }), false);
+  assert.equal(onb.tourOn({ ...s, onboarding: "tour" }), true);
+  assert.equal(onb.tourOn({ ...s, onboarding: "done" }), false);
+  assert.equal(onb.tourOn({ ...s, onboarding: "tour", mode: "compete" }), false);
   const where = onb.PROLOGUE_QUERY + " WHERE found_in = 'Garden'";
   assert.equal(strictCheck(onb.PROLOGUE_QUERY, onb.PROLOGUE_SCHEMA), null);
   assert.equal(strictCheck(where, onb.PROLOGUE_SCHEMA), null);
@@ -908,9 +982,9 @@ test("callouts point at parts of the page, never at a table", () => {
     assert.ok(id ? html.includes('id="' + id + '"') : html.includes('class="' + cls + '"'), sel);
     for (const t of tables) assert.ok(!text.toLowerCase().includes(t), text + " names " + t);
   }
-  assert.equal(onb.calloutLeft({ left: 300 }, 200, 390), 182, "kept inside the viewport");
-  assert.equal(onb.calloutLeft({ left: -20 }, 200, 390), 8);
-  assert.equal(onb.calloutLeft({ left: 50 }, 200, 1200), 50);
+  assert.equal(calloutLeft({ left: 300 }, 200, 390), 182, "kept inside the viewport");
+  assert.equal(calloutLeft({ left: -20 }, 200, 390), 8);
+  assert.equal(calloutLeft({ left: 50 }, 200, 1200), 50);
 });
 test("exercises tour: the game's callouts on the workbench, no solution, its GA features listed", async () => {
   const ex = await import("./site/learn/exercises.js"), monitor = await import("./site/monitor.js");
@@ -924,7 +998,7 @@ test("exercises tour: the game's callouts on the workbench, no solution, its GA 
     assert.ok(!/SELECT|FROM|WHERE|JOIN/.test(text), "no SQL in a callout: " + text);
   }
   assert.ok("tour_done" in monitor.HANDBOOK_FEATURES && "tour_skip" in monitor.HANDBOOK_FEATURES);
-  assert.equal(typeof onb.showCallouts, "function");
+  assert.equal(typeof showCallouts, "function");
 });
 test("landing warm-up line links the handbook's first warm-up exercise; terminal hints mention Tab", () => {
   const html = fs.readFileSync("site/index.html", "utf8"), ex = fs.readFileSync("site/learn/exercises.html", "utf8");
@@ -935,12 +1009,12 @@ test("landing warm-up line links the handbook's first warm-up exercise; terminal
   assert.match(ex, /<kbd>Ctrl<\/kbd><span class="plus">\+<\/span><kbd>Enter<\/kbd> run<\/span><span class="kgrp"><kbd>Tab<\/kbd> complete/);
 });
 test("share line: rank and count only, X and LinkedIn links carry the site", () => {
-  const t = onb.shareText(rank(25), 140);
+  const t = shareText(rank(25), 140);
   assert.equal(t, "I solved The Ritz Affair, a free SQL detective game, as Ganimard himself in 140 queries.");
-  const l = onb.shareLinks(t);
-  assert.ok(l.x.startsWith("https://x.com/intent/post?text=") && l.x.includes(encodeURIComponent(t)) && l.x.endsWith(encodeURIComponent(onb.SHARE_URL)));
+  const l = shareLinks(t);
+  assert.ok(l.x.startsWith("https://x.com/intent/post?text=") && l.x.includes(encodeURIComponent(t)) && l.x.endsWith(encodeURIComponent(SHARE_URL)));
   assert.equal(l.linkedin, "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent("https://mystery.alephb.uk/"));
-  const h = onb.shareHtml(t);
+  const h = shareHtml(t);
   for (const n of ["x", "linkedin", "copy", "native"]) assert.ok(h.includes('data-net="' + n + '"'), n);
   assert.ok(!/&(?!amp;)/.test(h), "ampersands escaped in the markup");
 });
@@ -971,8 +1045,10 @@ test("version_site.mjs: every local script, stylesheet and relative import carri
         for (const d of refs(p)) { importers.add(p); walk(p, d); }
       };
       for (const u of refs(page)) walk(page, u);
-      if (page === "learn/exercises.html")
-        for (const m of ["stats.js", "app.js", "shared.js", "learn/handbook.js", "learn/exercises.js"]) assert.ok(seen.has(m), "exercises.html runs " + m);
+      if (page === "learn/exercises.html") {
+        for (const m of ["stats.js", "terminal.js", "strict.js", "ui.js", "shared.js", "learn/handbook.js", "learn/exercises.js"]) assert.ok(seen.has(m), "exercises.html runs " + m);
+        assert.ok(!seen.has("app.js"), "exercises.html never loads the game");
+      }
     }
     // every module that imports another was reached from a page and checked above
     const withImports = files.filter((f) => f.endsWith(".js") && refs(f).length);

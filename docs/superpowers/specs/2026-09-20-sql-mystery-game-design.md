@@ -832,3 +832,17 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   runs it on a temp copy and walks each page's module graph (one URL per module, stats.js once on exercises.html).
   F15, `test_site.mjs` split into `test_site.mjs` (game, terminal, strict, deploy), `test_desk.mjs` and
   `test_handbook.mjs`, no test lost (106 before, 106 plus the new versioning test after). Batches 1-4 to follow.
+- ~~Thermo-nuclear review, batch 1 (game and terminal)~~ Done 2026-10-25 (owner approved every finding). F1: the
+  game, its prologue and the exercises page share one run pipeline (`terminal.js` `runSql`, an outcome object GA reads)
+  and one editor (`wireEditor`); owner's sub-choice: all three get the game's full behaviour (comma-join guard, strict
+  check, SQLite help, date note, Ctrl+Enter, Ctrl+F with the caret at the end, Tab completion, Tab indent, Enter
+  auto-indent). F2: `app.js` (2,321 lines) split into `strict.js`, `terminal.js`, `ui.js`, `onboarding.js`,
+  `badges.js`, `endings.js`, `suspects.js` and a small `state.js` (the saved state, so those modules never import the
+  game); app.js is 961 lines and the exercises page no longer loads it. F6 `starterSql`; F9 the fallbacks gone,
+  `migrateSave` the one migration point, `state.onboarding` (prologue, tour, done) replacing `prologue` + `tour`, the
+  scan writing only to the state it started on; F10 `queryFail(fails, key, outcome)`, `runOutcome` gone; F11 `columns()`;
+  F12 literal GA feature names, checked against monitor.js by a test; F17 `blankLiterals`; F18 `setIconButton`,
+  `portraitSrc`; F19 `askPassphrase` on `askDialog`, one `debugState`; F20 the stale comment, `openSuspects` and
+  `askReset` instead of synthetic clicks, exercises' `tablesNamed`. Left for the other batches: `test_desk.mjs` and
+  `colour_learn.mjs` still import `sha256`/`rank` and `highlightSql`/`strictCheck` through `app.js` (a marked
+  re-export), and `admin.js` can take `ICON_ATTRS` from `ui.js`.
