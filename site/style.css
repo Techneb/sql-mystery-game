@@ -17,6 +17,8 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
 /* the schema's Enlarge icon sits right after its title, centred on it (course owner, 2026-10-09) */
 .col-erd .label-row { justify-content: flex-start; gap: 8px; align-items: center; }
+/* the legend on the SCHEMA row, right-aligned, Enlarge beside the label (owner, 2026-10-25) */
+.label-row .erd-legend { margin: 0 0 0 auto; justify-content: flex-end; }
 .muted { opacity: .75; font-size: 13px; }
 .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
 .box { border: 1px solid var(--ink); border-radius: var(--r-box); padding: 6px 8px; margin: 10px 0; }

@@ -1272,7 +1272,7 @@ test("exercises: the level shown first and the question each level button select
   assert.match(js, /bench\.querySelector\("\.wb-question"\)\.prepend\(howto\)/, "the script moves it above the question choice");
   assert.match(page, /<p id="ex-status" class="ex-status" aria-live="polite" hidden><\/p>/, "no empty frame");
   assert.doesNotMatch(js, /Run a query: the result is checked here|Solved\. Your result matched|Solved\. That is the answer/, "the solved mark says it alone");
-  assert.match(page, /<span class="label">SCHEMA<\/span><span class="erd-legend muted wb-legend">[\s\S]*?<\/span>\n    <\/span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><\/button>/);
+  assert.match(page, /<span class="label">SCHEMA<\/span><button type="button" id="btn-erd" class="quiet" title="Enlarge the schema" aria-label="Enlarge the schema"><\/button><span class="erd-legend muted wb-legend">[\s\S]*?<\/span>\n    <\/span><\/div>/);
   assert.match(js, /erdButtonHtml\(large\)/, "the game's Enlarge/Close icon");
   assert.doesNotMatch(page, /class="in-game"/, "no In the game line on the exercises page (owner, 2026-10-20)");
   assert.match(page, /<span id="ex-solved" class="ex-solved" hidden>&#x2713; Solved<\/span>/);
