@@ -882,7 +882,7 @@ test("admin seasons table: newest first, counts per season, actions by state, va
   assert.ok(detail.includes("PLAYERS (5)") && detail.includes("19:00 <abbr"));
 });
 
-test("admin seasons table: action buttons are icons named by title and aria-label, no visible text", () => {
+test("admin seasons table: action buttons are icons with a one-word caption, named by title and aria-label", () => {
   const html = admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state: "created", createdAt: 1 }], {}, "");
   const names = { open: "Open", close: "Close", copy: "Copy link", qr: "QR", board: "Board", csv: "Export CSV", rename: "Rename the season", delete: "Delete the season" };
   const btns = [...html.matchAll(/<button ([^>]*)>([\s\S]*?)<\/button>/g)];
@@ -891,7 +891,7 @@ test("admin seasons table: action buttons are icons named by title and aria-labe
     const name = names[attrs.match(/data-act="(\w+)"/)[1]];
     assert.ok(attrs.includes('title="' + name + '"') && attrs.includes('aria-label="' + name + '"'), name);
     assert.match(inner, /^<svg [^>]*aria-hidden="true"/, name + ": an svg");
-    assert.equal(inner.replace(/<[^>]*>/g, "").trim(), "", name + ": no visible text");
+    assert.match(inner, /<span class="act-word" aria-hidden="true">\w+<\/span>$/, name + ": a one-word caption under the icon");
   }
   const acts = state => [...admin.seasonsTableHtml([{ id: "s1", name: "x", date: "d", db: 1, state, createdAt: 1 }], {}, "")
     .matchAll(/data-act="(\w+)"/g)].map(m => m[1]);
