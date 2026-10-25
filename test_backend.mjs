@@ -28,6 +28,7 @@ function backend() {
       rows,
       appendRow: r => { rows.push(r.map(coerce)); },
       getLastRow: () => rows.length,
+      deleteRows: (r, k) => { rows.splice(r - 1, k); },
       getRange: (r, c, nr, nc) => ({ getValues: () => rows.slice(r - 1, r - 1 + nr).map(x => x.slice(c - 1, c - 1 + nc)) }),
     };
   };
@@ -146,6 +147,32 @@ test("doGet reads: seasons, meta with now, unknown meta, rows of one season or a
   assert.equal(b.get({ key: KEY }).length, 2);
   assert.equal(b.get({}).ok, false, "every season's rows need the key");
   assert.equal(JSON.parse(b.props.get("SEASONS")).some(x => "now" in x), false, "now is never stored");
+});
+
+test("delete: created or closed seasons go with their rows, open ones are refused, others untouched, db freed", () => {
+  const b = backend();
+  const s = b.create(), t = b.create(), u = b.create();
+  assert.deepEqual([s.db, t.db, u.db], [1, 2, 3]);
+  // interleaved rows, so the deletion meets several runs; "007" stays text in the other season
+  for (const [team, id] of [["A", s.id], ["007", t.id], ["B", s.id], ["C", s.id], ["D", u.id], ["E", s.id]])
+    assert.ok(b.post({ event: "join", team, season: id }).ok, team);
+  assert.equal(b.post({ admin: "delete", key: "wrong", season: s.id }).error, "wrong admin key");
+  assert.equal(b.admin("delete", { season: "nope" }).error, "no such season");
+  b.admin("open", { season: s.id });
+  assert.equal(b.admin("delete", { season: s.id }).error, "close the season before deleting it");
+  b.admin("close", { season: s.id });
+  const r = b.admin("delete", { season: s.id });
+  assert.ok(r.ok);
+  assert.equal(r.removedRows, 4);
+  assert.deepEqual(b.get({ seasons: "1", key: KEY }).map(x => x.id), [t.id, u.id]);
+  assert.deepEqual(b.get({ key: KEY }).map(x => [x.team, x.season]), [["007", t.id], ["D", u.id]], "other seasons' rows untouched");
+  assert.deepEqual([...b.log()[0].slice(0, 4)], ["timestamp", "event", "team", "season"], "the header stays");
+  assert.equal(b.admin("delete", { season: u.id }).removedRows, 1, "a created season can be deleted too");
+  assert.equal(b.get({ meta: u.id }).ok, false);
+  assert.equal(b.create().db, 1, "a deleted season's database is free again");
+  assert.equal(b.create().db, 3);
+  assert.equal(b.admin("delete", { season: t.id }).removedRows, 1);
+  assert.equal(b.admin("delete", { season: t.id }).error, "no such season", "gone for good");
 });
 
 test("bodies that are not JSON objects, and our own exceptions, come back as {ok:false} JSON", () => {
