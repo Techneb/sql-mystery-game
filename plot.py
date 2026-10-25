@@ -341,7 +341,7 @@ TEXT = {
  3: dict(
   title="A Plate in the Dark",
   story="**His Lordship**, woken at dawn, is displeased but useful. *'My valet saw the man,'* he says, *'and I have told your inspector what he saw. Read it, if you doubt a peer's memory.'*\n\nThe cab company keeps a book of every fare. **Ganimard** wants **the cab that took our man**.",
-  story_compete="Whoever slept in that room did not leave on foot. **Ganimard** has found a second cab book: a rival company, which writes down its fares as carefully as the first and trusts its drivers less.\n\nIts despatcher, **Firmin Lagarde**, has already talked to the inspector. *'He is sure how the plate began, and of one figure near the end. Read what he said, then find me **the cab that took him**.'*",
+  story_compete="Whoever slept in that room did not leave on foot. **Ganimard** has found a second cab book: a rival company, which writes down its fares as carefully as the first and trusts its drivers less.\n\nIts despatcher, **Firmin Lagarde**, has already talked to the inspector. *'He is sure of how the plate began, and of one figure near the end. Read what he said, then find me **the cab that took him**.'*",
   objective="Read what the neighbour told Ganimard, then find the cab.",
   answer_form="the plate",
   telegram="MY DEAR GANIMARD STOP THE CAB SMELLED OF CIGARS STOP THE DRIVER KNOWS THE WAY STOP HE HAS TAKEN ME THERE BEFORE STOP READ HIS WEEK STOP A L"),
@@ -350,7 +350,7 @@ TEXT = {
   telegram_compete="MY DEAR GANIMARD STOP THREE DAYS AT THE SAME DOOR STOP FIVE TENANTS AND A CONCIERGE WHO SEES NOTHING STOP A L",
   story="**Ganimard** snorts at the plate. *'A gentleman thief does not hail cabs, clerk. He keeps one, with a driver paid to forget where he goes. But the company pays the same driver to write it all down.'*\n\nThe book holds some sixty fares for that cab in the week of the theft, from the 13th to the 19th of May. *'A thief with a plan visits his fence before the job. Find me **the address this cab kept going back to**. I do not want the list. I want the address.'*",
   story_compete="**Ganimard** taps the plate you found in chapter 3. *'A second cab book, clerk, and a driver paid to forget. But his company pays him to write it all down.'*\n\nThe book holds that cab's fares for the week of the theft, from the 13th to the 19th of May. *'A wedding brings a cab back to one door again and again in a single afternoon. A fence brings it back day after day. Find me **the address it went back to on three different days**.'*",
-  objective="Where did the cab from chapter 3 keep going the week of the theft?",
+  objective="Where did the cab from chapter 3 keep going, the week of the theft?",
   answer_form="the address",
   telegram="MY DEAR GANIMARD STOP THREE TIMES TO THE SAME DOOR STOP HABIT IS THE ENEMY OF ART STOP THE HOUSE HAS FIVE TENANTS AND ONE OF THEM OWNS A LOUPE STOP A L"),
  5: dict(

@@ -56,7 +56,7 @@
 <p class="lede">Long queries are easier to write, read and check when they are built in named steps. A CTE is a named step.</p>
 
 <h2>WITH: naming a result</h2>
-<p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. Its value is in the reading. Instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
+<p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. What it buys you is readability: instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
 <p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, its quantity times <code>unit_price</code>, the price paid on that line, and the main query adds those values up per order and keeps the orders of 20 or more.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">line</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-id">quantity</span> * <span class="sql-id">unit_price</span> <span class="sql-kw">AS</span> <span class="sql-id">amount</span>
