@@ -1809,7 +1809,7 @@ test("desk: ?board= is stored and leaves the address bar, links stay bare unless
   let shown = 0;
   const d = { querySelector: () => ({ textContent: "", value: "" }), showModal: () => { shown++; } };
   const p = shared.deskPassphrase(d, ss);
-  await new Promise(r => setTimeout(r, 50));
+  for (const end = Date.now() + 3000; !shown && Date.now() < end;) await new Promise(r => setTimeout(r, 10));   // sha256 is async: wait for the gate, not a fixed 50 ms (flaky under CI load)
   assert.equal(shown, 1); assert.equal(ss.getItem(shared.DESK_KEY), null);
   d.returnValue = "cancel"; d.onclose();
   assert.equal(await p, "");
@@ -1948,8 +1948,8 @@ test("landing warm-up line links the handbook's first warm-up exercise; terminal
   const slug = html.match(/class="muted landing-warmup">[^<]*<a href="learn\/exercises\.html#([\w-]+)"/)[1];
   const first = ex.slice(ex.indexOf("<h2>Warm-up</h2>")).match(/class="exercise" id="([\w-]+)"/)[1];
   assert.equal(slug, first);
-  assert.match(html, /Ctrl\+Enter to run, Tab to complete/);
-  assert.match(ex, /Ctrl\+Enter to run, Tab to complete/);
+  assert.match(html, /<kbd>Ctrl<\/kbd>\+<kbd>Enter<\/kbd> run &middot; <kbd>Tab<\/kbd> complete/);
+  assert.match(ex, /<kbd>Ctrl<\/kbd>\+<kbd>Enter<\/kbd> run &middot; <kbd>Tab<\/kbd> complete/);
 });
 test("share line: rank and count only, X and LinkedIn links carry the site", () => {
   const t = onb.shareText(rank(25), 140);
