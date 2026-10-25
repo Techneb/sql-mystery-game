@@ -1948,8 +1948,8 @@ test("landing warm-up line links the handbook's first warm-up exercise; terminal
   const slug = html.match(/class="muted landing-warmup">[^<]*<a href="learn\/exercises\.html#([\w-]+)"/)[1];
   const first = ex.slice(ex.indexOf("<h2>Warm-up</h2>")).match(/class="exercise" id="([\w-]+)"/)[1];
   assert.equal(slug, first);
-  assert.match(html, /<kbd>Ctrl<\/kbd>\+<kbd>Enter<\/kbd> run &middot; <kbd>Tab<\/kbd> complete/);
-  assert.match(ex, /<kbd>Ctrl<\/kbd>\+<kbd>Enter<\/kbd> run &middot; <kbd>Tab<\/kbd> complete/);
+  assert.match(html, /<kbd>Ctrl<\/kbd><span class="plus">\+<\/span><kbd>Enter<\/kbd> run<\/span><span class="kgrp"><kbd>Tab<\/kbd> complete/);
+  assert.match(ex, /<kbd>Ctrl<\/kbd><span class="plus">\+<\/span><kbd>Enter<\/kbd> run<\/span><span class="kgrp"><kbd>Tab<\/kbd> complete/);
 });
 test("share line: rank and count only, X and LinkedIn links carry the site", () => {
   const t = onb.shareText(rank(25), 140);
