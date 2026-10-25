@@ -687,7 +687,14 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
   assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(ob));
   assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
-  assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).ran.filters, { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
+  // shares by network: the share box's buttons in its order, zeros listed, presses in the tooltip
+  const nets = [...new Set([...fs.readFileSync("site/endings.js", "utf8").matchAll(/data-net="(\w+)"/g)].map(m => m[1]))];
+  assert.deepEqual(Object.keys(monitor.NETWORKS), nets, "NETWORKS = the share box's data-net values");
+  assert.deepEqual(monitor.PANELS.game.shares.requests(monitor.context("game")).shares, { days: 7, dimensions: ["customEvent:network"], metrics: ["totalUsers", "eventCount"], filters: { eventName: ["feature_use"], "customEvent:feature": ["share"] } });
+  const sh = monitor.sharesHtml({ shares: { rows: [["x", 3, 5]] } }, 390), sh0 = monitor.sharesHtml({ shares: { rows: [] } }, 390);
+  assert.ok(sh.includes('<td>X</td><td class="num">3</td><td class="num">5</td>') && sh.includes('<td>Copy link</td><td class="num">0</td>') && sh.includes("starts 2026-10-25"));
+  assert.ok(sh0.includes('<td>LinkedIn</td><td class="num">0</td>') && sh0.includes("Export CSV") && g.includes("SHARES BY NETWORK"));
+  assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).ran.filters,{ eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
   const wrong = monitor.wrongHintsHtml({ wrong: { rows: [["1", "1", 9], ["1", "3", 2]] }, hints: { rows: [["1", 4, 6]] } }, 390);
   assert.ok(wrong.includes('data-v="9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens"') && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
   const modes = monitor.modesHtml({ opened: { rows: [["compete", 3], ["learn", 6]], totals: [8] }, begun: { rows: [["learn", 6], ["compete", 3]], totals: [8] }, seen: { rows: [[20]] } });

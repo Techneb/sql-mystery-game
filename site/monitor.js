@@ -323,6 +323,8 @@ export const LEVELS = { "warm-up": "Warm-up", practice: "Practice", challenge: "
 export const ERROR_TYPES = { syntax: "Syntax", no_table: "Unknown table", no_column: "Unknown column", unterminated: "Unclosed quote",
   incomplete: "Incomplete query", curly_quote: "Curly quotes", other: "Other" };
 export const ROUTES = { same_result: "Same result as the solution", found: "Answer seen in a result", unseen: "Answer never on screen" };
+// The share box's buttons (site/endings.js shareHtml data-net), in its order.
+export const NETWORKS = { native: "Device share", x: "X", linkedin: "LinkedIn", copy: "Copy link" };
 export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by the grammar check" };
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
 const typeRequest = (d, pagePath) => ev(d, ["customEvent:type"], ["eventCount", "totalUsers"], { eventName: ["query_fail"], "customEvent:kind": ["error"], pagePath });
@@ -387,6 +389,7 @@ export const PANELS = {
       begun: ev(c.days, ["customEvent:mode"], ["totalUsers"], { eventName: ["landing_begin"] }), seen: ev(c.days, [], ["activeUsers"], { pagePath: GAME_PATHS }) }) },
     features: featuresPanel,
     ads: adsPanel,
+    shares: once("shares", d => ev(d, ["customEvent:network"], ["totalUsers", "eventCount"], { eventName: ["feature_use"], "customEvent:feature": ["share"] })),
   },
   handbook: {
     users: usersPanel,
@@ -491,6 +494,14 @@ export function onboardingHtml({ begin, features, ran, solved }, w) {
     '<p class="muted">Learn mode, users at each step, each GA&#39;s own count (a person can skip the prologue and finish the tour, and someone who began before the period still counts later). The prologue and tour events start 2026-10-25.</p>' +
     raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)])));
 }
+// shares: feature_use share by network, users per button in NETWORKS' order (zeros listed), presses in the tooltip.
+export function sharesHtml({ shares }, w) {
+  const users = fixedItems(shares, NETWORKS), uses = fixedItems(shares, NETWORKS, 2);
+  const rows = users.map((u, i) => ({ label: u.label, values: [u.value], tip: [[uses[i].value, "presses"]] }));
+  return hbarSvg(rows, [["users", "c3"]], w, compact, "Shares by network") +
+    '<p class="muted">Users who pressed each button of the share box (Part II ending), presses in the tooltip. The network data starts 2026-10-25.</p>' +
+    raw("shares-by-network", tableHtml(["Network", "Users", "Presses"], rows.map((r, i) => [r.label, r.values[0], uses[i].value])));
+}
 // opened: chapter_open by mode; begun: landing_begin by mode; seen: activeUsers on the game page: two donuts, GA's
 // totals in the centre.
 export function modesHtml({ opened, begun, seen }) {
@@ -514,7 +525,8 @@ export function gameHtml(s, w, P = {}, c = {}) {
     panel("SOLVE ROUTE", P.routes, res => routesHtml(res, w)) +
     panel("QUERY FAILURES", P.fails, res => failsHtml(res, w)) +
     (P.modes && P.modes.res ? modesHtml(P.modes.res) : panel("PLAYERS BY MODE", P.modes, () => "")) +
-    featuresRow(P, w, GAME_FEATURES);
+    featuresRow(P, w, GAME_FEATURES) +
+    panel("SHARES BY NETWORK", P.shares, res => sharesHtml(res, w));
 }
 
 // --- Handbook -----------------------------------------------------------------------------------
