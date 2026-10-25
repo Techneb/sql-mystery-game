@@ -1750,6 +1750,13 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(!monitor.failsHtml([empty, empty], 390).includes("BY KIND"), "the handbook's failures have no kind donut");
   const plain = monitor.failsHtml([{ rows: [["", 4, 2]] }, { rows: [["", "error", "1", 4, 2]] }], 390);
   assert.ok(plain.includes('data-k="SQL error"') && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
+  // chapter I onboarding: every step GA's own count in the steps' order, zeros listed, the share of Investigate in raw data
+  const ob = monitor.onboardingHtml([{ rows: [[20]] }, { rows: [["tour_done", 6], ["prologue_skip", 4]] }, { totals: [15] }, { rows: [] }], 390);
+  assert.ok(ob.includes('<td>Pressed Investigate</td><td class="num">20</td><td class="num">100%</td>') && ob.includes('<td>Prologue skipped</td><td class="num">4</td><td class="num">20%</td>'));
+  assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
+  assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(ob));
+  assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
+  assert.deepEqual(monitor.PANELS.game.onboarding(7)[2].filters, { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
   const wrong = monitor.wrongHintsHtml([{ rows: [["1", "1", 9], ["1", "3", 2]] }, { rows: [["1", 4, 6]] }], 390);
   assert.ok(wrong.includes('data-v="9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens"') && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
   const modes = monitor.modesHtml([{ rows: [["compete", 3], ["learn", 6]], totals: [8] }, { rows: [["learn", 6], ["compete", 3]], totals: [8] }, { rows: [[20]] }]);

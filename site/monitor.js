@@ -571,6 +571,15 @@ export const OUTCOMES = { ok: "Ran", error: "SQLite error", refused: "Refused by
 const ev = (days, dims, metrics, filters) => ({ days, dimensions: dims, metrics, filters });
 // AdSense's own clicks and impressions on the view's pages (GA has them once AdSense is linked, 2026-10-25).
 const adRequest = (days, pagePath) => ev(days, [], ["publisherAdClicks", "publisherAdImpressions"], { pagePath });
+// Chapter I onboarding (2026-10-25), learn mode, each stage its own GA count of users: Investigate pressed, the
+// prologue and the tour (done / skipped, one [feature] reply), a first query in chapter I, chapter I solved.
+export const ONBOARDING_STEPS = [["begin", "Pressed Investigate"], ["prologue_done", "Prologue finished"], ["prologue_skip", "Prologue skipped"],
+  ["tour_done", "Tour finished"], ["tour_skip", "Tour skipped"], ["ran", "Ran a first query in chapter I"], ["solved", "Solved chapter I"]];
+const LEARN_MODE = { "customEvent:mode": ["learn"] };
+export const onboardingRequests = d => [ev(d, [], ["totalUsers"], { eventName: ["landing_begin"], ...LEARN_MODE }),
+  ev(d, ["customEvent:feature"], ["totalUsers"], { eventName: ["feature_use"], "customEvent:feature": ["prologue_done", "prologue_skip", "tour_done", "tour_skip"], pagePath: GAME_PATHS }),
+  ev(d, [], ["totalUsers"], { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], ...LEARN_MODE }),
+  ev(d, [], ["totalUsers"], { eventName: ["chapter_solve"], "customEvent:chapter": ["1"], ...LEARN_MODE })];
 // Each panel: its ?report= requests for a period and the page's Count; the page fetches them in parallel. The panels
 // in COUNTED follow the Count (reloaded when it changes); the others count what their events say.
 export const COUNTED = ["pages", "devices", "channels"];
@@ -579,6 +588,7 @@ export const PANELS = {
     pages: (d, m) => sectionRequests(d, m),
   },
   game: {
+    onboarding: d => onboardingRequests(d),
     leave: d => [ev(d, ["customEvent:chapter"], ["totalUsers", "averageCustomEvent:seconds", "averageCustomEvent:queries"], { eventName: ["chapter_leave"] })],
     wrongHints: d => [ev(d, ["customEvent:chapter", "customEvent:n"], ["totalUsers"], { eventName: ["answer_wrong"] }),
       ev(d, ["customEvent:chapter"], ["totalUsers", "eventCount"], { eventName: ["hint_open"] })],
@@ -666,6 +676,16 @@ export function featuresHtml(res, w, names, name = "feature-use") {
     '<p class="muted">Users per feature; Ad clicks (Google) is GA&#39;s count of clicks on Google&#39;s ads on these pages (impressions in its tooltip), not users. GA shows AdSense data about a day after the link.</p>' +
     raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], bars.map(r => [r.label, r.key, r.unit ? r.values[0] + " clicks" : r.values[0], r.unit ? r.ev + " impressions" : r.ev])));
 }
+// res: onboardingRequests' four replies: one bar per stage, each GA's own users (never a difference), the share of
+// the Investigate pressers only in the tooltip and raw data.
+export function onboardingHtml(res, w) {
+  const f = byFirst(res[1]), v = { begin: gaTotal(res[0]), ran: gaTotal(res[2]), solved: gaTotal(res[3]) };
+  const rows = ONBOARDING_STEPS.map(([k, label]) => ({ key: k, label, values: [k in v ? v[k] : (f.get(k) || [0])[0]] }));
+  const begun = rows[0].values[0];
+  return hbarSvg(rows.map(r => ({ ...r, tip: [[pct(r.values[0], begun), "of those who pressed Investigate"]] })), [["users", "c1"]], w, compact, "Chapter I onboarding") +
+    '<p class="muted">Learn mode, users at each step, each GA&#39;s own count (a person can skip the prologue and finish the tour, and someone who began before the period still counts later). The prologue and tour events start 2026-10-25.</p>' +
+    raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)])));
+}
 // res: [chapter_open by mode, landing_begin by mode, activeUsers on the game page]: two donuts, GA's totals in the centre.
 export function modesHtml(res) {
   const begun = gaTotal(res[1]), seen = gaTotal(res[2]);
@@ -679,6 +699,7 @@ export function modesHtml(res) {
 export function gameHtml(s, w, P = {}, bd, m) {
   const ch = s ? s.chapters || [] : null, reading = '<p class="muted">Reading...</p>';
   return usersSection(null, w, bd, m, VIEW_BREAKDOWNS.game) +
+    panel("CHAPTER I ONBOARDING", P.onboarding, res => onboardingHtml(res, w)) +
     '<div class="label">CHAPTER FUNNEL</div>' + (ch ? funnelHtml(ch, w) : reading) +
     '<div class="label">SOLVE RATE</div>' + (ch ? solveRateHtml(ch, w) : reading) +
     panel("LEFT AN UNSOLVED CHAPTER", P.leave, res => leaveHtml(res, w)) +
