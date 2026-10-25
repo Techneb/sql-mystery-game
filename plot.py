@@ -267,26 +267,30 @@ CHAPTERS = [
 # The Suspects gallery. A suspect appears once met: when the story of an unlocked chapter names them (`meet`),
 # or earlier if a query result the student sees shows their name. Each note is added to the bio once chapter n
 # is unlocked (reached), so it may tell what the chapter before it revealed, never the one being played.
+# `cleared`: the solved chapter that clears them on the case board's suspects strip (crossed out), the chapter
+# whose decoy they are: Ashcombe and Ortega once Part I's culprit is named (VIII), Sernine and Almagro with X,
+# Velmont with XI. Blakeney is the culprit, never cleared. Nobody is crossed out before VIII is solved, so the
+# strip never leaves one face standing while the culprit is still to find (test_site.mjs walks I-XII).
 CAST = [
-    dict(name="Lord Ashcombe", nationality="English", meet=3,
+    dict(name="Lord Ashcombe", cleared=8, nationality="English", meet=3,
          bio="Peer of the realm. Collects clocks and grievances.",
          notes=[[3, "Was at the Opera until one, asleep at the Ritz before two. His valet saw a man in an English coat leave by the service door."],
                 [9, "Left for London on the boat train of the 19th, with his trunks."],
                 [10, "Carried the Blue Star through customs with a clear conscience, in a trunk he never packed."]]),
-    dict(name="Paul Sernine", nationality="French", meet=10,
+    dict(name="Paul Sernine", cleared=10, nationality="French", meet=10,
          bio="Rentier. Nobody has ever seen him pay for anything.",
          notes=[[10, "A regular at the Ritz since January."],
                 [11, "Slept at the Ritz on the night of 11 January, when Mr. Blakeney did."]]),
-    dict(name="Horace Velmont", nationality="French", meet=11,
+    dict(name="Horace Velmont", cleared=11, nationality="French", meet=11,
          bio="Painter of society portraits. Paints mostly at night.",
          notes=[[11, "Seldom in his suite after dark."],
                 [12, "Out from 02:30 to 05:55 on the night of the theft, painting the Prefect's wife. The Prefect confirms it, twice."]]),
-    dict(name="Raul Ortega", nationality="Argentine", meet=7,
+    dict(name="Raul Ortega", cleared=8, nationality="Argentine", meet=7,
          bio="Cattle baron. Signs everything with a flourish and an R.",
          notes=[[7, "Complains that the Ritz desk keeps mixing up his wires with another guest's, who also signs R."],
                 [8, "Wired Buenos Aires from the Ritz desk at 06:20 on the 18th: morning, by Ganimard's clock."],
                 [9, "Drinks champagne before dawn, but only after his coffee."]]),
-    dict(name="Ines de Almagro", nationality="Spanish", meet=10,
+    dict(name="Ines de Almagro", cleared=10, nationality="Spanish", meet=10,
          bio="Widow. Never travels without her maid.",
          notes=[[10, "A regular at the Ritz since January, never without her maid."],
                 [11, "Slept at the Ritz on the night of 11 January, when Mr. Blakeney did."]]),

@@ -120,7 +120,7 @@ Easter eggs in the data: a guest named after the teacher, Ganimard's cat in `per
 - **Wrong answers**: a one-line in-character reply. Each suspect's name has its own line (Sernine: "An
   anagram, Ganimard? Lupin is vain, not stupid."). Three wrong in a row: a Lupin telegram, nothing else.
 - **Lupin's telegrams**: one after each solved chapter, typed in at ~40 chars/s, click to skip.
-- **Case board**: one pinned index card per solved chapter with the answer.
+- **Case board**: one pinned index card per solved chapter with the answer and a picture (portrait or chapter icon); clicked, it reviews the chapter with the query that cracked it. Learn mode adds a strip of the suspects met, crossed out once cleared (section 8, 2026-10-25).
 - **Evidence arrives**: the ERD only draws tables revealed so far; a new table slides in with a "NEW
   EVIDENCE" stamp when a chapter opens. The database is complete from load (a student who reads
   `sqlite_master` sees everything; accepted, since every chapter needs the previous answer).
@@ -795,3 +795,13 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   the game only (Part II extra edition: X, LinkedIn, Copy link, the device's Share; `feature_use` share with the
   network); E. both terminals' hint lines mention Tab to complete. Re-read GA a week after the push: prologue done vs
   skipped, and chapter I's ran-1 share.
+- Case board improvements (owner-approved 2026-10-25). Built 2026-10-25 on a branch, not yet merged: a solved card,
+  clicked, reviews its chapter with the query that cracked it under the answer (`state.cracked`, the clerk's own
+  last run whose on-screen rows held the answer, else their last successful run; older saves show nothing); each
+  card carries a picture (the portrait when the answer is a cast person or the Comtesse, else the chapter's icon);
+  a suspects strip on the board (learn only) shows the faces the gallery has introduced, crossed out once the
+  chapter that clears them (`plot.CAST` `cleared`: Ashcombe and Ortega VIII, Sernine and Almagro X, Velmont XI,
+  Blakeney never) is solved; a test walks I-XII so a crossing never leaves one face standing before VIII. GA
+  `chapter_solve` gains `route` (same_result / found / unseen, `solveRoute`): every solution returns one row, its
+  answer, so same_result is "a run in that chapter returned one row holding the answer", computed from the answer
+  hashes alone, nothing shipped. The owner registers `route` as an event-scoped custom dimension in GA.

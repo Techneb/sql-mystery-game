@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage, sqliteHelp, errorHtml, dateArithmeticNote, ymd, FIRST_QUERY, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX } from "./site/app.js";
+import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage, sqliteHelp, errorHtml, dateArithmeticNote, ymd, FIRST_QUERY, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, boardSuspects, scanRun, solveRoute, winningQuery, crackedHtml, cardPicture } from "./site/app.js";
 import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
@@ -423,6 +423,64 @@ test("suspects appear when met, and their notes when their chapter is reached", 
   assert.ok(metSuspects(cast, st, data.chapters).some(s => s.name === "Paul Sernine" && s.notes.length === 0));
   st.solved = [1, 2, 3, 4, 5, 6, 7, 8]; st.part2 = true; st.solved.push(9, 10, 11);
   assert.equal(metSuspects(cast, st, data.chapters).length, 6, "chapter 12: all six met");
+});
+
+// The board's suspects strip crosses a suspect out once plot.CAST `cleared` is solved. Shortcut check: walking
+// I-XII, a crossing never names an upcoming answer (a cast person) by elimination, and before VIII (the culprit)
+// is solved no crossing ever leaves a single face standing, even with every suspect met early through a result.
+test("the suspects strip never narrows the field to an upcoming answer", async () => {
+  const cast = data.cast, names = cast.map(s => s.name);
+  const answerOf = {};
+  for (const ch of data.chapters) for (const nm of names) {
+    const n = normalise(nm);
+    if (ch.answer_sha256.includes(await sha256(n)) || ch.answer_sha256.includes(await sha256(n.split(" ").pop()))) answerOf[ch.n] = nm;
+  }
+  assert.deepEqual(answerOf, { 2: "Lord Ashcombe", 8: "Rupert Blakeney" });
+  assert.ok(!cast.find(s => s.name === "Rupert Blakeney").cleared, "the culprit is never cleared");
+  for (const s of cast) if (s.cleared) assert.ok(s.cleared >= s.meet && s.cleared <= 12, s.name);
+  for (let k = 0; k <= 11; k++) for (const found of [[], names]) {
+    const st = { ...freshState(), solved: [...Array(k).keys()].map(i => i + 1), part2: k >= 8, suspects: found, introduced: names };
+    const strip = boardSuspects(cast, st, data.chapters), up = strip.filter(s => !s.cleared).map(s => s.name);
+    const crossed = strip.length > up.length;
+    if (k < 8 && crossed) assert.ok(up.length >= 2, "solved " + k + ": one face left standing");
+    for (const [u, p] of Object.entries(answerOf)) if (Number(u) > k) {
+      assert.ok(!strip.some(s => s.name === p && s.cleared), "solved " + k + ": " + p + " crossed out before chapter " + u);
+      assert.ok(!(crossed && up.length === 1 && up[0] === p), "solved " + k + ": the strip names chapter " + u + "'s answer");
+    }
+  }
+  const st = { ...freshState(), solved: [1, 2, 3, 4, 5, 6, 7, 8], part2: true, introduced: names };
+  assert.deepEqual(boardSuspects(cast, st, data.chapters).filter(s => s.cleared).map(s => s.name), ["Lord Ashcombe", "Raul Ortega"]);
+  assert.deepEqual(boardSuspects(cast, { ...st, introduced: [] }, data.chapters), [], "a face the pop-up has not shown stays off the strip");
+});
+
+test("route and winning query: what the clerk's own runs showed", async () => {
+  const hashes = [await sha256("ashcombe")];
+  let run = await scanRun(undefined, "SELECT 1", { values: [["nobody"]] }, hashes);
+  assert.deepEqual(run, { last: "SELECT 1" });
+  assert.equal(solveRoute(run), "unseen"); assert.equal(solveRoute(undefined), "unseen");
+  assert.equal(winningQuery(run), "SELECT 1", "no result showed it: the last run before the answer");
+  run = await scanRun(run, "FROM q2", { values: [["Lord Ashcombe", 212], ["Ortega", 218]] }, hashes);
+  assert.equal(solveRoute(run), "found"); assert.equal(run.hit, "FROM q2");
+  run = await scanRun(run, "FROM q3", null, hashes);
+  assert.equal(winningQuery(run), "FROM q2", "the last query that showed the answer");
+  run = await scanRun(run, "FROM q4", { values: [[212, "Lord", "Ashcombe"]] }, hashes);
+  assert.equal(solveRoute(run), "same_result", "one row holding the answer: the solution's result, extra columns allowed");
+  run = await scanRun(run, "FROM q5", { values: [["Ashcombe"], ["x"]] }, hashes);
+  assert.equal(solveRoute(run), "same_result", "once seen, kept");
+  const far = { values: Array(ROW_CAP).fill(["x"]).concat([["Ashcombe"]]) };
+  assert.equal(solveRoute(await scanRun(undefined, "FROM q", far, hashes)), "unseen", "a row past the screen is not seen");
+  assert.equal(solveRoute(await scanRun(undefined, "SELECT 'Ashcombe'", { values: [["Ashcombe"]] }, hashes)), "unseen", "a typed constant is no find");
+  assert.equal(crackedHtml(""), "");
+  assert.match(crackedHtml("SELECT '<b>'"), /&lt;b&gt;/);
+});
+
+test("case-board cards: a portrait for a cast person, the chapter's icon otherwise", () => {
+  assert.deepEqual(cardPicture(2, "Lord Ashcombe"), { src: "portraits/ashcombe.jpg", face: true });
+  assert.deepEqual(cardPicture(8, "blakeney"), { src: "portraits/blakeney.jpg", face: true });
+  assert.deepEqual(cardPicture(12, "Cagliostro"), { src: "portraits/comtesse.jpg", face: true });
+  assert.deepEqual(cardPicture(3, "75-2041"), { src: "icons/ch03.png", face: false });
+  assert.deepEqual(cardPicture(5, undefined), { src: "icons/ch05.png", face: false }, "an old save without the answer");
+  for (let n = 1; n <= 12; n++) assert.ok(fs.existsSync("site/" + cardPicture(n, "").src));
 });
 
 

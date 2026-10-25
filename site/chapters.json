@@ -85,6 +85,7 @@
  "cast": [
   {
    "name": "Lord Ashcombe",
+   "cleared": 8,
    "nationality": "English",
    "meet": 3,
    "bio": "Peer of the realm. Collects clocks and grievances.",
@@ -105,6 +106,7 @@
   },
   {
    "name": "Paul Sernine",
+   "cleared": 10,
    "nationality": "French",
    "meet": 10,
    "bio": "Rentier. Nobody has ever seen him pay for anything.",
@@ -121,6 +123,7 @@
   },
   {
    "name": "Horace Velmont",
+   "cleared": 11,
    "nationality": "French",
    "meet": 11,
    "bio": "Painter of society portraits. Paints mostly at night.",
@@ -137,6 +140,7 @@
   },
   {
    "name": "Raul Ortega",
+   "cleared": 8,
    "nationality": "Argentine",
    "meet": 7,
    "bio": "Cattle baron. Signs everything with a flourish and an R.",
@@ -157,6 +161,7 @@
   },
   {
    "name": "Ines de Almagro",
+   "cleared": 10,
    "nationality": "Spanish",
    "meet": 10,
    "bio": "Widow. Never travels without her maid.",

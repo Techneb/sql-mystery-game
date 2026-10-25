@@ -190,6 +190,20 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 .card .card-label { font: italic 400 12px/1.2 "Cormorant Garamond", Georgia, serif; text-transform: none; }
 .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,.32); }
 .card:nth-child(even) { transform: rotate(1.5deg); }
+/* case-board pictures: a portrait when the answer is a cast person, else the chapter's painted icon (cardPicture) */
+.card .card-pic { float: left; width: 30px; height: 40px; margin: 0 6px 0 0; object-fit: contain; }
+.card .card-pic.face { object-fit: cover; border-radius: 50% / 40%; }
+/* the board's suspects strip (renderStrip): a face crossed out once the case clears it */
+.board-suspects { flex: 1 0 100%; display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; cursor: pointer; }
+.board-suspects[hidden] { display: none; }
+.strip-face { position: relative; width: 27px; height: 36px; }
+.strip-face img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50% / 40%; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.strip-face.cleared img { filter: grayscale(1); opacity: .55; }
+.strip-face.cleared::after { content: ""; position: absolute; left: -3px; right: -3px; top: 50%; border-top: 2px solid var(--red); transform: rotate(-40deg); }
+/* the query that cracked a solved chapter, under its answer on review (crackedHtml) */
+.cracked { margin-top: 6px; }
+.cracked .sql-view { margin: 4px 0 0; padding: 6px 8px; background: var(--term); color: var(--term-text); border-radius: var(--r-panel);
+  font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
 .suspect .note { font-style: italic; margin-top: 4px; }
@@ -244,6 +258,9 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .portrait { float: left; width: 96px; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%; margin: 4px 14px 6px 0;
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); }
 :root[data-mood="night"] .suspect img, :root[data-mood="night"] .portrait { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 20px rgba(63,111,181,.35)); }
+/* the board's small faces: the same night filter, its glow scaled down */
+:root[data-mood="night"] .card-pic.face, :root[data-mood="night"] .strip-face img { filter: brightness(.85) saturate(.9) contrast(1.15) drop-shadow(0 0 4px rgba(63,111,181,.35)); }
+:root[data-mood="night"] .strip-face.cleared img { filter: grayscale(1) brightness(.85); }
 @keyframes drop { from { transform: translateY(-40px) rotate(-6deg); opacity: 0 } to { opacity: 1 } }
 .telegram { font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; background: #fff8e8; color: #1c1a17;   /* a paper slip in both editions: its own ink, never --ink */ border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px; min-height: 3em; cursor: pointer; }
 .telegram:empty { display: none; }
