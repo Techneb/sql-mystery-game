@@ -825,3 +825,10 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   `chapter_solve` gains `route` (same_result / found / unseen, `solveRoute`): every solution returns one row, its
   answer, so same_result is "a run in that chapter returned one row holding the answer", computed from the answer
   hashes alone, nothing shipped. The owner registers `route` as an event-scoped custom dimension in GA.
+- Thermo-nuclear review of 2026-10-25 (`docs/reviews/2026-10-25-thermo-nuclear.md` on its branch; owner approved
+  fixing every finding). Batch 0 done 2026-10-25 on a branch, not yet merged: F3, the deploy's hand-kept `sed` lists
+  and 17 `grep -q` checks replaced by `version_site.mjs` (every local script and stylesheet of every page and every
+  relative import gets `?v=<commit>`, theme.js and the handbook's `../style.css` now included, cache only); a test
+  runs it on a temp copy and walks each page's module graph (one URL per module, stats.js once on exercises.html).
+  F15, `test_site.mjs` split into `test_site.mjs` (game, terminal, strict, deploy), `test_desk.mjs` and
+  `test_handbook.mjs`, no test lost (106 before, 106 plus the new versioning test after). Batches 1-4 to follow.

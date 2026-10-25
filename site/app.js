@@ -75,7 +75,7 @@ export function watchOn(state, board) {
   return !!board && state.mode === "compete" && !state.finishedAt && !state.over;
 }
 
-// The deploy loads this script as app.js?v=<commit> (.github/workflows/pages.yml); the data files are fetched
+// The deploy loads this script as app.js?v=<commit> (version_site.mjs, run by the deploy); the data files are fetched
 // with the same query, so a page never mixes this deploy's code with a previous deploy's cached data.
 // Empty locally and under node.
 const VERSION = new URL(import.meta.url).search;
