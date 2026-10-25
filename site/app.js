@@ -1389,7 +1389,7 @@ function renderBoard() {
     return '<div class="card" data-n="' + n + '"><img class="card-pic' + (p.face ? " face" : "") + '" src="' + p.src + '" alt=""><b>' + ROMAN[n] + '</b> <span class="card-label">' +
       esc(label(n)) + "</span>" + (state.answers[n] ? "<br>" + esc(state.answers[n]) : "") + "</div>"; }).join("") +   // older saves have no answers: no "NULL" card
     '<div id="board-suspects" class="board-suspects" hidden></div>';
-  $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => reviewChapter(Number(el.dataset.n))));
+  $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => { useFeature("card_review", { chapter: Number(el.dataset.n) }); reviewChapter(Number(el.dataset.n)); }));
   renderStrip();
 }
 // The board's suspects strip (learn only, as the gallery): the faces the gallery has introduced, each crossed out
@@ -2215,6 +2215,13 @@ async function boot() {
   $("btn-run").onclick = runQuery;
   // A refusal's Grammar link, the objective's Hint (once per chapter, kept in the state), the landing's About.
   $("results").addEventListener("click", e => { if (e.target.closest(".strict a")) useFeature("grammar_link", { chapter: curChapter() }); });
+  // The house ad and the landing's warm-up link, as on the handbook (GA audit, 2026-10-25).
+  document.addEventListener("click", e => {
+    const a = e.target.closest && e.target.closest("a");
+    if (!a) return;
+    if (a.closest(".press-notice")) useFeature("ad_house_click", { chapter: curChapter() });
+    else if (a.closest(".landing-warmup")) useFeature("warmup_link", { chapter: 1 });
+  });
   document.addEventListener("toggle", e => {   // toggle does not bubble: caught on the way down
     const d = e.target;
     if (!d.open || !d.matches) return;
