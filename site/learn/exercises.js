@@ -2,7 +2,7 @@
 // browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
 // and a check of the last result against the chosen question's solution, run on the same database.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, sqliteHelp, errorHtml, dateArithmeticNote, EMPTY_RUN, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail, wireSuggest } from "../app.js";
+import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, sqliteHelp, errorHtml, dateArithmeticNote, EMPTY_RUN, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail, wireSuggest, showCallouts } from "../app.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -66,6 +66,16 @@ export function levelPick(items, level, solved) {
   const list = items.filter(x => x.level === level);
   return list.find(x => !solved.includes(x.slug)) || list[0];
 }
+
+// The workbench's callouts (owner, 2026-10-25), the game's chapter I tour (app.js showCallouts) on this page's parts.
+// Shown once, when the workbench is up and the database ready; remembered in TOUR_STORE. Never a solution.
+export const TOUR_STORE = "ritz.exercises.tour";
+export const EX_CALLOUTS = [
+  [".wb-schema", "The schema shows the bakery's tables, their columns and the lines that link them. Enlarge opens it full size."],
+  ["#ex-run", "Write a query in the box above and press Run (or Ctrl+Enter). Tab completes table and column names."],
+  ["#ex-pick", "Pick a level (Warm-up, Practice or Challenge), then a question from this list. If you get stuck, Show solution under the question opens a worked answer."],
+  ["#ex-question", "A result that matches the question's gets a green Solved mark beside QUESTION and a tick in the list."],
+  [".ex-history", "History keeps the queries you ran. Click one to put it back in the box."]];
 
 function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
 function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private window: kept this visit only */ } }
@@ -220,6 +230,10 @@ async function boot() {
     $("ex-info").textContent = "Bakery database ready.";
     show(cur);
     if (linked) land();
+    if (!load(TOUR_STORE, false)) {   // blocked storage: once per page load
+      save(TOUR_STORE, true);
+      showCallouts(EX_CALLOUTS, how => useFeature("tour_" + how));
+    }
   } catch (e) {
     $("ex-info").textContent = "The SQL engine did not load (" + e.message + "): the questions and solutions are still here.";
     $("ex-static").hidden = false;

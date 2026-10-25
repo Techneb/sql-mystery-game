@@ -791,7 +791,10 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   A. "The clerk's first morning", a one-screen prologue in learn mode on an invented lost-property book built in the
   browser (run, add a WHERE, answer; skippable, shown once, offered again only by New investigation; `feature_use`
   prologue_done / prologue_skip); B. four callouts on chapter I's first visit (schema, terminal, objective, case
-  board; shown once); C. a landing line linking the handbook's first warm-up exercise; D. a share line at the end of
+  board; shown once; `feature_use` tour_done / tour_skip, added 2026-10-25); B2 (owner, 2026-10-25, on a branch, not
+  yet merged): the same callouts (`showCallouts`) on the handbook's exercises page, five steps over the workbench
+  (schema, terminal, level and question picker, the Solved check, History), shown once when the workbench is up
+  (`ritz.exercises.tour`), with the same tour_done / tour_skip events; C. a landing line linking the handbook's first warm-up exercise; D. a share line at the end of
   the game only (Part II extra edition: X, LinkedIn, Copy link, the device's Share; `feature_use` share with the
   network); E. both terminals' hint lines mention Tab to complete. Re-read GA a week after the push: prologue done vs
   skipped, and chapter I's ran-1 share.

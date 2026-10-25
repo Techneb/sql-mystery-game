@@ -1591,30 +1591,33 @@ export const CALLOUTS = [
 export const tourOn = state => state.mode !== "compete" && !!state.prologue && !state.tour && !state.solved.length;
 // The callout's left edge under a target rect, kept inside a viewport of width vw.
 export const calloutLeft = (rect, w, vw) => Math.max(8, Math.min(rect.left, vw - w - 8));
-function showTour() {
+const showTour = () => showCallouts(CALLOUTS, how => { state.tour = true; save(state); useFeature("tour_" + how, { chapter: 1 }); });
+// Callouts in turn under each step's target ([selector, text]); done("done") after Got it, done("skip") on Skip or
+// Escape. The handbook's exercises page runs its own steps through it (learn/exercises.js).
+export function showCallouts(steps, done) {
   let i = 0;
   const el = document.createElement("div");
   el.className = "callout"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "A quick tour");
   document.body.appendChild(el);
   const place = () => {
-    const t = document.querySelector(CALLOUTS[i][0]); if (!t) return;
+    const t = document.querySelector(steps[i][0]); if (!t) return;
     const r = t.getBoundingClientRect();
     el.style.left = calloutLeft(r, el.offsetWidth, document.documentElement.clientWidth) + scrollX + "px";
     el.style.top = Math.min(r.bottom, r.top + 200) + scrollY + 8 + "px";   // under the target, or inside a tall one
   };
-  const end = () => { el.remove(); removeEventListener("resize", place); state.tour = true; save(state); };
+  const end = how => { el.remove(); removeEventListener("resize", place); done(how); };
   const step = () => {
-    const last = i === CALLOUTS.length - 1;
-    el.innerHTML = "<p>" + esc(CALLOUTS[i][1]) + '</p><div class="row"><span class="muted">' + (i + 1) + " of " + CALLOUTS.length + "</span>" +
+    const last = i === steps.length - 1;
+    el.innerHTML = "<p>" + esc(steps[i][1]) + '</p><div class="row"><span class="muted">' + (i + 1) + " of " + steps.length + "</span>" +
       (last ? "" : '<button class="quiet callout-skip">Skip</button>') + '<button class="callout-next">' + (last ? "Got it" : "Next") + "</button></div>";
-    if (!last) el.querySelector(".callout-skip").onclick = end;
-    el.querySelector(".callout-next").onclick = () => { if (last) end(); else { i++; step(); } };
-    document.querySelector(CALLOUTS[i][0])?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (!last) el.querySelector(".callout-skip").onclick = () => end("skip");
+    el.querySelector(".callout-next").onclick = () => { if (last) end("done"); else { i++; step(); } };
+    document.querySelector(steps[i][0])?.scrollIntoView({ block: "center", behavior: "smooth" });
     place(); setTimeout(place, 500);   // again once the smooth scroll has settled
     el.querySelector(".callout-next").focus({ preventScroll: true });
   };
   addEventListener("resize", place);
-  el.addEventListener("keydown", e => { if (e.key === "Escape") end(); });
+  el.addEventListener("keydown", e => { if (e.key === "Escape") end("skip"); });
   step();
 }
 
