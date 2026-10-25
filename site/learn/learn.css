@@ -148,3 +148,45 @@
 .learn pre + table.result { margin-top: 0; }
 .learn pre.wrong { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .learn pre.wrong + .refusal { border-top: 0; border-radius: 0 0 var(--r-box) var(--r-box); background: color-mix(in srgb, var(--rel) 7%, transparent); }
+/* index.html and grammar.html (UI pass, 2026-10-25): the start path, the chapters as numbered cards, the order of
+   execution as numbered steps, the rules grouped by the page that explains them; all off the tokens */
+.learn .start-path, .toc-groups ol.toc, .learn ol.steps, .learn ul.rules { list-style: none; margin: 0; padding: 0; }
+.learn .start-path { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; counter-reset: step; margin: 6px 0 4px; }
+.learn .start-path li { counter-increment: step; }
+.learn .start-path a, .toc-groups ol.toc a { display: block; height: 100%; box-sizing: border-box; text-decoration: none; color: var(--ink);
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-card); padding: 10px 12px; }
+.learn .start-path a { border-top: 3px solid var(--gold); }
+.learn .start-path a::before { content: "Step " counter(step); display: block; font: 12px "Special Elite", monospace; color: var(--rel); }
+.learn .start-path b, .toc-groups ol.toc b { display: block; font: 700 17px/1.25 "Playfair Display", serif; }
+.learn .start-path span, .toc-groups ol.toc span { display: block; font-size: 15px; line-height: 1.35; margin-top: 3px; }
+.toc-groups ol.toc span::first-letter { text-transform: uppercase; }
+.learn .start-path a:hover, .learn .start-path a:focus-visible, .toc-groups ol.toc a:hover, .toc-groups ol.toc a:focus-visible,
+  .toc-pair .toc-card:hover, .toc-pair .toc-card:focus-visible { border-color: var(--ink); background: var(--shade); }
+.toc-groups ol.toc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; counter-reset: chap; }
+.toc-groups ol.toc li { counter-increment: chap; margin: 0; }
+.toc-groups ol.toc a { display: grid; grid-template-columns: 2.1em minmax(0, 1fr); column-gap: 8px; align-content: start; }
+.toc-groups ol.toc a::before { content: counter(chap); grid-row: 1 / 3; font: 900 26px/1 "Playfair Display", serif; color: var(--rel); text-align: right; }
+.toc-groups ol.toc a b, .toc-groups ol.toc a span { grid-column: 2; }
+.toc-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.toc-pair .toc-card { border: 1px solid var(--rule); border-top: 3px solid var(--rel); }
+.toc-pair .toc-card b { text-decoration: none; }
+.toc-pair .toc-card span { display: block; font-size: 16px; line-height: 1.4; }
+.learn ol.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; counter-reset: step; margin: 12px 0 16px; }
+.learn ol.steps li { counter-increment: step; background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 8px 10px 10px; font-size: 15px; line-height: 1.35; }
+.learn ol.steps li::before { content: counter(step); display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); color: var(--paper); font: 700 13px "Playfair Display", serif; margin-right: 6px; vertical-align: 1px; }
+.learn ol.steps b { font-weight: 400; }
+.learn ol.steps span { display: block; margin-top: 6px; }
+.learn .rule-groups { columns: 2; column-gap: 10px; margin: 12px 0; }   /* columns, not a grid: no gaps under the short groups */
+.learn .rule-groups section { break-inside: avoid; margin-bottom: 10px; background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--gold); border-radius: var(--r-panel); padding: 8px 12px 10px; }
+.learn .rule-groups h3 { font: 700 12px "Special Elite", monospace; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 4px; }
+.learn ul.rules li { padding: 5px 0; border-top: 1px solid var(--rule); font-size: 15px; line-height: 1.35; }
+.learn ul.rules li:first-child { border-top: 0; }
+.learn ul.rules a { font: 700 16px/1.3 "Playfair Display", serif; }
+.learn ul.rules span { display: block; }
+.learn table.shorthands td { padding-right: 24px; }
+@media (max-width: 700px) {
+  .learn .start-path, .learn ol.steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .toc-groups ol.toc, .toc-pair { grid-template-columns: minmax(0, 1fr); }
+  .learn .rule-groups { columns: 1; }
+}

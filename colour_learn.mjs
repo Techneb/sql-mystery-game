@@ -93,8 +93,8 @@ export function sideMenuPage(html, f) {
   const nav = '<!-- side menu: colour_learn.mjs -->\n<nav class="side-menu" aria-label="Learning chapters"><ol>\n' + items + "</ol></nav>\n<!-- /side menu -->\n";
   return html.replace(/<main class="learn(?: with-side)?">\n/, '<main class="learn with-side">\n' + nav);
 }
-// The index's list of learning chapters: each target's <h1>, then its blurb.
-const tocHtml = (pages) => '<ol class="toc">\n' + CHAPTERS.map(([href, , blurb]) => `<li><a href="${href}">${h1(pages[href], href)}</a>: ${blurb}</li>\n`).join("") + "</ol>\n";
+// The index's list of learning chapters, one numbered card each (learn.css .toc-groups ol.toc): the target's <h1>, then its blurb.
+const tocHtml = (pages) => '<ol class="toc">\n' + CHAPTERS.map(([href, , blurb]) => `<li><a href="${href}"><b>${h1(pages[href], href)}</b><span>${blurb}</span></a></li>\n`).join("") + "</ol>\n";
 
 // Every learn page ({ file: html } in, the same keys out): code coloured, refusals written, navigation generated.
 export function buildPages(pages) {
