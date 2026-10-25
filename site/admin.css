@@ -109,6 +109,9 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 /* Global's PAGES, devices and channels: three on one row from about 1000 px, stacked below */
 .donuts.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 1000px) { .donuts.three { grid-template-columns: minmax(0, 1fr); } }
+/* FEATURE USE and GOOGLE ADS: two thirds and one third; monitor.js sets the class only when its box is 900 px or
+   wider and draws each chart at its column's width (gap 28 px, PAIR_GAP) */
+.side-pair { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 0 28px; }
 .map { width: 100%; height: auto; }
 .map .land { fill: var(--shade); stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .map .b { fill: var(--rel); fill-opacity: .6; stroke: var(--paper); stroke-width: 2; vector-effect: non-scaling-stroke; }

@@ -344,6 +344,11 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
 
 ## 8. Backlog (not scheduled)
 
+- ~~Desk front-end clean-up (thermo-nuclear review 2026-10-25, batch 2).~~ Done 2026-10-25: monitor panels
+  with named replies and one loader (F4), the chart toolkit split into `site/charts.js` (F14), one CSV encoder in
+  `shared.js` (F16), the desk's season actions as one table (F8, admin.js); owner decision for F7: Google's ad
+  clicks left the FEATURE USE users chart for their own GOOGLE ADS chart beside it (clicks and impressions, GA's
+  totals), on Game and Handbook.
 - ~~Translate the site into multiple languages.~~ Dropped 2026-09-29, course owner: English only,
   section 1's fixed decision stands.
 - ~~Visual identity per chapter.~~ Implemented 2026-09-22, course owner's call ("do what you think

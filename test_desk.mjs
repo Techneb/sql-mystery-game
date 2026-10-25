@@ -245,6 +245,10 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, pure 
 });
 
 const monitor = await import("./site/monitor.js");
+const charts = await import("./site/charts.js");
+// A panel state as the page holds it: {res: named replies}; a donut's reply is named slices, the countries' countries.
+const dnP = res => ({ res: { slices: res } });
+const ctP = (countries, top = null) => ({ res: { countries, top } });
 test("monitor: the chapter funnel from GA rows, devices, raw data, every value escaped", () => {
   const rows = [
     { chapter: "1", event: "chapter_open", count: "(not set)", users: 474 },
@@ -267,20 +271,20 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
   assert.ok(sr.includes("<summary>Raw data</summary><button") && sr.includes("<td>II</td>") && sr.includes(">27%<"), "its own raw data");
   const fresh = monitor.funnelHtml(rows.filter(r => r.event !== "chapter_queries"));
   assert.ok(!fresh.includes("new event") && !fresh.includes("within about a day"), "no placeholder note: zeros are zeros (owner, 2026-10-24)");
-  assert.equal(monitor.ROMAN[12], "XII");
-  assert.equal(monitor.pct(1, 0), "-");
-  const dev = monitor.donutSection("devices", { res: { rows: [["<b>desktop", 20], ["mobile", 10]] } }, "opened");
+  assert.equal(charts.ROMAN[12], "XII");
+  assert.equal(charts.pct(1, 0), "-");
+  const dev = monitor.donutSection("devices", dnP({ rows: [["<b>desktop", 20], ["mobile", 10]] }), "opened");
   assert.ok(dev.indexOf("&#60;b&#62;desktop") < dev.indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, largest first");
   assert.ok(dev.includes(">67%<") && dev.includes("<th>Players who opened a chapter</th>") && dev.includes('data-v="20 players'), "share, raw data and tooltip follow the metric");
   assert.ok(!dev.includes("<select") && dev.includes("counts in both slices"), "no select of its own, the note follows the page's Count");
   const users = monitor.usersHtml([{ date: "20261022", users: 5 }, { date: "20261021", users: 10 }]);
   assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
-  const dn = { devices: { res: { rows: [["mobile", 1]] } }, channels: { res: { rows: [["Organic Search", 1]] } } };
-  const all = monitor.statsHtml({ users: [], chapters: [], countries: [{ country: "<script>", users: 3 }] }, 640, null, { dn });
+  const dn = { devices: dnP({ rows: [["mobile", 1]] }), channels: dnP({ rows: [["Organic Search", 1]] }) };
+  const all = monitor.statsHtml({ users: [], chapters: [], countries: [{ country: "<script>", users: 3 }] }, 640, null, dn);
   assert.ok(!all.includes("<script>") && all.includes("Organic Search") && !all.includes("CHAPTER FUNNEL"), "Global has no funnel any more");
   const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows,
     countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } },
-    { dn, top: { res: { rows: [["France", 3]], totals: [3] } }, pages: { res: [{ totals: [5] }, { totals: [3] }, { rows: [] }, { totals: [1] }, { totals: [7] }] } });
+    { ...dn, countries: ctP({ rows: [["France", 3]], totals: [3] }), pages: { res: { Game: { totals: [5] }, Handbook: { totals: [3] }, Desk: { rows: [] }, Other: { totals: [1] }, all: { totals: [7] } } } });
   assert.equal((full.match(/<svg /g) || []).length, 5, "users, the pages donut, map, two donuts");
   assert.ok(full.indexOf(">PAGES<") > full.indexOf("COUNTRIES") && full.includes("donuts three") && !full.includes("TOP PAGES"), "PAGES shares the donuts row, the top pages table is gone (owner, 2026-10-24)");
   assert.equal((full.match(/<summary>Raw data<\/summary><button[^>]*class="quiet csv"/g) || []).length, 5, "each with its raw data under it");
@@ -289,13 +293,13 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
 });
 
 test("monitor charts: ticks, the line inside its plot (one day too), vertical funnel bars, tooltips", () => {
-  assert.deepEqual(monitor.ticks(220), [0, 100, 200, 300]);
-  assert.deepEqual(monitor.ticks(680), [0, 200, 400, 600, 800]);
-  assert.deepEqual(monitor.ticks(3), [0, 1, 2, 3]);
-  assert.deepEqual(monitor.ticks(0), [0, 1]);
-  assert.equal(monitor.compact(1300), "1.3K");
-  assert.equal(monitor.compact(42), "42");
-  const svg = monitor.lineSvg([{ label: "2026-10-20", value: 220 }, { label: "2026-10-21", value: 680 }, { label: "2026-10-22", value: 0 }], 390);
+  assert.deepEqual(charts.ticks(220), [0, 100, 200, 300]);
+  assert.deepEqual(charts.ticks(680), [0, 200, 400, 600, 800]);
+  assert.deepEqual(charts.ticks(3), [0, 1, 2, 3]);
+  assert.deepEqual(charts.ticks(0), [0, 1]);
+  assert.equal(charts.compact(1300), "1.3K");
+  assert.equal(charts.compact(42), "42");
+  const svg = charts.lineSvg([{ label: "2026-10-20", value: 220 }, { label: "2026-10-21", value: 680 }, { label: "2026-10-22", value: 0 }], 390);
   assert.match(svg, /width="390"/);
   const d = svg.match(/class="line" d="M([^"]+)"/)[1].split("L").map(p => p.split(",").map(Number));
   assert.deepEqual(d.map(p => p[0]), [40, 193, 346], "first and last day on the plot edges (390 - 40 left - 44 right)");
@@ -304,12 +308,12 @@ test("monitor charts: ticks, the line inside its plot (one day too), vertical fu
   assert.equal((svg.match(/<g class="hit"/g) || []).length, 3, "one hover strip per day");
   assert.ok(svg.includes('data-k="2026-10-21" data-v="680\tusers"') && svg.includes(">Users</text>"), "the tooltip's data and the axis title");
   assert.ok(!svg.includes("<title>"), "no native title racing the tooltip");
-  const one = monitor.lineSvg([{ label: "2026-10-22", value: 7 }], 390);
+  const one = charts.lineSvg([{ label: "2026-10-22", value: 7 }], 390);
   assert.match(one, /class="line" d="M193,/, "a single day in the middle");
   assert.match(one, /<rect x="40" y="22" width="306"/, "its hover strip spans the plot");
-  assert.equal(monitor.tipAttrs('a"<', [["1", "x", "c1"], ["2", "y"]]), ' data-k="a&#34;&#60;" data-v="1\tx\tc1\n2\ty"');
+  assert.equal(charts.tipAttrs('a"<', [["1", "x", "c1"], ["2", "y"]]), ' data-k="a&#34;&#60;" data-v="1\tx\tc1\n2\ty"');
   const f = [{ chapter: 1, opened: 400, q1: 300, q5: 200, q20: 40, solved: 100 }, { chapter: 2, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }];
-  const fs2 = monitor.funnelSvg(f, 640);
+  const fs2 = charts.funnelSvg(f, 640);
   const bars = [...fs2.matchAll(/class="bar (c\d)" d="M([\d.]+),([\d.]+)v(-[\d.]+)/g)];
   assert.deepEqual(bars.map(m => m[1]), ["c1", "c2", "c3", "c4", "c5"], "the five stages in the categorical order; an empty chapter draws nothing");
   assert.ok(bars.every(m => Number(m[3]) === 196), "every bar stands on the baseline (220 - 24 bottom)");
@@ -319,16 +323,16 @@ test("monitor charts: ticks, the line inside its plot (one day too), vertical fu
   assert.ok(fs2.includes(">I</text>") && fs2.includes(">II</text>"), "roman numerals on the x axis");
   assert.ok(fs2.includes(">Retention</text>") && fs2.includes(">100%</text>") && fs2.includes(">0%</text>"), "the right axis, titled, 0-100%");
   assert.match(fs2, /class="rate-line" d="M180,22L460,196"/, "retention: chapter I at 100% (the top), chapter II nobody opened at 0, mid-column");
-  const ret = monitor.retention([{ chapter: 1, opened: 200 }, { chapter: 3, opened: 50 }]);
+  const ret = charts.retention([{ chapter: 1, opened: 200 }, { chapter: 3, opened: 50 }]);
   assert.equal(ret({ chapter: 3, opened: 50 }), 25, "opened N over opened I");
-  assert.equal(monitor.retention([{ chapter: 2, opened: 9 }])({ chapter: 2, opened: 9 }), null, "no chapter I, no retention");
-  const noBase = monitor.funnelSvg([{ chapter: 1, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }, { chapter: 2, opened: 5, q1: 0, q5: 0, q20: 0, solved: 1 }], 640);
+  assert.equal(charts.retention([{ chapter: 2, opened: 9 }])({ chapter: 2, opened: 9 }), null, "no chapter I, no retention");
+  const noBase = charts.funnelSvg([{ chapter: 1, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }, { chapter: 2, opened: 5, q1: 0, q5: 0, q20: 0, solved: 1 }], 640);
   assert.ok(!noBase.includes("rate-line") && noBase.includes("-\tretention\tc6"), "chapter I with no openers: no line, a dash in the tooltip");
-  const ss = monitor.solveRateSvg(f, 640);
+  const ss = charts.solveRateSvg(f, 640);
   assert.match(ss, /class="solve-line" d="M180,107.5"/, "the solve rate: 25% a quarter up (136 - 114 / 4), in the funnel's column");
   assert.equal((ss.match(/class="solve-dot"/g) || []).length, 1, "no dot for a chapter nobody opened");
   assert.ok(ss.includes(">Solve rate</text>") && ss.includes(">100%</text>") && ss.includes(">II</text>") && (ss.match(/<g class="hit"/g) || []).length === 2);
-  const twelve = monitor.funnelSvg(Array.from({ length: 12 }, (_, i) => ({ chapter: i + 1, opened: 10, q1: 5, q5: 3, q20: 1, solved: 2 })), 390);
+  const twelve = charts.funnelSvg(Array.from({ length: 12 }, (_, i) => ({ chapter: i + 1, opened: 10, q1: 5, q5: 3, q20: 1, solved: 2 })), 390);
   assert.ok(twelve.includes('class="tick small"') && twelve.includes(">XII</text>"), "twelve chapters at 390 px: smaller numerals");
   assert.match(twelve, /width="390"/);
   assert.ok(!/NaN|undefined/.test(fs2 + svg + one));
@@ -336,32 +340,32 @@ test("monitor charts: ticks, the line inside its plot (one day too), vertical fu
 
 test("monitor donuts and map: folding, arcs, area-proportional bubbles, the projection, unknown countries listed", () => {
   const items = [7, 6, 5, 4, 3, 2, 1].map((v, i) => ({ label: "k" + i, value: v }));
-  assert.deepEqual(monitor.fold(items).map(i => [i.label, i.value]), [["k0", 7], ["k1", 6], ["k2", 5], ["k3", 4], ["k4", 3], ["Other", 3]]);
-  assert.equal(monitor.fold(items.slice(0, 6)).length, 6, "six slices are not folded");
-  const a = monitor.arcs([1, 1, 2]);
+  assert.deepEqual(charts.fold(items).map(i => [i.label, i.value]), [["k0", 7], ["k1", 6], ["k2", 5], ["k3", 4], ["k4", 3], ["Other", 3]]);
+  assert.equal(charts.fold(items.slice(0, 6)).length, 6, "six slices are not folded");
+  const a = charts.arcs([1, 1, 2]);
   assert.deepEqual(a.map(([x, y]) => [+(x / Math.PI).toFixed(3), +(y / Math.PI).toFixed(3)]), [[0, 0.5], [0.5, 1], [1, 2]]);
-  assert.equal(monitor.arcPath(90, 90, 52, 86, 0, Math.PI / 2), "M90,4A86,86 0 0 1 176,90L142,90A52,52 0 0 0 90,38Z");
-  assert.equal((monitor.arcPath(90, 90, 52, 86, 0, 2 * Math.PI).match(/M/g) || []).length, 2, "a lone slice is two halves");
-  const ch = monitor.donutSection("channels", { res: { rows: [["Direct", 3], ["<i>x", 1]] } });
+  assert.equal(charts.arcPath(90, 90, 52, 86, 0, Math.PI / 2), "M90,4A86,86 0 0 1 176,90L142,90A52,52 0 0 0 90,38Z");
+  assert.equal((charts.arcPath(90, 90, 52, 86, 0, 2 * Math.PI).match(/M/g) || []).length, 2, "a lone slice is two halves");
+  const ch = monitor.donutSection("channels", dnP({ rows: [["Direct", 3], ["<i>x", 1]] }));
   assert.ok(ch.includes(">75%<") && ch.includes("&#60;i&#62;x") && !ch.includes("<i>x") && ch.includes('class="slice c2"'));
-  assert.equal(monitor.bubbleR(100, 100), 40);
-  assert.equal(monitor.bubbleR(25, 100), 20, "area proportional: a quarter of the users, half the radius");
-  assert.equal(monitor.bubbleR(0, 100), 0);
-  assert.equal(monitor.bubbleR(1, 1e6), 3, "a minimum radius stays visible");
-  assert.deepEqual(monitor.project(-180, 84), [0, 0]);
-  assert.deepEqual(monitor.project(180, -57), [1000, monitor.MAP.H]);
-  assert.equal(monitor.countryKey("C\u00f4te d\u2019Ivoire"), "Cote d'Ivoire");
+  assert.equal(charts.bubbleR(100, 100), 40);
+  assert.equal(charts.bubbleR(25, 100), 20, "area proportional: a quarter of the users, half the radius");
+  assert.equal(charts.bubbleR(0, 100), 0);
+  assert.equal(charts.bubbleR(1, 1e6), 3, "a minimum radius stays visible");
+  assert.deepEqual(charts.project(-180, 84), [0, 0]);
+  assert.deepEqual(charts.project(180, -57), [1000, charts.MAP.H]);
+  assert.equal(charts.countryKey("C\u00f4te d\u2019Ivoire"), "Cote d'Ivoire");
   const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
-  assert.equal(world.height, monitor.MAP.H, "the outline and the bubbles share one projection");
+  assert.equal(world.height, charts.MAP.H, "the outline and the bubbles share one projection");
   assert.ok(fs.statSync("site/world.json").size < 100000, "the outline stays small");
   for (const n of ["United States", "India", "France", "United Kingdom", "Germany", "Brazil", "Cote d'Ivoire", "Turkiye", "Singapore"]) assert.ok(world.centroids[n], n);
-  const [fx, fy] = monitor.project(...world.centroids.France);
+  const [fx, fy] = charts.project(...world.centroids.France);
   assert.ok(fx > 500 && fx < 520 && fy > 100 && fy < 110, "France in western Europe");
-  const m = monitor.mapHtml([{ country: "France", users: 40 }, { country: "C\u00f4te d\u2019Ivoire", users: 10 }, { country: "<b>Narnia", users: 2 }], world);
+  const m = charts.mapHtml([{ country: "France", users: 40 }, { country: "C\u00f4te d\u2019Ivoire", users: 10 }, { country: "<b>Narnia", users: 2 }], world);
   assert.equal((m.match(/<g class="bubble"/g) || []).length, 2, "two bubbles");
   assert.ok(m.indexOf('data-k="France"') < m.indexOf('data-k="C\u00f4te'), "the biggest drawn first, the small ones on top");
   assert.ok(m.includes("Not on the map: &#60;b&#62;Narnia (2)") && !m.includes("<b>Narnia"));
-  const bare = monitor.mapHtml([{ country: "France", users: 1 }], null);
+  const bare = charts.mapHtml([{ country: "France", users: 1 }], null);
   assert.ok(bare.includes("Raw data") && !bare.includes("<svg"), "without the outline, the table alone");
 });
 
@@ -392,7 +396,8 @@ test("explore: the request from the side panel, the pivot table sorted with GA's
   assert.ok(byDate.indexOf("2026-10-20") < byDate.indexOf("2026-10-21") && byDate.includes('aria-sort="ascending"'));
   assert.deepEqual(explore.sortRows(res, 3, false).map(r => r[3]), [12, 50.5, 70]);
   assert.equal(explore.pivotCsv(res, { col: 0, desc: true }),
-    'Date,Country,Active users,Avg session (s)\n2026-10-22,"Spain, ""north""",100,12\n2026-10-21,France,300,50.5\n2026-10-20,<b>UK,900,70\n');
+    'Date,Country,Active users,Avg session (s)\r\n2026-10-22,"Spain, ""north""",100,12\r\n2026-10-21,France,300,50.5\r\n2026-10-20,<b>UK,900,70\r\n', "shared.js csvText: CRLF like the other exports");
+  assert.equal(shared.csvText([["a", null, 'x "y"'], ["b\rc", 1, undefined]]), 'a,,"x ""y"""\r\n"b\rc",1,\r\n', "one CSV encoder: RFC 4180, null as empty, a bare CR quoted");
   assert.ok(explore.pivotHtml({ ...res, rows: [] }).includes("No rows"));
   const pick = explore.pickerHtml(explore.DIMENSIONS, ["country", "date"], "dim");
   assert.ok(pick.includes('data-dim="country" checked> Country<span class="ord">1</span>') && pick.includes('data-dim="date" checked> Date<span class="ord">2</span>'));
@@ -437,7 +442,7 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.deepEqual(p.series.map(s => s.label), ["<b>UK", "France", "E", "D", "C"], "top 5 by users over the period");
   assert.deepEqual(p.series[1].values, [0, 3, 5], "a missing day counts 0");
   assert.deepEqual(p.series.map(s => s.cls), ["c1", "c2", "c3", "c4", "c5"]);
-  assert.deepEqual(monitor.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
+  assert.deepEqual(charts.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
   const users = [{ date: "20261021", users: 12 }, { date: "20261022", users: 14 }];
   const html = monitor.breakdownHtml({ rows }, users, "country", 390);
   assert.ok(!html.includes("<b>UK") && html.includes("&#60;b&#62;UK"), "escaped");
@@ -449,19 +454,19 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.ok(!monitor.breakdownHtml({ rows: rows.slice(0, 2) }, users, "country", 390).includes("Top "), "no note when every value is drawn");
   const s = { users, chapters: [], devices: [], countries: [{ country: "France", users: 3 }], channels: [] };
   assert.ok(monitor.statsHtml(s, 390, null).includes('<option value="" selected>None</option>'), "None by default, the single line");
-  assert.ok(monitor.statsHtml(s, 390, null, { bd: { dim: "country" } }).includes("Reading the breakdown"), "loading in place");
-  const err = monitor.statsHtml(s, 390, null, { bd: { dim: "country", error: "<i>quota" } });
+  assert.ok(monitor.statsHtml(s, 390, null, {}, { dim: "country" }).includes("Reading the breakdown"), "loading in place");
+  const err = monitor.statsHtml(s, 390, null, { users: { error: "<i>quota" } }, { dim: "country" });
   assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota"), "GA's error, escaped");
-  assert.ok(monitor.statsHtml(s, 390, null, { bd: { dim: "browser", res: { rows: [["20261021", "Chrome", 4]] } } }).includes('<option value="browser" selected>Browser</option>'));
+  assert.ok(monitor.statsHtml(s, 390, null, { users: { res: { total: null, split: { rows: [["20261021", "Chrome", 4]] } } } }, { dim: "browser" }).includes('<option value="browser" selected>Browser</option>'));
   // countries: always from ?report=
   assert.ok(monitor.statsHtml(s, 390, null).includes("COUNTRIES (TOP 10)"));
   const res = { rows: [["France", 9], ["Spain", 4], ["<Narnia>", 1]] };
   assert.deepEqual(monitor.countriesFrom(res, 2), [{ country: "France", users: 9 }, { country: "Spain", users: 4 }]);
   assert.equal(monitor.countriesFrom(res, 0).length, 3, "0 = all");
   assert.deepEqual(monitor.countriesRequest(7), { days: 7, dimensions: ["country"], metrics: ["activeUsers"] });
-  const all = monitor.statsHtml(s, 390, null, { top: { n: 0, res } });
+  const all = monitor.statsHtml(s, 390, null, { countries: ctP(res) }, { top: 0 });
   assert.ok(all.includes("COUNTRIES (ALL)") && all.includes("&#60;Narnia&#62;") && !all.includes("<Narnia>"), "every row, escaped");
-  const t20 = monitor.statsHtml(s, 390, null, { top: { n: 20 } });
+  const t20 = monitor.statsHtml(s, 390, null, {}, { top: 20 });
   assert.ok(t20.includes("COUNTRIES (TOP 20)") && t20.includes("Reading the countries"));
 });
 
@@ -479,10 +484,10 @@ test("monitor donuts: each picks its metric, Visitors by default, loading and GA
   const html = monitor.statsHtml(s, 390, null);
   assert.ok(!html.includes('id="dn-') && !html.includes('id="count"'), "no per-donut select; the common one is in monitor.html");
   assert.ok(html.includes("Reading the devices") && html.includes("Reading the channels"), "loading in place");
-  const err = monitor.statsHtml(s, 390, null, { m: "sessions", dn: { channels: { error: "<i>quota" } } });
+  const err = monitor.statsHtml(s, 390, null, { channels: { error: "<i>quota" } }, { m: "sessions" });
   assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota"), "GA's error, escaped");
   assert.ok(monitor.donutNote("channels", "sessions").includes("two channels") && monitor.donutNote("devices", "visitors").includes("more than the people"));
-  assert.ok(monitor.donutSection("devices", { res: { rows: [] } }).includes('<path class="slice empty"'), "no rows: the empty ring");
+  assert.ok(monitor.donutSection("devices", dnP({ rows: [] })).includes('<path class="slice empty"'), "no rows: the empty ring");
 });
 
 test("monitor: one Count select drives users per day and both donuts; the five counts compared", () => {
@@ -493,13 +498,13 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   const s = { users: [{ date: "20261022", users: 5 }], chapters: [], countries: [] };
   // users per day: Visitors draws ?stats' users at once, any other count waits for its [date] report
   assert.ok(monitor.statsHtml(s, 390, null).includes(">Visitors</text>"), "the axis title is the count");
-  assert.ok(monitor.statsHtml(s, 390, null, { m: "sessions" }).includes("Reading the days"));
-  const ses = monitor.statsHtml(s, 390, null, { m: "sessions", bd: { total: { rows: [["20261021", 30], ["20261022", 40]] } } });
+  assert.ok(monitor.statsHtml(s, 390, null, {}, { m: "sessions" }).includes("Reading the days"));
+  const ses = monitor.statsHtml(s, 390, null, { users: { res: { total: { rows: [["20261021", 30], ["20261022", 40]] } } } }, { m: "sessions" });
   assert.ok(ses.includes(">Sessions</text>") && ses.includes('data-k="2026-10-22" data-v="40\tsessions"') && ses.includes("<th>Sessions</th>"), "axis, tooltip and raw data follow the count");
-  const bdh = monitor.statsHtml(s, 390, null, { m: "opened", bd: { dim: "country", total: { rows: [["20261022", 9]] }, res: { rows: [["20261022", "France", 4]] } } });
+  const bdh = monitor.statsHtml(s, 390, null, { users: { res: { total: { rows: [["20261022", 9]] }, split: { rows: [["20261022", "France", 4]] } } } }, { m: "opened", dim: "country" });
   assert.ok(bdh.includes("All players") && bdh.includes(">Players who opened a chapter</text>"), "the breakdown's total and axis too");
-  const dn = { devices: { res: { rows: [["mobile", 3]] } } };
-  assert.ok(monitor.statsHtml(s, 390, null, { m: "engaged", dn }).includes("3 sessions") && monitor.statsHtml(s, 390, null, { m: "engaged", dn }).includes("Counts engaged sessions"), "the donuts follow the same count");
+  const dn = { devices: dnP({ rows: [["mobile", 3]] }) };
+  assert.ok(monitor.statsHtml(s, 390, null, dn, { m: "engaged" }).includes("3 sessions") && monitor.statsHtml(s, 390, null, dn, { m: "engaged" }).includes("Counts engaged sessions"), "the donuts follow the same count");
   // the comparison
   assert.deepEqual(monitor.compareRequests(7, "country").map(([m, q]) => [m, q.metrics[0], q.dimensions[0]]),
     [["visitors", "activeUsers", "country"], ["opened", "totalUsers", "country"], ["solved", "totalUsers", "country"], ["sessions", "sessions", "country"], ["engaged", "engagedSessions", "country"], ["views", "screenPageViews", "country"]]);
@@ -508,28 +513,28 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   const st = monitor.stackData(res);
   assert.deepEqual(st.segs, ["desktop", "mobile", "<b>tablet"], "one order for every bar, by the sum over the bars");
   assert.deepEqual(st.bars.map(b => [b.m, b.values, b.total]), [["visitors", [60, 30, 0], 90], ["opened", [20, 25, 0], 45], ["solved", [0, 5, 0], 5], ["sessions", [90, 40, 2], 132], ["engaged", [50, 0, 0], 50], ["views", [0, 0, 0], 0]]);
-  assert.ok(monitor.donutNote("devices", "views").includes("each page view sits in one slice") && monitor.statsHtml(s, 390, null, { m: "views", dn }).includes("3 page views"), "page views: own unit, no overlap");
+  assert.ok(monitor.donutNote("devices", "views").includes("each page view sits in one slice") && monitor.statsHtml(s, 390, null, dn, { m: "views" }).includes("3 page views"), "page views: own unit, no overlap");
   const many = monitor.stackData({ visitors: { rows: ["a", "b", "c", "d", "e", "f", "g"].map((c, i) => [c, 10 - i]) } });
   assert.deepEqual(many.segs, ["a", "b", "c", "d", "e", "Other"]);
   assert.deepEqual(many.bars[0].values, [10, 9, 8, 7, 6, 9], "past six, the rest folds into Other");
   assert.equal(many.bars[1].total, 0, "a metric with no rows is an empty bar");
-  const svg = monitor.groupSvg(st, 390);
+  const svg = charts.groupSvg(st, 390);
   assert.match(svg, /width="390"/);
   assert.equal((svg.match(/class="seg /g) || []).length, 9, "one bar per non-zero segment");
   assert.ok(svg.includes('data-k="Players who opened a chapter" data-v="25\tmobile\tc2\n56%\tof the total"'), "tooltip: metric, segment, value, share of the total");
   assert.ok(svg.includes('text-anchor="middle">132</text>') && svg.includes(">Engaged</text>") && svg.includes(">Count</text>"), "totals on top, short names below, the axis titled");
   assert.equal((svg.match(/class="val"/g) || []).length, 6, "one total per group");
-  assert.ok(svg.includes(">Visitors</text>") && /y="234"[^>]*>Visitors</.test(svg) && /y="246"[^>]*>Opened</.test(svg) && monitor.groupSvg(st, 1200).includes('height="240"'), "narrow groups: names on two staggered lines");
+  assert.ok(svg.includes(">Visitors</text>") && /y="234"[^>]*>Visitors</.test(svg) && /y="246"[^>]*>Opened</.test(svg) && charts.groupSvg(st, 1200).includes('height="240"'), "narrow groups: names on two staggered lines");
   const bars = [...svg.matchAll(/<path class="seg c\d"[^>]* d="M([\d.]+),([\d.]+)/g)];
   assert.ok(bars.every(m => Math.abs(Number(m[2]) - 216) < 0.2), "every bar stands on the baseline (240 - 24)");
   const xs = bars.slice(0, 2).map(m => Number(m[1]));
   assert.ok(xs[1] > xs[0], "a group's bars side by side, not stacked");
   assert.ok(!svg.includes("&<b>") && svg.includes("&#60;b&#62;tablet") && !/NaN|undefined/.test(svg));
-  const sec = monitor.compareSection({ dim: "country", res }, 390);
+  const sec = monitor.compareSection({ res }, "country", 390);
   assert.ok(sec.includes("COUNT METRICS COMPARED") && sec.includes('<option value="country" selected>Country</option>') && sec.includes("do not share a unit"), "label, select, note");
   assert.ok(sec.includes('<i class="c3"></i>&#60;b&#62;tablet') && sec.includes("<td>Sessions</td>") && sec.includes('<td class="num">132</td>'), "legend and the metric x segment raw data");
-  assert.ok(monitor.compareSection({}, 390).includes('<option value="sessionDefaultChannelGroup" selected>Channel</option>') && monitor.compareSection({}, 390).includes("Reading the five counts"), "Channel by default, loading in place");
-  assert.ok(monitor.compareSection({ error: "<i>x" }, 390).includes("&#60;i&#62;x"));
+  assert.ok(monitor.compareSection({}, undefined, 390).includes('<option value="sessionDefaultChannelGroup" selected>Channel</option>') && monitor.compareSection({}, undefined, 390).includes("Reading the five counts"), "Channel by default, loading in place");
+  assert.ok(monitor.compareSection({ error: "<i>x" }, undefined, 390).includes("&#60;i&#62;x"));
   for (const d of Object.keys(monitor.STACKS)) assert.ok(fs.readFileSync("apps_script.gs", "utf8").match(/var REPORT_DIMS = [^;]*/)[0].includes('"' + d + '"'), d);
 });
 
@@ -539,8 +544,8 @@ test("monitor countries follow the Count: units, labels, the overlap note, GA's 
   assert.deepEqual(monitor.countriesRequest(7, "ran", monitor.LEARN).filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, "scoped");
   const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
   const s = { users: [], chapters: [], countries: [{ country: "France", users: 3 }] };
-  assert.ok(monitor.countriesSection(world, { n: 10 }, "visitors").includes("Reading the countries"), "Visitors too reads ?report=");
-  const vis = monitor.countriesSection(world, { n: 10, res: { rows: [["France", 3]], totals: [3] } }, "visitors");
+  assert.ok(monitor.countriesSection(world, {}, 10, "visitors").includes("Reading the countries"), "Visitors too reads ?report=");
+  const vis = monitor.countriesSection(world, ctP({ rows: [["France", 3]], totals: [3] }), 10, "visitors");
   assert.ok(vis.includes("3 visitors") && vis.includes('aria-label="Visitors by country"') && vis.includes("<th>Visitors</th>") && vis.includes("in two countries counts in both bubbles"), "Visitors");
   assert.ok(vis.includes("<p>The one country: 3 visitors.</p>") && vis.includes("<tfoot><tr><td>All countries (GA&#39;s total)</td><td class=\"num\">3</td>"), "every country shown: GA's total alone");
   // the Top cuts the list: GA's own total for the top N (a country filter), its share of GA's total for all
@@ -549,23 +554,23 @@ test("monitor countries follow the Count: units, labels, the overlap note, GA's 
     filters: { eventName: ["chapter_solve"], pagePath: { beginsWith: ["/learn/"] }, country: ["France", "Spain"] } }, "the top N as a filter, the Count's own");
   assert.equal(monitor.topTotalRequest(req, big, 3), null, "nothing cut, no request");
   assert.equal(monitor.topTotalRequest(req, big, 0), null, "All, no request");
-  const cut = monitor.countriesSection(world, { n: 2, res: big, sub: { rows: [[1050]], totals: [1050] } }, "solved");
+  const cut = monitor.countriesSection(world, ctP(big, { rows: [[1050]], totals: [1050] }), 2, "solved");
   assert.ok(cut.includes("<p>Top 2: 1,050 players, 95% of 1,100 in all 3 countries.</p>"), "GA's numbers, never the rows' sum (1,200)");
   assert.ok(cut.includes("<td>Top 2 (GA&#39;s total)</td><td class=\"num\">1050</td>") && cut.includes("<td>All countries (GA&#39;s total)</td><td class=\"num\">1100</td>"), "both totals in the raw data");
-  assert.ok(monitor.countriesSection(world, { n: 2, res: big }, "solved").includes("Top 2: reading GA&#39;s total..."), "reading in place");
-  const ses = monitor.countriesSection(world, { n: 10, res: { rows: [["France", 12], ["Spain", 4]] } }, "sessions");
+  assert.ok(monitor.countriesSection(world, ctP(big), 2, "solved").includes("Top 2: reading GA&#39;s total..."), "reading in place");
+  const ses = monitor.countriesSection(world, ctP({ rows: [["France", 12], ["Spain", 4]] }), 10, "sessions");
   assert.ok(ses.includes("12 sessions") && ses.includes("<th>Sessions</th>") && ses.includes('aria-label="Sessions by country"') && !ses.includes(" users"), "units follow");
   assert.ok(ses.includes(monitor.overlapNote("in two countries", "sessions", "bubbles").slice(0, 30)) && ses.includes("one person&#39;s sessions"), "the donuts' note");
-  assert.ok(monitor.statsHtml(s, 390, world, { m: "opened", top: { n: 10 } }).includes("Reading the countries"), "statsHtml passes the Count");
+  assert.ok(monitor.statsHtml(s, 390, world, {}, { m: "opened", top: 10 }).includes("Reading the countries"), "statsHtml passes the Count");
 });
 
 test("a missing GA value reads (empty), never null or undefined", () => {
   const bad = /\bnull\b|\bundefined\b/;
-  const map = monitor.mapHtml([{ country: null, users: 2 }, { country: undefined, users: 1 }], null);
+  const map = charts.mapHtml([{ country: null, users: 2 }, { country: undefined, users: 1 }], null);
   assert.ok(map.includes("(empty)") && !bad.test(map), "map raw data");
-  const dn = monitor.donutSection("devices", { res: { rows: [[null, 3], ["mobile", 1]] } });
+  const dn = monitor.donutSection("devices", dnP({ rows: [[null, 3], ["mobile", 1]] }));
   assert.ok(dn.includes("(empty)") && !bad.test(dn), "donut");
-  const st = monitor.compareSection({ dim: "country", res: { visitors: { rows: [[null, 2]] } } }, 390);
+  const st = monitor.compareSection({ res: { visitors: { rows: [[null, 2]] } } }, "country", 390);
   assert.ok(st.includes("(empty)") && !bad.test(st), "grouped bars");
   assert.equal(monitor.pivotSeries([["20261021", null, 2]]).series[0].label, "(empty)");
   const res = { dimensions: ["date", "country"], metrics: ["activeUsers"], rowCount: 1, totals: null, rows: [["20261021", null, null]] };
@@ -576,24 +581,25 @@ test("a missing GA value reads (empty), never null or undefined", () => {
 
 test("monitor donuts: the centre is GA's own total, so both donuts agree on the visitors", () => {
   const rows = [["desktop", "70"], ["mobile", "40"]];
-  const withTotal = monitor.donutSection("devices", { res: { rows, totals: [100] } }, "visitors");
+  const withTotal = monitor.donutSection("devices", dnP({ rows, totals: [100] }), "visitors");
   assert.ok(withTotal.includes(">100</text>") && withTotal.includes("the slices add up to 110"), "GA's 100 in the centre, the 110 explained");
   assert.ok(withTotal.includes("70%"), "shares of the people, not of the slices");
-  const noTotal = monitor.donutSection("devices", { res: { rows } }, "visitors");
+  const noTotal = monitor.donutSection("devices", dnP({ rows }), "visitors");
   assert.ok(noTotal.includes(">110</text>") && !noTotal.includes("the slices add up to 110"), "without GA's total, the sum and no note");
 });
 
 test("monitor raw data: an Export CSV button beside every Raw data toggle, and the CSV quoting", () => {
-  const html = monitor.donutSection("devices", { res: { rows: [["desktop", "7"]], totals: [7] } }, "visitors");
+  const html = monitor.donutSection("devices", dnP({ rows: [["desktop", "7"]], totals: [7] }), "visitors");
   assert.ok(/<summary>Raw data<\/summary><button type="button" class="quiet csv" data-csv="devices">Export CSV<\/button>/.test(html));
-  assert.equal(monitor.tableCsv([["Country", "Visitors"], ["Korea, South", " 3 "], ['A "b"', "1"]]),
+  assert.equal(charts.tableCsv([["Country", "Visitors"], ["Korea, South", " 3 "], ['A "b"', "1"]]),
     'Country,Visitors\r\n"Korea, South",3\r\n"A ""b""",1\r\n');
 });
 
 test("monitor views: every panel request is one ?report= accepts, the exercises match exercises.html, the new pages are kept out of search like monitor.html", () => {
   const back = fs.readFileSync("apps_script.gs", "utf8"), list = n => JSON.parse(back.match(new RegExp("var " + n + " = (\\[[^;]*\\]);"))[1]);
   const dims = list("REPORT_DIMS"), mets = list("REPORT_METRICS");
-  for (const [view, panels] of Object.entries(monitor.PANELS)) for (const [id, f] of Object.entries(panels)) for (const q of f(7, "opened")) {
+  const asked = (view, p, c) => p.requests ? Object.values(p.requests(c)).filter(Boolean) : [monitor.countriesRequest(c.days, c.m, c.scope)];
+  for (const [view, panels] of Object.entries(monitor.PANELS)) for (const [id, p] of Object.entries(panels)) for (const q of asked(view, p, monitor.context(view, { m: "opened", dim: "country", stack: "country" }))) {
     for (const d of q.dimensions) assert.ok(dims.includes(d), view + "." + id + " " + d);
     for (const m of q.metrics) assert.ok(mets.includes(m), view + "." + id + " " + m);
     for (const d of Object.keys(q.filters || {})) assert.ok(dims.includes(d), view + "." + id + " filter " + d);
@@ -618,19 +624,30 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const bad = /NaN|undefined|null/;
   // empty replies: the frame, zeros on the grids, no placeholder note
   const empty = { rows: [] };
-  const g = monitor.gameHtml(null, 390, Object.fromEntries(Object.entries(monitor.PANELS.game).map(([k, f]) => [k, { res: f(7).map(() => empty) }])), { total: empty });
+  // every panel of a view loaded with empty replies, under their names (the countries' load: its two replies)
+  const emptyPanels = (view, c = {}) => Object.fromEntries(Object.entries(monitor.PANELS[view]).map(([id, p]) => [id, { res: p.load ? { countries: empty, top: null }
+    : Object.fromEntries(Object.entries(p.requests(monitor.context(view, c))).map(([k, q]) => [k, q && empty])) }]));
+  const g = monitor.gameHtml(null, 390, emptyPanels("game"));
   assert.ok(!bad.test(g) && !g.includes("No data yet") && !g.includes("within about a day") && !g.includes("Nothing in this period"));
   assert.ok(g.includes("LEFT AN UNSOLVED CHAPTER") && g.includes("AVERAGE TIME BEFORE LEAVING") && g.includes("AVERAGE QUERIES BEFORE LEAVING") && g.includes("WRONG ANSWERS AND HINTS"));
   assert.equal((g.match(/data-k="Chapter XII"/g) || []).length, 5, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints, solve route");
   assert.ok(g.includes("SOLVE ROUTE") && g.includes('data-k="Unknown table" data-v="0\terrors\tc2\n0\tusers"') && g.includes("<td>Curly quotes</td>"), "the route grid and every error type at zero");
   assert.ok(g.includes('data-k="Suspects opened" data-v="0\tusers\tc3\n0\tuses"'), "known features listed at zero");
-  assert.ok(g.includes('data-k="Ad clicks (Google)" data-v="0\tclicks\tc3\n0\timpressions"'), "Google's ad clicks at zero");
-  const fu = monitor.featuresHtml([{ rows: [["ad_house_click", 4, 5]] }, { rows: [[7, 300]], totals: [9, 310] }], 390, monitor.HANDBOOK_FEATURES);
-  assert.ok(fu.includes('data-k="Ad clicks (Google)" data-v="9\tclicks\tc3\n310\timpressions"'), "GA's own totals");
-  assert.ok(fu.indexOf("House ad clicked") < fu.indexOf("Ad clicks (Google)") && fu.indexOf("Ad clicks (Google)") < fu.indexOf("Schema enlarged"), "right after the house ad");
+  // Google's ads: their own chart beside FEATURE USE (owner, 2026-10-25), clicks and impressions, GA's totals, zero frame
+  const adsKey = 'data-k="Google&#39;s ads on these pages" data-v="';
+  assert.ok(g.includes("GOOGLE ADS") && g.includes(adsKey + '0\tclicks\tc3\n0\timpressions\tc5"') && !g.includes("Ad clicks (Google)\" data-v"), "Google's ads at zero, out of the features");
+  const fu = monitor.featuresHtml({ features: { rows: [["ad_house_click", 4, 5]] } }, 390, monitor.HANDBOOK_FEATURES);
+  assert.ok(fu.includes('data-k="House ad clicked" data-v="4\tusers\tc3\n5\tuses"') && !fu.includes("Ad clicks") && !fu.includes("impressions"), "users only");
+  const ads = monitor.adsHtml({ ads: { rows: [[7, 300]], totals: [9, 310] } }, 390, "handbook-google-ads");
+  assert.ok(ads.includes(adsKey + '9\tclicks\tc3\n310\timpressions\tc5"') && ads.includes('<td>Ad clicks (Google)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (Google)</td><td class="num">310</td>'), "GA's own totals, raw data");
+  assert.ok(/<summary>Raw data<\/summary><button[^>]*data-csv="handbook-google-ads"/.test(ads) && ads.includes('<i class="c5"></i>impressions'), "Export CSV and a legend");
+  assert.ok(monitor.adsHtml({ ads: empty }, 390).includes('class="axis"') && !bad.test(monitor.adsHtml({ ads: empty }, 390)), "no reply rows: the zero frame");
+  const wideG = monitor.gameHtml(null, 1000, emptyPanels("game"));
+  assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("GOOGLE ADS") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
+  assert.ok(/hbar-chart" width="648"[^]*FEATURE USE|FEATURE USE[^]*hbar-chart" width="648"/.test(wideG) && wideG.includes('hbar-chart" width="324"'), "each drawn at its column's width (1000 - 28 gap, 2:1)");
   assert.equal((g.match(/class="slice empty"/g) || []).length, 3, "the failure kind and both mode donuts: empty rings");
   assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
-  const h = monitor.handbookHtml(390, Object.fromEntries(Object.entries(monitor.PANELS.handbook).map(([k, f]) => [k, { res: f(7, "ran").map(() => empty) }])), { total: empty }, "ran");
+  const h = monitor.handbookHtml(390, emptyPanels("handbook", { m: "ran" }), { m: "ran" });
   assert.ok(!bad.test(h) && h.includes('data-k="20. Word of mouth"') && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
   assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && h.includes(">Readers who ran an exercise</text>"), "the handbook's breakdowns and Count");
   assert.equal((h.match(/class="slice empty"/g) || []).length, 5, "pages, devices, channels, level and outcome donuts: empty rings");
@@ -639,45 +656,45 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
     h.indexOf('<div class="donuts three"><div>') < h.indexOf(">PAGES<") && h.indexOf("CHANNELS") < h.indexOf("EXERCISES"), "users, countries, the three donuts, then the exercises");
   assert.ok(h.includes("Counts the users who ran an exercise: a person on two devices"), "the donuts' overlap note follows the Count");
   for (const k of ["devices", "channels"]) {
-    assert.ok(monitor.COUNTED.includes(k), k + " follows the Count");
-    assert.deepEqual(monitor.PANELS.handbook[k](7, "ran")[0].filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
+    assert.ok(monitor.PANELS.handbook[k].deps.includes("m") && monitor.PANELS.global[k].deps.includes("m"), k + " follows the Count");
+    assert.deepEqual(monitor.PANELS.handbook[k].requests(monitor.context("handbook", { m: "ran" })).slices.filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
   }
-  const hc = monitor.handbookHtml(390, { devices: { res: [{ rows: [["mobile", 3]], totals: [2] }] } }, { total: empty }, "visitors", null, { n: 5, res: { rows: [["France", 4], ["Spain", 3], ["Italy", 1]] } });
+  const hc = monitor.handbookHtml(390, { devices: dnP({ rows: [["mobile", 3]], totals: [2] }), countries: ctP({ rows: [["France", 4], ["Spain", 3], ["Italy", 1]] }) }, { m: "visitors", top: 5 });
   assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && hc.includes(">2</text>") && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
-  assert.ok(monitor.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
+  assert.ok(charts.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
   // the leave block reads GA's averages as they come, labelled as averages, no dot where nobody left
-  const leave = monitor.leaveHtml([{ rows: [["2", 7, 95.25, 4.5], ["(not set)", 1, 1, 1]] }], 640);
+  const leave = monitor.leaveHtml({ leave: { rows: [["2", 7, 95.25, 4.5], ["(not set)", 1, 1, 1]] } }, 640);
   assert.ok(leave.includes('<td>II</td><td class="num">7</td><td class="num">95.3</td><td class="num">4.5</td>') && leave.includes('<td>III</td><td class="num">0</td><td class="num">-</td>'));
   assert.ok(leave.includes('data-v="7\tusers who left\tc1\n95.3 s\tavg seconds\n4.5\tavg queries"') && leave.includes("an average, not a median") && leave.includes(">Avg seconds</text>"));
   assert.equal((leave.match(/class="avg-dot"/g) || []).length, 2, "one dot per average line, chapter II only");
   // failures: the kind as a donut of GA's totals, bars from the [rule] reply, never summed from the split
-  const fails = monitor.failsHtml([{ rows: [["<b>group-by", 12, 5]] }, { rows: [["group-by", "refused", "3", 7, 3], ["group-by", "refused", "4", 5, 4]] }, { rows: [["syntax", 9, 4], ["weird", 1, 1]] }, { rows: [["refused", 12], ["error", 4]], totals: [16] }], 390);
+  const fails = monitor.failsHtml({ rule: { rows: [["<b>group-by", 12, 5]] }, split: { rows: [["group-by", "refused", "3", 7, 3], ["group-by", "refused", "4", 5, 4]] }, type: { rows: [["syntax", 9, 4], ["weird", 1, 1]] }, kind: { rows: [["refused", 12], ["error", 4]], totals: [16] } }, 390);
   assert.ok(fails.includes('data-k="Syntax" data-v="9\terrors\tc2\n4\tusers"') && fails.includes('<td>Unknown column</td><td class="num">0</td><td class="num">0</td>') &&
     fails.indexOf("<td>Other</td>") < fails.indexOf("<td>weird</td>"), "error types in a fixed order, zeros listed, GA's other values after");
   assert.ok(fails.includes('data-k="&#60;b&#62;group-by" data-v="12\tfailures\tc6\n5\tusers"') && fails.includes("<td>III</td>") && !fails.includes("<b>group"));
   assert.ok(fails.indexOf("SQLite error") < fails.indexOf("Refused by") && fails.includes('data-k="Refused by the grammar check" data-v="12 failures\t75%"'), "kinds in a fixed order and colour");
-  const hf = monitor.failsHtml([empty, empty, empty], 390, "Exercise", "exercise-failures");
+  const hf = monitor.failsHtml({ rule: empty, split: empty, type: empty, kind: null }, 390, "Exercise", "exercise-failures");
   assert.ok(!hf.includes("BY KIND") && hf.includes("SQLITE ERRORS BY TYPE") && hf.includes("<td>Syntax</td>"), "the handbook's failures: by type, no kind donut");
-  const routes = monitor.routesHtml([{ rows: [["3", "unseen", 2], ["3", "same_result", 7], ["(not set)", "found", 1]] }], 390);
+  const routes = monitor.routesHtml({ routes: { rows: [["3", "unseen", 2], ["3", "same_result", 7], ["(not set)", "found", 1]] } }, 390);
   assert.ok(routes.includes('data-k="Chapter III" data-v="7\tSame result as the solution\tc3\n0\tAnswer seen in a result\tc1\n2\tAnswer never on screen\tc6"') &&
     routes.includes('<td>III</td><td class="num">7</td><td class="num">0</td><td class="num">2</td>') && routes.includes("Data starts 2026-10-25"), "users per route per chapter, GA's rows");
-  const plain = monitor.failsHtml([{ rows: [["", 4, 2]] }, { rows: [["", "error", "1", 4, 2]] }], 390);
+  const plain = monitor.failsHtml({ rule: { rows: [["", 4, 2]] }, split: { rows: [["", "error", "1", 4, 2]] } }, 390);
   assert.ok(plain.includes('data-k="SQL error"') && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
   // chapter I onboarding: every step GA's own count in the steps' order, zeros listed, the share of Investigate in raw data
-  const ob = monitor.onboardingHtml([{ rows: [[20]] }, { rows: [["tour_done", 6], ["prologue_skip", 4]] }, { totals: [15] }, { rows: [] }], 390);
+  const ob = monitor.onboardingHtml({ begin: { rows: [[20]] }, features: { rows: [["tour_done", 6], ["prologue_skip", 4]] }, ran: { totals: [15] }, solved: { rows: [] } }, 390);
   assert.ok(ob.includes('<td>Pressed Investigate</td><td class="num">20</td><td class="num">100%</td>') && ob.includes('<td>Prologue skipped</td><td class="num">4</td><td class="num">20%</td>'));
   assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
   assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(ob));
   assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
-  assert.deepEqual(monitor.PANELS.game.onboarding(7)[2].filters, { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
-  const wrong = monitor.wrongHintsHtml([{ rows: [["1", "1", 9], ["1", "3", 2]] }, { rows: [["1", 4, 6]] }], 390);
+  assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).ran.filters, { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
+  const wrong = monitor.wrongHintsHtml({ wrong: { rows: [["1", "1", 9], ["1", "3", 2]] }, hints: { rows: [["1", 4, 6]] } }, 390);
   assert.ok(wrong.includes('data-v="9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens"') && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
-  const modes = monitor.modesHtml([{ rows: [["compete", 3], ["learn", 6]], totals: [8] }, { rows: [["learn", 6], ["compete", 3]], totals: [8] }, { rows: [[20]] }]);
+  const modes = monitor.modesHtml({ opened: { rows: [["compete", 3], ["learn", 6]], totals: [8] }, begun: { rows: [["learn", 6], ["compete", 3]], totals: [8] }, seen: { rows: [[20]] } });
   assert.ok(modes.includes("8 of the 20 visitors on the game page (40%)") && modes.includes('<td>All (GA&#39;s total)</td><td class="num">8</td>') && modes.includes(">8</text>"), "GA's total (8), not 6 + 3");
   assert.ok(modes.indexOf('<i class="c1"></i><span>Learn') > 0 && modes.includes('<i class="c2"></i><span>Compete'), "learn and compete keep their colour whatever the order");
   assert.equal(monitor.gaTotal({ rows: [[20]] }), 20);
   assert.equal(monitor.gaTotal({ rows: [["a", 1], ["b", 2]] }), 0, "no total without GA's");
-  const ex = monitor.exercisesHtml([{ rows: [["busy-hours", 10]] }, { rows: [["busy-hours", "ok", 4], ["busy-hours", "refused", 7]] }, { rows: [["busy-hours", 4, 3.333]] }], 390);
+  const ex = monitor.exercisesHtml({ ran: { rows: [["busy-hours", 10]] }, outcomes: { rows: [["busy-hours", "ok", 4], ["busy-hours", "refused", 7]] }, solved: { rows: [["busy-hours", 4, 3.333]] } }, 390);
   assert.ok(ex.includes('<td>9. Busy hours</td><td class="num">10</td><td class="num">4</td><td class="num">40%</td><td class="num">3.3</td><td class="num">4</td><td class="num">0</td><td class="num">7</td>'));
   assert.ok(ex.indexOf("1. The cheap shelf") < ex.indexOf("9. Busy hours") && ex.indexOf("9. Busy hours") < ex.indexOf("20. Word of mouth"), "the page's order");
   // handbook pages: a donut by title, the suffix dropped, top 5 + Other named as a sum in raw data, GA's total in the centre
@@ -685,11 +702,11 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const pages = monitor.handbookPagesHtml({ rows: titles, totals: [30] }, "visitors");
   assert.ok(pages.includes("&#60;i&#62;LIKE</span>") && !pages.includes("<i>LIKE") && !pages.includes("Ritz Affair"));
   assert.ok(pages.includes("<td>Other (sum of 2 rows)</td><td class=\"num\">9</td>") && pages.includes(">30</text>") && pages.includes("the slices add up to 49"));
-  assert.deepEqual(monitor.PANELS.handbook.pages(7, "ran")[0], { days: 7, dimensions: ["pageTitle"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
-  const ch = monitor.choicesHtml([{ rows: [["challenge", 2, 5], ["warm-up", 4, 9]], totals: [5] }, { rows: [["ok", 7], ["refused", 2]], totals: [9] }]);
+  assert.deepEqual(monitor.PANELS.handbook.pages.requests(monitor.context("handbook", { m: "ran" })).pages, { days: 7, dimensions: ["pageTitle"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
+  const ch = monitor.choicesHtml({ levels: { rows: [["challenge", 2, 5], ["warm-up", 4, 9]], totals: [5] }, outcomes: { rows: [["ok", 7], ["refused", 2]], totals: [9] } });
   assert.ok(ch.indexOf("Warm-up") < ch.indexOf("Practice") && ch.includes("9 Warm-up, 0 Practice, 5 Challenge presses") && ch.includes('data-k="Ran" data-v="7 runs\t78%"'));
   // Global's PAGES: a donut over the four sections, GA's unfiltered total in the centre, the overlap said
-  const sec = monitor.pagesSection({ res: [{ totals: [5] }, { totals: [3] }, { rows: [] }, { totals: [1] }, { totals: [7] }] }, "visitors");
+  const sec = monitor.pagesSection({ res: { Game: { totals: [5] }, Handbook: { totals: [3] }, Desk: { rows: [] }, Other: { totals: [1] }, all: { totals: [7] } } }, "visitors");
   assert.ok(sec.includes('class="chart donut"') && sec.includes('<i class="c3"></i><span>Desk</span><b class="num">0</b>') && sec.includes('<td>Handbook</td><td class="num">3</td>'));
   assert.ok(sec.includes(">7</text>") && sec.includes("the slices add up to 9") && sec.includes("both the game and the handbook") && sec.includes("<td>All (GA&#39;s total)</td><td class=\"num\">7</td>"));
   assert.deepEqual(monitor.sectionRequests(7, "opened")[1], { days: 7, dimensions: [], metrics: ["totalUsers"], filters: { eventName: ["chapter_open"], pagePath: { beginsWith: ["/learn/"] } } });
@@ -703,9 +720,32 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   // the compared groups print GA's total over each group when the reply has one
   const st = monitor.stackData({ visitors: { rows: [["desktop", 6], ["mobile", 5]], totals: [9] } });
   assert.deepEqual([st.bars[0].sum, st.bars[0].total], [11, 9]);
-  assert.ok(monitor.groupSvg(st, 390).includes('text-anchor="middle">9</text>'));
-  const cb = monitor.chapterBarsSvg(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]], 390);
+  assert.ok(charts.groupSvg(st, 390).includes('text-anchor="middle">9</text>'));
+  const cb = charts.chapterBarsSvg(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]], 390);
   assert.equal((cb.match(/class="bar c1"/g) || []).length, 1, "one bar, the zeros drawn as nothing");
+});
+
+test("monitor panels: each view's panels cover everything its renderer reads; one loader keyed on deps", () => {
+  // every panel loaded (empty replies under their names): no section still reads "Reading", so no renderer reads a
+  // panel its view lacks; a view missing one of its panels shows that panel reading.
+  const empty = { rows: [] }, s = { users: [], chapters: [] };
+  const full = (view, c = {}) => Object.fromEntries(Object.entries(monitor.PANELS[view]).map(([id, p]) => [id, { res: p.load ? { countries: empty, top: null }
+    : Object.fromEntries(Object.entries(p.requests(monitor.context(view, c))).map(([k, q]) => [k, q && empty])) }]));
+  for (const view of Object.keys(monitor.PANELS)) {
+    // a breakdown chosen, so users per day waits for its panel even where ?stats has the visitors
+    const c = monitor.context(view, { dim: "country" }), P = full(view, c), html = monitor.VIEWS[view].html(s, 640, P, c, null);
+    assert.ok(!html.includes("Reading"), view + ": every section drawn");
+    for (const id of Object.keys(P)) {
+      const less = { ...P }; delete less[id];
+      assert.ok(monitor.VIEWS[view].html(s, 640, less, c, null).includes("Reading"), view + "." + id + " is read by the view");
+    }
+    for (const p of Object.values(monitor.PANELS[view])) assert.ok(Array.isArray(p.deps) && (typeof p.requests === "function" || typeof p.load === "function"));
+  }
+  // users per day on Global with Visitors asks nothing: ?stats' users draw it
+  assert.deepEqual(monitor.PANELS.global.users.requests(monitor.context("global")), { total: null, split: null });
+  assert.ok(monitor.PANELS.game.users.requests(monitor.context("game")).total.filters.pagePath, "the game's own pages");
+  assert.deepEqual(Object.keys(monitor.PANELS.global.pages.requests(monitor.context("global"))), ["Game", "Handbook", "Desk", "Other", "all"]);
+  assert.equal(monitor.PANELS.handbook.fails.requests(monitor.context("handbook")).kind, null, "the handbook asks no kind");
 });
 
 test("desk: ?board= is stored and leaves the address bar, links stay bare unless storage is blocked; a stale passphrase is dropped", async () => {

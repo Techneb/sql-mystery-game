@@ -105,6 +105,17 @@ export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeU
 export const gaText = v => (v == null || v === "" ? "(empty)" : String(v));
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 
+// CSV for the desk's three exports (seasons rows, raw data, pivot table): RFC 4180, a field with a comma, a quote or
+// a line break in quotes, its quotes doubled, null as empty, lines ending CRLF.
+const csvField = v => { const s = v == null ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+export const csvText = rows => rows.map(r => r.map(csvField).join(",")).join("\r\n") + "\r\n";
+// The browser saves text as a file (browser only).
+export function downloadText(name, text, type = "text/csv;charset=utf-8") {
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 // Rows are a season's backend rows (doGet ?season=<id>: timestamp, event, team, chapter, wrong, queries, elapsedMs...);
 // meta is its season record (openedAt, penalty). Players group by teamKey, named as they typed it first.
 function players(rows) {
