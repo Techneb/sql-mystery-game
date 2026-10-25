@@ -1538,7 +1538,10 @@ function showPrologue(then) {
   const sync = () => { hl.innerHTML = highlightSql(ta.value); ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; };
   let step = 0;
   const show = () => {
-    $("prologue-step").textContent = PROLOGUE_STEPS[step];
+    const el = $("prologue-step");   // a numbered, flashed box: a new step must not pass unnoticed (owner, 2026-10-25)
+    el.innerHTML = '<span class="step-no">' + (step < 3 ? "Step " + (step + 1) + " of 3" : "Done") + "</span> " + esc(PROLOGUE_STEPS[step]);
+    el.classList.remove("fresh"); void el.offsetWidth; el.classList.add("fresh");
+    if (step) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
     $("prologue-answer").hidden = step !== 2;
     $("prologue-done").hidden = step < 3;
     $("prologue-skip").hidden = step >= 3;

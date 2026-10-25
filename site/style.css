@@ -330,7 +330,11 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 }
 /* The clerk's first morning (#prologue) and chapter I's callouts (owner, 2026-10-25) */
 .prologue { max-width: min(640px, calc(100vw - 32px)); }
-.prologue p.prologue-step { font-weight: 700; }
+.prologue p.prologue-step { font-weight: 700; text-align: left; margin: 10px 0; padding: 8px 10px; border-left: 4px solid var(--rel); border-radius: var(--r-box); background: rgba(201,163,90,.12); }
+.prologue .step-no { display: block; font: 700 12px/1.4 "Playfair Display", Georgia, serif; letter-spacing: .08em; text-transform: uppercase; color: var(--rel); }
+.prologue p.prologue-step.fresh { animation: step-flash 1.6s ease-out; }
+@keyframes step-flash { 0%, 25% { background: rgba(201,163,90,.55); } 100% { background: rgba(201,163,90,.12); } }
+@media (prefers-reduced-motion: reduce) { .prologue p.prologue-step.fresh { animation: none; } }
 #prologue-sql { min-height: 48px; }
 .prologue .row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
 .prologue .results { max-height: 30vh; text-align: left; } .prologue .results:empty { display: none; }
