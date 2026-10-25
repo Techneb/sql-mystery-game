@@ -312,7 +312,7 @@ export function suggestSql(text, caret, tables) {
 export function wireSuggest(ta, tables, sync) {
   const ul = document.createElement("ul");
   ul.id = ta.id + "-suggest"; ul.className = "sql-suggest"; ul.setAttribute("role", "listbox"); ul.setAttribute("aria-label", "Suggestions"); ul.hidden = true;
-  document.body.appendChild(ul);
+  (ta.closest("dialog") || document.body).appendChild(ul);   // inside a modal dialog, or the top layer would hide it
   ta.setAttribute("aria-autocomplete", "list"); ta.setAttribute("aria-controls", ul.id);
   let cur = null, sel = 0;
   const hide = () => { cur = null; ul.hidden = true; ta.removeAttribute("aria-activedescendant"); };
@@ -1564,6 +1564,7 @@ function showPrologue(then) {
   const close = how => { pdb.close(); d.close(); state.prologue = how; save(state); useFeature("prologue_" + how, { chapter: 1 }); then(); };
   ta.value = PROLOGUE_QUERY; show();
   ta.oninput = sync;
+  if (!ta.dataset.suggest) { ta.dataset.suggest = "1"; wireSuggest(ta, () => ({ lost_property: PROLOGUE_SCHEMA.lost_property.map(c => c[0]) }), sync); }   // Tab completion, as in the game
   ta.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); run(); } };
   $("prologue-run").onclick = run;
   const answer = () => {
