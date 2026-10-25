@@ -27,11 +27,28 @@ export const colourPage = (html, schema) => html
     return out + "\n" + refusalHtml(r);
   });
 
+// The side menu of a learning chapter page (one whose Learning chapters summary is current): all fourteen chapters,
+// read from the page's own dropdown, and under the current one its h2 sections; handbook.js highlights the one read.
+const SIDE_RE = /<!-- side menu: colour_learn.mjs -->\n[\s\S]*?<!-- \/side menu -->\n/;
+export function sideMenuPage(html) {
+  html = html.replace(SIDE_RE, "");
+  const ol = html.match(/<details class="learn-chapters"><summary class="current">[^<]*<\/summary><ol>([\s\S]*?)<\/ol>/);
+  if (!ol) return html;
+  const main = html.slice(html.indexOf('<main class="learn'));
+  const sections = [...main.matchAll(/<h2 id="([\w-]+)"[^>]*>([\s\S]*?)<\/h2>/g)]
+    .map(([, id, t]) => `      <li><a href="#${id}">${t.replace(/<[^>]+>/g, "")}</a></li>\n`).join("");
+  const items = [...ol[1].matchAll(/<li>(?:<a href="([^"]+)">|<span class="current" aria-current="page">)([^<]*)<\/(?:a|span)><\/li>/g)]
+    .map(([, href, label]) => href ? `  <li><a href="${href}">${label}</a></li>\n`
+      : `  <li class="here"><span aria-current="page">${label}</span>` + (sections ? `\n    <ol>\n${sections}    </ol>\n  ` : "") + "</li>\n").join("");
+  const nav = '<!-- side menu: colour_learn.mjs -->\n<nav class="side-menu" aria-label="Learning chapters"><ol>\n' + items + "</ol></nav>\n<!-- /side menu -->\n";
+  return html.replace(/<main class="learn(?: with-side)?">\n/, '<main class="learn with-side">\n' + nav);
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const dir = "site/learn/";
   const schema = bakerySchema(fs.readFileSync(dir + "database.html", "utf8"));
   for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".html")).sort()) {
-    const html = fs.readFileSync(dir + f, "utf8"), out = colourPage(html, schema);
+    const html = fs.readFileSync(dir + f, "utf8"), out = sideMenuPage(colourPage(html, schema));
     if (out !== html) { fs.writeFileSync(dir + f, out); console.log("coloured " + dir + f); }
   }
 }

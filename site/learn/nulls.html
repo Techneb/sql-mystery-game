@@ -50,17 +50,48 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li class="here"><span aria-current="page">9. NULL</span>
+    <ol>
+      <li><a href="#what-null-means">What NULL means</a></li>
+      <li><a href="#three-answers-not-two-true-false-and-unknown">Three answers, not two: true, false and unknown</a></li>
+      <li><a href="#asking-about-null-is-null-and-is-not-null">Asking about NULL: IS NULL and IS NOT NULL</a></li>
+      <li><a href="#aggregates-skip-null">Aggregates skip NULL</a></li>
+      <li><a href="#replacing-null-coalesce">Replacing NULL: COALESCE</a></li>
+      <li><a href="#coalesce">Grammar: COALESCE and IS</a></li>
+      <li><a href="#null-in-joins">NULL in joins</a></li>
+      <li><a href="#the-not-in-trap">The NOT IN trap</a></li>
+      <li><a href="#null-in-sorting-and-grouping">NULL in sorting and grouping</a></li>
+      <li><a href="#nulls-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>NULL and missing values</h1>
 <p class="game-label">Game: chapters <a href="../">X</a> and <a href="../">XI</a></p>
 <p class="lede">Real data has holes. SQL marks a hole with NULL, and NULL follows rules of its own: most surprises in a query that "looks right" come from them.</p>
 
-<h2>What NULL means</h2>
+<h2 id="what-null-means">What NULL means</h2>
 <p>NULL is not a value. It is the mark SQL puts in a cell when there is no value: the fact is unknown, or does not apply. It is not zero, which is a number, and it is not the empty string <code>''</code>, which is a piece of text with no letters in it. A price of 0 says "free"; a NULL price says "nobody wrote the price down".</p>
 <p>In the bakery database (see the <a href="database.html">bakery database page</a>), <code>customer.referred_by</code> holds the id of the customer who recommended the shop. Seven customers walked in on their own, so their <code>referred_by</code> is NULL. In the same way <code>staff.manager_id</code> holds the manager of each member of staff, and Margaret Hale, who owns the shop, answers to nobody: her <code>manager_id</code> is NULL. The columns are not wrong for them; there is simply nothing to put in them. Every rule on this page follows from recording an absence that way.</p>
 
-<h2>Three answers, not two: true, false and unknown</h2>
-<p>A comparison usually answers true or false. When one side is NULL, it answers <i>unknown</i>: is a missing manager equal to Tom Becker, staff member 2? Nobody can say. SQL's logic therefore has three values, and the rule that matters most is short: <code>WHERE</code>, <code>HAVING</code> and <code>ON</code> keep a row only when the condition is <b>true</b>. Unknown is thrown away, exactly like false.</p>
+<h2 id="three-answers-not-two-true-false-and-unknown">Three answers, not two: true, false and unknown</h2>
+<p>A comparison usually answers true or false. When one side is NULL, it answers <i>unknown</i>: is a missing manager equal to Tom Becker, staff member 2? Nobody can say. SQL's logic therefore has <b>three values</b>, and the rule that matters most is short: <code>WHERE</code>, <code>HAVING</code> and <code>ON</code> keep a row only when the condition is <b>true</b>. Unknown is thrown away, exactly like false.</p>
 <p>The query below asks for the staff not managed by Tom Becker. Four of the six answer to him, so it looks as if it should return the other two, Tom himself and Margaret Hale, but Margaret is missing: for her <code>manager_id &lt;&gt; 2</code> is unknown.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">manager_id</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
@@ -97,7 +128,7 @@
 </table>
 <p>False AND anything is false, whatever the unknown turns out to be; true OR anything is true. Every other mix stays unknown. Arithmetic behaves the same way: <code>price + NULL</code> is NULL, and so is <code>'Mr ' || NULL</code>.</p>
 
-<h2>Asking about NULL: IS NULL and IS NOT NULL</h2>
+<h2 id="asking-about-null-is-null-and-is-not-null">Asking about NULL: IS NULL and IS NOT NULL</h2>
 <p>Because a comparison with NULL is never true, <code>referred_by = NULL</code> keeps no rows at all, even on the rows where the column is NULL. SQL has a dedicated test instead: <code>IS NULL</code>, and its opposite <code>IS NOT NULL</code>. These two always answer true or false, never unknown, so they are safe anywhere a condition goes. Here they find the walk-ins who left an email (<code>customer.email</code> is NULL for those who gave none).</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -111,7 +142,7 @@
 <tr><td>Zoe Garcia</td><td>Riverside</td></tr>
 </table>
 
-<h2>Aggregates skip NULL</h2>
+<h2 id="aggregates-skip-null">Aggregates skip NULL</h2>
 <p><code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts the rows where that column is not NULL. <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> also ignore NULLs: an average is taken over the known values only, not over all rows with the unknown ones treated as zero. One query shows the difference.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>,
        <span class="sql-fn">COUNT</span>(<span class="sql-id">referred_by</span>) <span class="sql-kw">AS</span> <span class="sql-id">referred</span>,
@@ -131,7 +162,7 @@
 <tr><td>0</td><td>NULL</td></tr>
 </table>
 
-<h2>Replacing NULL: COALESCE</h2>
+<h2 id="replacing-null-coalesce">Replacing NULL: COALESCE</h2>
 <p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL. It is the standard way to show a default instead of a hole, and it works in every database (<code>IFNULL</code> is not standard SQL; see <a href="#coalesce">Grammar: COALESCE and IS</a>). Its most common use is turning the NULL sum of an empty group back into a zero. Here each cake is joined to its order lines with a <a href="joins.html">LEFT JOIN</a>, so the Pistachio financier, which nobody bought, stays in the result with NULL quantities, and <code>COALESCE</code> reports 0 pieces.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span>), <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">AS</span> <span class="sql-id">p</span>
@@ -151,7 +182,7 @@
 </table>
 <p>Use <code>COALESCE</code> for display, or where a NULL really means zero. Do not use it to hide NULLs that mean "unknown": replacing an unknown price by 0 before averaging pulls the average down with prices nobody ever charged. The reverse tool exists too: <code>NULLIF(a, b)</code> gives NULL when <code>a</code> equals <code>b</code>, which is how you avoid dividing by zero (<code>total / NULLIF(orders, 0)</code> is NULL instead of an error: PostgreSQL raises an error on division by zero, while SQLite already returns NULL).</p>
 
-<h2 id="coalesce">Grammar: COALESCE and IS</h2>
+<h2 id="coalesce" class="rule">Grammar: COALESCE and IS</h2>
 <p>The standard way to replace a NULL is <code>COALESCE</code>, as above; <code>IFNULL</code> is not standard SQL. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IFNULL</span>(<span class="sql-id">referred_by</span>, <span class="sql-num">0</span>) <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
@@ -172,7 +203,7 @@
 <tr><td>Vera Bianchi</td></tr>
 </table>
 
-<h2>NULL in joins</h2>
+<h2 id="null-in-joins">NULL in joins</h2>
 <p>A join condition is a condition like any other, so a NULL key never matches anything, not even another NULL. Joining each member of staff to their manager with an inner join silently drops the owner: five rows come back, not six.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">s</span>.<span class="sql-id">name</span>, <span class="sql-id">m</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">manager</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">staff</span> <span class="sql-kw">AS</span> <span class="sql-id">s</span>
@@ -209,7 +240,7 @@
 <tr><td>Marco Costa</td><td>1</td><td>0</td></tr>
 </table>
 
-<h2>The NOT IN trap</h2>
+<h2 id="the-not-in-trap">The NOT IN trap</h2>
 <p>Which members of staff manage nobody? A natural first attempt asks for the staff whose id is not in the list of managers. It returns nothing at all.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
@@ -231,7 +262,7 @@
 <tr><td>Sam Ito</td></tr>
 </table>
 
-<h2>NULL in sorting and grouping</h2>
+<h2 id="null-in-sorting-and-grouping">NULL in sorting and grouping</h2>
 <p>For <code>GROUP BY</code> and <code>DISTINCT</code>, all NULLs are treated as one value, so the seven walk-ins form a single group. For sorting, databases disagree: SQLite, which runs these examples, puts NULLs first in ascending order, while PostgreSQL puts them last. When it matters, do not rely on either: say so with <code>NULLS FIRST</code> or <code>NULLS LAST</code>. Here <code>HAVING</code> keeps the referrers who brought at least three customers, and the group of walk-ins comes last.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">referred_by</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -248,7 +279,7 @@
 <tr><td>NULL</td><td>7</td></tr>
 </table>
 
-<h2>Common mistakes</h2>
+<h2 id="nulls-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Writing <code>= NULL</code> or <code>&lt;&gt; NULL</code> instead of <code>IS NULL</code> or <code>IS NOT NULL</code>. Forgetting that <code>&lt;&gt;</code> and <code>NOT</code> also drop the NULL rows. Using <code>COUNT(*)</code> after a left join and counting the padded rows. Using <code>NOT IN</code> on a subquery whose column can be NULL. Expecting <code>SUM</code> of nothing to be 0. Replacing an unknown value with a made-up one through <code>COALESCE</code> before a calculation. Storing the text <code>'none'</code> or <code>'N/A'</code> instead of NULL, which makes <code>IS NULL</code> miss the rows and <code>COUNT(column)</code> count them.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#back-again">Back again</a>, <a href="exercises.html#untidy-emails">Untidy emails</a> and <a href="exercises.html#money-back">Money back</a>, on the exercises page.</p>

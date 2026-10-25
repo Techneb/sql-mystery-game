@@ -50,12 +50,44 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li class="here"><span aria-current="page">7. GROUP BY</span>
+    <ol>
+      <li><a href="#aggregate-functions">Aggregate functions</a></li>
+      <li><a href="#one-row-per-group-group-by">One row per group: GROUP BY</a></li>
+      <li><a href="#group-by">Grammar: grouped or aggregated</a></li>
+      <li><a href="#grouping-by-more-than-one-column">Grouping by more than one column</a></li>
+      <li><a href="#filtering-groups-having">Filtering groups: HAVING</a></li>
+      <li><a href="#having">Grammar: HAVING without GROUP BY</a></li>
+      <li><a href="#adding-up-quantities">Adding up quantities</a></li>
+      <li><a href="#order-by-grouped">Grammar: ORDER BY after GROUP BY</a></li>
+      <li><a href="#group-concat">Grammar: string_agg and SUM</a></li>
+      <li><a href="#the-order-in-which-a-query-runs">The order in which a query runs</a></li>
+      <li><a href="#group-by-having-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>GROUP BY, aggregates and HAVING</h1>
 <p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
-<p class="lede">So far every query returned rows of the table. Aggregates return facts about many rows at once: how many, how much, the largest, the average.</p>
+<p class="lede">So far every query returned rows of the table. <b>Aggregates</b> return facts about many rows at once: how many, how much, the largest, the average.</p>
 
-<h2>Aggregate functions</h2>
+<h2 id="aggregate-functions">Aggregate functions</h2>
 <p>Five functions do most of the work: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code>. Used without grouping, each one collapses the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>,
        <span class="sql-fn">MIN</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">cheapest</span>,
@@ -67,7 +99,7 @@
 <tr><td>20</td><td>1.2</td><td>4.5</td><td>2.87</td></tr>
 </table>
 
-<h2>One row per group: GROUP BY</h2>
+<h2 id="one-row-per-group-group-by">One row per group: GROUP BY</h2>
 <p><code>GROUP BY</code> splits the rows into groups that share the same value in one or more columns, then computes each aggregate once per group. The result has one row per group. Picture the database sorting the rows into piles, one pile per category, and then counting or adding up each pile separately.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -81,7 +113,7 @@
 </table>
 <p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of six breads?), and the query is refused: the next section shows how.</p>
 
-<h2 id="group-by">Grammar: grouped or aggregated</h2>
+<h2 id="group-by" class="rule">Grammar: grouped or aggregated</h2>
 <p>A column in <code>SELECT</code> that is neither grouped nor inside an aggregate has several values inside one group, and no single one of them to show, so the query is refused.</p>
 <p>A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own, and the query after it is the correct version.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*)
@@ -114,10 +146,10 @@
 <tr><td>5</td><td>Emma Novak</td><td>17</td></tr>
 </table>
 
-<h2>Grouping by more than one column</h2>
+<h2 id="grouping-by-more-than-one-column">Grouping by more than one column</h2>
 <p>Grouping by two columns makes one group per combination that actually occurs. Counting orders per customer and per day, for instance, gives one row for each customer on each day they came in. A day on which a customer did not come in produces no row at all: groups are built from the rows that exist, never from the ones that might have.</p>
 
-<h2>Filtering groups: HAVING</h2>
+<h2 id="filtering-groups-having">Filtering groups: HAVING</h2>
 <p><code>WHERE</code> filters rows before they are grouped. <code>HAVING</code> filters groups after they are counted, so it is the place for conditions on an aggregate, such as "customers with at least fifteen orders". You cannot write <code>WHERE COUNT(*) &gt;= 15</code>, because when <code>WHERE</code> runs, the counting has not happened yet.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
@@ -151,7 +183,7 @@
 <tr><td>2026-03-26</td><td>5</td></tr>
 </table>
 
-<h2 id="having">Grammar: HAVING without GROUP BY</h2>
+<h2 id="having" class="rule">Grammar: HAVING without GROUP BY</h2>
 <p><code>HAVING</code> filters groups. Without <code>GROUP BY</code>, the whole table is one group, so only aggregates make sense in it: a plain column has no single value.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -176,7 +208,7 @@
 <tr><td>20</td></tr>
 </table>
 
-<h2>Adding up quantities</h2>
+<h2 id="adding-up-quantities">Adding up quantities</h2>
 <p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold over the four weeks. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least 58 pieces, and <code>lines</code> counts the order lines behind each total. Four products tie at 58, the croissant and the cinnamon roll among them, and <code>product_id</code> breaks the tie, so the order is fixed. To turn quantities into money, multiply each line by its <code>unit_price</code>, the price paid on that line: <code>SUM(quantity * unit_price)</code>. The catalogue's <code>product.price</code> is today's price, and three products cost less before Monday 16 March, so it would overstate the early takings; the <a href="joins.html">JOIN</a> page brings in the names and both prices.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">product_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
@@ -195,7 +227,7 @@
 <tr><td>13</td><td>58</td><td>39</td></tr>
 </table>
 
-<h2 id="order-by-grouped">Grammar: ORDER BY after GROUP BY</h2>
+<h2 id="order-by-grouped" class="rule">Grammar: ORDER BY after GROUP BY</h2>
 <p>Sorting happens after grouping, so <code>ORDER BY</code> follows the same rule as <code>SELECT</code>: a grouped column, an aggregate, or an alias from the <code>SELECT</code> list.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -214,7 +246,7 @@
 </table>
 <p>Say which price you mean: the dearest of each category here, or <code>MIN(price)</code>, or <code>AVG(price)</code>.</p>
 
-<h2 id="group-concat">Grammar: string_agg and SUM</h2>
+<h2 id="group-concat" class="rule">Grammar: string_agg and SUM</h2>
 <p>To join the texts of a group into one, standard SQL writes <code>string_agg(column, ', ')</code>, with an <code>ORDER BY</code> inside the parentheses to fix the order of the pieces. <code>GROUP_CONCAT</code> is not standard SQL, and neither is <code>TOTAL(x)</code>: write <code>SUM(x)</code>, or <code>COALESCE(SUM(x), 0)</code> when an empty group should read 0.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">GROUP_CONCAT</span>(<span class="sql-id">name</span>)
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -231,14 +263,14 @@
 <tr><td>pastry</td><td>Almond croissant, Apple turnover, Brioche, Cinnamon roll, Croissant, Hot cross bun, Pain au chocolat</td></tr>
 </table>
 
-<h2>The order in which a query runs</h2>
+<h2 id="the-order-in-which-a-query-runs">The order in which a query runs</h2>
 <p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page; <a href="grammar.html#order-of-execution">Order of execution</a> goes through it step by step.</p>
 
-<h2>Common mistakes</h2>
+<h2 id="group-by-having-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which has no single value to show (see <a href="#group-by">Grammar: grouped or aggregated</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered, such as the Pistachio financier, simply does not appear when you group <code>order_item</code>.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#the-counter-by-category">The counter by category</a>, <a href="exercises.html#orders-by-town">Orders by town</a>, <a href="exercises.html#takings-per-day">Takings per day</a> and <a href="exercises.html#busy-hours">Busy hours</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises GROUP BY and HAVING; Chapter VI, <i>Follow the Francs</i>, adds SUM over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a CASE label.</p>
+<p class="in-game"><b>In the game:</b> Chapter IV, <i>The Cab's Week</i>, practises <code>GROUP BY</code> and <code>HAVING</code>; Chapter VI, <i>Follow the Francs</i>, adds <code>SUM</code> over several joined tables; Chapter VII, <i>The Quietest Hour</i>, groups by a <code>CASE</code> label.</p>
 <nav class="learn-pager"><a class="prev" href="dates-times.html">Previous: Dates and times stored as text or numbers</a><a class="next" href="joins.html">Next: JOIN, LEFT JOIN and self-joins</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>

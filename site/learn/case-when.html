@@ -50,12 +50,40 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li class="here"><span aria-current="page">10. CASE</span>
+    <ol>
+      <li><a href="#the-shape-of-a-case-expression">The shape of a CASE expression</a></li>
+      <li><a href="#labelling-rows">Labelling rows</a></li>
+      <li><a href="#buckets-and-group-by">Buckets and GROUP BY</a></li>
+      <li><a href="#conditional-counts-and-sums">Conditional counts and sums</a></li>
+      <li><a href="#case-in-order-by">CASE in ORDER BY</a></li>
+      <li><a href="#iif">Grammar: CASE, not IIF</a></li>
+      <li><a href="#case-when-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>CASE WHEN</h1>
 <p class="game-label">Game: chapter <a href="../">VII</a></p>
 <p class="lede">SQL's if-then-else. <code>CASE</code> computes a value row by row, and once you can compute a label, you can group by it.</p>
 
-<h2>The shape of a CASE expression</h2>
+<h2 id="the-shape-of-a-case-expression">The shape of a CASE expression</h2>
 <p>A <code>CASE</code> expression lists conditions in order and returns the value of the first one that is true:</p>
 <pre><code><span class="sql-kw">CASE</span>
   <span class="sql-kw">WHEN</span> <span class="sql-id">condition_1</span> <span class="sql-kw">THEN</span> <span class="sql-id">value_1</span>
@@ -64,7 +92,7 @@
 <span class="sql-kw">END</span></code></pre>
 <p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
-<h2>Labelling rows</h2>
+<h2 id="labelling-rows">Labelling rows</h2>
 <p>The simplest use turns a number into a word. Here each of the ten products the bakery opened with (ids 1 to 10) receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>,
        <span class="sql-kw">CASE</span>
@@ -89,7 +117,7 @@
 <tr><td>Sourdough loaf</td><td>4.5</td><td>large</td></tr>
 </table>
 
-<h2>Buckets and GROUP BY</h2>
+<h2 id="buckets-and-group-by">Buckets and GROUP BY</h2>
 <p><code>CASE</code> becomes most useful when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per bucket. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CASE</span>
          <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'early'</span>
@@ -111,7 +139,7 @@
 <p>SQLite and PostgreSQL both let you group by the alias, as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
 <p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. Here five orders were placed at exactly 12:00, and the query above counts them in the afternoon; with <code>&lt;= '12:00'</code> they would move to the morning, and the two buckets would both read 86. Likewise the three orders at exactly 09:00 are in the morning, not the early bucket. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
 
-<h2>Conditional counts and sums</h2>
+<h2 id="conditional-counts-and-sums">Conditional counts and sums</h2>
 <p>A <code>CASE</code> inside an aggregate counts or adds only some rows, which lets one query produce several figures side by side. <code>SUM(CASE WHEN ... THEN 1 ELSE 0 END)</code> counts the rows that meet the condition. The same idea with a quantity in the <code>THEN</code> branch adds up only part of a column. The example covers the week of Monday 9 March.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>,
        <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>,
@@ -132,7 +160,7 @@
 </table>
 <p>Monday's order at exactly 12:00 is counted after noon, because the two conditions split at <code>&lt; '12:00'</code> and <code>&gt;= '12:00'</code>: every order falls in exactly one column, and the two add up to <code>orders</code>. Friday 13 March has no row at all: the shop is closed on Fridays, and <code>GROUP BY</code> only makes groups for days that have orders. This is often called pivoting: values that were rows (before noon, after noon) become columns. It is a compact way to compare categories without running one query per category.</p>
 
-<h2>CASE in ORDER BY</h2>
+<h2 id="case-in-order-by">CASE in ORDER BY</h2>
 <p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -146,7 +174,7 @@
 </table>
 <p><code>GROUP BY</code> keeps one row per category, and the <code>CASE</code> only uses the grouped column. (With <code>SELECT DISTINCT</code> instead, the sort would be an error: see <a href="order-by-limit.html#distinct-order">DISTINCT and ORDER BY</a>.) This is the short form, <code>CASE column WHEN value THEN ...</code>, which compares one column against a list of values. It cannot test ranges or NULLs, for which you need the long form.</p>
 
-<h2 id="iif">Grammar: CASE, not IIF</h2>
+<h2 id="iif" class="rule">Grammar: CASE, not IIF</h2>
 <p><code>CASE</code> is the one standard way to choose between values. The shorthand <code>IIF(condition, a, b)</code> is not standard SQL, and neither is <code>MAX</code> or <code>MIN</code> with two arguments, which compares two values on one row: both are written as a <code>CASE</code>. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IIF</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>, <span class="sql-str">'dear'</span>, <span class="sql-str">'cheap'</span>) <span class="sql-kw">AS</span> <span class="sql-id">label</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
@@ -171,11 +199,11 @@
 <tr><td>MAX(a, b), MIN(a, b)</td><td>CASE WHEN a &gt; b THEN a ELSE b END, CASE WHEN a &lt; b THEN a ELSE b END</td></tr>
 </table>
 
-<h2>Common mistakes</h2>
+<h2 id="case-when-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Forgetting <code>END</code>, which produces a confusing syntax error further down the query. Writing overlapping conditions in the wrong order, so that a broad condition placed first catches rows meant for a narrower one below it. Leaving out <code>ELSE</code> and getting NULL labels for the rows nobody thought of. Testing for NULL in the short form, where <code>WHEN NULL</code> never matches. Comparing times stored without a leading zero, where <code>'9:30'</code> sorts after <code>'12:00'</code>.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#morning-people">Morning people</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, practises CASE WHEN with GROUP BY.</p>
+<p class="in-game"><b>In the game:</b> Chapter VII, <i>The Quietest Hour</i>, practises <code>CASE WHEN</code> with <code>GROUP BY</code>.</p>
 <nav class="learn-pager"><a class="prev" href="nulls.html">Previous: NULL and missing values</a><a class="next" href="subqueries.html">Next: Subqueries</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>

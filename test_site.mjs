@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { normalise, sha256, freshState, currentChapter, part1Done, awaitingCode, competeDone, storageKey, fmtTime, competeStats, eventPayload, clockStart, clockMs, watchOn, renderResults, ROW_CAP, pushHistory, judgeWrong, TAUNTS, visibleTables, legendEntries, detectBadges, BADGES, rank, partStats, PENALTY, duration, highlightSql, formatSql, metSuspects, foundSuspects, suspectsOn, FILM_LINES, seenFilms, eggText, EGG_ROWS, richText, track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, cartesian, strictCheck, strictHtml, SQLITE_FUNCS, SQL_KEYWORDS, toSqlite, ilike, recordQuery, STRICT_SECTIONS, teamKey, themeButtonHtml, erdButtonHtml, mastheadChapterHtml, resultsLink, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, queryMilestone, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS, chapterLeave, resetMessage, sqliteHelp, errorHtml, dateArithmeticNote, ymd, FIRST_QUERY, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, boardSuspects, scanRun, solveRoute, winningQuery, crackedHtml, cardPicture } from "./site/app.js";
-import { colourBlock, colourPage, bakerySchema, plainSql } from "./colour_learn.mjs";
+import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
@@ -762,6 +762,27 @@ test("handbook: every code block is already coloured by colour_learn.mjs", () =>
   assert.ok(n >= 40, "the handbook's code blocks were found");
 });
 
+test("handbook: each learning chapter's side menu lists the fourteen in order, its own sections under it", () => {
+  assert.equal(chapterLinks.length, 14);
+  const ids = [];
+  for (const f of learnPages) {
+    const h = learnHtml[f];
+    assert.equal(sideMenuPage(h), h, f + ": run node colour_learn.mjs");
+    const heads = [...h.matchAll(/<h2( id="([\w-]+)")?[^>]*>/g)];
+    if (!["index.html", "exercises.html"].includes(f)) heads.forEach((m) => { assert.ok(m[2], f + ": every h2 has an id"); ids.push(m[2]); });
+    const nav = h.match(/<nav class="side-menu" aria-label="Learning chapters"><ol>([\s\S]*?)<\/ol><\/nav>/);
+    assert.equal(!!nav, chapterLinks.includes(f), f + ": a side menu on the learning chapters only");
+    if (!nav) continue;
+    assert.ok(h.includes('<main class="learn with-side">\n<!-- side menu: colour_learn.mjs -->\n'), f);
+    const top = nav[1].replace(/\n    <ol>[\s\S]*?<\/ol>\n  /, "");
+    const pages = [...top.matchAll(/<li(?: class="here")?>(?:<a href="([^"]+)">|<span aria-current="page">)/g)].map((m) => m[1] || f);
+    assert.deepEqual(pages, chapterLinks, f + ": all fourteen, in table of contents order");
+    assert.equal((top.match(/class="here"/g) || []).length, 1, f + ": one current chapter");
+    assert.deepEqual([...nav[1].matchAll(/<a href="#([\w-]+)">/g)].map((m) => m[1]), heads.map((m) => m[2]), f + ": its sections are its h2s");
+  }
+  assert.equal(new Set(ids).size, ids.length, "h2 ids are unique across the handbook");
+});
+
 const qrRows = (m) => m.map((r) => r.map((d) => (d ? "1" : "0")).join(""));
 
 test("qrMatrix: HELLO WORLD at M is a version 1 code (21 x 21) with a finder in three corners", () => {
@@ -1171,7 +1192,7 @@ test("handbook: every example passes the strict terminal; each wrong one is refu
   assert.ok(wrong >= 10);
   const page = learnHtml["grammar.html"];
   for (const [a, [f]] of Object.entries(STRICT_SECTIONS)) {
-    assert.match(learnHtml[f + ".html"], new RegExp(`<h2 id="${a}">`), "section " + a + " on " + f);
+    assert.match(learnHtml[f + ".html"], new RegExp(`<h2 id="${a}"[ >]`), "section " + a + " on " + f);
     assert.ok(page.includes(f === "grammar" ? `href="#${a}"` : `href="${f}.html#${a}"`), "the grammar hub lists " + a);
   }
   assert.match(page, /follows PostgreSQL's rules/);

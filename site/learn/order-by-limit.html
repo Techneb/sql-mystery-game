@@ -50,14 +50,43 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li class="here"><span aria-current="page">4. ORDER BY</span>
+    <ol>
+      <li><a href="#why-rows-need-sorting">Why rows need sorting</a></li>
+      <li><a href="#several-sort-keys">Several sort keys</a></li>
+      <li><a href="#keeping-the-first-rows-limit">Keeping the first rows: LIMIT</a></li>
+      <li><a href="#ties-and-limit">Ties and LIMIT</a></li>
+      <li><a href="#distinct-order">Grammar: DISTINCT and ORDER BY</a></li>
+      <li><a href="#limit-offset">Grammar: LIMIT and OFFSET</a></li>
+      <li><a href="#order-of-clauses">Order of clauses</a></li>
+      <li><a href="#order-by-limit-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>ORDER BY and LIMIT</h1>
 <p class="game-label">Game: chapter <a href="../">II</a></p>
 <p class="lede">A table has no natural order. If the order of the rows matters to you, you must ask for it.</p>
 
-<h2>Why rows need sorting</h2>
+<h2 id="why-rows-need-sorting">Why rows need sorting</h2>
 <p>A beginner often assumes that rows come back in the order they were inserted. Sometimes they do, by accident, but the SQL standard makes no such promise, and a database is free to return rows in whatever order is fastest for it. The moment a question contains a word like "cheapest", "latest", "first" or "top three", the query needs an <code>ORDER BY</code> clause.</p>
-<p><code>ORDER BY</code> comes after <code>WHERE</code> and names one or more columns. Each column sorts ascending by default (<code>ASC</code>: smallest number, earliest date, A before Z); add <code>DESC</code> after a column to reverse it. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
+<p><code>ORDER BY</code> comes after <code>WHERE</code> and names one or more columns. Each column sorts <b>ascending</b> by default (<code>ASC</code>: smallest number, earliest date, A before Z); add <code>DESC</code> after a column to reverse it. The examples use the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'pastry'</span>
@@ -73,7 +102,7 @@
 <tr><td>Croissant</td><td>1.4</td></tr>
 </table>
 
-<h2>Several sort keys</h2>
+<h2 id="several-sort-keys">Several sort keys</h2>
 <p>When two rows tie on the first column, the second column decides, then the third, and so on. Each column carries its own direction, so you can sort by category alphabetically and, inside each category, by price from the most to the least expensive, with the name as a third key for the two breads that cost the same. The example keeps the products of 3 euros and more. The database never looks at the second key unless the first one ties.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -93,7 +122,7 @@
 </table>
 <p>You can sort by a column that you do not display, and by a computed expression or an alias defined in <code>SELECT</code>. Sorting happens after the rows have been chosen, which is why aliases work here while they do not in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
 
-<h2>Keeping the first rows: LIMIT</h2>
+<h2 id="keeping-the-first-rows-limit">Keeping the first rows: LIMIT</h2>
 <p><code>LIMIT n</code>, written at the very end of the query, keeps only the first n rows of the result. On its own it keeps an arbitrary n rows, which is rarely useful; combined with <code>ORDER BY</code> it answers questions such as "the three most recent orders" or "the cheapest pastry". <code>OFFSET k</code> skips the first k rows before counting, which is how a website shows page two of a list.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
@@ -117,11 +146,11 @@
 </table>
 <p>These are the third and fourth cheapest products: the two cheapest are skipped, the next two are kept.</p>
 
-<h2>Ties and LIMIT</h2>
+<h2 id="ties-and-limit">Ties and LIMIT</h2>
 <p>Be careful when the value you sort by can tie at the edge of the limit. If two products both cost the same and you ask for <code>LIMIT 1</code>, you get one of them, and which one is not defined. In the bakery, the Rye loaf, the Seeded rolls and the Cheesecake slice all cost 3.80, and the two eclairs 2.80. When the question is "which product is the cheapest", it is worth checking whether the second row has the same price as the first: drop the limit, or raise it to five, and read the top of the list with your own eyes. Adding a second sort key, such as the name or the id, at least makes the answer the same every time you run it.</p>
 <p>NULL values also need a thought: in SQLite they sort before every other value in ascending order, and after them in descending order. PostgreSQL does the opposite (last in ascending order, first in descending); write <code>NULLS FIRST</code> or <code>NULLS LAST</code> after the sort key to say which you want, and both agree. If a column can be missing, the top of a sorted list may be full of NULLs rather than of the smallest real values; filter them out with <code>WHERE ... IS NOT NULL</code> when they do not belong in the answer.</p>
 
-<h2 id="distinct-order">Grammar: DISTINCT and ORDER BY</h2>
+<h2 id="distinct-order" class="rule">Grammar: DISTINCT and ORDER BY</h2>
 <p>A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own, and the query after it is the correct version.</p>
 <p><code>SELECT DISTINCT</code> removes repeated rows before the sort, so the sort can only use what was selected.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>
@@ -140,7 +169,7 @@
 </table>
 <p><code>GROUP BY</code> also keeps one row per category, and it lets you sort the categories by an aggregate, here their cheapest product (see <a href="group-by-having.html">GROUP BY</a>).</p>
 
-<h2 id="limit-offset">Grammar: LIMIT and OFFSET</h2>
+<h2 id="limit-offset" class="rule">Grammar: LIMIT and OFFSET</h2>
 <p>Skipping rows is written with <code>OFFSET</code>, after the row count. The short form with a comma, which puts the skipped rows first, is not standard SQL.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -158,14 +187,14 @@
 <tr><td>Rye loaf</td><td>3.8</td></tr>
 </table>
 
-<h2>Order of clauses</h2>
+<h2 id="order-of-clauses">Order of clauses</h2>
 <p>The clauses always come in the same order: <code>SELECT</code>, <code>FROM</code>, <code>WHERE</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Putting <code>LIMIT</code> before <code>ORDER BY</code> is a syntax error, and writing <code>ORDER BY</code> before <code>WHERE</code> is too. Later pages add <code>GROUP BY</code> and <code>HAVING</code>, which sit between <code>WHERE</code> and <code>ORDER BY</code>.</p>
 
-<h2>Common mistakes</h2>
+<h2 id="order-by-limit-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Relying on the insertion order or on the id as a stand-in for time: the row with the highest id is not always the latest event, so sort by the date itself. Forgetting <code>DESC</code> and reading the bottom of a list as if it were the top. Sorting dates stored in a form that does not sort as text, such as day/month/year. Using <code>LIMIT 1</code> without checking for ties. Sorting by a number stored as text, where <code>'10'</code> comes before <code>'9'</code>.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#the-cheap-shelf">The cheap shelf</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter II, <i>The Neighbouring Suite</i>, practises ORDER BY and LIMIT.</p>
+<p class="in-game"><b>In the game:</b> Chapter II, <i>The Neighbouring Suite</i>, practises <code>ORDER BY</code> and <code>LIMIT</code>.</p>
 <nav class="learn-pager"><a class="prev" href="select-where.html">Previous: SELECT and WHERE</a><a class="next" href="like.html">Next: LIKE and text patterns</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>

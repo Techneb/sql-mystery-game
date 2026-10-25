@@ -23,3 +23,22 @@ if (typeof document !== "undefined") {
     else if (d.matches("details.solution")) useFeature("solution_open");
   }, true);
 }
+
+// A learning chapter's side menu (colour_learn.mjs writes it): the section being read gets aria-current. The section
+// read is the last whose heading has passed the line 30% down the window, or the last one once the page end shows.
+if (typeof document !== "undefined" && typeof IntersectionObserver !== "undefined") {
+  const links = [...document.querySelectorAll(".side-menu .here a[href^='#']")];
+  const heads = links.map(a => document.getElementById(a.getAttribute("href").slice(1)));
+  if (links.length && heads.every(Boolean)) {
+    const mark = () => {
+      let i = heads.findLastIndex(h => h.getBoundingClientRect().top <= innerHeight * 0.3);
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) i = heads.length - 1;
+      links.forEach((a, j) => j === Math.max(i, 0) ? a.setAttribute("aria-current", "location") : a.removeAttribute("aria-current"));
+    };
+    const io = new IntersectionObserver(mark, { rootMargin: "0px 0px -70% 0px" });
+    heads.forEach(h => io.observe(h));
+    const end = new IntersectionObserver(mark, { threshold: [0, 1] });   // the last short sections may never reach the line
+    document.querySelectorAll(".learn-pager, .learn-foot").forEach(e => end.observe(e));
+    mark();
+  }
+}

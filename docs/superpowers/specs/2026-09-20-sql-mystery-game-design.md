@@ -684,6 +684,12 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`).
 - ~~`bakery.py` scaffolding~~ Done 2026-10-20: v1's schema, `LIVE` and `check(1)` dropped, the generator emits
   v2 only (its first-week rows renamed `FIRST_WEEK`); the script, every pasted result and the schemas unchanged.
+- ~~Handbook layout and reading pass~~ Done 2026-10-25 (owner): the exercises workbench spans the whole window
+  (16 px gutters, the static fallback and pager at reading width); the fourteen learning chapters carry a side menu
+  over 1000 px (every chapter, the current one with its h2 sections, the section read highlighted by `handbook.js`;
+  written by `colour_learn.mjs`, pinned by a test; hidden under 1000 px, where the menu row's dropdown serves);
+  every h2 has an id unique across the handbook; inline code as chips, key terms bold at first use, Grammar sections
+  with a gold edge, Common mistakes and refusals tinted red, Try it with a gold edge. Wording unchanged.
 - ~~Blind check of the five new exercises~~ Done 2026-10-20: two independent solvers, 10 of 10 answers match the official
   results under the page's own check; The price rise now says one row per product and price paid.
 - Query funnel and monitoring page (2026-10-23; GA showed 474 players opening chapter 1 and 127 solving it, with no way

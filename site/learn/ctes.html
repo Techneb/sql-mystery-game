@@ -50,13 +50,39 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li class="here"><span aria-current="page">14. CTEs</span>
+    <ol>
+      <li><a href="#with-naming-a-result">WITH: naming a result</a></li>
+      <li><a href="#several-steps-and-joining-a-cte">Several steps, and joining a CTE</a></li>
+      <li><a href="#with-recursive-following-a-chain">WITH RECURSIVE: following a chain</a></li>
+      <li><a href="#with-recursive-generating-rows">WITH RECURSIVE: generating rows</a></li>
+      <li><a href="#ctes-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+</ol></nav>
+<!-- /side menu -->
 <h1>CTEs and WITH RECURSIVE</h1>
 <p class="game-label">Game: chapters <a href="../">VIII</a>, <a href="../">IX</a> and <a href="../">XII</a></p>
 <p class="lede">Long queries are easier to write, read and check when they are built in named steps. A CTE is a named step.</p>
 
-<h2>WITH: naming a result</h2>
-<p>A common table expression, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. What it buys you is readability: instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
+<h2 id="with-naming-a-result">WITH: naming a result</h2>
+<p>A <b>common table expression</b>, or CTE, is a query given a name at the top of a statement with <code>WITH name AS (...)</code>. The rest of the statement can then use that name as if it were a table. Nothing is stored: the CTE exists only for the duration of the query. What it buys you is readability: instead of a subquery buried three levels deep, you get a list of steps, each with a name that says what it holds.</p>
 <p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Here the first step computes the value of each order line, its quantity times <code>unit_price</code>, the price paid on that line, and the main query adds those values up per order and keeps the orders of 20 or more.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">line</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">order_id</span>, <span class="sql-id">quantity</span> * <span class="sql-id">unit_price</span> <span class="sql-kw">AS</span> <span class="sql-id">amount</span>
@@ -81,7 +107,7 @@
 </table>
 <p>The line's price, not today's. Three products cost more from Monday 16 March, and <code>product.price</code> holds only the current price, so a step that joined <code>product</code> and multiplied by <code>p.price</code> would value the earlier lines at a price nobody paid: order 10 would read 22.10 instead of 21.90, and order 12, which came to 19.60, would join the list at 20.00.</p>
 
-<h2>Several steps, and joining a CTE</h2>
+<h2 id="several-steps-and-joining-a-cte">Several steps, and joining a CTE</h2>
 <p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine. What did each customer who had a refund pay over the four weeks, get back, and keep?</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">paid</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>) <span class="sql-kw">AS</span> <span class="sql-id">paid</span>
@@ -115,8 +141,8 @@
 <p>To debug such a query, replace the final <code>SELECT</code> with <code>SELECT * FROM paid</code> and look at the intermediate result. Then do the same with the next step. A mistake usually shows up at the first step whose rows look wrong.</p>
 <p>CTEs pair naturally with <a href="window-functions.html">window functions</a>: compute a rank or a previous value in a CTE, then filter on it outside, since a window function cannot appear in <code>WHERE</code> (see <a href="grammar.html#order-of-execution">Order of execution</a>).</p>
 
-<h2>WITH RECURSIVE: following a chain</h2>
-<p>Some questions have no fixed number of steps. "Who brought this customer to the shop, and who brought that one, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an anchor, which produces the starting rows, and a recursive part, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
+<h2 id="with-recursive-following-a-chain">WITH RECURSIVE: following a chain</h2>
+<p>Some questions have no fixed number of steps. "Who brought this customer to the shop, and who brought that one, and so on, all the way up?" might take one join or ten. A recursive CTE handles that. It has two parts joined by <code>UNION ALL</code>: an <b>anchor</b>, which produces the starting rows, and a <b>recursive part</b>, which refers to the CTE itself and produces the next rows from the previous ones. The database runs the anchor, then runs the recursive part again and again on the newest rows until it produces nothing.</p>
 <p>In the bakery, <code>customer.referred_by</code> points to the customer who recommended the shop. Who brought Wen Petrov (id 12)? The anchor is Wen alone. Each round joins the customer whose <code>id</code> is the previous row's <code>referred_by</code>, one step further up, and the recursion stops at a customer who came on their own: a NULL <code>referred_by</code> matches no one, so the round adds no row.</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">chain</span>(<span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>, <span class="sql-id">steps</span>) <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">name</span>, <span class="sql-id">referred_by</span>, <span class="sql-num">0</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">12</span>
@@ -137,7 +163,7 @@
 <p>Four steps lead from Wen Petrov back to Alice Turner, the longest chain in the shop. To walk the other way, all the way down, turn the join round: <code>c.referred_by = ch.id</code> adds, each round, the customers the previous ones brought in. Started from Emma Novak, it finds Farid Haddad and Ugo Dubois, then Wen Petrov. The staff table holds the same kind of chain in <code>staff.manager_id</code>, three levels deep from the owner down to the counter.</p>
 <p>Carrying extra columns through the recursion is a useful trick. A counter such as <code>steps</code> tells you how far each row is from the start, and a text column built up with <code>||</code> can record the whole path, which is often the answer you actually want.</p>
 
-<h2>WITH RECURSIVE: generating rows</h2>
+<h2 id="with-recursive-generating-rows">WITH RECURSIVE: generating rows</h2>
 <p>A recursive CTE does not need a table at all. It can count, or produce every date of a period, which is handy for finding days that are missing from the data. The anchor gives the first day, the recursive part adds one to the day of the month and writes the date out as text (<code>RIGHT('0' || n, 2)</code> pads it to two digits), and a condition in its <code>WHERE</code> stops the recursion. Counting the day of the month only works within one month; real date arithmetic differs from one database to the next (PostgreSQL's <code>CAST(day AS DATE) + 1</code> or <code>generate_series</code>, SQLite's <code>date(day, '+1 day')</code>), and the game's terminal refuses it (see <a href="dates-times.html#date-functions">Dates, substr and CAST</a>).</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">calendar</span>(<span class="sql-id">n</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-num">2</span>, <span class="sql-str">'2026-03-02'</span>
@@ -161,11 +187,11 @@
 </table>
 <p>The left join keeps Friday 6 March, when the shop was closed, with a count of zero; grouping the <code>orders</code> table alone would simply have skipped it.</p>
 
-<h2>Common mistakes</h2>
+<h2 id="ctes-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Forgetting the stop condition, so that the recursion never ends: always make sure each round moves towards a limit, and while experimenting add a depth counter with a condition such as <code>WHERE steps &lt; 20</code>. Following a chain that loops back on itself, which also never ends unless the path is tracked. Using <code>UNION</code> where <code>UNION ALL</code> is meant, or the reverse, without thinking about duplicates (see <a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>). Putting the recursive reference in a subquery or an aggregate, which SQLite does not allow. Writing the anchor and the recursive part with a different number of columns.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#above-their-category">Above their category</a>, <a href="exercises.html#word-of-mouth">Word of mouth</a>, <a href="exercises.html#money-back">Money back</a> and <a href="exercises.html#shutters-down">Shutters down</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises WITH RECURSIVE.</p>
+<p class="in-game"><b>In the game:</b> Chapter VIII, <i>The First Order Before Dawn</i>, and Chapter IX, <i>The Trunk</i>, use a CTE; Chapter XII, <i>Follow the Money</i>, practises <code>WITH RECURSIVE</code>.</p>
 <nav class="learn-pager"><a class="prev" href="window-functions.html">Previous: Window functions: RANK and LAG</a><a class="next" href="exercises.html">Next: SQL exercises with solutions</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>

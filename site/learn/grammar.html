@@ -54,7 +54,7 @@
 <h1>The Grammar of SQL</h1>
 <p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
 <p class="lede">A handful of rules that every correct query follows: what a grouped query may show, how text and names are quoted, how values of different types are compared, what makes a condition.</p>
-<p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one does not run, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. This page gives the order in which a query is worked out, from which most of the rules follow, then lists every rule with a link to the page that explains it, with examples on the <a href="database.html">bakery database</a>.</p>
+<p>The game's terminal follows PostgreSQL's rules, and on types it adds one rule of its own: a query that breaks one <b>does not run</b>, and the terminal answers with an error line in PostgreSQL's words and a sentence on how to fix it. The query still counts, but it is not kept in the History list. This page gives the order in which a query is worked out, from which most of the rules follow, then lists every rule with a link to the page that explains it, with examples on the <a href="database.html">bakery database</a>.</p>
 
 <h2 id="order-of-execution">Order of execution</h2>
 <p>A query is written starting with <code>SELECT</code>, but it is not worked out in that order. Logically, the database takes the clauses in this order, and each step sees only what the step before it produced:</p>
@@ -74,21 +74,21 @@
 <h2 id="the-rules">The rules, and where each is explained</h2>
 <p>Each rule sits on the page of the construct it belongs to, with a query that breaks it, the terminal's answer, and the correct version. The terminal's own error messages link to the same sections.</p>
 <ul class="toc">
-<li><a href="select-where.html#double-quotes">Double quotes</a>: 'text' is a value, "name" a name, and a quoted name keeps its case.</li>
-<li><a href="select-where.html#double-equals">One equals sign</a>: SQL compares with =, never ==.</li>
-<li><a href="select-where.html#types">Types</a>: a number against a number, text against text, || on text.</li>
-<li><a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>: a SELECT name does not exist there yet.</li>
-<li><a href="select-where.html#boolean">Conditions</a>: WHERE, HAVING, ON and WHEN need something true or false.</li>
+<li><a href="select-where.html#double-quotes">Double quotes</a>: <code>'text'</code> is a value, <code>"name"</code> a name, and a quoted name keeps its case.</li>
+<li><a href="select-where.html#double-equals">One equals sign</a>: SQL compares with <code>=</code>, never <code>==</code>.</li>
+<li><a href="select-where.html#types">Types</a>: a number against a number, text against text, <code>||</code> on text.</li>
+<li><a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>: a <code>SELECT</code> name does not exist there yet.</li>
+<li><a href="select-where.html#boolean">Conditions</a>: <code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and <code>WHEN</code> need something true or false.</li>
 <li><a href="order-by-limit.html#distinct-order">DISTINCT and ORDER BY</a>: sort by what was selected.</li>
-<li><a href="order-by-limit.html#limit-offset">LIMIT and OFFSET</a>: LIMIT 3 OFFSET 2, not LIMIT 2, 3.</li>
+<li><a href="order-by-limit.html#limit-offset">LIMIT and OFFSET</a>: <code>LIMIT 3 OFFSET 2</code>, not <code>LIMIT 2, 3</code>.</li>
 <li><a href="like.html#like-ilike">LIKE and ILIKE</a>: the only pattern matches, case-sensitive or not.</li>
-<li><a href="dates-times.html#date-functions">Dates, substr and CAST</a>: comparisons, substr and CAST, not strftime or date(d, '+1 day').</li>
+<li><a href="dates-times.html#date-functions">Dates, substr and CAST</a>: comparisons, <code>substr</code> and <code>CAST</code>, not <code>strftime</code> or <code>date(d, '+1 day')</code>.</li>
 <li><a href="group-by-having.html#group-by">GROUP BY</a>: every column grouped or aggregated.</li>
 <li><a href="group-by-having.html#having">HAVING without GROUP BY</a>: aggregates only.</li>
 <li><a href="group-by-having.html#order-by-grouped">ORDER BY after GROUP BY</a>: grouped columns, aggregates or aliases.</li>
-<li><a href="group-by-having.html#group-concat">string_agg and SUM</a>: not GROUP_CONCAT or TOTAL.</li>
-<li><a href="nulls.html#coalesce">COALESCE and IS</a>: not IFNULL; IS only with NULL, TRUE or FALSE.</li>
-<li><a href="case-when.html#iif">CASE, not IIF</a>: and no MAX or MIN of two values.</li>
+<li><a href="group-by-having.html#group-concat">string_agg and SUM</a>: not <code>GROUP_CONCAT</code> or <code>TOTAL</code>.</li>
+<li><a href="nulls.html#coalesce">COALESCE and IS</a>: not <code>IFNULL</code>; <code>IS</code> only with <code>NULL</code>, <code>TRUE</code> or <code>FALSE</code>.</li>
+<li><a href="case-when.html#iif">CASE, not IIF</a>: and no <code>MAX</code> or <code>MIN</code> of two values.</li>
 <li><a href="#sqlite-only">Other shorthands</a>: below.</li>
 </ul>
 

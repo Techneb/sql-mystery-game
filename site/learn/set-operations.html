@@ -50,12 +50,39 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li><a href="dates-times.html">6. Dates</a></li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li class="here"><span aria-current="page">12. UNION</span>
+    <ol>
+      <li><a href="#union-one-list-from-two-queries">UNION: one list from two queries</a></li>
+      <li><a href="#union-all-keeping-every-row">UNION ALL: keeping every row</a></li>
+      <li><a href="#matching-the-columns">Matching the columns</a></li>
+      <li><a href="#intersect-the-rows-both-results-share">INTERSECT: the rows both results share</a></li>
+      <li><a href="#except-the-rows-of-one-but-not-the-other">EXCEPT: the rows of one but not the other</a></li>
+      <li><a href="#set-operations-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>UNION, INTERSECT and EXCEPT</h1>
 <p class="game-label">Game: chapter <a href="../">XII</a></p>
-<p class="lede">A join puts tables side by side. A set operation puts two results one above the other, and keeps all their rows, the rows they share, or the rows of the first that the second lacks.</p>
+<p class="lede">A join puts tables side by side. A <b>set operation</b> puts two results one above the other, and keeps all their rows, the rows they share, or the rows of the first that the second lacks.</p>
 
-<h2>UNION: one list from two queries</h2>
+<h2 id="union-one-list-from-two-queries">UNION: one list from two queries</h2>
 <p>Write two complete <code>SELECT</code> statements and put <code>UNION</code> between them: the result holds the rows of the first followed by the rows of the second, with duplicates removed. Each half can read its own tables and use its own conditions, which is what makes it useful when one <code>WHERE</code> cannot say both things at once.</p>
 <p>The examples use the bakery database from the <a href="database.html">bakery database page</a>. Say the bakery wants to send a voucher to everyone Alice Turner brought to the shop (the customers whose <code>referred_by</code> is her id, 1), and to everyone who was given a refund. The first half reads one table, the second needs two joins.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
@@ -78,7 +105,7 @@
 </table>
 <p>Chloe Martin and Vera Bianchi were brought by Alice and also refunded, so both halves return them, and Chloe had two refunds on the same order, so the second half returns her twice; each still appears once. Alice Turner herself is on the list for a refund of her own. The single <code>ORDER BY</code> at the very end sorts the whole result, not the second half: a set operation takes no <code>ORDER BY</code> or <code>LIMIT</code> inside its halves, only one pair after the last of them.</p>
 
-<h2>UNION ALL: keeping every row</h2>
+<h2 id="union-all-keeping-every-row">UNION ALL: keeping every row</h2>
 <p><code>UNION ALL</code> stacks the two results as they are. Nothing is compared, so nothing is removed, and it is also the cheaper of the two, since removing duplicates means sorting or hashing every row. Here is the same voucher list with <code>UNION ALL</code>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
 <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
@@ -124,7 +151,7 @@
 <tr><td>Vera Bianchi</td><td>referred by Alice</td></tr>
 </table>
 
-<h2>Matching the columns</h2>
+<h2 id="matching-the-columns">Matching the columns</h2>
 <p>Both halves must return the same number of columns, and the columns are matched by position, not by name: the first column of one goes under the first column of the other, whatever each is called. The result takes its column names from the first half, which is why only the first half above says <code>AS reason</code>. Matched columns should also hold the same kind of value. This timeline of Oscar Nakamura's dealings with the bakery stacks a date from <code>customer</code> on dates from <code>orders</code> and <code>refund</code>, text on text, with a label to tell them apart. A third half is one more <code>UNION ALL</code>; the final <code>ORDER BY</code> sorts all three together.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">joined</span> <span class="sql-kw">AS</span> <span class="sql-id">day</span>, <span class="sql-str">'joined'</span> <span class="sql-kw">AS</span> <span class="sql-id">event</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">id</span> = <span class="sql-num">20</span>
 <span class="sql-kw">UNION</span> <span class="sql-kw">ALL</span>
@@ -146,7 +173,7 @@
 </table>
 <p>A label column like <code>event</code> is the usual companion of <code>UNION ALL</code>: once the rows are stacked, it is the only way left to know which half each came from. The same stacking is the first step of a <a href="ctes.html">recursive CTE</a>, whose anchor and recursive part are joined by <code>UNION ALL</code>.</p>
 
-<h2>INTERSECT: the rows both results share</h2>
+<h2 id="intersect-the-rows-both-results-share">INTERSECT: the rows both results share</h2>
 <p><code>INTERSECT</code> keeps only the rows that appear in both results, once each. Which customers of Hillcrest ordered both on a weekday and at the weekend?</p>
 <p>No column says which day of the week a date is, and the functions that compute it differ from one database to the next (PostgreSQL's <code>EXTRACT(DOW FROM ...)</code>, SQLite's <code>strftime</code>, which the game's terminal refuses). Here a little arithmetic does it. Every order falls in March 2026, whose Saturdays are the 7th, 14th, 21st and 28th, so the day of the month divided by 7 leaves 0 on a Saturday and 1 on a Sunday: <code>CAST(substr(o.day, 9, 2) AS INTEGER) % 7 IN (0, 1)</code> means "at the weekend" (<code>substr</code> and <code>CAST</code> as on the <a href="dates-times.html">dates page</a>), and <code>NOT IN (0, 1)</code> means a weekday, Monday to Thursday, since the shop is closed on Fridays. A date bound such as <code>day &gt;= '2026-03-07'</code> is not "the weekend": it is every day from the first Saturday on, weekdays of the three later weeks included.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
@@ -173,7 +200,7 @@
 </table>
 <p>A single query whose <code>WHERE</code> asks for both, <code>% 7 NOT IN (0, 1) AND % 7 IN (0, 1)</code>, would return nothing: one order cannot fall both on a weekday and at the weekend. The question is about two different rows of the same customer, and <code>INTERSECT</code> compares the two lists of names instead of a single row with itself. <code>EXISTS</code> or a <a href="joins.html">self-join</a> can ask the same thing.</p>
 
-<h2>EXCEPT: the rows of one but not the other</h2>
+<h2 id="except-the-rows-of-one-but-not-the-other">EXCEPT: the rows of one but not the other</h2>
 <p><code>EXCEPT</code> keeps the rows of the first result that the second does not contain. Which customers ordered on a weekday but never at the weekend? This time over every town.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
@@ -194,11 +221,11 @@
 <p>Unlike <code>UNION</code> and <code>INTERSECT</code>, <code>EXCEPT</code> is not symmetrical: swap the halves and the question becomes "at the weekend but never during the week", whose answer, compared by id as the next paragraph explains, is Elena Nakamura, Greta Hughes, Iris Costa and a Zoe Garcia. It is another way of asking about a missing row, alongside <code>NOT EXISTS</code> and <code>NOT IN</code> on the <a href="subqueries.html">subqueries page</a>, and unlike <code>NOT IN</code> it treats two NULLs as equal, so a NULL in the second result does not empty the answer.</p>
 <p>The answer above is one name short. Two different customers are called Zoe Garcia: the one in Hillcrest (id 14) came only on weekdays, the one in Riverside (id 27) only at weekends. The halves compare names, so the Riverside Zoe's weekend orders remove the Hillcrest Zoe from the result. Select <code>c.id, c.name</code> in both halves instead and the two Zoes are different rows again: the answer becomes four, Zoe Garcia (id 14) included. Whenever two people could share a name, compare the ids, and join the names back afterwards if you need them.</p>
 
-<h2>Common mistakes</h2>
+<h2 id="set-operations-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Halves with a different number of columns, which every database refuses. Columns in a different order in each half, which runs and stacks towns under names. A text column matched with a number, which PostgreSQL refuses and SQLite quietly stacks. An <code>ORDER BY</code> at the end of the first half, which is a syntax error: the only one goes after the last half. Using <code>UNION</code> where duplicates are real events to count, or <code>UNION ALL</code> where a list of people was meant. Chaining several different operators without thinking about the order they run in: PostgreSQL works out <code>INTERSECT</code> first, SQLite reads them from left to right, so name each step in a <a href="ctes.html">CTE</a> rather than rely on either.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#not-on-the-weekend-menu">Not on the weekend menu</a>, on the exercises page.</p>
-<p class="in-game"><b>In the game:</b> Chapter XII, <i>Follow the Money</i>, uses UNION ALL inside WITH RECURSIVE.</p>
+<p class="in-game"><b>In the game:</b> Chapter XII, <i>Follow the Money</i>, uses <code>UNION ALL</code> inside <code>WITH RECURSIVE</code>.</p>
 <nav class="learn-pager"><a class="prev" href="subqueries.html">Previous: Subqueries</a><a class="next" href="window-functions.html">Next: Window functions: RANK and LAG</a></nav>
 </main>
 <footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>

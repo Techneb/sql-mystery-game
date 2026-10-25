@@ -50,12 +50,41 @@
   </ol></details> &middot;
   <a href="exercises.html">Exercises</a> &middot;
   <a href="grammar.html">Grammar</a></nav>
-<main class="learn">
+<main class="learn with-side">
+<!-- side menu: colour_learn.mjs -->
+<nav class="side-menu" aria-label="Learning chapters"><ol>
+  <li><a href="database.html">1. Database</a></li>
+  <li><a href="schema.html">2. Schema</a></li>
+  <li><a href="select-where.html">3. SELECT</a></li>
+  <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+  <li><a href="like.html">5. LIKE</a></li>
+  <li class="here"><span aria-current="page">6. Dates</span>
+    <ol>
+      <li><a href="#three-ways-to-write-a-moment">Three ways to write a moment</a></li>
+      <li><a href="#why-text-order-is-calendar-order">Why text order is calendar order</a></li>
+      <li><a href="#comparing-and-filtering-ranges">Comparing and filtering ranges</a></li>
+      <li><a href="#taking-apart">Taking a date apart: substr</a></li>
+      <li><a href="#from-text-to-number-cast">From text to number: CAST</a></li>
+      <li><a href="#dates-stored-as-numbers">Dates stored as numbers</a></li>
+      <li><a href="#date-functions">Grammar: dates, substr and CAST</a></li>
+      <li><a href="#dates-times-common-mistakes">Common mistakes</a></li>
+    </ol>
+  </li>
+  <li><a href="group-by-having.html">7. GROUP BY</a></li>
+  <li><a href="joins.html">8. JOIN</a></li>
+  <li><a href="nulls.html">9. NULL</a></li>
+  <li><a href="case-when.html">10. CASE</a></li>
+  <li><a href="subqueries.html">11. Subqueries</a></li>
+  <li><a href="set-operations.html">12. UNION</a></li>
+  <li><a href="window-functions.html">13. Windows</a></li>
+  <li><a href="ctes.html">14. CTEs</a></li>
+</ol></nav>
+<!-- /side menu -->
 <h1>Dates and times stored as text or numbers</h1>
 <p class="game-label">Game: chapters <a href="../">I</a>, <a href="../">IV</a>, <a href="../">VI</a>, <a href="../">VII</a> and <a href="../">XI</a></p>
 <p class="lede">SQLite has no date type. A date is a piece of text or a number that people agree to read as a date, and once the format is right, ordinary comparisons do almost everything.</p>
 
-<h2>Three ways to write a moment</h2>
+<h2 id="three-ways-to-write-a-moment">Three ways to write a moment</h2>
 <p>Databases such as PostgreSQL have proper <code>DATE</code>, <code>TIME</code> and <code>TIMESTAMP</code> types, with their own arithmetic. SQLite stores only numbers, text and blobs, so dates arrive in one of a few conventional shapes:</p>
 <table class="result">
 <tr><th>Shape</th><th>Example</th><th>Stored as</th></tr>
@@ -66,8 +95,8 @@
 </table>
 <p>The bakery database (see the <a href="database.html">bakery database page</a>) uses the first two: <code>orders.day</code>, <code>refund.day</code> and <code>customer.joined</code> are ISO dates, <code>orders.time</code> is a clock time. The schema tells you which shape a column uses; check a few rows too, because the type alone does not say whether a text column holds <code>'2026-03-05'</code> or <code>'5 March 2026'</code>.</p>
 
-<h2>Why text order is calendar order</h2>
-<p>Text is compared character by character from the left, the way a dictionary sorts words. The first character that differs decides, and later characters do not matter. An ISO date puts the largest unit first (year, then month, then day), gives each unit a fixed width, and pads with leading zeros. So the first difference between two dates is always in the largest unit that differs, which is exactly how calendar order works: <code>'2026-03-10'</code> and <code>'2026-03-09'</code> first differ at the ninth character, where <code>1</code> is greater than <code>0</code>, and the tenth of March does come after the ninth.</p>
+<h2 id="why-text-order-is-calendar-order">Why text order is calendar order</h2>
+<p>Text is compared character by character from the left, the way a dictionary sorts words. The first character that differs decides, and later characters do not matter. An <b>ISO date</b> puts the largest unit first (year, then month, then day), gives each unit a fixed width, and pads with leading zeros. So the first difference between two dates is always in the largest unit that differs, which is exactly how calendar order works: <code>'2026-03-10'</code> and <code>'2026-03-09'</code> first differ at the ninth character, where <code>1</code> is greater than <code>0</code>, and the tenth of March does come after the ninth.</p>
 <p>The same reasoning holds for <code>HH:MM</code> times on a 24-hour clock, and for <code>'YYYY-MM-DD HH:MM'</code> stamps. It fails as soon as the width varies. Without its leading zero, nine o'clock sorts after half past ten, because <code>9</code> is greater than <code>1</code>:</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'9:05'</span> &lt; <span class="sql-str">'10:30'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'before'</span> <span class="sql-kw">ELSE</span> <span class="sql-str">'after'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">without_zero</span>,
        <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-str">'09:05'</span> &lt; <span class="sql-str">'10:30'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'before'</span> <span class="sql-kw">ELSE</span> <span class="sql-str">'after'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">with_zero</span>;</code></pre>
@@ -77,7 +106,7 @@
 </table>
 <p>Day-first formats such as <code>'05/03/2026'</code> fail the same way as soon as two dates fall in different months: they sort by day of the month first, so <code>'05/03/2026'</code> comes after <code>'04/06/2026'</code>. If you design a table, store ISO text or a number; if you inherit one in another format, convert it before comparing.</p>
 
-<h2>Comparing and filtering ranges</h2>
+<h2 id="comparing-and-filtering-ranges">Comparing and filtering ranges</h2>
 <p>Because the order is right, the usual operators work on ISO text as they do on numbers. Compare with a value written in the same shape and in single quotes: <code>day &gt;= '2026-03-05'</code>. <code>BETWEEN a AND b</code> includes both ends, which suits whole days, and clock times too: here the orders of the fourth and the fifth taken between nine and ten.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
@@ -129,7 +158,7 @@
 <p>The filter <code>joined &lt; '2024-05-01'</code> compares two pieces of text, and because both are ISO dates, text order is date order: it keeps everyone who joined before the first of May 2024. The month column can then be grouped on, to count the newcomers of each month (see <a href="group-by-having.html">GROUP BY</a>).</p>
 <p>A prefix can also be matched with <a href="like.html">LIKE</a>: <code>joined LIKE '2024-02-%'</code> keeps February 2024. It works, but a range (<code>joined &gt;= '2024-02-01' AND joined &lt; '2024-03-01'</code>) says what you mean and can use an index. Avoid patterns with a wildcard on both sides, such as <code>LIKE '%03%'</code>: it matches March, the third of any month, and the year 2003.</p>
 
-<h2>From text to number: CAST</h2>
+<h2 id="from-text-to-number-cast">From text to number: CAST</h2>
 <p><code>substr</code> returns text. As long as you only compare or sort, that is fine, but arithmetic needs numbers: <code>CAST(text AS INTEGER)</code> converts. Turning a clock time into the number of minutes since midnight, for instance, lets you add and subtract times: the hours times 60, plus the minutes.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span>,
        <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) * <span class="sql-num">60</span> + <span class="sql-kw">CAST</span>(<span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">4</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">INTEGER</span>) <span class="sql-kw">AS</span> <span class="sql-id">minutes_after_midnight</span>
@@ -161,7 +190,7 @@
 <tr><td>11</td><td>21</td></tr>
 </table>
 
-<h2>Dates stored as numbers</h2>
+<h2 id="dates-stored-as-numbers">Dates stored as numbers</h2>
 <p>Some systems store a date as the integer <code>YYYYMMDD</code>: 5 March 2026 is <code>20260305</code>. Larger units sit in the higher digits, so numeric order is calendar order and comparisons work exactly as with ISO text, without quotes this time: the value is a number, and a number is compared with a number (see <a href="select-where.html#types">Types</a>). Integer division and the remainder take it apart: <code>d / 10000</code> is the year, <code>d / 100 % 100</code> the month, <code>d % 100</code> the day. Here it is applied to a number written in the query, to show the arithmetic; <code>CAST(replace(day, '-', '') AS INTEGER)</code> would turn an ISO text date into such a number.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-num">20260305</span> / <span class="sql-num">10000</span> <span class="sql-kw">AS</span> <span class="sql-id">year</span>, <span class="sql-num">20260305</span> / <span class="sql-num">100</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">month</span>, <span class="sql-num">20260305</span> % <span class="sql-num">100</span> <span class="sql-kw">AS</span> <span class="sql-id">day_of_month</span>;</code></pre>
 <table class="result">
@@ -176,7 +205,7 @@
 </table>
 <p>A range such as "the first week of March" is still easy to write (<code>d BETWEEN 20260301 AND 20260307</code>); "seven days after a given date" is not, because the end of a month gets in the way. Real date arithmetic needs the database's own date functions, and those differ from one database to the next (SQLite's <code>date()</code> and <code>julianday()</code>, PostgreSQL's <code>DATE</code> type and intervals). For the comparisons, ranges and parts on this page, plain text and integer operations are enough, and they behave the same everywhere.</p>
 
-<h2 id="date-functions">Grammar: dates, substr and CAST</h2>
+<h2 id="date-functions" class="rule">Grammar: dates, substr and CAST</h2>
 <p>Everything on this page is done with comparisons of the date text, <code>substr</code> and <code>CAST</code>, which every database knows. Date functions such as <code>strftime</code> differ from one database to the next and are not standard SQL. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-fn">strftime</span>(<span class="sql-str">'%m'</span>, <span class="sql-id">joined</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
@@ -189,7 +218,7 @@
 </table>
 <p><code>date</code> and <code>time</code> with a single argument are accepted. PostgreSQL's own <code>LEFT(t, n)</code>, <code>RIGHT(t, n)</code> and <code>x::integer</code> are accepted too: the terminal runs them as <code>substr</code> and <code>CAST(x AS INTEGER)</code>.</p>
 
-<h2>Common mistakes</h2>
+<h2 id="dates-times-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Comparing a text date with a number, <code>day = 20260305</code>, or a number date with text, <code>d = '20260305'</code>: write the value in the column's own type and format. Writing a date in a shape other than the column's, such as <code>'2026-3-5'</code> against <code>'2026-03-05'</code>, which compares as text and matches nothing. Times without a leading zero. <code>BETWEEN</code> with a date-only end on a column that also holds the time. Subtracting <code>YYYYMMDD</code> numbers to count days. Doing arithmetic on <code>substr</code> results without <code>CAST</code>. Matching dates with <code>LIKE '%...%'</code>, which finds the digits anywhere.</p>
 
 <p class="try-it"><b>Try it:</b> <a href="exercises.html#early-customers">Early customers</a> and <a href="exercises.html#busy-hours">Busy hours</a>, on the exercises page.</p>
