@@ -1,8 +1,12 @@
 // The handbook's exercises page made interactive: the bakery database (learn/database.html's script) built in the
-// browser with sql.js, the game's terminal rules (strictCheck, cartesian guard, query_only, case-sensitive LIKE),
-// and a check of the last result against the chosen question's solution, run on the same database.
+// browser with sql.js, the game's terminal (terminal.js: the same run pipeline and editor as the game), and a check
+// of the last result against the chosen question's solution, run on the same database. It never loads the game.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { highlightSql, formatSql, strictCheck, strictHtml, cartesian, sqliteHelp, errorHtml, dateArithmeticNote, EMPTY_RUN, toSqlite, renderResults, terminalDb, escapeHtml, pushHistory, btnLike, initAds, erdButtonHtml, track, trackOnce, useFeature, queryFail, wireSuggest, showCallouts } from "../app.js";
+import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, EMPTY_RUN } from "../terminal.js";
+import { toSqlite } from "../strict.js";
+import { btnLike, erdButtonHtml, setIconButton, showCallouts } from "../ui.js";
+import { initAds, track, trackOnce, useFeature, queryFail } from "../stats.js";
+import { escapeHtml } from "../shared.js";
 
 const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
@@ -49,7 +53,7 @@ export function sameResult(user, sol, { ordered = false, need = null, tol = 1e-6
   return pick([]);
 }
 // The bakery tables a solution reads (shown with the question).
-export function tablesIn(sql, names) { return names.filter(t => new RegExp("\\b" + t + "\\b", "i").test(sql)); }
+export function tablesNamed(sql, names) { return names.filter(t => new RegExp("\\b" + t + "\\b", "i").test(sql)); }
 
 // The levels (the page's Warm-up, Practice and Challenge headings). The level shown first: the linked question's,
 // else the first level with a question left to solve. A level's button selects its first unsolved question.
@@ -59,15 +63,13 @@ export function startLevel(items, solved, slug) {
 }
 // GA's name for a level: its heading in lower case (warm-up, practice, challenge).
 export const levelId = level => level.toLowerCase();
-// exercise_run's outcome for a run: refused (strictCheck or the comma-join guard), error (SQLite's own) or ok.
-export const runOutcome = (error, refused) => refused ? "refused" : error ? "error" : "ok";
 
 export function levelPick(items, level, solved) {
   const list = items.filter(x => x.level === level);
   return list.find(x => !solved.includes(x.slug)) || list[0];
 }
 
-// The workbench's callouts (owner, 2026-10-25), the game's chapter I tour (app.js showCallouts) on this page's parts.
+// The workbench's callouts (owner, 2026-10-25), the game's chapter I tour (ui.js showCallouts) on this page's parts.
 // Shown once, when the workbench is up and the database ready; remembered in TOUR_STORE. Never a solution.
 export const TOUR_STORE = "ritz.exercises.tour";
 export const EX_CALLOUTS = [
@@ -90,7 +92,7 @@ async function boot() {
     return { p, slug: p.id, level: h.textContent, title: p.querySelector("b").textContent.replace(/\.$/, ""), sol, sql: sol.querySelector("pre code").textContent, opts: checkOptions(p.dataset) };
   });
   const levels = [...new Set(items.map(e => e.level))];
-  let solved = load(STORE, []).filter(s => items.some(e => e.slug === s)), cur = items[0], level = null, db = null, schema = {}, names = [];
+  let solved = load(STORE, []).filter(s => items.some(e => e.slug === s)), cur = items[0], level = null, db = null, schema = {}, names = [], cols = {};
   const hist = { history: load(HISTORY_STORE, []).filter(q => typeof q === "string") };
   const pick = $("ex-pick");
   const TICK = String.fromCharCode(0x2713), BLANK = String.fromCharCode(0x2003);   // a check mark, or an em space as wide
@@ -116,7 +118,7 @@ async function boot() {
     sol.open = false;
     sol.querySelector("summary").textContent = "Show solution";
     $("ex-question").replaceChildren(q, sol);
-    $("ex-tables").textContent = names.length ? "Tables: " + tablesIn(e.sql, names).join(", ") : "";
+    $("ex-tables").textContent = names.length ? "Tables: " + tablesNamed(e.sql, names).join(", ") : "";
     markSolved();
     status("", "");   // the solved mark next to QUESTION says the rest
   }
@@ -142,11 +144,7 @@ async function boot() {
   if (title) { bench.querySelector(".wb-question").prepend(title); title.classList.add("wb-title"); }
   // The schema's Enlarge button, as in the game: a fixed overlay, closed by the X, a second click or Escape.
   const erdBox = bench.querySelector(".bakery-erd"), erdBtn = $("btn-erd");
-  const setErd = large => {
-    erdBox.classList.toggle("large", large);
-    const { html, label } = erdButtonHtml(large);
-    erdBtn.innerHTML = html; erdBtn.title = label; erdBtn.setAttribute("aria-label", label);
-  };
+  const setErd = large => { erdBox.classList.toggle("large", large); setIconButton(erdBtn, erdButtonHtml(large)); };
   setErd(false);
   erdBtn.onclick = () => { const large = !erdBox.classList.contains("large"); setErd(large); if (large) useFeature("schema_enlarge"); };
   document.addEventListener("keydown", ev => { if (ev.key === "Escape" && erdBox.classList.contains("large")) { setErd(false); erdBtn.focus(); } });
@@ -162,27 +160,13 @@ async function boot() {
   initAds();
 
   const ta = $("sql");
-  const sync = () => { $("sql-hl").innerHTML = highlightSql(ta.value); ta.style.height = "auto"; ta.style.height = Math.max(140, ta.scrollHeight + 2) + "px"; };
+  const sync = wireEditor(ta, $("sql-hl"), { run, cols: () => cols, minHeight: 140 });   // the whole bakery
   // History, as in the game: most recent first, 20 at most, a query that errors or is refused never kept; per browser.
   function renderHistory() {
     $("history").innerHTML = hist.history.map(q => "<li>" + escapeHtml(q) + "</li>").join("");
     [...$("history").children].forEach((li, i) => btnLike(li, () => { ta.value = hist.history[i]; sync(); ta.focus(); useFeature("history_reuse"); }));
   }
   renderHistory();
-  ta.addEventListener("input", sync);
-  wireSuggest(ta, () => Object.fromEntries(names.map(t => [t, schema[t].map(c => c[0])])), sync);   // the whole bakery
-  ta.addEventListener("keydown", ev => {
-    if ((ev.ctrlKey || ev.metaKey) && ev.key === "Enter") { ev.preventDefault(); run(); }
-    else if (ev.ctrlKey && !ev.metaKey && ev.key.toLowerCase() === "f") { ev.preventDefault(); ta.value = formatSql(ta.value); sync(); }
-    else if (ev.key === "Tab" && !ev.shiftKey) {   // Shift+Tab leaves the box
-      ev.preventDefault();
-      const s = ta.selectionStart;
-      ta.value = ta.value.slice(0, s) + "\t" + ta.value.slice(ta.selectionEnd);
-      ta.selectionStart = ta.selectionEnd = s + 1;
-      sync();
-    }
-  });
-  sync();
   $("ex-run").onclick = run;
 
   const solutions = {}, runs = {}, fails = {};   // this page load's runs and failed runs per question (GA)
@@ -190,18 +174,13 @@ async function boot() {
     const sql = ta.value.trim();
     if (!db) return;
     if (!sql) { $("ex-results").innerHTML = EMPTY_RUN; $("ex-info").textContent = ""; return; }   // not a run
-    let res = null, error = null, strict = null, cart = false;
-    if ((cart = cartesian(sql))) error = "Two tables side by side with nothing to match them: say what joins them (ON or WHERE).";
-    else if ((strict = strictCheck(sql, schema))) error = strict.error;
-    else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; } catch (e) { error = e.message; }
-    const help = error && !strict && !cart ? sqliteHelp(error, sql, Object.fromEntries(Object.entries(schema).map(([t, cs]) => [t, cs.map(c => c[0])]))) : null;
-    const note = !error && !res ? dateArithmeticNote(sql, schema) : "";
-    $("ex-results").innerHTML = strict ? strictHtml(strict, "") : error ? errorHtml(error, help) : renderResults(res) + (note ? '<p class="muted">' + escapeHtml(note) + "</p>" : "");
-    $("ex-info").textContent = error ? "error" : (res ? res.values.length : 0) + " rows";
+    const r = runSql(db, sql, schema, cols, "tables"), { res, error } = r;
+    $("ex-results").innerHTML = runHtml(r, "");
+    $("ex-info").textContent = runInfo(r);
     const ex = cur.slug, level = levelId(cur.level);
     runs[ex] = (runs[ex] || 0) + 1;
-    trackOnce("run:" + ex, "exercise_run", { exercise: ex, level, outcome: runOutcome(error, strict || cart) });
-    const fail = error && queryFail(fails, ex, strict, cart, help);
+    trackOnce("run:" + ex, "exercise_run", { exercise: ex, level, outcome: r.outcome.kind });
+    const fail = error && queryFail(fails, ex, r.outcome);
     if (fail) track("query_fail", { exercise: ex, ...fail });
     if (error) return status("wrong", "Fix the error first, then run it again.");
     pushHistory(hist, sql);
@@ -220,19 +199,18 @@ async function boot() {
   try {
     const html = await (await fetch("database.html" + VERSION)).text();
     const script = new DOMParser().parseFromString(html, "text/html").querySelector("details.script code").textContent;
-    const SQL = await initSqlJs({ locateFile: f => "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/" + f });
+    const SQL = await openSqlJs();
     db = new SQL.Database();
     db.run(script);
     terminalDb(db);
-    names = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")[0].values.map(r => r[0]);
-    for (const t of names) schema[t] = db.exec("PRAGMA table_info(" + t + ")")[0].values.map(r => [r[1], r[2], r[5]]);
+    schema = readSchema(db); names = Object.keys(schema); cols = columns(schema);
     for (const e of items) { const all = db.exec(toSqlite(e.sql)); solutions[e.slug] = all[all.length - 1] || null; }
     $("ex-info").textContent = "Bakery database ready.";
     show(cur);
     if (linked) land();
     if (!load(TOUR_STORE, false)) {   // blocked storage: once per page load
       save(TOUR_STORE, true);
-      showCallouts(EX_CALLOUTS, how => useFeature("tour_" + how));
+      showCallouts(EX_CALLOUTS, how => useFeature(how === "done" ? "tour_done" : "tour_skip"));
     }
   } catch (e) {
     $("ex-info").textContent = "The SQL engine did not load (" + e.message + "): the questions and solutions are still here.";

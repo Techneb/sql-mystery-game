@@ -9,7 +9,8 @@
 // Idempotent: a coloured block is stripped back to plain SQL and coloured again to the same bytes.
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
-import { highlightSql, strictCheck } from "./site/app.js";
+import { highlightSql } from "./site/terminal.js";
+import { strictCheck } from "./site/strict.js";
 
 const ENT = { "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": '"', "&#x27;": "'", "&#39;": "'" };
 export const plainSql = (inner) => inner.replace(/<\/?span[^>]*>/g, "").replace(/&(lt|gt|amp|quot|#x27|#39);/g, (e) => ENT[e]);

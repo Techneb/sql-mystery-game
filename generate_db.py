@@ -18,7 +18,7 @@ SEASONS = 5   # compete databases the deploy builds (site/season-1..5.*); a seas
 
 
 def normalise(s):
-    """Same rules as normalise() in site/app.js. Keep both in sync (fixture in chapters.json).
+    """Same rules as normalise() in site/shared.js. Keep both in sync (fixture in chapters.json).
     Lowercase word/digit tokens; a lone letter glues to the digits after it (A-7, A 7, A7 -> a7) before stop words
     go; a trailing STOP (telegram punctuation) goes when other tokens remain; all-digit answers drop leading zeros."""
     tokens = []
@@ -75,7 +75,7 @@ CREATE TABLE lift_log (
 
 
 def ilike(pattern, value, escape=None):
-    """Case-insensitive LIKE, as site/app.js ilike(): the terminal runs ILIKE as REGEXP bound to it."""
+    """Case-insensitive LIKE, as site/strict.js ilike(): the terminal runs ILIKE as REGEXP bound to it."""
     if pattern is None or value is None:
         return None
     out, chars = [], iter(str(pattern))
@@ -88,7 +88,7 @@ def ilike(pattern, value, escape=None):
 PG_TOKEN = re.compile(r"""(\s+|--[^\n]*|/\*[\s\S]*?(?:\*/|$))|('(?:[^']|'')*')|("(?:[^"]|"")*")|(`[^`]*`|\[[^\]]*\])|"""
                        r"""((?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)|([A-Za-z_][A-Za-z0-9_$]*)|(<=|>=|<>|!=|==|\|\||::|[-+*/%(),.;=<>|&~?:@^!])|([\s\S])""")
 TOKEN_KINDS = (None, "str", "qid", "bq", "num", "word", "op", "bad")
-# site/app.js RESERVED, SQLITE_TYPE
+# site/strict.js RESERVED, SQLITE_TYPE
 RESERVED = set(("select from where group by having order limit offset union intersect except join inner left right full outer "
                 "cross natural on using as and or not in is null like ilike glob regexp match between case when then else end with recursive "
                 "distinct all exists cast over partition window asc desc values collate escape true false filter isnull notnull").split())
@@ -99,7 +99,7 @@ SQLITE_TYPE = dict([(t, "INTEGER") for t in "int integer int2 int4 int8 smallint
 
 
 def sql_tokens(sql):
-    """site/app.js sqlTokens: (kind, text, lower text, start, end), whitespace and comments dropped."""
+    """site/strict.js sqlTokens: (kind, text, lower text, start, end), whitespace and comments dropped."""
     out = []
     for m in PG_TOKEN.finditer(sql):
         if m.group(1):
@@ -135,7 +135,7 @@ def _cast_type(toks, i):
 
 
 def _rewrite_one(sql, toks):
-    """site/app.js rewriteOne: the leftmost x::type, LEFT(x, n) or RIGHT(x, n) rewritten, or None."""
+    """site/strict.js rewriteOne: the leftmost x::type, LEFT(x, n) or RIGHT(x, n) rewritten, or None."""
     at = lambda k: toks[k] if 0 <= k < len(toks) else (None, "", "", 0, 0)
     for i, x in enumerate(toks):
         if x[1] == "::":
@@ -185,7 +185,7 @@ def _rewrite_one(sql, toks):
 
 
 def sqlite_sql(sql):
-    """site/app.js toSqlite: LEFT/RIGHT become substr, x::type becomes CAST, ILIKE becomes REGEXP (strings untouched)."""
+    """site/strict.js toSqlite: LEFT/RIGHT become substr, x::type becomes CAST, ILIKE becomes REGEXP (strings untouched)."""
     while True:
         r = _rewrite_one(sql, sql_tokens(sql))
         if r is None:
@@ -1252,7 +1252,7 @@ def chapters_json(V, mode="learn"):
     return out
 
 
-# A port of site/app.js formatSql (Ctrl+F in the terminal), so solution.sql reads like a formatted query.
+# A port of site/terminal.js formatSql (Ctrl+F in the terminal), so solution.sql reads like a formatted query.
 # The site test runs the JS formatter over solution.sql and requires it to change nothing: the two must agree.
 SQL_KEYWORDS = set(("select from where and or not in is null like ilike glob between join inner left right full outer "
     "cross natural on using as group by order having limit offset distinct all union intersect except with recursive case "

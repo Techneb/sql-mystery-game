@@ -5,6 +5,7 @@
 // compares it with ADMIN_KEY).
 import { BOARD_KEY, csvText as csv, downloadText, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
+import { ICON_ATTRS } from "./ui.js";
 
 export const POLL_MS = 10000;
 export const CSV_COLUMNS = ["timestamp", "event", "team", "season", "chapter", "wrong", "queries", "clientAt", "elapsedMs"];
@@ -38,7 +39,6 @@ export const newestFirst = seasons => [...seasons].sort((a, b) => Number(b.creat
 
 // Buttons in the game's icon style (app.js erdButtonHtml): a 16 px glyph stroked in currentColor over a one-word
 // caption (owner, 2026-10-25), the action's full name in title (the tooltip) and aria-label.
-const ICON_ATTRS = 'width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 // One row per action: when (which seasons show it) and run (the click; true when the seasons table should reload).
 // run reads the page wiring below, at click time.
 const always = () => true;

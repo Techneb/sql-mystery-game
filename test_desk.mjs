@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { sha256, rank } from "./site/app.js";
+import { sha256 } from "./site/shared.js";
+import { rank } from "./site/badges.js";
 import * as shared from "./site/shared.js";
 import { qrMatrix, qrSvg, dataPositions, MASKS, gfMul, gfExp } from "./site/qr.js";
 

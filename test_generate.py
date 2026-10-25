@@ -133,7 +133,7 @@ class Noise(unittest.TestCase):
 
     def test_guests_stay_noise(self):
         import re
-        films = re.search(r"FILM_LINES = \[([^\]]*)\]", open("site/app.js").read()).group(1)
+        films = re.search(r"FILM_LINES = \[([^\]]*)\]", open("site/badges.js").read()).group(1)
         films = re.findall(r'"([^"]+)"', films)
         planted = {c["name"] for c in plot.CAST} | {"Mr. Grey"}
         self.assertEqual(len(set(g.GUESTS)), len(g.GUESTS))
@@ -654,7 +654,7 @@ class Board(unittest.TestCase):
 class SolutionSql(unittest.TestCase):
     def test_formatter_matches_the_site(self):
         import re
-        with open("site/app.js") as f:
+        with open("site/terminal.js") as f:
             js = f.read()
         words = lambda name: set(" ".join(re.findall(r'"([a-z_ ]+)"', re.search(r"const %s = new Set\(([\s\S]*?)\);" % name, js).group(1))).split())
         self.assertEqual(words("SQL_KEYWORDS"), g.SQL_KEYWORDS)
