@@ -1945,7 +1945,7 @@ test("callouts point at parts of the page, never at a table", () => {
 });
 test("landing warm-up line links the handbook's first warm-up exercise; terminal hints mention Tab", () => {
   const html = fs.readFileSync("site/index.html", "utf8"), ex = fs.readFileSync("site/learn/exercises.html", "utf8");
-  const slug = html.match(/class="muted landing-warmup">[^<]*<a href="learn\/exercises\.html#([\w-]+)"/)[1];
+  const slug = html.match(/class="landing-warmup"><strong>New to SQL\?<\/strong> <a href="learn\/exercises\.html#([\w-]+)"/)[1];
   const first = ex.slice(ex.indexOf("<h2>Warm-up</h2>")).match(/class="exercise" id="([\w-]+)"/)[1];
   assert.equal(slug, first);
   assert.match(html, /<kbd>Ctrl<\/kbd><span class="plus">\+<\/span><kbd>Enter<\/kbd> run<\/span><span class="kgrp"><kbd>Tab<\/kbd> complete/);

@@ -56,7 +56,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-foot { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 /* the handbook's chrome: its header nav under the masthead lines, its footer in .landing-foot (also privacy.html) */
 .landing-nav { margin-top: 6px; }
-.landing-foot a, .landing-nav a, .mast-sub a, .landing-warmup a { color: inherit; }
+.landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }
@@ -353,6 +353,8 @@ body:has(.suspects:not([hidden]), .erd.large) .theme-corner { display: none; }
 .callout::before { content: ""; position: absolute; top: -10px; left: 18px; border: 8px solid transparent; border-top: 0; border-bottom: 9px solid var(--accent); }
 .callout .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 .callout .row .muted { margin-right: auto; font-size: 13px; }
-.landing-warmup { margin: 4px 0 10px; font-size: 17px; opacity: 1; }   /* owner, 2026-10-25: bigger */
+/* the newcomers' line, set off as a ruled slip so it is seen (owner, 2026-10-25) */
+.landing-warmup { display: inline-block; margin: 10px 0 10px; padding: 7px 14px; font-size: 17px; border: 1px solid var(--rule); border-left: 4px solid var(--rel); border-radius: var(--r-box); background: var(--shade); }
+.landing-warmup a { font-weight: 700; color: var(--rel); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .share .share-text { font-style: italic; margin: 6px 0 8px; }
 .share a.btn { text-decoration: none; } .share a.btn.quiet { background: transparent; color: var(--ink); }
