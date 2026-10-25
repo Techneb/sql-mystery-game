@@ -7,6 +7,7 @@
 // opens GA. This module is the GA model (the Count metrics, the request builders, PANELS) and the views; the charts
 // themselves are charts.js. Pure parts are exported for test_desk.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
+import { wireFeedback } from "./feedback.js";
 import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 import { ROMAN, STAGES, barTable, chapterBarsSvg, chapterLineSvg, compact, donutHtml, fold, funnelSvg, groupSvg, hbarSvg, legend, legendOf,
   lineSvg, mapHtml, multiLineSvg, pct, pctOf, r1, raw, retention, roman, solveRateSvg, tableHtml, wireCsv, wireTips } from "./charts.js";
@@ -312,10 +313,10 @@ export function pagesSection(p, m) {
 export const GAME_FEATURES = { schema_enlarge: "Schema enlarged", suspects_open: "Suspects opened", history_reuse: "History query reused",
   grammar_link: "Grammar link followed", film_play: "Film played", film_end: "Film watched to the end", landing_about: "Landing about opened", theme_toggle: "Day/Night toggled",
   prologue_done: "Prologue finished", prologue_skip: "Prologue skipped", share: "Shared the result", tour_done: "Tour finished", tour_skip: "Tour skipped",
-  ad_house_click: "House ad clicked", warmup_link: "Warm-up link followed", card_review: "Case card reopened" };
+  ad_house_click: "House ad clicked", warmup_link: "Warm-up link followed", card_review: "Case card reopened", feedback: "Feedback link pressed" };
 export const HANDBOOK_FEATURES = { schema_enlarge: "Schema enlarged", history_reuse: "History query reused", grammar_link: "Grammar link followed",
   howto_open: "How to use opened", solution_open: "Solution opened", try_it: "Try it link followed", theme_toggle: "Day/Night toggled", ad_house_click: "House ad clicked",
-  tour_done: "Tour finished", tour_skip: "Tour skipped" };
+  tour_done: "Tour finished", tour_skip: "Tour skipped", feedback: "Feedback link pressed" };
 export const MODES = { learn: "Learn", compete: "Compete" };
 export const KINDS = { error: "SQLite error", refused: "Refused by the grammar check" };
 export const LEVELS = { "warm-up": "Warm-up", practice: "Practice", challenge: "Challenge" };
@@ -673,4 +674,4 @@ async function main() {
   load(DAYS[0]);
 }
 
-if (typeof document !== "undefined") main();
+if (typeof document !== "undefined") { wireFeedback(); main(); }

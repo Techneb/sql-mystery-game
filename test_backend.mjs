@@ -300,3 +300,49 @@ test("?report: GA's error text comes back as {ok:false, error}, and totals are r
   const r = b.get({ report: JSON.stringify({ dimensions: ["date"], metrics: ["activeUsers"] }), key: KEY });
   assert.deepEqual([r.rowCount, r.rows, r.totals], [42, [], [1300]]);
 });
+
+// feedback_script.gs: its own small vm (doPost only), the same coercing Sheet stub idea.
+function feedbackBackend() {
+  const tabs = new Map(), cache = new Map(), lock = { busy: false };
+  const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
+  const ctx = vm.createContext({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: k => (k === "SHEET_ID" ? "sheet-1" : null) }) },
+    SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = { rows: [], appendRow(r) { this.rows.push(Array.from(r, coerce)); } }; tabs.set(n, s); return s; } }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
+    CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
+    ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
+  });
+  vm.runInContext(fs.readFileSync(new URL("./feedback_script.gs", import.meta.url), "utf8"), ctx);
+  const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === "string" ? body : JSON.stringify(body) } }).text);
+  return { post, tabs, lock, rows: () => tabs.get("Feedback").rows };
+}
+
+test("feedback script: a valid message is one text row, the tab made with headers", () => {
+  const b = feedbackBackend();
+  assert.deepEqual(b.post({ message: "  007  ", email: "a@b.co", page: "/learn/like.html" }), { ok: true });
+  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email"]);
+  const [at, ...rest] = b.rows()[1];
+  assert.equal(typeof at, "number");
+  assert.deepEqual(rest, ["/learn/like.html", "007", "a@b.co"], "text stays text, trimmed");
+  assert.ok(b.post({ message: "=HYPERLINK(1)", email: "", page: "/" }).ok);
+  assert.equal(b.rows()[2][2], "=HYPERLINK(1)", "the apostrophe keeps a formula as text");
+});
+
+test("feedback script: empty, oversized, bad email or page refused; never throws", () => {
+  const b = feedbackBackend();
+  for (const body of [{ message: "   ", page: "/" }, { message: "x".repeat(2001), page: "/" }, { message: "hi", email: "nope", page: "/" },
+    { message: "hi", email: "a@b.co" + "x".repeat(120), page: "/" }, { message: "hi", page: "https://x" }, { message: "hi", page: "/" + "x".repeat(200) }])
+    assert.equal(b.post(body).ok, false, JSON.stringify(body).slice(0, 60));
+  assert.equal(b.post("not json").ok, false);
+  assert.ok(b.post({ message: "x".repeat(2000), page: "/" }).ok, "2000 characters pass");
+  assert.equal(b.rows().length, 2, "only the header and the valid row");
+  b.lock.busy = true;
+  assert.deepEqual(b.post({ message: "hi", page: "/" }), { ok: false, error: "busy" });
+});
+
+test("feedback script: at most 30 messages per 10 minutes", () => {
+  const b = feedbackBackend();
+  for (let i = 0; i < 30; i++) assert.ok(b.post({ message: "m" + i, page: "/" }).ok);
+  assert.deepEqual(b.post({ message: "one more", page: "/" }), { ok: false, error: "busy" });
+  assert.equal(b.rows().length, 31);
+});

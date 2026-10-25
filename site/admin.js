@@ -3,6 +3,7 @@
 // browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
 // passphrase stays in sessionStorage for the tab (shared.js deskPassphrase) and goes to the backend as `key` (apps_script.gs
 // compares it with ADMIN_KEY).
+import { wireFeedback } from "./feedback.js";
 import { BOARD_KEY, csvText as csv, downloadText, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 import { ICON_ATTRS } from "./ui.js";
@@ -242,4 +243,4 @@ async function main() {
   start();
 }
 
-if (typeof document !== "undefined") main();
+if (typeof document !== "undefined") { wireFeedback(); main(); }
