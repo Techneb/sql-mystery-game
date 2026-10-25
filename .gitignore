@@ -5,3 +5,4 @@ site/season-*.json
 site/season-*.sqlite
 .claude/worktrees/
 assets-source/
+docs/audits/
