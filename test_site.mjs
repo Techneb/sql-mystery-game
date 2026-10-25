@@ -1943,6 +1943,20 @@ test("callouts point at parts of the page, never at a table", () => {
   assert.equal(onb.calloutLeft({ left: -20 }, 200, 390), 8);
   assert.equal(onb.calloutLeft({ left: 50 }, 200, 1200), 50);
 });
+test("exercises tour: the game's callouts on the workbench, no solution, its GA features listed", async () => {
+  const ex = await import("./site/learn/exercises.js"), monitor = await import("./site/monitor.js");
+  const html = fs.readFileSync("site/learn/exercises.html", "utf8");
+  const bench = html.slice(html.indexOf('id="workbench"'), html.indexOf('id="ex-static"'));
+  assert.equal(ex.TOUR_STORE, "ritz.exercises.tour");
+  assert.ok(ex.EX_CALLOUTS.length >= 4 && ex.EX_CALLOUTS.length <= 5);
+  for (const [sel, text] of ex.EX_CALLOUTS) {
+    const id = sel.match(/#([\w-]+)/)?.[1], cls = sel.match(/\.([\w-]+)$/)?.[1];
+    assert.ok(id ? bench.includes('id="' + id + '"') : bench.includes('class="' + cls), sel);
+    assert.ok(!/SELECT|FROM|WHERE|JOIN/.test(text), "no SQL in a callout: " + text);
+  }
+  assert.ok("tour_done" in monitor.HANDBOOK_FEATURES && "tour_skip" in monitor.HANDBOOK_FEATURES);
+  assert.equal(typeof onb.showCallouts, "function");
+});
 test("landing warm-up line links the handbook's first warm-up exercise; terminal hints mention Tab", () => {
   const html = fs.readFileSync("site/index.html", "utf8"), ex = fs.readFileSync("site/learn/exercises.html", "utf8");
   const slug = html.match(/class="landing-warmup"><strong>New to SQL\?<\/strong> <a href="learn\/exercises\.html#([\w-]+)"/)[1];
