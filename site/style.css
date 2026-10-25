@@ -240,6 +240,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 .part2 h2 { font: 900 30px/1.15 "Playfair Display", serif; margin: 10px 0 14px; padding-top: 10px; border-top: 3px double var(--ink); }
 .part2 p { text-align: left; margin: 0 0 16px; }
 .part2 button, .part2 a.btn { padding: 8px 22px; }
+.part2.feedback-dialog { width: min(720px, calc(100vw - 32px)); max-width: none; }
 .feedback-dialog label { display: block; font-weight: 700; } .feedback-dialog textarea, .feedback-dialog input { width: 100%; margin-top: 4px; }
 .feedback-dialog .feedback-status:empty { display: none; } .feedback-dialog .feedback-status a { color: inherit; }
 #names-input { width: 100%; box-sizing: border-box; margin-top: 6px; }

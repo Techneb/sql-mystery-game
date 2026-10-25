@@ -21,7 +21,7 @@ export function feedbackPayload(message, email, page) {
 
 const DIALOG = `<form method="dialog">
   <div class="label" id="feedback-title">SEND FEEDBACK</div>
-  <p><label for="feedback-msg">Your message</label><textarea id="feedback-msg" rows="6" maxlength="${FEEDBACK_MAX}" required></textarea></p>
+  <p><label for="feedback-msg">Your message</label><textarea id="feedback-msg" rows="8" maxlength="${FEEDBACK_MAX}" required></textarea></p>
   <p><label for="feedback-email">Email, if you want an answer</label><input id="feedback-email" type="email" maxlength="${EMAIL_MAX}" autocomplete="email"></p>
   <p class="feedback-status" role="status"></p>
   <button value="send">Send</button> <button value="" class="quiet" formnovalidate>Cancel</button>
