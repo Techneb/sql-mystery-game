@@ -60,47 +60,70 @@
 
 <h2 id="order-of-execution">Order of execution</h2>
 <p>A query is written starting with <code>SELECT</code>, but it is not worked out in that order. Logically, the database takes the clauses in this order, and each step sees only what the step before it produced:</p>
-<table class="result">
-<tr><th>Step</th><th>Clause</th><th>What it does</th></tr>
-<tr><td>1</td><td>FROM and JOIN</td><td>gathers the rows of the tables and pairs them up</td></tr>
-<tr><td>2</td><td>WHERE</td><td>keeps the rows whose condition is true</td></tr>
-<tr><td>3</td><td>GROUP BY</td><td>gathers the remaining rows into groups</td></tr>
-<tr><td>4</td><td>HAVING</td><td>keeps the groups whose condition is true</td></tr>
-<tr><td>5</td><td>SELECT</td><td>works out the columns of the result, window functions included, and names them</td></tr>
-<tr><td>6</td><td>DISTINCT</td><td>removes the rows of the result that repeat</td></tr>
-<tr><td>7</td><td>ORDER BY</td><td>sorts the result</td></tr>
-<tr><td>8</td><td>LIMIT and OFFSET</td><td>keeps a slice of the sorted rows</td></tr>
-</table>
+<ol class="steps">
+<li><b><code>FROM</code> and <code>JOIN</code></b><span>gathers the rows of the tables and pairs them up</span></li>
+<li><b><code>WHERE</code></b><span>keeps the rows whose condition is true</span></li>
+<li><b><code>GROUP BY</code></b><span>gathers the remaining rows into groups</span></li>
+<li><b><code>HAVING</code></b><span>keeps the groups whose condition is true</span></li>
+<li><b><code>SELECT</code></b><span>works out the columns of the result, window functions included, and names them</span></li>
+<li><b><code>DISTINCT</code></b><span>removes the rows of the result that repeat</span></li>
+<li><b><code>ORDER BY</code></b><span>sorts the result</span></li>
+<li><b><code>LIMIT</code> and <code>OFFSET</code></b><span>keeps a slice of the sorted rows</span></li>
+</ol>
 <p>Most of the rules on this page follow from that order. An alias is a name given at step 5, so <code>WHERE</code> and <code>HAVING</code>, at steps 2 and 4, run before it exists and cannot use it (see <a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>), while <code>ORDER BY</code>, at step 7, can (PostgreSQL also lets <code>GROUP BY</code> name an alias, an exception to this order). A window function is computed at step 5 too, which is why it cannot be filtered in <code>WHERE</code>: compute it in a <a href="ctes.html">CTE</a> and filter outside. After step 3 each row is a group, so steps 4 to 7 may only use grouped columns and aggregates, plus, in <code>ORDER BY</code>, the result's own column names. And <code>LIMIT</code> comes last, so it keeps the first rows of the sorted result, never a sample taken before sorting. With <a href="set-operations.html">UNION, INTERSECT or EXCEPT</a>, each half runs steps 1 to 6 on its own, the two results are combined, and the one <code>ORDER BY</code> and <code>LIMIT</code> apply to the combination. The database may take shortcuts when it actually runs a query, but the result is always the one this order gives.</p>
 
 <h2 id="the-rules">The rules, and where each is explained</h2>
 <p>Each rule sits on the page of the construct it belongs to, with a query that breaks it, the terminal's answer, and the correct version. The terminal's own error messages link to the same sections.</p>
-<ul class="toc">
-<li><a href="select-where.html#double-quotes">Double quotes</a>: <code>'text'</code> is a value, <code>"name"</code> a name, and a quoted name keeps its case.</li>
-<li><a href="select-where.html#double-equals">One equals sign</a>: SQL compares with <code>=</code>, never <code>==</code>.</li>
-<li><a href="select-where.html#types">Types</a>: a number against a number, text against text, <code>||</code> on text.</li>
-<li><a href="select-where.html#aliases">Aliases in WHERE and HAVING</a>: a <code>SELECT</code> name does not exist there yet.</li>
-<li><a href="select-where.html#boolean">Conditions</a>: <code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and <code>WHEN</code> need something true or false.</li>
-<li><a href="order-by-limit.html#distinct-order">DISTINCT and ORDER BY</a>: sort by what was selected.</li>
-<li><a href="order-by-limit.html#limit-offset">LIMIT and OFFSET</a>: <code>LIMIT 3 OFFSET 2</code>, not <code>LIMIT 2, 3</code>.</li>
-<li><a href="like.html#like-ilike">LIKE and ILIKE</a>: the only pattern matches, case-sensitive or not.</li>
-<li><a href="dates-times.html#date-functions">Dates, substr and CAST</a>: comparisons, <code>substr</code> and <code>CAST</code>, not <code>strftime</code> or <code>date(d, '+1 day')</code>.</li>
-<li><a href="group-by-having.html#group-by">GROUP BY</a>: every column grouped or aggregated.</li>
-<li><a href="group-by-having.html#having">HAVING without GROUP BY</a>: aggregates only.</li>
-<li><a href="group-by-having.html#order-by-grouped">ORDER BY after GROUP BY</a>: grouped columns, aggregates or aliases.</li>
-<li><a href="group-by-having.html#group-concat">string_agg and SUM</a>: not <code>GROUP_CONCAT</code> or <code>TOTAL</code>.</li>
-<li><a href="nulls.html#coalesce">COALESCE and IS</a>: not <code>IFNULL</code>; <code>IS</code> only with <code>NULL</code>, <code>TRUE</code> or <code>FALSE</code>.</li>
-<li><a href="case-when.html#iif">CASE, not IIF</a>: and no <code>MAX</code> or <code>MIN</code> of two values.</li>
-<li><a href="#sqlite-only">Other shorthands</a>: below.</li>
-</ul>
+<div class="rule-groups">
+<section><h3><a href="select-where.html">SELECT and WHERE</a></h3>
+<ul class="rules">
+<li><a href="select-where.html#double-quotes">Double quotes</a><span><code>'text'</code> is a value, <code>"name"</code> a name, and a quoted name keeps its case.</span></li>
+<li><a href="select-where.html#double-equals">One equals sign</a><span>SQL compares with <code>=</code>, never <code>==</code>.</span></li>
+<li><a href="select-where.html#types">Types</a><span>A number against a number, text against text, <code>||</code> on text.</span></li>
+<li><a href="select-where.html#aliases">Aliases in WHERE and HAVING</a><span>A <code>SELECT</code> name does not exist there yet.</span></li>
+<li><a href="select-where.html#boolean">Conditions</a><span><code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and <code>WHEN</code> need something true or false.</span></li>
+</ul></section>
+<section><h3><a href="order-by-limit.html">ORDER BY and LIMIT</a></h3>
+<ul class="rules">
+<li><a href="order-by-limit.html#distinct-order">DISTINCT and ORDER BY</a><span>Sort by what was selected.</span></li>
+<li><a href="order-by-limit.html#limit-offset">LIMIT and OFFSET</a><span><code>LIMIT 3 OFFSET 2</code>, not <code>LIMIT 2, 3</code>.</span></li>
+</ul></section>
+<section><h3><a href="like.html">LIKE and text patterns</a></h3>
+<ul class="rules">
+<li><a href="like.html#like-ilike">LIKE and ILIKE</a><span>The only pattern matches, case-sensitive or not.</span></li>
+</ul></section>
+<section><h3><a href="dates-times.html">Dates and times</a></h3>
+<ul class="rules">
+<li><a href="dates-times.html#date-functions">Dates, substr and CAST</a><span>Comparisons, <code>substr</code> and <code>CAST</code>, not <code>strftime</code> or <code>date(d, '+1 day')</code>.</span></li>
+</ul></section>
+<section><h3><a href="group-by-having.html">GROUP BY, aggregates and HAVING</a></h3>
+<ul class="rules">
+<li><a href="group-by-having.html#group-by">GROUP BY</a><span>Every column grouped or aggregated.</span></li>
+<li><a href="group-by-having.html#having">HAVING without GROUP BY</a><span>Aggregates only.</span></li>
+<li><a href="group-by-having.html#order-by-grouped">ORDER BY after GROUP BY</a><span>Grouped columns, aggregates or aliases.</span></li>
+<li><a href="group-by-having.html#group-concat">string_agg and SUM</a><span>Not <code>GROUP_CONCAT</code> or <code>TOTAL</code>.</span></li>
+</ul></section>
+<section><h3><a href="nulls.html">NULL and missing values</a></h3>
+<ul class="rules">
+<li><a href="nulls.html#coalesce">COALESCE and IS</a><span>Not <code>IFNULL</code>; <code>IS</code> only with <code>NULL</code>, <code>TRUE</code> or <code>FALSE</code>.</span></li>
+</ul></section>
+<section><h3><a href="case-when.html">CASE WHEN</a></h3>
+<ul class="rules">
+<li><a href="case-when.html#iif">CASE, not IIF</a><span>No <code>IIF</code>, and no <code>MAX</code> or <code>MIN</code> of two values.</span></li>
+</ul></section>
+<section><h3>On this page</h3>
+<ul class="rules">
+<li><a href="#sqlite-only">Other shorthands</a><span><code>printf</code>, <code>randomblob</code>, <code>likely</code>: what to write instead.</span></li>
+</ul></section>
+</div>
 
 <h2 id="sqlite-only">Other shorthands</h2>
 <p>A few more functions are not standard SQL either. Write these instead:</p>
-<table class="result">
+<table class="result shorthands">
 <tr><th>Instead of</th><th>Write</th></tr>
-<tr><td>printf(...)</td><td>format(...)</td></tr>
-<tr><td>randomblob(n)</td><td>random()</td></tr>
-<tr><td>likely(c), unlikely(c)</td><td>the condition c alone</td></tr>
+<tr><td><code>printf(...)</code></td><td><code>format(...)</code></td></tr>
+<tr><td><code>randomblob(n)</code></td><td><code>random()</code></td></tr>
+<tr><td><code>likely(c)</code>, <code>unlikely(c)</code></td><td>the condition <code>c</code> alone</td></tr>
 </table>
 
 <p class="in-game"><b>In the game:</b> every chapter's terminal follows these rules, in both the investigation and the timed sessions.</p>

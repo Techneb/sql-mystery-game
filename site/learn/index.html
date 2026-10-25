@@ -57,35 +57,39 @@
 <p class="muted byline">By <a href="https://alephb.uk/">AlephB</a></p>
 <img class="vignette" src="handbook-book.webp" width="440" height="338" alt="" decoding="async">
 <p class="lede">Plain-English pages on the SQL that <a href="../">The Ritz Affair</a> practises, for a first SQL course. Every example runs on a small bakery database, never the game's archives, so nothing here gives a chapter away. The game's terminal follows PostgreSQL's rules; the last page, <a href="grammar.html">The Grammar of SQL</a>, sums them up.</p>
+<h2 class="toc-head">Where to start</h2>
+<ol class="start-path">
+<li><a href="exercises.html#the-cheap-shelf"><b>Warm up</b><span>Write a first query in two minutes.</span></a></li>
+<li><a href="database.html"><b>Read</b><span>Meet the bakery database, then one construct per page.</span></a></li>
+<li><a href="exercises.html"><b>Practise</b><span>Twenty graded questions, checked when you run them.</span></a></li>
+<li><a href="../"><b>Play</b><span>Put it all to work in The Ritz Affair.</span></a></li>
+</ol>
 <div class="toc-groups">
-<h2 class="toc-head">Exercises</h2>
-<p class="muted toc-what">Practise: write the queries yourself, in the page.</p>
-<a class="toc-card" href="exercises.html"><b>SQL exercises with solutions</b><span>Twenty graded questions in three levels, from a first filter to a recursive chain: run your query in the page's terminal and it is checked against the question. Solutions stay hidden until you open them.</span></a>
-<h2 class="toc-head">Grammar</h2>
-<p class="muted toc-what">Reference: the rules the game's terminal follows, each linked to the chapter that explains it.</p>
-<ul class="toc">
-<li><a href="grammar.html">The Grammar of SQL</a>: grouping, quotes, types and conditions, done right.</li>
-</ul>
 <h2 class="toc-head">Learning chapters</h2>
 <p class="muted toc-what">Read: one construct per page, with examples on the bakery database.</p>
 <!-- toc: colour_learn.mjs -->
 <ol class="toc">
-<li><a href="database.html">The bakery database</a>: the example data, with a script to recreate it.</li>
-<li><a href="schema.html">Tables, keys and the schema</a>: keys, relationships, exploring a database.</li>
-<li><a href="select-where.html">SELECT and WHERE</a>: choosing columns and filtering rows.</li>
-<li><a href="order-by-limit.html">ORDER BY and LIMIT</a>: sorting and keeping the top rows.</li>
-<li><a href="like.html">LIKE and text patterns</a>: searching text with wildcards.</li>
-<li><a href="dates-times.html">Dates and times stored as text or numbers</a>: comparing, ranges, substr and CAST, and why ISO dates sort.</li>
-<li><a href="group-by-having.html">GROUP BY, aggregates and HAVING</a>: counting and summing per group.</li>
-<li><a href="joins.html">JOIN, LEFT JOIN and self-joins</a>: combining tables and finding what is missing.</li>
-<li><a href="nulls.html">NULL and missing values</a>: three-valued logic, COUNT, COALESCE and the NOT IN trap.</li>
-<li><a href="case-when.html">CASE WHEN</a>: labels, buckets and conditional counts.</li>
-<li><a href="subqueries.html">Subqueries</a>: scalar, IN, EXISTS, correlated and derived tables.</li>
-<li><a href="set-operations.html">UNION, INTERSECT and EXCEPT</a>: stacking two results, the rows they share, the rows one lacks.</li>
-<li><a href="window-functions.html">Window functions: RANK and LAG</a>: ranking rows and comparing with the previous one.</li>
-<li><a href="ctes.html">CTEs and WITH RECURSIVE</a>: named steps and following chains.</li>
+<li><a href="database.html"><b>The bakery database</b><span>the example data, with a script to recreate it.</span></a></li>
+<li><a href="schema.html"><b>Tables, keys and the schema</b><span>keys, relationships, exploring a database.</span></a></li>
+<li><a href="select-where.html"><b>SELECT and WHERE</b><span>choosing columns and filtering rows.</span></a></li>
+<li><a href="order-by-limit.html"><b>ORDER BY and LIMIT</b><span>sorting and keeping the top rows.</span></a></li>
+<li><a href="like.html"><b>LIKE and text patterns</b><span>searching text with wildcards.</span></a></li>
+<li><a href="dates-times.html"><b>Dates and times stored as text or numbers</b><span>comparing, ranges, substr and CAST, and why ISO dates sort.</span></a></li>
+<li><a href="group-by-having.html"><b>GROUP BY, aggregates and HAVING</b><span>counting and summing per group.</span></a></li>
+<li><a href="joins.html"><b>JOIN, LEFT JOIN and self-joins</b><span>combining tables and finding what is missing.</span></a></li>
+<li><a href="nulls.html"><b>NULL and missing values</b><span>three-valued logic, COUNT, COALESCE and the NOT IN trap.</span></a></li>
+<li><a href="case-when.html"><b>CASE WHEN</b><span>labels, buckets and conditional counts.</span></a></li>
+<li><a href="subqueries.html"><b>Subqueries</b><span>scalar, IN, EXISTS, correlated and derived tables.</span></a></li>
+<li><a href="set-operations.html"><b>UNION, INTERSECT and EXCEPT</b><span>stacking two results, the rows they share, the rows one lacks.</span></a></li>
+<li><a href="window-functions.html"><b>Window functions: RANK and LAG</b><span>ranking rows and comparing with the previous one.</span></a></li>
+<li><a href="ctes.html"><b>CTEs and WITH RECURSIVE</b><span>named steps and following chains.</span></a></li>
 </ol>
 <!-- /toc -->
+<h2 class="toc-head">Practice and reference</h2>
+<div class="toc-pair">
+<a class="toc-card" href="exercises.html"><b>SQL exercises with solutions</b><span>Twenty graded questions in three levels, from a first filter to a recursive chain: run your query in the page's terminal and it is checked against the question. Solutions stay hidden until you open them.</span></a>
+<a class="toc-card" href="grammar.html"><b>The Grammar of SQL</b><span>The rules the game's terminal follows: grouping, quotes, types and conditions, done right, each linked to the chapter that explains it.</span></a>
+</div>
 </div><!-- /toc-groups -->
 <!-- pager: colour_learn.mjs -->
 <nav class="learn-pager"><span></span><a class="next" href="database.html">Next: The bakery database</a></nav>
