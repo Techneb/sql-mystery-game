@@ -192,7 +192,7 @@ export const DIMENSIONS = {
   sessionDefaultChannelGroup: "Channel", sessionSource: "Source", newVsReturning: "New or returning", pagePath: "Page path",
   pageTitle: "Page title", "customEvent:kind": "Failure kind", "customEvent:rule": "Grammar rule", "customEvent:n": "Wrong answer #",
   "customEvent:feature": "Feature", "customEvent:exercise": "Exercise", "customEvent:level": "Level", "customEvent:outcome": "Run outcome",
-  "customEvent:type": "Error type", "customEvent:route": "Solve route",
+  "customEvent:type": "Error type", "customEvent:route": "Solve route", "customEvent:network": "Share network",
 };
 export function reportUrl(board, req, key) {
   const u = new URL(board);

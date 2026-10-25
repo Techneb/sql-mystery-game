@@ -266,7 +266,7 @@ var REPORT_DIMS = ["date", "eventName", "customEvent:chapter", "customEvent:coun
   "customEvent:name", "deviceCategory", "operatingSystem", "browser", "country", "city", "language",
   "sessionDefaultChannelGroup", "sessionSource", "newVsReturning", "pagePath", "pageTitle", "customEvent:kind",
   "customEvent:rule", "customEvent:n", "customEvent:feature", "customEvent:exercise", "customEvent:level", "customEvent:outcome",
-  "customEvent:type", "customEvent:route"];
+  "customEvent:type", "customEvent:route", "customEvent:network"];
 var REPORT_METRICS = ["activeUsers", "totalUsers", "newUsers", "sessions", "engagedSessions", "eventCount",
   "userEngagementDuration", "averageSessionDuration", "screenPageViews", "customEvent:seconds", "averageCustomEvent:seconds",
   "customEvent:queries", "averageCustomEvent:queries", "customEvent:runs", "averageCustomEvent:runs", "customEvent:wrong",

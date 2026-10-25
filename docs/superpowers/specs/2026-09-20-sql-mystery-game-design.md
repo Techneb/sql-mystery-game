@@ -723,6 +723,13 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   devices and channels as donuts; every chart with a closed Raw data table. `chapter_queries` reaches GA (Realtime,
   2026-10-23) but the Data API shows a new event only after up to a day; the funnel notes it while ran-N is empty.
   Open: the owner's look at the live pages with real data; archive the old backend project once no old link uses it.
+- Monitoring for the 2026-10-25 onboarding (done 2026-10-25): the Game page's CHAPTER I ONBOARDING bars (learn mode:
+  Investigate pressed, prologue finished / skipped, tour finished / skipped, a first query in chapter I, chapter I
+  solved, each GA's own users count). FEATURE USE already lists prologue, tour, share, warm-up link, case card
+  reopened, house ad and Google's ad clicks (game) and the exercises tour (handbook). Open: SHARES by network needs
+  `network` registered in GA as an event-scoped custom dimension and `customEvent:network` added to REPORT_DIMS /
+  DIMENSIONS; until then FEATURE USE shows only the share total. Would add: prologue and tour done/skip split by
+  device (mobile readers may skip more), and the onboarding steps per day once a week of data exists.
 - Trackers everywhere and monitoring split (owner, 2026-10-24): new game events (chapter_leave, query_fail, answer_wrong,
   hint_open, feature_use, landing_begin) and GA on every handbook page under the same consent (`site/stats.js` split out
   of app.js, `learn/handbook.js`; exercise_run, exercise_solve, exercise_level, query_fail, feature_use); GA custom
