@@ -96,7 +96,7 @@
     <li>And these game events, with only these fields:
       <ul>
         <li><code>chapter_open</code>: chapter number, mode (learn or compete);</li>
-        <li><code>chapter_solve</code>: chapter number, mode, seconds taken, number of queries, number of wrong answers;</li>
+        <li><code>chapter_solve</code>: chapter number, mode, seconds taken, number of queries, number of wrong answers, and how you reached the answer as a fixed category: <code>same_result</code> (one of your queries in that chapter returned it in a single row), <code>found</code> (one showed it among other rows) or <code>unseen</code> (none of them showed it). Your queries and the answer are never sent;</li>
         <li><code>chapter_queries</code>: chapter number, mode, and a count (1, 5 or 20), sent once when you reach that many queries in a chapter you have not solved yet. The queries themselves are never sent;</li>
         <li><code>game_finish</code>: part, mode;</li>
         <li><code>badge</code>: badge name;</li>

@@ -8,9 +8,10 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, milestones: {}, fails: {}, hints: [], suspects: [], suspectsSeen: 0, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
+           film: [], opened: {}, milestones: {}, fails: {}, hints: [], suspects: [], suspectsSeen: 0, runs: {}, cracked: {}, extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0 };
 }
-// queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }
+// queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }; runs[n] tracks the open chapter's successful runs
+// (scanRun) and cracked[n] keeps the query shown on its case-board card once solved (winningQuery)
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
 // in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
 // token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection
@@ -88,6 +89,14 @@ const iconSrc = n => "icons/ch" + String(n).padStart(2, "0") + ".png";
 // never gets one singled out, so no face reads guiltier than another before chapter VIII.
 const PORTRAIT_FILE = { "Lord Ashcombe": "ashcombe", "Paul Sernine": "sernine", "Horace Velmont": "velmont",
   "Raul Ortega": "ortega", "Ines de Almagro": "almagro", "Rupert Blakeney": "blakeney" };
+// A case-board card's picture: the portrait when the accepted answer names one of these (the Comtesse too, whose
+// portrait the Part II ending uses), else the chapter's painted icon.
+const CARD_FACES = { ...PORTRAIT_FILE, "Comtesse de Cagliostro": "comtesse" };
+export function cardPicture(n, answer) {
+  const a = normalise(answer || "");
+  const name = a && Object.keys(CARD_FACES).find(k => { const f = normalise(k); return a === f || a === f.split(" ").pop(); });
+  return name ? { src: "portraits/" + CARD_FACES[name] + ".jpg", face: true } : { src: iconSrc(n), face: false };
+}
 
 const $ = id => document.getElementById(id);
 
@@ -151,7 +160,7 @@ function renderChapter() {
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch);
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml((state.cracked || {})[ch.n]);
     showTelegram(ch.telegram);
     return;
   }
@@ -1152,6 +1161,28 @@ export function chapterLeave(state, chapters, now = Date.now()) {
   if (!ch || state.solved.includes(ch.n) || !state.opened[ch.n]) return null;
   return { chapter: ch.n, mode: state.mode, seconds: Math.round((now - state.opened[ch.n]) / 1000), queries: state.queries[ch.n] || 0 };
 }
+// How a chapter was cracked, from its successful runs (state.runs[n] = { last, hit, same }, kept while it is open):
+// last = the latest successful query, hit = the latest whose result (the rows on screen) held the answer, same =
+// some such result was a single row, which is the official solution's result (every solution returns exactly one
+// row, its answer: generate_db.check_chapter), its other columns allowed as on the exercises page (sameResult).
+// The page only has the answer's hashes, so each cell and each pair of neighbouring cells is normalised and hashed.
+export async function scanRun(run, sql, res, hashes) {
+  run = { ...run, last: sql };
+  if (!res || !/\bfrom\b/i.test(sql)) return run;   // a typed constant (SELECT 214) shows nothing the archives hold
+  const seen = new Set();
+  for (const r of res.values.slice(0, ROW_CAP))
+    r.forEach((v, i) => { seen.add(normalise(String(v ?? ""))); if (i) seen.add(normalise((r[i - 1] ?? "") + " " + (v ?? ""))); });
+  seen.delete("");
+  const hit = (await Promise.all([...seen].map(sha256))).some(h => hashes.includes(h));
+  return hit ? { ...run, hit: sql, same: !!run.same || res.values.length === 1 } : run;
+}
+// GA chapter_solve's route: same_result, found (the answer was in a result run in that chapter) or unseen
+// (guessed, copied, or worked out elsewhere). Neither the query nor the answer is ever sent.
+export const solveRoute = run => run && run.same ? "same_result" : run && run.hit ? "found" : "unseen";
+// The query on the solved chapter's card: the last that showed the answer, else the last that ran before it.
+export const winningQuery = run => run ? run.hit || run.last || "" : "";
+export const crackedHtml = sql => sql ? '<div class="cracked"><b>The query that cracked it:</b><pre class="sql-view">' + highlightSql(sql) + "</pre></div>" : "";
+let scanning = Promise.resolve();
 const curChapter = () => state && data ? currentChapter(state, data.chapters).n : 0;
 
 function runQuery() {
@@ -1164,6 +1195,11 @@ function runQuery() {
   else try { const all = db.exec(toSqlite(sql)); res = all[all.length - 1] || null; }
   catch (e) { error = e.message; }
   recordQuery(state, ch.n, sql, error);
+  if (!error && !state.solved.includes(ch.n)) {   // chained, so two quick runs never scan from the same stale record
+    const n = ch.n;
+    scanning = scanning.then(() => scanRun((state.runs ||= {})[n], sql, res, ch.answer_sha256))
+      .then(r => { state.runs[n] = r; save(state); }).catch(e => console.warn("scanRun:", e.message));
+  }
   const m = state.solved.includes(ch.n) ? 0 : queryMilestone(state.queries[ch.n], (state.milestones ||= {})[ch.n]);
   if (m) { state.milestones[ch.n] = m; track("chapter_queries", { chapter: ch.n, mode: state.mode, count: m }); }
   const help = error && !strict && !cart ? sqliteHelp(error, sql, revealedColumns()) : null;
@@ -1347,9 +1383,29 @@ function ctx(extra) {
 
 function renderBoard() {
   const label = n => (data.chapters.find(c => c.n === n) || {}).board || "";
-  $("board").innerHTML = state.solved.map(n => '<div class="card" data-n="' + n + '"><b>' + ROMAN[n] + '</b> <span class="card-label">' +
-    esc(label(n)) + "</span>" + (state.answers[n] ? "<br>" + esc(state.answers[n]) : "") + "</div>").join("");   // older saves have no answers: no "NULL" card
+  $("board").innerHTML = state.solved.map(n => { const p = cardPicture(n, state.answers[n]);
+    return '<div class="card" data-n="' + n + '"><img class="card-pic' + (p.face ? " face" : "") + '" src="' + p.src + '" alt=""><b>' + ROMAN[n] + '</b> <span class="card-label">' +
+      esc(label(n)) + "</span>" + (state.answers[n] ? "<br>" + esc(state.answers[n]) : "") + "</div>"; }).join("") +   // older saves have no answers: no "NULL" card
+    '<div id="board-suspects" class="board-suspects" hidden></div>';
   $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => reviewChapter(Number(el.dataset.n))));
+  renderStrip();
+}
+// The board's suspects strip (learn only, as the gallery): the faces the gallery has introduced, each crossed out
+// once the chapter that clears them (plot.CAST `cleared`) is solved; a click opens the gallery.
+export function boardSuspects(cast, state, chapters) {
+  const shown = state.introduced || [];
+  return metSuspects(cast, state, chapters).filter(s => shown.includes(s.name))
+    .map(s => ({ name: s.name, cleared: !!s.cleared && state.solved.includes(s.cleared) }));
+}
+function renderStrip() {
+  const el = $("board-suspects");
+  if (!el) return;
+  const list = suspectsOn(state) ? boardSuspects(data.cast, state, data.chapters) : [];
+  el.hidden = !list.length;
+  el.title = "Suspects";
+  el.innerHTML = list.map(s => { const t = esc(s.name + (s.cleared ? ", cleared" : ""));
+    return '<span class="strip-face' + (s.cleared ? " cleared" : "") + '"><img src="portraits/' + PORTRAIT_FILE[s.name] + '.jpg" alt="' + t + '" title="' + t + '"></span>'; }).join("");
+  btnLike(el, () => $("btn-suspects").click());
 }
 
 // A closing film (site/video/<name>.*) waits on its poster: browsers only allow sound after a click, so the student
@@ -1448,10 +1504,11 @@ function renderSuspects() {
 // The Suspects button carries a dot while the gallery holds a face or a note the student has not opened yet.
 function markSuspects() {
   $("btn-suspects").hidden = !suspectsOn(state);
-  if (!suspectsOn(state)) return;
+  if (!suspectsOn(state)) return renderStrip();
   const met = metSuspects(data.cast, state, data.chapters);
   $("btn-suspects").classList.toggle("new", met.reduce((k, s) => k + 1 + s.notes.length, 0) > (state.suspectsSeen || 0));
   introduceSuspects(met.map(s => s.name));
+  renderStrip();
 }
 // The first time a suspect is met, a pop-up (#newsuspects) shows their portrait and bio; suspects met together share
 // one. It waits while a solved chapter is still on screen (the next chapter's names stay unread) and while the extra
@@ -1490,10 +1547,12 @@ async function submitAnswer() {
     $("answer").value = ""; save(state); return;
   }
   if (ch.answer_sha256.includes(hash)) {   // compete too: the season file carries its hashes
-
+    await scanning;   // the last run's scan is in
+    const run = (state.runs || {})[ch.n];
+    (state.cracked ||= {})[ch.n] = winningQuery(run); if (state.runs) delete state.runs[ch.n];
     state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
     track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
-                             queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
+                             queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0, route: solveRoute(run) });
     $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
     typeTelegram(ch.telegram);
     afterSolve(ch, "solve");
