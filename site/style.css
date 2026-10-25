@@ -139,7 +139,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* ERD */
 .erd { background: var(--card); border: 1px solid var(--ink); border-radius: var(--r-panel); overflow: auto; max-height: 55vh; position: relative; }
 /* The ad box under the schema: a <details>, its summary the toggle (open by default). */
-.press-box { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); }
+.press-box { margin-top: 12px; border: 1px solid var(--ink); background: var(--card); border-radius: var(--r-panel); overflow: hidden; }   /* rounded like the schema box (owner, 2026-10-25) */
 .press-box summary { cursor: pointer; padding: 7px 10px; list-style-position: inside; }
 /* typewritten title, option D (owner, 2026-10-19); the wording stays one of AdSense's two permitted labels */
 .press-box summary.label { font: 14px/1.2 "Special Elite", monospace; letter-spacing: 2px; }
