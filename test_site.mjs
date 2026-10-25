@@ -1060,3 +1060,13 @@ test("version_site.mjs: every local script, stylesheet and relative import carri
     assert.match(fs.readFileSync("site/app.js", "utf8"), /from "\.\/stats\.js";/, "the source tree is left alone");
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
+
+test("feedback form: the payload follows feedback_script.gs's rules, the page is the path alone", async () => {
+  const fb = await import("./site/feedback.js");
+  assert.equal(fb.pagePath({ pathname: "/learn/like.html", search: "?board=secret" }), "/learn/like.html");
+  assert.deepEqual(JSON.parse(fb.feedbackPayload("  Nice game ", " a@b.co ", "/").body), { message: "Nice game", email: "a@b.co", page: "/" });
+  assert.ok(fb.feedbackPayload("   ", "", "/").error);
+  assert.ok(fb.feedbackPayload("x".repeat(2001), "", "/").error);
+  assert.ok(fb.feedbackPayload("x".repeat(2000), "", "/").body);
+  assert.ok(fb.feedbackPayload("hi", "not an email", "/").error);
+});

@@ -20,6 +20,10 @@ export function themeButtonHtml(mood) {
     : `<svg class="icon moon" ${ICON_ATTRS}><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg>`;
   return `${svg}<span class="btn-text">${mood === "night" ? "Day edition" : "Night edition"}</span>`;
 }
+// The Send feedback button beside the Day/Night button on every page that has it (static HTML, a test checks): an
+// envelope. feedback.js wireFeedback opens its form.
+export const feedbackButtonHtml = `<button id="btn-feedback" class="quiet feedback-corner" title="Send feedback" aria-label="Send feedback">`
+  + `<svg class="icon mail" ${ICON_ATTRS}><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M2 4.5L8 9L14 4.5"/></svg><span class="btn-text">Feedback</span></button>`;
 // The schema's Enlarge/Close button is icon-only: two arrows out to the corners, or an X once enlarged.
 export function erdButtonHtml(large) {
   return large

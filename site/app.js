@@ -3,6 +3,7 @@
 // terminal), badges.js, suspects.js, endings.js, onboarding.js, ui.js, stats.js and shared.js. boot() only runs on
 // the game page.
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
+import { wireFeedback } from "./feedback.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
 import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables } from "./state.js";
 import { highlightSql, wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
@@ -811,6 +812,7 @@ async function boot() {
   // The query box; it completes only the tables the schema shows (learn or compete): never one the evidence has not reached.
   syncSql = wireEditor($("sql"), $("sql-hl"), { run: () => db && state && runQuery(), cols: visibleColumns, minHeight: 160 });
   $("btn-theme").onclick = toggleTheme;
+  wireFeedback(() => useFeature("feedback", { chapter: curChapter() }));
   initConsent();
   initAds();
   applyMood();   // the reader's palette on the landing page too, before any state is loaded

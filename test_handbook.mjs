@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { strictCheck, STRICT_SECTIONS } from "./site/strict.js";
 import { strictHtml } from "./site/terminal.js";
-import { themeButtonHtml, erdButtonHtml } from "./site/ui.js";
+import { themeButtonHtml, erdButtonHtml, feedbackButtonHtml } from "./site/ui.js";
 import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPages, sitemapXml, READING, CHAPTERS } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
@@ -111,9 +111,11 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
   const game = fs.readFileSync("site/index.html", "utf8");
   const btn = one(game, /\n(<button id="btn-theme"[^\n]*<\/button>)\n/, "the game's button");
   assert.equal(btn, `<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition">${themeButtonHtml("day")}</button>`);
+  const corners = `<div class="corners">\n${feedbackButtonHtml}\n${btn}\n</div>`;
+  assert.ok(game.includes("<body>\n" + corners + "\n"), "the game: Send feedback beside the button");
   const pages = { ...learnHtml, "../admin.html": fs.readFileSync("site/admin.html", "utf8"), "../leaderboard.html": fs.readFileSync("site/leaderboard.html", "utf8"), "../monitor.html": fs.readFileSync("site/monitor.html", "utf8"), "../monitor-game.html": fs.readFileSync("site/monitor-game.html", "utf8"), "../monitor-handbook.html": fs.readFileSync("site/monitor-handbook.html", "utf8"), "../explore.html": fs.readFileSync("site/explore.html", "utf8") };
   for (const [f, html] of Object.entries(pages)) {
-    assert.ok(/<body( data-view="\w+")?>\n/.test(html) && html.includes(">\n" + btn + "\n"), f + ": the same button, first in the body");
+    assert.ok(/<body( data-view="\w+")?>\n/.test(html) && html.includes(">\n" + corners + "\n"), f + ": the same Feedback link and button, first in the body");
     const head = html.slice(0, html.indexOf("</head>"));
     assert.ok(head.includes(f.startsWith("../") ? '<script src="learn/theme.js"></script>' : '<script src="theme.js"></script>'), f + ": theme.js in <head>, no defer (no flash)");
   }

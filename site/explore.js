@@ -2,6 +2,7 @@
 // and filters, read from the Apps Script's ?report=<json>&key=<passphrase> (apps_script.gs report_, the same whitelist).
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
+import { wireFeedback } from "./feedback.js";
 import { DIMENSIONS, csvText, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 // The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
@@ -216,4 +217,4 @@ async function main() {
   $("run").click();
 }
 
-if (typeof document !== "undefined") main();
+if (typeof document !== "undefined") { wireFeedback(); main(); }
