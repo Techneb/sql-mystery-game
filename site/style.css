@@ -56,7 +56,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-foot { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 /* the handbook's chrome: its header nav under the masthead lines, its footer in .landing-foot (also privacy.html) */
 .landing-nav { margin-top: 6px; }
-.landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
+.landing-foot a, .landing-nav a, .mast-sub a, .landing-warmup a { color: inherit; }
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }
