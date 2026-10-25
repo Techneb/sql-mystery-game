@@ -36,6 +36,9 @@ export function seasonCounts(rows) {
   return out;
 }
 
+export const deleteMessage = (name, players) => 'Delete "' + name + '"? Its ' + players + " player" + (players === 1 ? "" : "s") +
+  " and all their rows are erased for good. This cannot be undone: export the CSV first if you want to keep them.";
+
 export const newestFirst = seasons => [...seasons].sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
 
 // Icon-only buttons in the game's style (app.js erdButtonHtml): a 16 px glyph stroked in currentColor, the action's
@@ -47,13 +50,14 @@ const ACTIONS = [
   ["copy", "Copy link", '<path d="M6.5 9.5L9.5 6.5M8.5 4.5L9.5 3.5A2.5 2.5 0 0 1 13 7L12 8M7.5 11.5L6.5 12.5A2.5 2.5 0 0 1 3 9L4 8"/>'],
   ["qr", "QR", '<rect x="2.5" y="2.5" width="4" height="4"/><rect x="9.5" y="2.5" width="4" height="4"/><rect x="2.5" y="9.5" width="4" height="4"/><rect x="9.5" y="9.5" width="4" height="4"/>'],
   ["board", "Board", '<path d="M2.5 13.5V9H6V13.5M6 13.5V4.5H10V13.5M10 13.5V10.5H13.5V13.5M1.5 13.5H14.5"/>'],
-  ["csv", "Export CSV", '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>']];
+  ["csv", "Export CSV", '<path d="M8 2.5V9.5M5 6.5L8 9.5L11 6.5M2.5 10V13.5H13.5V10"/>'],
+  ["delete", "Delete the season", '<path d="M2.5 4.5H13.5M6 4.5V2.5H10V4.5M4 4.5L4.75 13.5H11.25L12 4.5M6.75 7V11M9.25 7V11"/>']];
 export function seasonsTableHtml(seasons, counts, selected) {
   if (!seasons.length) return '<p class="muted">No season yet: create one above.</p>';
   return '<table class="seasons"><thead><tr><th>Name</th><th>Date</th><th>State</th><th>Database</th><th>Joined</th><th>Finished</th><th></th></tr></thead><tbody>' +
     seasons.map(s => {
       const c = counts[s.id] || { joined: 0, finished: 0 }, id = esc(s.id);
-      const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state !== "closed"))
+      const btns = ACTIONS.filter(([a]) => (a !== "open" || s.state === "created") && (a !== "close" || s.state !== "closed") && (a !== "delete" || s.state !== "open"))
         .map(([a, label, glyph]) => '<button class="quiet icon-btn" data-act="' + a + '" data-id="' + id + '" title="' + label +
           '" aria-label="' + label + '"><svg class="icon" ' + ICON_ATTRS + ">" + glyph + "</svg></button>").join(" ");
       return '<tr data-id="' + id + '" class="' + (s.id === selected ? "selected" : "") + '" tabindex="0"><td>' + esc(s.name) +
@@ -79,7 +83,7 @@ export function detailHtml(meta, rows) {
 
 // --- page wiring (browser only) ----------------------------------------------------------------
 const $ = id => document.getElementById(id);
-let board = "", key = "", seasons = [], selected = "", pollTimer = 0, detailGen = 0;
+let board = "", key = "", seasons = [], counts = {}, selected = "", pollTimer = 0, detailGen = 0;
 
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
@@ -105,7 +109,8 @@ async function loadSeasons() {
     const [list, rows] = await Promise.all([getJson({ seasons: 1, key }), getJson({ key })]);
     if (!Array.isArray(list)) throw new Error(list && list.error || "not a season list");
     seasons = newestFirst(list);
-    $("seasons").innerHTML = seasonsTableHtml(seasons, seasonCounts(Array.isArray(rows) ? rows : []), selected);
+    counts = seasonCounts(Array.isArray(rows) ? rows : []);
+    $("seasons").innerHTML = seasonsTableHtml(seasons, counts, selected);
   } catch (e) { say("Could not read the seasons: " + e.message, true); }
 }
 
@@ -124,6 +129,7 @@ async function showDetail(id) {
     // The seasons table's Joined and Finished cells follow the poll, from the same rows.
     const c = seasonCounts(Array.isArray(rows) ? rows.map(r => ({ ...r, season: id })) : [])[id] || { joined: 0, finished: 0 };
     const tr = document.querySelector('table.seasons tr[data-id="' + CSS.escape(id) + '"]');
+    counts[id] = c;
     if (tr) { tr.cells[4].textContent = c.joined; tr.cells[5].textContent = c.finished; }
     if (meta.state !== "closed") pollTimer = setTimeout(() => showDetail(id), POLL_MS);
   } catch (e) {
@@ -152,6 +158,14 @@ async function act(a, id) {
   } else if (a === "close") {
     if (!await ask('Close "' + s.name + '"? The backend will refuse every later post; this cannot be undone.', "Close the season")) return;
     if ((await post({ admin: "close", season: id })).ok) say('"' + s.name + '" is closed.');
+  } else if (a === "delete") {
+    if (!await ask(deleteMessage(s.name, (counts[id] || { joined: 0 }).joined), "Delete the season")) return;
+    const out = await post({ admin: "delete", season: id });
+    if (!out.ok) return;
+    say('"' + s.name + '" is deleted (' + out.removedRows + " rows).");
+    if (selected === id) { clearTimeout(pollTimer); detailGen++; selected = ""; $("detail").innerHTML = ""; }
+    await loadSeasons();
+    return;
   } else if (a === "copy") {
     const link = studentLink(gameUrl(), id, board);
     try { await navigator.clipboard.writeText(link); say("Link copied: " + link); } catch { say("Copy this link: " + link); }

@@ -777,3 +777,8 @@ plain SQL errors; built 2026-10-25 on a branch, not yet pushed: a first query th
   random `TOKEN_SECRET` (both set by the owner in Script Properties and checked live the same day, no season
   open), and `?seasons=1` and the all-rows `doGet` now need the key. Accepted: compete answers checked in
   the browser (honour-based), `erd.py` unescaped names (build time, our own names).
+- Delete a season (owner, 2026-10-25: "Why can't seasons be deleted? let's add that feature"). Built 2026-10-25 on a
+  branch, not yet merged or deployed: admin action `delete` (key, under the script lock), refused for an open season;
+  it removes the record from `SEASONS` and the season's log rows (bottom-up `deleteRows`, so the other rows keep their
+  text cells), returns `removedRows`, and frees the database for the next create. The desk shows a bin button on
+  created and closed rows and asks in `#ask` first, suggesting the CSV export. Needs `deploy.sh` once on main.

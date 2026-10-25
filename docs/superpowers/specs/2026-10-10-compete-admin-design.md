@@ -5,7 +5,7 @@ section 8 that the rehearsal called for) were merged into main on 2026-10-10 (br
 `claude/compete-variants`, nothing left on either); the repository secrets are gone; the class trial was played and
 its student reports fixed 2026-10-15/16. Step 5 done 2026-10-19: `RANKS` tuned (from GA4, the trial being
 played in learn mode) and the unused Script Properties deleted by the owner. A season
-is never edited: a wrong one is closed and created again (the unused `update` action was removed, 2026-10-16).
+is never edited: a wrong one is closed and created again (the unused `update` action was removed, 2026-10-16). A season that is not open can be deleted, record and log rows together (2026-10-25, desk bin button).
 Choices the spec left open: when all five databases have a season not yet closed, a new season takes the one
 whose newest season is oldest; pseudos and season ids are written to the Sheet as text (a leading apostrophe),
 so "007" stays "007" and no pseudo is read as a formula; `ritz.compete` also keeps

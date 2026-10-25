@@ -5,7 +5,7 @@
 //
 // Script Properties (Project Settings > Script Properties):
 //   SHEET_ID      the log sheet's id (required)
-//   ADMIN_KEY     the admin passphrase: lets admin.html create, edit, open and close seasons (required for that)
+//   ADMIN_KEY     the admin passphrase: lets admin.html create, open, close and delete seasons (required for that)
 //   TOKEN_SECRET  optional; signs the per-player tokens (falls back to ADMIN_KEY, then SHEET_ID)
 //   SEASONS       written by this script (the season records), never by hand
 //
@@ -20,7 +20,8 @@
 // a season (one join per pseudo), then post "progress"
 // and "finish" with the token "join" returned, only while the season is open; a "finish" needs its seven
 // "progress" rows first. Answers are checked in the browser (the season files carry their hashes), so the
-// game stays honour-based and off the marks.
+// game stays honour-based and off the marks. A season that is not open can be deleted: its record and every log
+// row of it go for good, and its database is free for the next season.
 
 var DBS = 5;   // generate_db.SEASONS: the pre-built databases site/season-1..5.*
 var ID_RE = /^[a-z0-9-]{1,40}$/;
@@ -113,6 +114,13 @@ function admin_(data) {
     if (s.state === "closed") return {ok: true, season: s};
     s.state = "closed"; s.closedAt = now;   // from open, or from created (a season created by mistake frees its database)
     return save_(list, s);
+  }
+  if (act === "delete") {
+    if (s.state === "open") return {ok: false, error: "close the season before deleting it"};
+    var removed = deleteRows_(getLogSheet_(), s.id);
+    var out = save_(list.filter(function (x) { return x.id !== s.id; }), s);   // pickDb_ no longer sees its database
+    out.removedRows = removed;
+    return out;
   }
   return {ok: false, error: "unknown admin action"};
 }
@@ -340,6 +348,23 @@ function countRows_(sheet, ev, team, id) {
   var k = teamKey_(team);
   return sheet.getRange(2, 2, sheet.getLastRow() - 1, 3).getValues()   // event, team, season
     .filter(function (r) { return r[0] === ev && String(r[2]) === id && teamKey_(r[1]) === k; }).length;
+}
+
+// Deletes a season's rows bottom-up, one call per run of adjacent rows. Deleting rather than rewriting the range keeps
+// every other cell as Sheets stored it (a rewrite would turn the text "007" back into 7). Rows appended meanwhile (an
+// open season's progress posts take no lock) land below the snapshot, so they are never hit.
+function deleteRows_(sheet, id) {
+  var n = sheet.getLastRow() - 1, removed = 0;
+  if (n < 1) return 0;
+  var ids = sheet.getRange(2, 4, n, 1).getValues();
+  for (var i = n - 1; i >= 0;) {
+    if (String(ids[i][0]) !== id) { i--; continue; }
+    var end = i;
+    while (i >= 0 && String(ids[i][0]) === id) i--;
+    sheet.deleteRows(i + 3, end - i);   // index k is sheet row k + 2; the run is indexes i+1..end
+    removed += end - i;
+  }
+  return removed;
 }
 
 function getLogSheet_() {
