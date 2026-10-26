@@ -749,7 +749,7 @@ device); the SQL Noir study.
   bubbles on a world map (`site/world.json`, 79 KB, Natural Earth 110m plus centroids under GA's English names);
   devices and channels as donuts; every chart with a closed Raw data table. `chapter_queries` reaches GA (Realtime,
   2026-10-23) but the Data API shows a new event only after up to a day; the funnel notes it while ran-N is empty.
-  Open: the owner's look at the live pages with real data; archive the old backend project once no old link uses it.
+  Open (owner): a look at the live pages with real data; archive the old backend project once no old link uses it.
 - Monitoring for the 2026-10-25 onboarding (done 2026-10-25): the Game page's CHAPTER I ONBOARDING bars (learn mode:
   Investigate pressed, prologue finished / skipped, tour finished / skipped, a first query in chapter I, chapter I
   solved, each GA's own users count). FEATURE USE already lists prologue, tour, share, warm-up link, case card
@@ -798,7 +798,7 @@ device); the SQL Noir study.
   clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Done 2026-10-25: the owner linked AdSense to
   GA4; the three metrics are in the whitelist (and the pivot table), and both the Game and Handbook FEATURE USE show
   "Ad clicks (Google)" (GA's own total on their pages, impressions in its tooltip, zero until GA has data, about a day
-  after the link). Needs the backend redeployed (`deploy.sh`) once on main.
+  after the link). Backend deployed.
 - Competitor study (owner, 2026-10-24): research SQL Noir (https://www.sqlnoir.com/), a detective-themed SQL game,
   and note what it does well to borrow: onboarding, case structure and difficulty, hints, the editor and results,
   progress and accounts, how it earns money, SEO and sharing. Output: a short findings note with what to adopt here.
@@ -814,28 +814,26 @@ device); the SQL Noir study.
   random `TOKEN_SECRET` (both set by the owner in Script Properties and checked live the same day, no season
   open), and `?seasons=1` and the all-rows `doGet` now need the key. Accepted: compete answers checked in
   the browser (honour-based), `erd.py` unescaped names (build time, our own names).
-- Delete a season (owner, 2026-10-25: "Why can't seasons be deleted? let's add that feature"). Built 2026-10-25 on a
-  branch, not yet merged or deployed: admin action `delete` (key, under the script lock), refused for an open season;
+- ~~Delete a season~~ Done and live 2026-10-25 (owner, 2026-10-25: "Why can't seasons be deleted? let's add that feature"). Built 2026-10-25: admin action `delete` (key, under the script lock), refused for an open season;
   it removes the record from `SEASONS` and the season's log rows (bottom-up `deleteRows`, so the other rows keep their
   text cells), returns `removedRows`, and frees the database for the next create. The desk shows a bin button on
-  created and closed rows and asks in `#ask` first, suggesting the CSV export. Needs `deploy.sh` once on main.
-- Rename a season (owner, 2026-10-25). Built 2026-10-25 on a branch, not yet merged or deployed: admin action
+  created and closed rows and asks in `#ask` first, suggesting the CSV export. Backend deployed (@11); the owner deleted the test seasons the same day.
+- ~~Rename a season~~ Done and live 2026-10-25 (owner). Admin action
   `rename` {season, name} (key, under the script lock, any state), the name validated as on create (1 to 60
   characters), only `name` changes. The desk shows a pencil button on every row and asks in `#rename`, a labelled
-  field prefilled with the current name. Board and game follow through `?meta`. Needs `deploy.sh` once on main.
-- Chapter I onboarding (owner, 2026-10-25, all three practice options plus a share line, after the drop-off
-  diagnosis: 45% of chapter I openers never ran a query). Built 2026-10-25 on a branch, not yet merged or deployed:
+  field prefilled with the current name. Board and game follow through `?meta`. Backend deployed (@11).
+- ~~Chapter I onboarding~~ Done and live 2026-10-25 (owner, all three practice options plus a share line, after the drop-off
+  diagnosis: 45% of chapter I openers never ran a query). Built 2026-10-25:
   A. "The clerk's first morning", a one-screen prologue in learn mode on an invented lost-property book built in the
   browser (run, add a WHERE, answer; skippable, shown once, offered again only by New investigation; `feature_use`
   prologue_done / prologue_skip); B. four callouts on chapter I's first visit (schema, terminal, objective, case
-  board; shown once; `feature_use` tour_done / tour_skip, added 2026-10-25); B2 (owner, 2026-10-25, on a branch, not
-  yet merged): the same callouts (`showCallouts`) on the handbook's exercises page, five steps over the workbench
+  board; shown once; `feature_use` tour_done / tour_skip, added 2026-10-25); B2 (owner, 2026-10-25): the same callouts (`showCallouts`) on the handbook's exercises page, five steps over the workbench
   (schema, terminal, level and question picker, the Solved check, History), shown once when the workbench is up
   (`ritz.exercises.tour`), with the same tour_done / tour_skip events; C. a landing line linking the handbook's first warm-up exercise; D. a share line at the end of
   the game only (Part II extra edition: X, LinkedIn, Copy link, the device's Share; `feature_use` share with the
   network); E. both terminals' hint lines mention Tab to complete. Re-read GA a week after the push: prologue done vs
   skipped, and chapter I's ran-1 share.
-- Case board improvements (owner-approved 2026-10-25). Built 2026-10-25 on a branch, not yet merged: a solved card,
+- ~~Case board improvements~~ Done and live 2026-10-25 (owner-approved): a solved card,
   clicked, reviews its chapter with the query that cracked it under the answer (`state.cracked`, the clerk's own
   last run whose on-screen rows held the answer, else their last successful run; older saves show nothing); each
   card carries a picture (the portrait when the answer is a cast person or the Comtesse, else the chapter's icon);
@@ -844,14 +842,14 @@ device); the SQL Noir study.
   Blakeney never) is solved; a test walks I-XII so a crossing never leaves one face standing before VIII. GA
   `chapter_solve` gains `route` (same_result / found / unseen, `solveRoute`): every solution returns one row, its
   answer, so same_result is "a run in that chapter returned one row holding the answer", computed from the answer
-  hashes alone, nothing shipped. The owner registers `route` as an event-scoped custom dimension in GA.
-- Thermo-nuclear review of 2026-10-25 (`docs/reviews/2026-10-25-thermo-nuclear.md` on its branch; owner approved
-  fixing every finding). Batch 0 done 2026-10-25 on a branch, not yet merged: F3, the deploy's hand-kept `sed` lists
+  hashes alone, nothing shipped. The owner registered `route` (and `type`) in GA on 2026-10-25.
+- ~~Thermo-nuclear review of 2026-10-25~~ Done and live 2026-10-25, all 20 findings in five batches (`docs/reviews/2026-10-25-thermo-nuclear.md` on its branch; owner approved
+  fixing every finding). Batch 0: F3, the deploy's hand-kept `sed` lists
   and 17 `grep -q` checks replaced by `version_site.mjs` (every local script and stylesheet of every page and every
   relative import gets `?v=<commit>`, theme.js and the handbook's `../style.css` now included, cache only); a test
   runs it on a temp copy and walks each page's module graph (one URL per module, stats.js once on exercises.html).
   F15, `test_site.mjs` split into `test_site.mjs` (game, terminal, strict, deploy), `test_desk.mjs` and
-  `test_handbook.mjs`, no test lost (106 before, 106 plus the new versioning test after). Batches 1-4 to follow.
+  `test_handbook.mjs`, no test lost (106 before, 106 plus the new versioning test after). Batches 1-4 below and in the desk and handbook entries (F4, F5, F7, F8, F14, F16).
 - ~~Thermo-nuclear review, batch 1 (game and terminal)~~ Done 2026-10-25 (owner approved every finding). F1: the
   game, its prologue and the exercises page share one run pipeline (`terminal.js` `runSql`, an outcome object GA reads)
   and one editor (`wireEditor`); owner's sub-choice: all three get the game's full behaviour (comma-join guard, strict
@@ -863,6 +861,5 @@ device); the SQL Noir study.
   scan writing only to the state it started on; F10 `queryFail(fails, key, outcome)`, `runOutcome` gone; F11 `columns()`;
   F12 literal GA feature names, checked against monitor.js by a test; F17 `blankLiterals`; F18 `setIconButton`,
   `portraitSrc`; F19 `askPassphrase` on `askDialog`, one `debugState`; F20 the stale comment, `openSuspects` and
-  `askReset` instead of synthetic clicks, exercises' `tablesNamed`. Left for the other batches: `test_desk.mjs` and
-  `colour_learn.mjs` still import `sha256`/`rank` and `highlightSql`/`strictCheck` through `app.js` (a marked
-  re-export), and `admin.js` can take `ICON_ATTRS` from `ui.js`.
+  `askReset` instead of synthetic clicks, exercises' `tablesNamed`. Follow-ups done the same day: the re-exports removed (`test_desk.mjs` and `colour_learn.mjs` import from the
+  owning modules) and `admin.js` takes `ICON_ATTRS` from `ui.js`.
