@@ -103,18 +103,3 @@ function setup() {
   if (!book.getSheetByName(FEEDBACK_TAB)) book.insertSheet(FEEDBACK_TAB).appendRow(HEADERS);
 }
 
-// Run once from the editor (2026-10-26): rewrites the old [at, page, message, email, context] tab under HEADERS.
-function reorganise() {
-  var sheet = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID")).getSheetByName(FEEDBACK_TAB);
-  var old = sheet.getDataRange().getValues();
-  if (String(old[0][0]) !== "at") throw new Error("not the old layout");
-  var rows = old.slice(1).map(function (r) {
-    var ctx = {};
-    String(r[4]).split("\n").forEach(function (l) { var i = l.indexOf(": "); if (i > 0) ctx[l.slice(0, i)] = l.slice(i + 2); });
-    return row_(HEADERS, new Date(Number(r[0])), String(r[1]), String(r[2]), String(r[3]), ctx);
-  });
-  sheet.clear();
-  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight("bold");
-  if (rows.length) sheet.getRange(2, 1, rows.length, HEADERS.length).setValues(rows);
-  sheet.setFrozenRows(1);
-}
