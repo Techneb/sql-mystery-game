@@ -30,9 +30,11 @@ export const tableCsv = cells => csvText(cells.map(r => r.map(c => String(c).tri
 export const isNum = c => typeof c === "number" || /^(-|\d+(\.\d+)?%?)$/.test(String(c));
 export const tableHtml = (heads, rows) => '<div class="wide"><table class="detail stats"><thead><tr>' + heads.map((h, i) => "<th" + (rows.length && i && isNum(rows[0][i]) ? ' class="num"' : "") + ">" + esc(h) + "</th>").join("") +
   "</tr></thead><tbody>" + rows.map(r => "<tr>" + r.map(c => "<td" + (isNum(c) ? ' class="num"' : "") + ">" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
-export const legendOf = series => series.length > 1 ? '<p class="legend">' + series.map(([n, c]) => '<span><i class="' + c + '"></i>' + esc(n) + "</span>").join("") + "</p>" : "";
-export const legend = names => '<p class="legend">' + names.map((name, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(name) + "</span>").join("") +
-  '<span><i class="c6 key-line"></i>Retention (right axis)</span></p>';
+// Legends: each entry a toggle for series j of the plot it sits beside (monitor.js wires the click, shown() hides it).
+export const keyHtml = (j, cls, name) => '<button type="button" class="key" data-series="' + j + '" aria-pressed="true"><i class="' + cls + '"></i>' + esc(name) + "</button>";
+export const legendKeys = series => '<p class="legend">' + series.map(([n, c], j) => keyHtml(j, c, n)).join("") + "</p>";
+export const legendOf = series => (series.length > 1 ? legendKeys(series) : "");
+export const legend = names => legendKeys(names.map((name, j) => [name, "c" + (j + 1)]).concat([["Retention (right axis)", "c6 key-line"]]));
 
 // Chapters as the game names them.
 export const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
@@ -51,9 +53,18 @@ export const KEY = cls => "var(--" + (cls === "total" ? "ink" : cls) + ")";
 export const tipText = (k, rows) => "<b>" + esc(k) + "</b>" + rows.map(([v, label, cls]) => "<br>" + (cls ? '<span style="color:' + KEY(cls) + '">\u25cf</span> ' : "") +
   "<b>" + esc(v) + "</b>" + (label ? " " + esc(label) : "")).join("");
 const HT = "%{hovertext}<extra></extra>";
-// An invisible trace owning the hover of each column (h: each row): x positions, y where the box points, its texts.
-const carrier = (x, y, texts, h = false) => ({ type: "scatter", mode: "markers", x: h ? y : x, y: h ? x : y, hovertext: texts, hovertemplate: HT,
-  marker: { opacity: 0, size: 12 }, cliponaxis: false });
+// An invisible trace owning the hover of each column (h: each row): x positions, y where the box points, each box's
+// heading and tipText rows; a row's 4th cell is the series it belongs to, and meta keeps them so shown() can drop it.
+const carrier = (x, y, heads, rows, h = false) => ({ type: "scatter", mode: "markers", x: h ? y : x, y: h ? x : y, hovertext: heads.map((k, i) => tipText(k, rows[i])),
+  hovertemplate: HT, meta: { heads, rows }, marker: { opacity: 0, size: 12 }, cliponaxis: false });
+// The figure with the series in hidden (a Set of legend indexes) left out: trace j hidden (series j is trace j in every
+// chart with a legend), each carrier's box rebuilt without that series' rows; a donut hides slice j.
+export function shown(fig, hidden) {
+  if (!hidden || !hidden.size) return fig;
+  if (fig.data[0] && fig.data[0].type === "pie") return { ...fig, layout: { ...fig.layout, hiddenlabels: [...hidden].map(j => "s" + j) } };
+  return { ...fig, data: fig.data.map((t, i) => (hidden.has(i) ? { ...t, visible: false }
+    : t.meta ? { ...t, hovertext: t.meta.heads.map((k, c) => tipText(k, t.meta.rows[c].filter(r => !hidden.has(r[3])))) } : t)) };
+}
 // The placeholder monitor.js draws; the figure travels escaped in the attribute, so the views stay strings.
 export const plotHtml = fig => '<div class="plot" role="img" aria-label="' + esc(fig.aria) + '" style="height:' + fig.layout.height + 'px" data-fig="' +
   esc(JSON.stringify(fig)) + '"></div>';
@@ -90,12 +101,12 @@ export function lineFig(points, ytitle = "Users", unit = "users", ref = null) {
     layout: { height: 220, hovermode: "x", margin: { l: 8, r: 40, t: 10, b: 8 }, xaxis: DAYX, yaxis: zeroY(y, ytitle), ...refLayout(ref) } };
 }
 // One day's tooltip rows, the largest first: [value, label, key class].
-export const dayTip = (series, i) => series.map(s => [s.values[i], s.label, s.cls]).sort((a, b) => b[0] - a[0]).map(([v, l, c]) => [compact(v), l, c]);
+export const dayTip = (series, i) => series.map((s, j) => [s.values[i], s.label, s.cls, j]).sort((a, b) => b[0] - a[0]).map(([v, l, c, j]) => [compact(v), l, c, j]);
 // Several lines on one axis, the total (cls "total") first, under the others; each day's box lists every line.
 export function multiLineFig(labels, series, ytitle = "Users", ref = null) {
   return { aria: ytitle + " per day by value", data: series.map(s => ({ type: "scatter", mode: "lines", x: labels, y: s.values, line: { color: KEY(s.cls), width: 2 },
       opacity: s.cls === "total" ? 0.45 : 1, hoverinfo: "skip" }))
-    .concat([carrier(labels, labels.map((_, i) => Math.max(0, ...series.map(s => s.values[i]))), labels.map((l, i) => tipText(l, dayTip(series, i))))]),
+    .concat([carrier(labels, labels.map((_, i) => Math.max(0, ...series.map(s => s.values[i]))), labels, labels.map((_, i) => dayTip(series, i)))]),
     layout: { height: 220, hovermode: "x", xaxis: DAYX, yaxis: zeroY(series.flatMap(s => s.values), ytitle), ...refLayout(ref) } };
 }
 
@@ -127,8 +138,8 @@ export function funnelFig(f) {
   return { aria: "Chapter funnel and retention", data: STAGES.map(([k], j) => ({ type: "bar", x, y: f.map(c => c[k]), marker: { color: KEY("c" + (j + 1)) }, hoverinfo: "skip" }))
     .concat([{ type: "scatter", mode: "lines+markers", x, y: f.map(ret), yaxis: "y2", line: { color: "var(--c6)", width: 2 },
       marker: { color: "var(--c6)", size: 8, line: { color: "var(--paper)", width: 2 } }, hoverinfo: "skip" },
-    carrier(x, f.map(c => Math.max(...STAGES.map(([k]) => c[k]))), f.map(c => tipText(chTip(c), STAGES.map(([k, name], j) => [c[k], name, "c" + (j + 1)])
-      .concat([[pctOf(ret(c)), "retention", "c6"], [pct(c.solved, c.opened), "solve rate"]]))))]),
+    carrier(x, f.map(c => Math.max(...STAGES.map(([k]) => c[k]))), f.map(chTip), f.map(c => STAGES.map(([k, name], j) => [c[k], name, "c" + (j + 1), j])
+      .concat([[pctOf(ret(c)), "retention", "c6", STAGES.length], [pct(c.solved, c.opened), "solve rate"]])))]),
     layout: { height: 260, barmode: "group", bargap: 0.2, hovermode: "x", margin: CHM, xaxis: CHX, yaxis: chY(f.flatMap(c => STAGES.map(([k]) => c[k])), "Users"),
       yaxis2: { title: title("Retention"), overlaying: "y", side: "right", range: [0, 105], ...PCT, showgrid: false, zeroline: false, automargin: false } } };
 }
@@ -137,21 +148,21 @@ export function solveRateFig(f) {
   const x = f.map(c => roman(c.chapter));
   return { aria: "Solve rate per chapter", data: [{ type: "scatter", mode: "lines+markers", x, y: f.map(solveRate), line: { color: "var(--rel)", width: 2 },
     marker: { color: "var(--rel)", size: 8, line: { color: "var(--paper)", width: 2 } }, hoverinfo: "skip" },
-  carrier(x, f.map(c => solveRate(c) ?? 0), f.map(c => tipText(chTip(c), [[c.solved + " of " + c.opened + " solved (" + pct(c.solved, c.opened) + ")"]])))],
+  carrier(x, f.map(c => solveRate(c) ?? 0), f.map(chTip), f.map(c => [[c.solved + " of " + c.opened + " solved (" + pct(c.solved, c.opened) + ")"]]))],
   layout: { height: 180, hovermode: "x", margin: CHM, xaxis: CHX, yaxis: { title: title("Solve rate"), range: [0, 105], ...PCT, automargin: false } } };
 }
 // Grouped bars per chapter on one axis titled t; g: [{chapter, values, tip}], series: [[name, key class]].
 export function chapterBarsFig(g, series, t = "Users", fmt = compact) {
   const x = g.map(c => roman(c.chapter));
   return { aria: t + " per chapter", data: series.map(([, cls], j) => ({ type: "bar", x, y: g.map(c => c.values[j]), marker: { color: KEY(cls) }, hoverinfo: "skip" }))
-    .concat([carrier(x, g.map(c => Math.max(0, ...c.values)), g.map(c => tipText(chTip(c), series.map(([name, cls], j) => [fmt(c.values[j]), name, cls]).concat(c.tip || []))))]),
+    .concat([carrier(x, g.map(c => Math.max(0, ...c.values)), g.map(chTip), g.map(c => series.map(([name, cls], j) => [fmt(c.values[j]), name, cls, j]).concat(c.tip || [])))]),
     layout: { height: 200, barmode: "group", bargap: 0.25, hovermode: "x", margin: CHM, xaxis: CHX, yaxis: chY(g.flatMap(c => c.values), t) } };
 }
 // One value per chapter as a --c1 line with dots (no dot where val is null), a small chart under the bars it explains.
 export function chapterLineFig(g, val, t, tip) {
   const x = g.map(c => roman(c.chapter)), y = g.map(val);
   return { aria: t + " per chapter", data: [{ type: "scatter", mode: "lines+markers", x, y, line: { color: "var(--c1)", width: 2 },
-    marker: { color: "var(--c1)", size: 7, line: { color: "var(--paper)", width: 2 } }, hoverinfo: "skip" }, carrier(x, y.map(v => v ?? 0), g.map(c => tipText(chTip(c), tip(c))))],
+    marker: { color: "var(--c1)", size: 7, line: { color: "var(--paper)", width: 2 } }, hoverinfo: "skip" }, carrier(x, y.map(v => v ?? 0), g.map(chTip), g.map(tip))],
   layout: { height: 150, hovermode: "x", margin: CHM, xaxis: CHX, yaxis: chY(y, t) } };
 }
 
@@ -163,7 +174,7 @@ export function hbarFig(rows, series, w = 640, fmt = compact, aria = "Bars") {
   const cut = s => (s.length > chars ? s.slice(0, chars - 3) + "..." : s), ys = rows.map((_, i) => i);
   return { aria, data: series.map(([, cls], j) => ({ type: "bar", orientation: "h", x: rows.map(r => r.values[j] || 0), y: ys.map(i => i + 0.04 + bw * (j + 0.5)), width: bw * 0.85,
     marker: { color: KEY(cls) }, text: rows.map(r => fmt(r.values[j] || 0)), texttemplate: "%{text}", textposition: "outside", constraintext: "none", textfont: { size: 11 }, cliponaxis: false, hoverinfo: "skip" }))
-    .concat(rows.length ? [carrier(ys.map(i => i + 0.25), rows.map(r => Math.max(0, ...r.values)), rows.map(r => tipText(r.label, series.map(([name, c], j) => [fmt(r.values[j] || 0), name, c]).concat(r.tip || []))), true)] : []),
+    .concat(rows.length ? [carrier(ys.map(i => i + 0.25), rows.map(r => Math.max(0, ...r.values)), rows.map(r => r.label), rows.map(r => series.map(([name, c], j) => [fmt(r.values[j] || 0), name, c, j]).concat(r.tip || [])), true)] : []),
     layout: { height: Math.max(1, rows.length) * (24 + n * 13) + 34, hovermode: "y", margin: { l: 4, r: 40, t: 4, b: 8 },
       xaxis: { range: [0, (max || 1) * 1.12], rangemode: "tozero", zeroline: true },
       yaxis: { range: [Math.max(1, rows.length) - 0.5, -0.55], showticklabels: false, ticks: "", showgrid: false, zeroline: false },
@@ -192,8 +203,8 @@ export function donutFig(s, total, what, aria) {
 export function donutHtml(items, what, aria, unique, fixed = false) {
   const s = fixed ? items : fold(items);
   const sum = s.reduce((t, i) => t + i.value, 0), total = unique > 0 ? unique : sum;
-  return '<div class="donut-row"><div class="donut">' + plotHtml(donutFig(s, total, what, aria)) + '</div><ul class="donut-legend">' + s.map((i, j) => '<li><i class="c' + (j + 1) + '"></i><span>' + esc(i.label) +
-    '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></li>").join("") + "</ul></div>" +
+  return '<div class="donut-row"><div class="donut">' + plotHtml(donutFig(s, total, what, aria)) + '</div><ul class="donut-legend">' + s.map((i, j) => '<li><button type="button" class="key" data-series="' + j + '" aria-pressed="true"><i class="c' + (j + 1) + '"></i><span>' + esc(i.label) +
+    '</span><b class="num">' + i.value + '</b><span class="num muted">' + pct(i.value, total) + "</span></button></li>").join("") + "</ul></div>" +
     (sum > total ? '<p class="muted">' + total + " " + esc(what) + " in all; the slices add up to " + sum + " because some count in more than one.</p>" : "");
 }
 

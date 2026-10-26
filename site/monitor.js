@@ -9,8 +9,8 @@
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
 import { wireFeedback } from "./feedback.js";
 import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
-import { ROMAN, STAGES, barTable, chapterBarsFig, chapterLineFig, compact, donutHtml, fold, funnelFig, groupFig, hbarFig, legend, legendOf,
-  lineFig, mapHtml, multiLineFig, pct, pctOf, plotHtml, r1, raw, retention, roman, solveRateFig, tableCsv, tableHtml, themed } from "./figures.js";
+import { ROMAN, STAGES, barTable, chapterBarsFig, chapterLineFig, compact, donutHtml, fold, funnelFig, groupFig, hbarFig, legend, legendKeys, legendOf,
+  lineFig, mapHtml, multiLineFig, pct, pctOf, plotHtml, r1, raw, retention, roman, shown, solveRateFig, tableCsv, tableHtml, themed } from "./figures.js";
 const hbar = (...a) => plotHtml(hbarFig(...a));
 
 export const DAYS = [7, 30, 90];
@@ -67,7 +67,7 @@ export function breakdownHtml(res, users, dim, w, m) {
   const tot = new Map(total.map(u => [String(u.date), Number(u.users) || 0]));
   const all = { label: "All " + d.unit, values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
   const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values", avg = dailyAverage(all.values);
-  return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
+  return legendKeys(series.map(s => [s.label, s.cls + " key-line"])) +
     plotHtml(multiLineFig(labels, series, d.label, avgRef(avg))) + avgNote(avg, labels.length, d.unit) +
     (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by " + esc(d.unit) + " summed over the days).</p>" : "") +
     raw("users-per-day-breakdown", '<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
@@ -256,7 +256,7 @@ export function compareSection(p = {}, stack, w) {
   if (p.error) return head + '<p class="status bad">Google Analytics said: ' + esc(p.error) + "</p>";
   if (!p.res) return head + '<p class="muted">Reading the five counts...</p>';
   const st = stackData(p.res);
-  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + plotHtml(groupFig(st)) +
+  return head + legendKeys(st.segs.map((s, j) => [s, "c" + (j + 1)])) + plotHtml(groupFig(st)) +
     '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a group is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a group&#39;s bars can add up to more than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(b.label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
@@ -653,7 +653,7 @@ function resolved(v, css) {
 }
 function plot(el, react = false) {
   if (!window.Plotly) { el.textContent = "The chart library did not load: the numbers are under Raw data."; return; }
-  const f = JSON.parse(el.dataset.fig), css = getComputedStyle(document.documentElement), touch = matchMedia("(pointer: coarse)").matches;
+  const f = shown(JSON.parse(el.dataset.fig), HIDDEN.get(el)), css = getComputedStyle(document.documentElement), touch = matchMedia("(pointer: coarse)").matches;
   window.Plotly[react ? "react" : "newPlot"](el, resolved(f.data, css), resolved(themed(f.layout, touch), css), CONFIG);
 }
 // Writes html into box, keeping each drawn plot whose figure is unchanged (no redraw while panels arrive one by one).
@@ -665,6 +665,25 @@ function drawPlots(box, html) {
     if (was) { el.replaceWith(was); keep.delete(el.dataset.fig); } else plot(el);
   }
   if (window.Plotly) for (const el of keep.values()) window.Plotly.purge(el);
+  box.querySelectorAll(".key[data-series]").forEach(syncKey);
+}
+// Legend toggles: a legend's plot is the one it sits beside (a donut's in its row); the hidden series live on the
+// plot element (HIDDEN, a Set per element), so a kept plot and a day/night redraw keep them and a new figure starts afresh.
+const HIDDEN = new WeakMap();
+const keyPlot = b => { const l = b.closest(".legend, .donut-row"); return l && (l.matches(".donut-row") ? l.querySelector(".plot") : l.nextElementSibling); };
+function syncKey(b) {
+  const el = keyPlot(b), off = !!(el && HIDDEN.has(el) && HIDDEN.get(el).has(Number(b.dataset.series)));
+  b.setAttribute("aria-pressed", String(!off));
+}
+function wireKeys(box) {
+  box.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest(".key[data-series]"), el = b && keyPlot(b);
+    if (!el || !el.matches(".plot")) return;
+    const j = Number(b.dataset.series), h = HIDDEN.get(el) || HIDDEN.set(el, new Set()).get(el);
+    if (!h.delete(j)) h.add(j);
+    plot(el, true);
+    syncKey(b);
+  });
 }
 const restyle = () => document.querySelectorAll(".plot").forEach(el => plot(el, true));
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
@@ -678,6 +697,7 @@ async function main() {
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
   $("monitor").hidden = false;
   wireCsv($("stats"));
+  wireKeys($("stats"));
   new MutationObserver(restyle).observe(document.documentElement, { attributes: true, attributeFilter: ["data-mood"] });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", restyle);
   // The view (monitor.html Global, monitor-game.html, monitor-handbook.html), its panels and their states; the Count

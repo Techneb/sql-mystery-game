@@ -461,7 +461,7 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.deepEqual(p.series.map(s => s.label), ["<b>UK", "France", "E", "D", "C"], "top 5 by users over the period");
   assert.deepEqual(p.series[1].values, [0, 3, 5], "a missing day counts 0");
   assert.deepEqual(p.series.map(s => s.cls), ["c1", "c2", "c3", "c4", "c5"]);
-  assert.deepEqual(figures.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
+  assert.deepEqual(figures.dayTip(p.series, 1), [["5", "E", "c3", 2], ["4", "D", "c4", 3], ["3", "France", "c2", 1], ["3", "C", "c5", 4], ["0", "<b>UK", "c1", 0]], "largest first, each row tagged with its series");
   const users = [{ date: "20261021", users: 12 }, { date: "20261022", users: 14 }];
   const html = monitor.breakdownHtml({ rows }, users, "country", 390);
   assert.ok(!html.includes("<b>UK") && html.includes("&#60;b&#62;UK"), "escaped");
@@ -501,6 +501,26 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.ok(all.includes("COUNTRIES (ALL)") && all.includes("&#60;Narnia&#62;") && !all.includes("<Narnia>"), "every row, escaped");
   const t20 = monitor.statsHtml(s, 390, null, {}, { top: 20 });
   assert.ok(t20.includes("COUNTRIES (TOP 20)") && t20.includes("Reading the countries"));
+});
+
+test("monitor legends: each entry a toggle for its series; shown() hides the trace and its rows in the column's box", () => {
+  const rows = [1, 2].flatMap(c => [["chapter_open", "", 10 * c], ["chapter_queries", "1", 8], ["chapter_solve", "", 5]].map(([event, count, users]) => ({ chapter: String(c), event, count, users })));
+  const html = monitor.funnelHtml(rows, 640), keys = [...html.matchAll(/<button type="button" class="key" data-series="(\d)" aria-pressed="true">/g)].map(m => Number(m[1]));
+  assert.deepEqual(keys, [0, 1, 2, 3, 4, 5], "five stages and the retention, each a pressed toggle");
+  const f = figsOf(html)[0], box = fg => fg.data.at(-1).hovertext[0];
+  assert.equal(figures.shown(f, new Set()), f, "nothing hidden: the figure as is");
+  const h = figures.shown(f, new Set([1, 5]));
+  assert.ok(h.data[1].visible === false && h.data[5].visible === false && h.data[0].visible === undefined, "the hidden series' traces only");
+  assert.ok(box(f).includes("Ran 1 query") && !box(h).includes("Ran 1 query") && !box(h).includes("retention"), "gone from the box");
+  assert.ok(box(h).includes("Opened") && box(h).includes("solve rate"), "the other series and the untagged rows stay");
+  assert.ok(!JSON.stringify(f).includes('"visible"'), "shown() leaves the figure alone");
+  const dn = figures.donutHtml([{ label: "a", value: 3 }, { label: "b", value: 2 }], "users", "A donut", 5);
+  assert.equal((dn.match(/class="key" data-series=/g) || []).length, 2, "each slice's legend row a toggle");
+  assert.deepEqual(figures.shown(figsOf(dn)[0], new Set([1])).layout.hiddenlabels, ["s1"], "a donut hides the slice; its centre stays");
+  const wh = monitor.wrongHintsHtml({ wrong: { rows: [[1, 1, 4], [1, 3, 2]] }, hints: { rows: [[1, 3, 3]] } }, 640), wf = figsOf(wh)[0];
+  assert.ok(!box(figures.shown(wf, new Set([0]))).includes("1st wrong") && box(figures.shown(wf, new Set([0]))).includes("hint opens"), "chapter bars: the tip extras stay");
+  assert.equal(monitor.adsHtml({ ads: { totals: [1, 9] } }, 640).match(/class="key"/g).length, 2, "hbar legends too");
+  assert.equal(figures.legendOf([["one", "c1"]]), "", "a single series: no legend to toggle");
 });
 
 test("monitor donuts: each picks its metric, Visitors by default, loading and GA errors in place", () => {
