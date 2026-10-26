@@ -687,6 +687,19 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
   assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(ob));
   assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
+  // by device: desktop, mobile, tablet in that order whatever GA's order, a missing device reads 0, the share per device
+  const od = monitor.onboardingDevicesHtml({ begin: { rows: [["mobile", 10], ["desktop", 30]], totals: [39] }, byDevice: { rows: [["prologue_skip", "mobile", 6], ["prologue_skip", "desktop", 3]] },
+    ran: { rows: [["desktop", 24]] }, solved: { rows: [] } }, 390);
+  assert.ok(od.includes('<th class="num">Desktop</th>') && od.indexOf('<th class="num">Desktop</th>') < od.indexOf('<th class="num">Mobile</th>') && od.indexOf('<th class="num">Mobile</th>') < od.indexOf('<th class="num">Tablet</th>'));
+  assert.ok(od.includes('<td>Pressed Investigate</td><td class="num">30</td><td class="num">100%</td><td class="num">10</td><td class="num">100%</td><td class="num">0</td><td class="num">-</td>'));
+  assert.ok(od.includes('<td>Prologue skipped</td><td class="num">3</td><td class="num">10%</td><td class="num">6</td><td class="num">60%</td><td class="num">0</td>') &&
+    od.includes('<td>Ran a first query in chapter I</td><td class="num">24</td><td class="num">80%</td><td class="num">0</td>') && od.includes('<td>Solved chapter I</td><td class="num">0</td>'));
+  assert.ok(od.includes("60%\tof Mobile Investigate pressers") && od.includes("Export CSV"));
+  const od0 = monitor.onboardingDevicesHtml({ begin: { rows: [] }, byDevice: { rows: [] }, ran: { rows: [] }, solved: { rows: [] } }, 390);
+  assert.ok(od0.includes("<td>Tour finished</td>") && od0.includes('<th class="num">Tablet</th>') && ob.includes("BY DEVICE"), "the empty frame, and under the all-devices bars");
+  assert.equal(monitor.onboardingHtml({ begin: { rows: [["desktop", 30], ["mobile", 10]], totals: [39] }, features: empty, byDevice: empty, ran: empty, solved: empty }, 390)
+    .includes('<td>Pressed Investigate</td><td class="num">39</td>'), true, "the all-devices bar is GA's total, never the devices added");
+  assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).byDevice.dimensions, ["customEvent:feature", "deviceCategory"]);
   // shares by network: the share box's buttons in its order, zeros listed, presses in the tooltip
   const nets = [...new Set([...fs.readFileSync("site/endings.js", "utf8").matchAll(/data-net="(\w+)"/g)].map(m => m[1]))];
   assert.deepEqual(Object.keys(monitor.NETWORKS), nets, "NETWORKS = the share box's data-net values");

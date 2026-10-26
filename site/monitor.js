@@ -336,10 +336,15 @@ const adRequest = (days, pagePath) => ev(days, [], ["publisherAdClicks", "publis
 export const ONBOARDING_STEPS = [["begin", "Pressed Investigate"], ["prologue_done", "Prologue finished"], ["prologue_skip", "Prologue skipped"],
   ["tour_done", "Tour finished"], ["tour_skip", "Tour skipped"], ["ran", "Ran a first query in chapter I"], ["solved", "Solved chapter I"]];
 const LEARN_MODE = { "customEvent:mode": ["learn"] };
-export const onboardingRequests = d => ({ begin: ev(d, [], ["totalUsers"], { eventName: ["landing_begin"], ...LEARN_MODE }),
-  features: ev(d, ["customEvent:feature"], ["totalUsers"], { eventName: ["feature_use"], "customEvent:feature": ["prologue_done", "prologue_skip", "tour_done", "tour_skip"], pagePath: GAME_PATHS }),
-  ran: ev(d, [], ["totalUsers"], { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], ...LEARN_MODE }),
-  solved: ev(d, [], ["totalUsers"], { eventName: ["chapter_solve"], "customEvent:chapter": ["1"], ...LEARN_MODE }) });
+// Split by device (2026-10-26): begin, ran and solved carry deviceCategory (their totals stay GA's all-device count);
+// the features need a second reply by device, since GA's rows by feature alone are the all-device bars.
+export const DEVICES = { desktop: "Desktop", mobile: "Mobile", tablet: "Tablet" };
+const OB_FEATURES = { eventName: ["feature_use"], "customEvent:feature": ["prologue_done", "prologue_skip", "tour_done", "tour_skip"], pagePath: GAME_PATHS };
+export const onboardingRequests = d => ({ begin: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["landing_begin"], ...LEARN_MODE }),
+  features: ev(d, ["customEvent:feature"], ["totalUsers"], OB_FEATURES),
+  byDevice: ev(d, ["customEvent:feature", "deviceCategory"], ["totalUsers"], OB_FEATURES),
+  ran: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], ...LEARN_MODE }),
+  solved: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["chapter_solve"], "customEvent:chapter": ["1"], ...LEARN_MODE }) });
 
 // --- panels: everything a view draws from ?report= is a panel, PANELS[view][id] = {deps, requests} or {deps, load}.
 // c is the page's context: {days, gen (one per period load), m (the Count), dim (the breakdown), stack (Stack by), top
@@ -487,13 +492,30 @@ function featuresRow(P, w, names, prefix = "") {
 }
 // onboardingRequests' replies: one bar per stage, each GA's own users (never a difference), the share of the
 // Investigate pressers only in the tooltip and raw data.
-export function onboardingHtml({ begin, features, ran, solved }, w) {
+export function onboardingHtml({ begin, features, byDevice, ran, solved }, w) {
   const f = byFirst(features), v = { begin: gaTotal(begin), ran: gaTotal(ran), solved: gaTotal(solved) };
   const rows = ONBOARDING_STEPS.map(([k, label]) => ({ key: k, label, values: [k in v ? v[k] : (f.get(k) || [0])[0]] }));
   const begun = rows[0].values[0];
   return hbarSvg(rows.map(r => ({ ...r, tip: [[pct(r.values[0], begun), "of those who pressed Investigate"]] })), [["users", "c1"]], w, compact, "Chapter I onboarding") +
     '<p class="muted">Learn mode, users at each step, each GA&#39;s own count (a person can skip the prologue and finish the tour, and someone who began before the period still counts later). The prologue and tour events start 2026-10-25.</p>' +
-    raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)])));
+    raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)]))) +
+    onboardingDevicesHtml({ begin, byDevice, ran, solved }, w);
+}
+// The same steps per device (DEVICES' order, then any other name GA gives; zeros listed): one bar per device, each
+// GA's own users for that step and device; the share of that device's Investigate pressers in the tooltip and raw data.
+export function onboardingDevicesHtml({ begin, byDevice, ran, solved }, w) {
+  const one = res => new Map(((res && res.rows) || []).map(r => [String(r[0]), Number(r.at(-1)) || 0]));
+  const fr = (byDevice && byDevice.rows) || [], f = new Map(fr.map(r => [r[0] + "|" + r[1], Number(r[2]) || 0]));
+  const v = { begin: one(begin), ran: one(ran), solved: one(solved) };
+  const seen = [...v.begin.keys(), ...v.ran.keys(), ...v.solved.keys(), ...fr.map(r => String(r[1]))];
+  const devs = [...Object.keys(DEVICES), ...new Set(seen.filter(k => !(k in DEVICES)))];
+  const at = (k, d) => (k in v ? v[k].get(d) : f.get(k + "|" + d)) || 0, begun = devs.map(d => at("begin", d));
+  const series = devs.map((d, j) => [DEVICES[d] || gaText(d), "c" + (j + 1)]);
+  const rows = ONBOARDING_STEPS.map(([k, label]) => ({ label, values: devs.map(d => at(k, d)) }));
+  return '<div class="label sub">BY DEVICE</div>' + legendOf(series) +
+    hbarSvg(rows.map(r => ({ ...r, tip: series.map(([n], j) => [pct(r.values[j], begun[j]), "of " + n + " Investigate pressers"]) })), series, w, compact, "Chapter I onboarding by device") +
+    '<p class="muted">Each bar GA&#39;s own users for that step on that device; the share of that device&#39;s Investigate pressers is in the tooltip.</p>' +
+    raw("onboarding-devices", tableHtml(["Step", ...series.flatMap(([n]) => [n, n + " share"])], rows.map(r => [r.label, ...r.values.flatMap((x, j) => [x, pct(x, begun[j])])])));
 }
 // shares: feature_use share by network, users per button in NETWORKS' order (zeros listed), presses in the tooltip.
 export function sharesHtml({ shares }, w) {
