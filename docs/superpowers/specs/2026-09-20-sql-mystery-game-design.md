@@ -825,7 +825,8 @@ device).
   characters), only `name` changes. The desk shows a pencil button on every row and asks in `#rename`, a labelled
   field prefilled with the current name. Board and game follow through `?meta`. Backend deployed (@11).
 - ~~Chapter I onboarding~~ Done and live 2026-10-25 (owner, all three practice options plus a share line, after the drop-off
-  diagnosis: 45% of chapter I openers never ran a query). Built 2026-10-25:
+  diagnosis: 45% of chapter I openers never ran a query; the diagnosis, the baseline for the 2026-11-01 re-read, is
+  `docs/research/2026-10-25-chapter-1-diagnosis.md`). Built 2026-10-25:
   A. "The clerk's first morning", a one-screen prologue in learn mode on an invented lost-property book built in the
   browser (run, add a WHERE, answer; skippable, shown once, offered again only by New investigation; `feature_use`
   prologue_done / prologue_skip); B. four callouts on chapter I's first visit (schema, terminal, objective, case
@@ -845,7 +846,7 @@ device).
   `chapter_solve` gains `route` (same_result / found / unseen, `solveRoute`): every solution returns one row, its
   answer, so same_result is "a run in that chapter returned one row holding the answer", computed from the answer
   hashes alone, nothing shipped. The owner registered `route` (and `type`) in GA on 2026-10-25.
-- ~~Thermo-nuclear review of 2026-10-25~~ Done and live 2026-10-25, all 20 findings in five batches (`docs/reviews/2026-10-25-thermo-nuclear.md` on its branch; owner approved
+- ~~Thermo-nuclear review of 2026-10-25~~ Done and live 2026-10-25, all 20 findings in five batches (`docs/reviews/2026-10-25-thermo-nuclear.md`; owner approved
   fixing every finding). Batch 0: F3, the deploy's hand-kept `sed` lists
   and 17 `grep -q` checks replaced by `version_site.mjs` (every local script and stylesheet of every page and every
   relative import gets `?v=<commit>`, theme.js and the handbook's `../style.css` now included, cache only); a test
