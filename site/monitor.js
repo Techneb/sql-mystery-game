@@ -5,12 +5,13 @@
 // (monitor-handbook.html: its pages as a donut, the exercises, level choice and run outcome, failures, features,
 // Try it), read from the Apps Script's ?stats=<days>&key= and ?report= (apps_script.gs stats_, report_), so nobody
 // opens GA. This module is the GA model (the Count metrics, the request builders, PANELS) and the views; the charts
-// themselves are charts.js. Pure parts are exported for test_desk.mjs; the page wiring runs only in a browser.
+// themselves are figures.js (Plotly figures, drawn by drawPlots below). Pure parts are exported for test_desk.mjs; the page wiring runs only in a browser.
 // The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
 import { wireFeedback } from "./feedback.js";
-import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
-import { ROMAN, STAGES, barTable, chapterBarsSvg, chapterLineSvg, compact, donutHtml, fold, funnelSvg, groupSvg, hbarSvg, legend, legendOf,
-  lineSvg, mapHtml, multiLineSvg, pct, pctOf, r1, raw, retention, roman, solveRateSvg, tableHtml, wireCsv, wireTips } from "./charts.js";
+import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+import { ROMAN, STAGES, barTable, chapterBarsFig, chapterLineFig, compact, donutHtml, fold, funnelFig, groupFig, hbarFig, legend, legendOf,
+  lineFig, mapHtml, multiLineFig, pct, pctOf, plotHtml, r1, raw, retention, roman, solveRateFig, tableCsv, tableHtml, themed } from "./figures.js";
+const hbar = (...a) => plotHtml(hbarFig(...a));
 
 export const DAYS = [7, 30, 90];
 
@@ -19,13 +20,13 @@ const isoDate = d => String(d).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3");
 export function usersHtml(users, w, m) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
   const d = metricOf(m), avg = dailyAverage(pts.map(p => p.value));
-  return lineSvg(pts, w, d.label, d.unit, avgRef(avg)) + avgNote(avg, pts.length, d.unit) +
+  return plotHtml(lineFig(pts, d.label, d.unit, avgRef(avg))) + avgNote(avg, pts.length, d.unit) +
     raw("users-per-day", barTable("Day", pts.map(p => [p.label, p.value]), d.label, pts.length ? [["Average per day", avg]] : []));
 }
 // The mean of the daily counts over the days shown (a day without a row is a 0 in values), to one decimal; null with no
 // days. A person active on several days counts on each: it is an average of daily counts, not of people.
 export const dailyAverage = values => (values.length ? r1(values.reduce((a, b) => a + b, 0) / values.length) : null);
-const avgRef = avg => (avg === null ? {} : { ref: { value: avg, label: "avg " + compact(avg) } });
+const avgRef = avg => (avg === null ? null : { value: avg, label: "avg " + compact(avg) });
 const avgNote = (avg, n, unit) => (avg === null ? "" : '<p class="muted">Average per day: ' + esc(compact(avg)) + " " + esc(unit) +
   " (the mean of the daily counts over the " + n + " days shown, the dashed line; a person active on several days counts on each).</p>");
 // A ?report= on [date] as usersHtml's [{date, users}].
@@ -67,7 +68,7 @@ export function breakdownHtml(res, users, dim, w, m) {
   const all = { label: "All " + d.unit, values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
   const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values", avg = dailyAverage(all.values);
   return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
-    multiLineSvg(labels, series, w, d.label, avgRef(avg)) + avgNote(avg, labels.length, d.unit) +
+    plotHtml(multiLineFig(labels, series, d.label, avgRef(avg))) + avgNote(avg, labels.length, d.unit) +
     (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by " + esc(d.unit) + " summed over the days).</p>" : "") +
     raw("users-per-day-breakdown", '<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
       labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody>" +
@@ -113,14 +114,14 @@ export function countriesTotal(res, sub, n, m) {
 const topSelect = cur => '<label class="pick">Top <select id="top-n">' + optionsHtml(TOP_COUNTRIES.map(n => [n, n || "All"]), cur) + "</select></label>";
 // p: the countries panel ({res: {countries, top}, error}): countries the country reply (null while reading), top the
 // top N's total reply (null while reading or when nothing is cut); n the Top; m the page's Count.
-export function countriesSection(world, p = {}, n = 10, m = "visitors") {
+export function countriesSection(world, p = {}, n = 10, m = "visitors", w = 640) {
   const head = '<div class="label-row"><span class="label">COUNTRIES (' + (n ? "TOP " + n : "ALL") + ")</span>" + topSelect(n) + "</div>";
   if (p.error) return head + '<p class="status bad">Google Analytics said: ' + esc(p.error) + "</p>";
   const res = p.res && p.res.countries, sub = p.res && p.res.top;
   if (!res) return head + '<p class="muted">Reading the countries...</p>';
   const list = countriesFrom(res, n), cut = topTotalRequest({}, res, n);
   const foot = [...(cut && sub ? [["Top " + n + " (GA's total)", gaTotal(sub)]] : []), ["All countries (GA's total)", gaTotal(res)]];
-  return head + '<p>' + esc(countriesTotal(res, sub, n, m)) + "</p>" + mapHtml(list, world, metricOf(m), foot) +
+  return head + '<p>' + esc(countriesTotal(res, sub, n, m)) + "</p>" + mapHtml(list, world, metricOf(m), foot, w) +
     (list.length ? '<p class="muted">' + esc(overlapNote("in two countries", m, "bubbles")) + "</p>" : "");
 }
 
@@ -143,7 +144,7 @@ export const funnel12 = rows => { const by = new Map(funnel(rows).map(c => [c.ch
   return Array.from({ length: 12 }, (_, i) => by.get(i + 1) || { chapter: i + 1, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }); };
 export function solveRateHtml(rows, w) {
   const f = funnel12(rows);
-  return solveRateSvg(f, w) +
+  return plotHtml(solveRateFig(f)) +
     raw("solve-rate", '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Solved</th><th>Solve rate</th></tr></thead><tbody>' +
       f.map(c => "<tr><td>" + roman(c.chapter) + '</td><td class="num">' + c.opened + '</td><td class="num">' + c.solved + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>");
 }
@@ -151,7 +152,7 @@ export function funnelHtml(rows, w) {
   const f = funnel12(rows);
   const finished = rows.filter(r => r.event === "game_finish").reduce((s, r) => s + (Number(r.users) || 0), 0);
   const ret = retention(f);
-  return legend(STAGES.map(s => s[1])) + funnelSvg(f, w) +
+  return legend(STAGES.map(s => s[1])) + plotHtml(funnelFig(f)) +
     raw("chapter-funnel", '<table class="detail stats"><thead><tr><th>Chapter</th><th>Opened</th><th>Ran 1 query</th><th>Ran 5</th><th>Ran 20</th><th>Solved</th><th>Retention</th><th>Solve rate</th></tr></thead><tbody>' +
     f.map(c => "<tr><td>" + roman(c.chapter) + "</td>" + STAGES.map(([k]) => '<td class="num">' + c[k] + "</td>").join("") +
       '<td class="num">' + pctOf(ret(c)) + '</td><td class="num">' + pct(c.solved, c.opened) + "</td></tr>").join("") + "</tbody></table>") +
@@ -255,7 +256,7 @@ export function compareSection(p = {}, stack, w) {
   if (p.error) return head + '<p class="status bad">Google Analytics said: ' + esc(p.error) + "</p>";
   if (!p.res) return head + '<p class="muted">Reading the five counts...</p>';
   const st = stackData(p.res);
-  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + groupSvg(st, w) +
+  return head + '<p class="legend">' + st.segs.map((s, j) => '<span><i class="c' + (j + 1) + '"></i>' + esc(s) + "</span>").join("") + "</p>" + plotHtml(groupFig(st)) +
     '<p class="muted">Visitors and players are people, sessions are visits, page views are pages loaded: the bars do not share a unit. The number over a group is GA&#39;s own total; a person in two segments (two devices, say) counts in both, so a group&#39;s bars can add up to more than its total.</p>' +
     raw("count-metrics-compared", '<div class="wide"><table class="detail stats"><thead><tr><th>Count</th>' + st.segs.map(s => '<th class="num">' + esc(s) + "</th>").join("") + '<th class="num">Total</th></tr></thead><tbody>' +
       st.bars.map(b => "<tr><td>" + esc(b.label) + "</td>" + b.values.map(v => '<td class="num">' + v + "</td>").join("") + '<td class="num">' + b.total + "</td></tr>").join("") + "</tbody></table></div>");
@@ -265,7 +266,7 @@ export function compareSection(p = {}, stack, w) {
 // page's choices {m, dim, stack, top}. PAGES, devices and channels share one row.
 export function statsHtml(s, w, world, P = {}, c = {}) {
   return usersSection(s, w, P.users, c) + compareSection(P.compare, c.stack, w) +
-    countriesSection(world, P.countries, c.top ?? 10, c.m) + donutsRow(P, c.m);
+    countriesSection(world, P.countries, c.top ?? 10, c.m, w) + donutsRow(P, c.m);
 }
 // PAGES, devices and channels as three donuts on one row (Global and Handbook).
 const donutsRow = (P, m, pages = pagesSection) => '<div class="donuts three"><div>' + pages(P.pages, m) + "</div>" +
@@ -431,8 +432,8 @@ export const context = (view, c = {}) => ({ days: DAYS[0], gen: 0, m: "visitors"
 export function leaveHtml({ leave }, w) {
   const g = chapterGrid(leave, 3), has = c => c.values[0] > 0;
   const tip = c => [[c.values[0], "users who left", "c1"], [has(c) ? avg(c.values[1]) + " s" : "-", "avg seconds"], [has(c) ? avg(c.values[2]) : "-", "avg queries"]];
-  const line = (label, j, title) => '<div class="label sub">' + label + "</div>" + chapterLineSvg(g, c => (has(c) ? r1(c.values[j]) : null), w, title, tip);
-  return chapterBarsSvg(g.map(c => ({ chapter: c.chapter, values: [c.values[0]], tip: tip(c).slice(1) })), [["users who left", "c1"]], w, "Users") +
+  const line = (label, j, title) => '<div class="label sub">' + label + "</div>" + plotHtml(chapterLineFig(g, c => (has(c) ? r1(c.values[j]) : null), title, tip));
+  return plotHtml(chapterBarsFig(g.map(c => ({ chapter: c.chapter, values: [c.values[0]], tip: tip(c).slice(1) })), [["users who left", "c1"]], "Users")) +
     line("AVERAGE TIME BEFORE LEAVING", 1, "Avg seconds") + line("AVERAGE QUERIES BEFORE LEAVING", 2, "Avg queries") +
     '<p class="muted">Users who left a chapter they had not solved, and GA&#39;s average per leave event of the seconds spent and the queries run in it (an average, not a median).</p>' +
     raw("chapter-leave", tableHtml(["Chapter", "Users who left", "Avg seconds (per leave)", "Avg queries (per leave)"], g.map(c => [roman(c.chapter), c.values[0], has(c) ? avg(c.values[1]) : "-", has(c) ? avg(c.values[2]) : "-"])));
@@ -446,9 +447,9 @@ export function failsHtml({ rule, split, type, kind }, w, where = "Chapter", nam
   const cells = ((split && split.rows) || []).map(([r, k, c, e, u]) => [ruleText(r), gaText(k), where === "Chapter" && ROMAN[Number(c)] ? roman(Number(c)) : gaText(c), Number(e) || 0, Number(u) || 0]);
   const users = fixedItems(type, ERROR_TYPES, 2), types = fixedItems(type, ERROR_TYPES).map((t, i) => ({ ...t, values: [t.value], tip: [[users[i].value, "users"]] }));
   return (kind ? '<div class="label sub">BY KIND</div>' + donutBody(fixedItems(kind, KINDS), "failures", "Query failures by kind", kind, "", name + "-kind", "Kind", "Failures", true) : "") +
-    (type ? '<div class="label sub">SQLITE ERRORS BY TYPE</div>' + hbarSvg(types, [["errors", "c2"]], w, compact, "SQLite errors by type") +
+    (type ? '<div class="label sub">SQLITE ERRORS BY TYPE</div>' + hbar(types, [["errors", "c2"]], w, compact, "SQLite errors by type") +
       raw(name + "-type", tableHtml(["Type", "Errors", "Users"], types.map((t, i) => [t.label, t.value, users[i].value]))) + '<div class="label sub">BY GRAMMAR RULE</div>' : "") +
-    hbarSvg(rows, [["failures", "c6"]], w, compact, "Query failures by grammar rule") +
+    hbar(rows, [["failures", "c6"]], w, compact, "Query failures by grammar rule") +
     '<p class="muted">Failed or refused runs, the first 3 per ' + (where === "Chapter" ? "chapter" : "exercise") + " per page load; the rule is the Grammar section a refusal links; SQL error is a plain SQLite error, with no rule.</p>" +
     raw(name, tableHtml(["Rule", "Kind", where, "Failures", "Users"], cells));
 }
@@ -458,7 +459,7 @@ export function routesHtml({ routes }, w) {
   for (const [c, r, u] of (routes && routes.rows) || []) by.set(c + "|" + r, Number(u) || 0);
   const keys = Object.keys(ROUTES), series = keys.map((k, j) => [ROUTES[k], ["c3", "c1", "c6"][j]]);
   const g = Array.from({ length: CHAPTERS }, (_, i) => ({ chapter: i + 1, values: keys.map(k => by.get(i + 1 + "|" + k) || 0) }));
-  return legendOf(series) + chapterBarsSvg(g, series, w, "Users") +
+  return legendOf(series) + plotHtml(chapterBarsFig(g, series, "Users")) +
     '<p class="muted">Answer never on screen means no query run in the chapter showed the answer before it was typed: a guess or a copied answer. Data starts 2026-10-25.</p>' +
     raw("solve-route", tableHtml(["Chapter", ...keys.map(k => ROUTES[k])], g.map(c => [roman(c.chapter), ...c.values])));
 }
@@ -469,7 +470,7 @@ export function wrongHintsHtml({ wrong, hints }, w) {
   for (const [c, n, u] of (wrong && wrong.rows) || []) by.set(c + "|" + n, Number(u) || 0);
   const g = chapterGrid(hints, 2).map((h, i) => ({ chapter: i + 1, values: [by.get(i + 1 + "|1") || 0, by.get(i + 1 + "|3") || 0, h.values[0]], tip: [[h.values[1], "hint opens"]] }));
   const series = [["1st wrong answer", "c1"], ["3rd wrong answer", "c2"], ["opened the hint", "c4"]];
-  return legendOf(series) + chapterBarsSvg(g, series, w, "Users") +
+  return legendOf(series) + plotHtml(chapterBarsFig(g, series, "Users")) +
     raw("wrong-answers-hints", tableHtml(["Chapter", "Users with a 1st wrong answer", "Users with a 3rd", "Users who opened the hint", "Hint opens"],
       g.map(c => [roman(c.chapter), ...c.values, c.tip[0][0]])));
 }
@@ -478,7 +479,7 @@ export function featuresHtml({ features }, w, names, name = "feature-use") {
   const m = byFirst(features), keys = [...Object.keys(names), ...[...m.keys()].filter(k => !(k in names))];
   const rows = keys.map(k => ({ key: k, label: names[k] || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }))
     .sort((a, b) => b.values[0] - a.values[0] || b.ev - a.ev); // most users first; ties keep the names' order (stable sort)
-  return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] })), [["users", "c3"]], w, compact, "Feature use") +
+  return hbar(rows.map(r => ({ ...r, tip: [[r.ev, "uses"]] })), [["users", "c3"]], w, compact, "Feature use") +
     '<p class="muted">Users per feature, and how many times it was used in its tooltip.</p>' +
     raw(name, tableHtml(["Feature", "Parameter", "Users", "Uses"], rows.map(r => [r.label, r.key, r.values[0], r.ev])));
 }
@@ -488,7 +489,7 @@ export function adsHtml({ ads }, w, name = "google-ads") {
   const t = (ads && ads.totals) || (ads && ads.rows && ads.rows[0]) || [], clicks = Number(t[0]) || 0, shown = Number(t[1]) || 0;
   const series = [["clicks", "c3"], ["impressions", "c5"]], rate = ctr(clicks, shown);
   return '<p class="stat-line">Click-through rate (CTR): <b>' + rate + "</b></p>" + legendOf(series) +
-    hbarSvg([{ label: "Google's ads on these pages", values: [clicks, shown] }], series, w, compact, "Google's ad clicks and impressions") +
+    hbar([{ label: "Google's ads on these pages", values: [clicks, shown] }], series, w, compact, "Google's ad clicks and impressions") +
     '<p class="muted">GA&#39;s count of clicks on Google&#39;s ads and of their impressions on these pages, not users. The CTR is clicks / impressions, a ratio of those two GA totals. GA shows AdSense data about a day after the link.</p>' +
     raw(name, tableHtml(["Metric", "Count"], [["Ad clicks (Google)", clicks], ["Ad impressions (Google)", shown], ["Click-through rate (clicks / impressions)", rate]]));
 }
@@ -507,7 +508,7 @@ export function onboardingHtml({ begin, features, byDevice, ran, solved }, w) {
   const f = byFirst(features), v = { begin: gaTotal(begin), ran: gaTotal(ran), solved: gaTotal(solved) };
   const rows = ONBOARDING_STEPS.map(([k, label]) => ({ key: k, label, values: [k in v ? v[k] : (f.get(k) || [0])[0]] }));
   const begun = rows[0].values[0];
-  return hbarSvg(rows.map(r => ({ ...r, tip: [[pct(r.values[0], begun), "of those who pressed Investigate"]] })), [["users", "c1"]], w, compact, "Chapter I onboarding") +
+  return hbar(rows.map(r => ({ ...r, tip: [[pct(r.values[0], begun), "of those who pressed Investigate"]] })), [["users", "c1"]], w, compact, "Chapter I onboarding") +
     '<p class="muted">Learn mode, users at each step, each GA&#39;s own count (a person can skip the prologue and finish the tour, and someone who began before the period still counts later). The prologue and tour events start 2026-10-25.</p>' +
     raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)]))) +
     onboardingDevicesHtml({ begin, byDevice, ran, solved }, w);
@@ -524,7 +525,7 @@ export function onboardingDevicesHtml({ begin, byDevice, ran, solved }, w) {
   const series = devs.map((d, j) => [DEVICES[d] || gaText(d), "c" + (j + 1)]);
   const rows = ONBOARDING_STEPS.map(([k, label]) => ({ label, values: devs.map(d => at(k, d)) }));
   return '<div class="label sub">BY DEVICE</div>' + legendOf(series) +
-    hbarSvg(rows.map(r => ({ ...r, tip: series.map(([n], j) => [pct(r.values[j], begun[j]), "of " + n + " Investigate pressers"]) })), series, w, compact, "Chapter I onboarding by device") +
+    hbar(rows.map(r => ({ ...r, tip: series.map(([n], j) => [pct(r.values[j], begun[j]), "of " + n + " Investigate pressers"]) })), series, w, compact, "Chapter I onboarding by device") +
     '<p class="muted">Each bar GA&#39;s own users for that step on that device; the share of that device&#39;s Investigate pressers is in the tooltip.</p>' +
     raw("onboarding-devices", tableHtml(["Step", ...series.flatMap(([n]) => [n, n + " share"])], rows.map(r => [r.label, ...r.values.flatMap((x, j) => [x, pct(x, begun[j])])])));
 }
@@ -532,7 +533,7 @@ export function onboardingDevicesHtml({ begin, byDevice, ran, solved }, w) {
 export function sharesHtml({ shares }, w) {
   const users = fixedItems(shares, NETWORKS), uses = fixedItems(shares, NETWORKS, 2);
   const rows = users.map((u, i) => ({ label: u.label, values: [u.value], tip: [[uses[i].value, "presses"]] }));
-  return hbarSvg(rows, [["users", "c3"]], w, compact, "Shares by network") +
+  return hbar(rows, [["users", "c3"]], w, compact, "Shares by network") +
     '<p class="muted">Users who pressed each button of the share box (Part II ending), presses in the tooltip. The network data starts 2026-10-25.</p>' +
     raw("shares-by-network", tableHtml(["Network", "Users", "Presses"], rows.map((r, i) => [r.label, r.values[0], uses[i].value])));
 }
@@ -583,7 +584,7 @@ export function exercisesHtml({ ran, outcomes, solved }, w) {
     return { key: k, label: exTitle.get(k) || gaText(k), values: [r, s], runs, tip: [[pct(s, r), "solve rate"], [s ? avg(runs) : "-", "avg runs to solve"]] };
   });
   const series = [["ran a query", "c1"], ["solved", "c3"]];
-  return legendOf(series) + hbarSvg(rows, series, w, compact, "Exercises: ran and solved") +
+  return legendOf(series) + hbar(rows, series, w, compact, "Exercises: ran and solved") +
     '<p class="muted">Users who ran a query on the exercise and who solved it; the solve rate is solved over ran, the runs to solve GA&#39;s average per solve event.</p>' +
     raw("exercises", tableHtml(["Exercise", "Ran", "Solved", "Solve rate", "Avg runs to solve", "Ran: ok", "Ran: error", "Ran: refused"],
       rows.map(r => [r.label, r.values[0], r.values[1], pct(r.values[1], r.values[0]), r.values[1] ? avg(r.runs) : "-", ...["ok", "error", "refused"].map(o => out.get(r.key + "|" + o) || 0)])));
@@ -604,14 +605,14 @@ export function choicesHtml({ levels, outcomes }) {
 }
 export function tryItHtml({ tryIt }, w) {
   const m = byFirst(tryIt), rows = exRows(m).map(k => ({ label: exTitle.get(k) || gaText(k), values: [(m.get(k) || [0])[0]], ev: (m.get(k) || [0, 0])[1] }));
-  return hbarSvg(rows.map(r => ({ ...r, tip: [[r.ev, "clicks"]] })), [["users", "c5"]], w, compact, "Try it links per exercise") +
+  return hbar(rows.map(r => ({ ...r, tip: [[r.ev, "clicks"]] })), [["users", "c5"]], w, compact, "Try it links per exercise") +
     raw("try-it", tableHtml(["Exercise", "Users", "Clicks"], rows.map(r => [r.label, r.values[0], r.ev])));
 }
 // Global's layout on the /learn/ pages: users per day, the countries map, then PAGES, devices and channels as three
 // donuts on one row, all following the Count. P and c as statsHtml's; world: the map outline.
 export function handbookHtml(w, P = {}, c = {}, world = null) {
   return usersSection(null, w, P.users, c, VIEW_BREAKDOWNS.handbook) +
-    countriesSection(world, P.countries, c.top ?? 10, c.m) +
+    countriesSection(world, P.countries, c.top ?? 10, c.m, w) +
     donutsRow(P, c.m, (p, m) => panel("PAGES", p, res => handbookPagesHtml(res.pages, m))) +
     panel("EXERCISES", P.exercises, res => exercisesHtml(res, w)) +
     (P.choices && P.choices.res ? choicesHtml(P.choices.res) : panel("LEVEL CHOICE", P.choices, () => "")) +
@@ -621,7 +622,7 @@ export function handbookHtml(w, P = {}, c = {}, world = null) {
 }
 
 // Each view: its renderer, whether it reads ?stats (stats) and draws nothing before it (wait), and whether it shows
-// the map (world.json).
+// the map (world.json, the countries' centroids).
 export const VIEWS = {
   global: { html: (s, w, P, c, world) => statsHtml(s, w, world, P, c), stats: true, wait: true, map: true },
   game: { html: (s, w, P, c) => gameHtml(s, w, P, c), stats: true, wait: false, map: false },
@@ -630,6 +631,42 @@ export const VIEWS = {
 
 // --- page wiring (browser only) ----------------------------------------------------------------
 const $ = id => document.getElementById(id);
+// Every Export CSV button in box saves the table of its Raw data toggle as ga-<name>-<date>.csv.
+function wireCsv(box) {
+  box.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("button.csv");
+    if (!b || !box.contains(b)) return;
+    e.preventDefault();
+    const t = b.closest("details").querySelector("table");
+    downloadText("ga-" + b.dataset.csv + "-" + new Date().toISOString().slice(0, 10) + ".csv", tableCsv([...t.rows].map(r => [...r.cells].map(c => c.textContent))));
+  });
+}
+// Plotly (window.Plotly, loaded by the three monitor pages from cdnjs) draws every .plot placeholder; a figure's
+// "var(--x)" tokens are read from the page at draw time, so a mood change redraws them all (restyle). The world's
+// topojson is self-hosted (site/topojson/), never fetched from Plotly's CDN.
+const CONFIG = { responsive: true, displaylogo: false, topojsonURL: "topojson/",
+  modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d", "toggleSpikelines", "hoverClosestCartesian", "hoverCompareCartesian", "hoverClosestGeo"] };
+function resolved(v, css) {
+  if (typeof v === "string") return v.replace(/var\(--([\w-]+)\)/g, (_, n) => css.getPropertyValue("--" + n).trim() || "#888");
+  if (Array.isArray(v)) return v.map(x => resolved(x, css));
+  return v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, resolved(x, css)])) : v;
+}
+function plot(el, react = false) {
+  if (!window.Plotly) { el.textContent = "The chart library did not load: the numbers are under Raw data."; return; }
+  const f = JSON.parse(el.dataset.fig), css = getComputedStyle(document.documentElement), touch = matchMedia("(pointer: coarse)").matches;
+  window.Plotly[react ? "react" : "newPlot"](el, resolved(f.data, css), resolved(themed(f.layout, touch), css), CONFIG);
+}
+// Writes html into box, keeping each drawn plot whose figure is unchanged (no redraw while panels arrive one by one).
+function drawPlots(box, html) {
+  const keep = new Map([...box.querySelectorAll(".plot")].map(el => [el.dataset.fig, el]));
+  box.innerHTML = html;
+  for (const el of box.querySelectorAll(".plot")) {
+    const was = keep.get(el.dataset.fig);
+    if (was) { el.replaceWith(was); keep.delete(el.dataset.fig); } else plot(el);
+  }
+  if (window.Plotly) for (const el of keep.values()) window.Plotly.purge(el);
+}
+const restyle = () => document.querySelectorAll(".plot").forEach(el => plot(el, true));
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
 async function main() {
@@ -640,7 +677,9 @@ async function main() {
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
   $("monitor").hidden = false;
-  wireTips($("stats")); wireCsv($("stats"));
+  wireCsv($("stats"));
+  new MutationObserver(restyle).observe(document.documentElement, { attributes: true, attributeFilter: ["data-mood"] });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", restyle);
   // The view (monitor.html Global, monitor-game.html, monitor-handbook.html), its panels and their states; the Count
   // and the breakdown are remembered per view (Global keeps the original keys).
   const view = document.body.dataset.view in PANELS ? document.body.dataset.view : "global", V = VIEWS[view], panels = PANELS[view], P = {};
@@ -654,7 +693,7 @@ async function main() {
     wide = $("stats").clientWidth;
     if (!last && V.wait) return;
     const focus = document.activeElement && document.activeElement.id;
-    $("stats").innerHTML = V.html(last, Math.max(280, wide), P, c, world);
+    drawPlots($("stats"), V.html(last, Math.max(280, wide), P, c, world));
     if (focus && $(focus)) $(focus).focus();
   };
   const report = async req => {
@@ -682,7 +721,7 @@ async function main() {
     if (e.target.id === "top-n") choose("top", Number(e.target.value));
   });
   $("count").addEventListener("change", e => { try { localStorage.setItem(COUNT_KEY, e.target.value); } catch {} choose("m", e.target.value); });
-  // The outline, fetched with this module's ?v= like the game's data files; without it the countries keep their table.
+  // The centroids, fetched with this module's ?v= like the game's data files; without them the countries keep their table.
   if (V.map) fetch("world.json" + new URL(import.meta.url).search).then(r => r.json()).then(j => { world = j; draw(); }).catch(() => {});
   addEventListener("resize", () => { if ($("stats").clientWidth !== wide) draw(); });
   async function load(d) {

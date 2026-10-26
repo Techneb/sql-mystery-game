@@ -241,12 +241,23 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, pure 
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/explore\.html$/m);
   assert.match(fs.readFileSync("site/explore.html", "utf8"), /<meta name="robots" content="noindex">/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
-  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/world.json"])
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/figures.js", "site/world.json", "site/topojson/world_110m.json", "site/monitor-game.html", "site/monitor-handbook.html"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
 
 const monitor = await import("./site/monitor.js");
-const charts = await import("./site/charts.js");
+const figures = await import("./site/figures.js");
+const unesc = s => s.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n));
+// Every figure a view's HTML carries (figures.js plotHtml's data-fig), parsed; their hover boxes.
+const figsOf = html => [...html.matchAll(/data-fig="([^"]*)"/g)].map(m => JSON.parse(unesc(m[1])));
+const hovers = html => figsOf(html).flatMap(f => f.data.flatMap(t => t.hovertext || []));
+// A hover box drawn in html: its heading k and "value<TAB>label<TAB>key class" lines, written as escaped HTML text.
+const hasTip = (html, k, v) => hovers(html).includes(figures.tipText(unesc(k), v.split("\n").map(l => l.split("\t").map(unesc))));
+const heads = (html, k) => hovers(html).filter(h => h.startsWith("<b>" + k + "</b>")).length;
+// The page's text without the figures (which legitimately hold null for a gap in a line).
+const visible = html => html.replace(/ data-fig="[^"]*"/g, "");
+const centres = html => figsOf(html).filter(f => f.data[0].type === "pie").map(f => f.layout.annotations[0].text);
+const emptyRings = html => figsOf(html).filter(f => f.data[0].type === "pie" && f.data[0].marker.colors[0] === "var(--rule)").length;
 // A panel state as the page holds it: {res: named replies}; a donut's reply is named slices, the countries' countries.
 const dnP = res => ({ res: { slices: res } });
 const ctP = (countries, top = null) => ({ res: { countries, top } });
@@ -263,20 +274,20 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
     { chapter: 1, opened: 474, q1: 300, q5: 200, q20: 40, solved: 127 },
     { chapter: 2, opened: 120, q1: 0, q5: 0, q20: 0, solved: 0 }]);
   const html = monitor.funnelHtml(rows);
-  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary><button") && html.includes('data-k="Chapter I"'));
+  assert.ok(html.includes("Finished a part: 9 users") && html.includes("<summary>Raw data</summary><button") && heads(html, "Chapter I") === 1);
   assert.ok(html.includes("<td>I</td>") && html.includes("<td>II</td>") && html.includes("<th>Solve rate</th>") && html.includes('>27%<') && html.includes('>0%<'), "roman chapters, the solve rate in the raw data");
   assert.ok(html.includes("<th>Retention</th>") && html.includes('>100%<') && html.includes('>25%<'), "retention in the raw data: 120 of chapter I's 474");
   assert.ok(html.includes("Retention (right axis)") && !html.includes("Solve rate (right axis)"), "the legend names the line");
   const sr = monitor.solveRateHtml(rows);
-  assert.ok(sr.includes('data-k="Chapter I" data-v="127 of 474 solved (27%)"') && sr.includes('data-v="0 of 120 solved (0%)"'), "the solve rate tooltip");
+  assert.ok(hasTip(sr, "Chapter I", "127 of 474 solved (27%)") && hasTip(sr, "Chapter II", "0 of 120 solved (0%)"), "the solve rate tooltip");
   assert.ok(sr.includes("<summary>Raw data</summary><button") && sr.includes("<td>II</td>") && sr.includes(">27%<"), "its own raw data");
   const fresh = monitor.funnelHtml(rows.filter(r => r.event !== "chapter_queries"));
   assert.ok(!fresh.includes("new event") && !fresh.includes("within about a day"), "no placeholder note: zeros are zeros (owner, 2026-10-24)");
-  assert.equal(charts.ROMAN[12], "XII");
-  assert.equal(charts.pct(1, 0), "-");
+  assert.equal(figures.ROMAN[12], "XII");
+  assert.equal(figures.pct(1, 0), "-");
   const dev = monitor.donutSection("devices", dnP({ rows: [["<b>desktop", 20], ["mobile", 10]] }), "opened");
-  assert.ok(dev.indexOf("&#60;b&#62;desktop") < dev.indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, largest first");
-  assert.ok(dev.includes(">67%<") && dev.includes("<th>Players who opened a chapter</th>") && dev.includes('data-v="20 players'), "share, raw data and tooltip follow the metric");
+  assert.ok(visible(dev).indexOf("&#60;b&#62;desktop") < visible(dev).indexOf("mobile") && !dev.includes("<b>desktop"), "escaped, largest first");
+  assert.ok(dev.includes(">67%<") && dev.includes("<th>Players who opened a chapter</th>") && hovers(dev).includes(figures.tipText("<b>desktop", [["20 players", "67%"]])), "share, raw data and tooltip follow the metric");
   assert.ok(!dev.includes("<select") && dev.includes("counts in both slices"), "no select of its own, the note follows the page's Count");
   const users = monitor.usersHtml([{ date: "20261022", users: 5 }, { date: "20261021", users: 10 }]);
   assert.ok(users.indexOf("2026-10-21") < users.indexOf("2026-10-22") && users.includes("width:100%") && users.includes("width:50%"));
@@ -286,88 +297,95 @@ test("monitor: the chapter funnel from GA rows, devices, raw data, every value e
   const full = monitor.statsHtml({ users: [{ date: "20261022", users: 5 }], chapters: rows,
     countries: [{ country: "France", users: 3 }] }, 640, { land: "M0,0Z", centroids: { France: [2, 46] } },
     { ...dn, countries: ctP({ rows: [["France", 3]], totals: [3] }), pages: { res: { Game: { totals: [5] }, Handbook: { totals: [3] }, Desk: { rows: [] }, Other: { totals: [1] }, all: { totals: [7] } } } });
-  assert.equal((full.match(/<svg /g) || []).length, 5, "users, the pages donut, map, two donuts");
+  assert.equal(figsOf(full).length, 5, "users, the pages donut, map, two donuts");
   assert.ok(full.indexOf(">PAGES<") > full.indexOf("COUNTRIES") && full.includes("donuts three") && !full.includes("TOP PAGES"), "PAGES shares the donuts row, the top pages table is gone (owner, 2026-10-24)");
   assert.equal((full.match(/<summary>Raw data<\/summary><button[^>]*class="quiet csv"/g) || []).length, 5, "each with its raw data under it");
   const game = monitor.gameHtml({ chapters: rows }, 640, {});
   assert.ok(game.indexOf("CHAPTER FUNNEL") < game.indexOf(">SOLVE RATE<") && game.includes("Reading..."), "the funnel moved to Game; panels read in place");
 });
 
-test("monitor charts: ticks, the line inside its plot (one day too), vertical funnel bars, tooltips", () => {
-  assert.deepEqual(charts.ticks(220), [0, 100, 200, 300]);
-  assert.deepEqual(charts.ticks(680), [0, 200, 400, 600, 800]);
-  assert.deepEqual(charts.ticks(3), [0, 1, 2, 3]);
-  assert.deepEqual(charts.ticks(0), [0, 1]);
-  assert.equal(charts.compact(1300), "1.3K");
-  assert.equal(charts.compact(42), "42");
-  const svg = charts.lineSvg([{ label: "2026-10-20", value: 220 }, { label: "2026-10-21", value: 680 }, { label: "2026-10-22", value: 0 }], 390);
-  assert.match(svg, /width="390"/);
-  const d = svg.match(/class="line" d="M([^"]+)"/)[1].split("L").map(p => p.split(",").map(Number));
-  assert.deepEqual(d.map(p => p[0]), [40, 193, 346], "first and last day on the plot edges (390 - 40 left - 44 right)");
-  assert.equal(d[2][1], 176, "zero on the baseline (200 - 24 bottom)");
-  assert.ok(d[1][1] > 22 && d[1][1] < d[0][1], "the peak below the top tick, above the 220 day");
-  assert.equal((svg.match(/<g class="hit"/g) || []).length, 3, "one hover strip per day");
-  assert.ok(svg.includes('data-k="2026-10-21" data-v="680\tusers"') && svg.includes(">Users</text>"), "the tooltip's data and the axis title");
-  assert.ok(!svg.includes("<title>"), "no native title racing the tooltip");
-  const one = charts.lineSvg([{ label: "2026-10-22", value: 7 }], 390);
-  assert.match(one, /class="line" d="M193,/, "a single day in the middle");
-  assert.match(one, /<rect x="40" y="22" width="306"/, "its hover strip spans the plot");
-  assert.equal(charts.tipAttrs('a"<', [["1", "x", "c1"], ["2", "y"]]), ' data-k="a&#34;&#60;" data-v="1\tx\tc1\n2\ty"');
+test("monitor figures: the line per day (one day and none too), the funnel's dual axis, the solve rate, hover boxes", () => {
+  assert.equal(figures.compact(1300), "1.3K");
+  assert.equal(figures.compact(42), "42");
+  const line = figures.lineFig([{ label: "2026-10-20", value: 220 }, { label: "2026-10-21", value: 680 }, { label: "2026-10-22", value: 0 }]);
+  assert.deepEqual([line.data[0].x, line.data[0].y], [["2026-10-20", "2026-10-21", "2026-10-22"], [220, 680, 0]]);
+  assert.equal(line.data[0].line.color, "var(--rel)", "a token, resolved at draw time");
+  assert.deepEqual([line.data[1].x, line.data[1].text], [["2026-10-22"], ["0"]], "the last value labelled at its end dot");
+  assert.equal(line.data[0].hovertext[1], figures.tipText("2026-10-21", [["680", "users"]]), "one box per day");
+  assert.ok(line.layout.yaxis.title.text === "Users" && line.layout.hovermode === "x" && line.layout.yaxis.rangemode === "tozero");
+  assert.equal(figures.tipText('a"<', [["1", "x", "c1"], ["2", "y"]]), '<b>a&#34;&#60;</b><br><span style="color:var(--c1)">\u25cf</span> <b>1</b> x<br><b>2</b> y', "escaped, a dot in the series' colour");
+  const one = figures.lineFig([{ label: "2026-10-22", value: 7 }]);
+  assert.deepEqual(one.data[1].y, [7], "a single day still shows its dot");
+  const none = figures.lineFig([]);
+  assert.ok(none.data.length === 1 && none.data[0].x.length === 0 && none.layout.yaxis.range[1] === 1, "no days: the empty frame");
   const f = [{ chapter: 1, opened: 400, q1: 300, q5: 200, q20: 40, solved: 100 }, { chapter: 2, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }];
-  const fs2 = charts.funnelSvg(f, 640);
-  const bars = [...fs2.matchAll(/class="bar (c\d)" d="M([\d.]+),([\d.]+)v(-[\d.]+)/g)];
-  assert.deepEqual(bars.map(m => m[1]), ["c1", "c2", "c3", "c4", "c5"], "the five stages in the categorical order; an empty chapter draws nothing");
-  assert.ok(bars.every(m => Number(m[3]) === 196), "every bar stands on the baseline (220 - 24 bottom)");
-  assert.deepEqual(bars.map(m => Math.round(2 - Number(m[4]))), [174, 131, 87, 17, 44], "heights scaled to the top tick (400 = 174 px)");
-  assert.ok(Number(bars[1][2]) > Number(bars[0][2]), "side by side, left to right");
-  assert.ok(fs2.includes('data-k="Chapter I"') && fs2.includes("100%\tretention\tc6\n25%\tsolve rate") && fs2.includes("40\tRan 20\tc4") && fs2.includes(">Users</text>"));
-  assert.ok(fs2.includes(">I</text>") && fs2.includes(">II</text>"), "roman numerals on the x axis");
-  assert.ok(fs2.includes(">Retention</text>") && fs2.includes(">100%</text>") && fs2.includes(">0%</text>"), "the right axis, titled, 0-100%");
-  assert.match(fs2, /class="rate-line" d="M180,22L460,196"/, "retention: chapter I at 100% (the top), chapter II nobody opened at 0, mid-column");
-  const ret = charts.retention([{ chapter: 1, opened: 200 }, { chapter: 3, opened: 50 }]);
-  assert.equal(ret({ chapter: 3, opened: 50 }), 25, "opened N over opened I");
-  assert.equal(charts.retention([{ chapter: 2, opened: 9 }])({ chapter: 2, opened: 9 }), null, "no chapter I, no retention");
-  const noBase = charts.funnelSvg([{ chapter: 1, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }, { chapter: 2, opened: 5, q1: 0, q5: 0, q20: 0, solved: 1 }], 640);
-  assert.ok(!noBase.includes("rate-line") && noBase.includes("-\tretention\tc6"), "chapter I with no openers: no line, a dash in the tooltip");
-  const ss = charts.solveRateSvg(f, 640);
-  assert.match(ss, /class="solve-line" d="M180,107.5"/, "the solve rate: 25% a quarter up (136 - 114 / 4), in the funnel's column");
-  assert.equal((ss.match(/class="solve-dot"/g) || []).length, 1, "no dot for a chapter nobody opened");
-  assert.ok(ss.includes(">Solve rate</text>") && ss.includes(">100%</text>") && ss.includes(">II</text>") && (ss.match(/<g class="hit"/g) || []).length === 2);
-  const twelve = charts.funnelSvg(Array.from({ length: 12 }, (_, i) => ({ chapter: i + 1, opened: 10, q1: 5, q5: 3, q20: 1, solved: 2 })), 390);
-  assert.ok(twelve.includes('class="tick small"') && twelve.includes(">XII</text>"), "twelve chapters at 390 px: smaller numerals");
-  assert.match(twelve, /width="390"/);
-  assert.ok(!/NaN|undefined/.test(fs2 + svg + one));
+  const fu = figures.funnelFig(f), bars = fu.data.filter(t => t.type === "bar");
+  assert.deepEqual(bars.map(t => t.marker.color), ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"], "the five stages in the categorical order");
+  assert.deepEqual(bars.map(t => t.y[0]), [400, 300, 200, 40, 100]);
+  assert.ok(bars.every(t => t.x.join() === "I,II") && fu.layout.barmode === "group", "roman numerals on x, grouped");
+  const ret = fu.data.find(t => t.yaxis === "y2");
+  assert.deepEqual(ret.y, [100, 0], "retention: chapter I at 100%, chapter II nobody opened at 0");
+  assert.ok(ret.line.color === "var(--c6)" && fu.layout.yaxis.title.text === "Users", "the --c6 line, the left axis in users");
+  const y2 = fu.layout.yaxis2;
+  assert.ok(y2.overlaying === "y" && y2.side === "right" && y2.title.text === "Retention" && y2.ticktext.at(-1) === "100%" && y2.tickvals.at(-1) === 100, "the right axis, titled, 0-100%");
+  assert.equal(fu.data.at(-1).hovertext[0], figures.tipText("Chapter I", [[400, "Opened", "c1"], [300, "Ran 1 query", "c2"], [200, "Ran 5", "c3"], [40, "Ran 20", "c4"], [100, "Solved", "c5"], ["100%", "retention", "c6"], ["25%", "solve rate"]]), "one box per chapter: stages, retention, solve rate");
+  assert.equal(figures.retention([{ chapter: 1, opened: 200 }, { chapter: 3, opened: 50 }])({ chapter: 3, opened: 50 }), 25, "opened N over opened I");
+  assert.equal(figures.retention([{ chapter: 2, opened: 9 }])({ chapter: 2, opened: 9 }), null, "no chapter I, no retention");
+  const noBase = figures.funnelFig([{ chapter: 1, opened: 0, q1: 0, q5: 0, q20: 0, solved: 0 }, { chapter: 2, opened: 5, q1: 0, q5: 0, q20: 0, solved: 1 }]);
+  assert.ok(noBase.data.find(t => t.yaxis === "y2").y.every(v => v === null) && noBase.data.at(-1).hovertext[1].includes("<b>-</b> retention"), "chapter I with no openers: no line, a dash in the box");
+  const ss = figures.solveRateFig(f);
+  assert.deepEqual(ss.data[0].y, [25, null], "25%, no dot for a chapter nobody opened");
+  assert.ok(ss.layout.yaxis.title.text === "Solve rate" && ss.layout.yaxis.ticktext[2] === "50%" && ss.data.at(-1).hovertext.length === 2);
+  assert.equal(ss.data.at(-1).hovertext[0], figures.tipText("Chapter I", [["100 of 400 solved (25%)"]]));
+  const cb = figures.chapterBarsFig([{ chapter: 1, values: [1] }], [["users", "c1"]]), cl = figures.chapterLineFig([{ chapter: 1, values: [1] }], c => c.values[0], "Avg", () => []);
+  for (const g of [ss, cb, cl]) assert.deepEqual(g.layout.margin, fu.layout.margin, "every chapter chart on one x layout, so they line up");
+  assert.ok(!/NaN|undefined/.test(JSON.stringify([line, one, none, fu, noBase, ss])));
 });
 
-test("monitor donuts and map: folding, arcs, area-proportional bubbles, the projection, unknown countries listed", () => {
+test("monitor donuts and map: folding, fixed colours, the empty ring, area-proportional bubbles, Plotly's world self-hosted, unknown countries listed", () => {
   const items = [7, 6, 5, 4, 3, 2, 1].map((v, i) => ({ label: "k" + i, value: v }));
-  assert.deepEqual(charts.fold(items).map(i => [i.label, i.value]), [["k0", 7], ["k1", 6], ["k2", 5], ["k3", 4], ["k4", 3], ["Other", 3]]);
-  assert.equal(charts.fold(items.slice(0, 6)).length, 6, "six slices are not folded");
-  const a = charts.arcs([1, 1, 2]);
-  assert.deepEqual(a.map(([x, y]) => [+(x / Math.PI).toFixed(3), +(y / Math.PI).toFixed(3)]), [[0, 0.5], [0.5, 1], [1, 2]]);
-  assert.equal(charts.arcPath(90, 90, 52, 86, 0, Math.PI / 2), "M90,4A86,86 0 0 1 176,90L142,90A52,52 0 0 0 90,38Z");
-  assert.equal((charts.arcPath(90, 90, 52, 86, 0, 2 * Math.PI).match(/M/g) || []).length, 2, "a lone slice is two halves");
+  assert.deepEqual(figures.fold(items).map(i => [i.label, i.value]), [["k0", 7], ["k1", 6], ["k2", 5], ["k3", 4], ["k4", 3], ["Other", 3]]);
+  assert.equal(figures.fold(items.slice(0, 6)).length, 6, "six slices are not folded");
+  const d = figures.donutFig([{ label: "a", value: 1 }, { label: "b", value: 0 }, { label: "c", value: 3 }], 4, "users", "x");
+  assert.deepEqual(d.data[0].marker.colors, ["var(--c1)", "var(--c2)", "var(--c3)"], "a slice keeps its colour, zeros included");
+  assert.ok(d.data[0].sort === false && d.data[0].direction === "clockwise" && d.data[0].rotation === 0, "in the items' order, clockwise from 12");
+  assert.ok(d.layout.annotations[0].text.includes("<b>4</b>") && d.layout.annotations[0].text.endsWith("<br>users"), "the total and its unit in the centre");
+  const e = figures.donutFig([], 0, "users", "x");
+  assert.ok(e.data[0].marker.colors[0] === "var(--rule)" && e.data[0].hoverinfo === "skip" && e.layout.annotations[0].text.includes("<b>0</b>"), "nothing: the empty ring, 0");
   const ch = monitor.donutSection("channels", dnP({ rows: [["Direct", 3], ["<i>x", 1]] }));
-  assert.ok(ch.includes(">75%<") && ch.includes("&#60;i&#62;x") && !ch.includes("<i>x") && ch.includes('class="slice c2"'));
-  assert.equal(charts.bubbleR(100, 100), 40);
-  assert.equal(charts.bubbleR(25, 100), 20, "area proportional: a quarter of the users, half the radius");
-  assert.equal(charts.bubbleR(0, 100), 0);
-  assert.equal(charts.bubbleR(1, 1e6), 3, "a minimum radius stays visible");
-  assert.deepEqual(charts.project(-180, 84), [0, 0]);
-  assert.deepEqual(charts.project(180, -57), [1000, charts.MAP.H]);
-  assert.equal(charts.countryKey("C\u00f4te d\u2019Ivoire"), "Cote d'Ivoire");
+  assert.ok(ch.includes(">75%<") && ch.includes("&#60;i&#62;x") && !ch.includes("<i>x") && figsOf(ch)[0].data[0].marker.colors[1] === "var(--c2)");
   const world = JSON.parse(fs.readFileSync("site/world.json", "utf8"));
-  assert.equal(world.height, charts.MAP.H, "the outline and the bubbles share one projection");
-  assert.ok(fs.statSync("site/world.json").size < 100000, "the outline stays small");
+  assert.ok(fs.statSync("site/world.json").size < 100000 && !("land" in world), "the centroids only: Plotly draws the land");
   for (const n of ["United States", "India", "France", "United Kingdom", "Germany", "Brazil", "Cote d'Ivoire", "Turkiye", "Singapore"]) assert.ok(world.centroids[n], n);
-  const [fx, fy] = charts.project(...world.centroids.France);
-  assert.ok(fx > 500 && fx < 520 && fy > 100 && fy < 110, "France in western Europe");
-  const m = charts.mapHtml([{ country: "France", users: 40 }, { country: "C\u00f4te d\u2019Ivoire", users: 10 }, { country: "<b>Narnia", users: 2 }], world);
-  assert.equal((m.match(/<g class="bubble"/g) || []).length, 2, "two bubbles");
-  assert.ok(m.indexOf('data-k="France"') < m.indexOf('data-k="C\u00f4te'), "the biggest drawn first, the small ones on top");
+  const [lon, lat] = world.centroids.France;
+  assert.ok(lon > -5 && lon < 8 && lat > 42 && lat < 51, "France in western Europe");
+  const topo = JSON.parse(fs.readFileSync("site/topojson/world_110m.json", "utf8"));
+  assert.ok(topo.type === "Topology" && ["land", "countries", "coastlines"].every(k => k in topo.objects), "Plotly's world_110m, self-hosted (config topojsonURL)");
+  assert.equal(figures.countryKey("C\u00f4te d\u2019Ivoire"), "Cote d'Ivoire");
+  const m = figures.mapHtml([{ country: "C\u00f4te d\u2019Ivoire", users: 10 }, { country: "France", users: 40 }, { country: "<b>Narnia", users: 2 }], world);
+  const geo = figsOf(m)[0].data[0];
+  assert.ok(geo.type === "scattergeo" && geo.lon.length === 2, "two bubbles");
+  assert.ok(geo.hovertext[0].startsWith("<b>France</b>") && geo.lon[0] === lon, "the biggest drawn first, the small ones on top");
+  assert.ok(geo.marker.sizemode === "area" && geo.marker.size.join() === "40,10" && geo.marker.sizeref === (2 * 40) / figures.MAX_BUBBLE ** 2, "area proportional: the largest at MAX_BUBBLE px");
   assert.ok(m.includes("Not on the map: &#60;b&#62;Narnia (2)") && !m.includes("<b>Narnia"));
-  const bare = charts.mapHtml([{ country: "France", users: 1 }], null);
-  assert.ok(bare.includes("Raw data") && !bare.includes("<svg"), "without the outline, the table alone");
+  const bare = figures.mapHtml([{ country: "France", users: 1 }], null);
+  assert.ok(bare.includes("Raw data") && !bare.includes("data-fig"), "without the centroids, the table alone");
+});
+
+test("monitor figures: Plotly from one exact cdnjs version on the three monitor pages only, its world never from Plotly's CDN", () => {
+  const pages = ["index.html", "admin.html", "explore.html", "leaderboard.html", "privacy.html", "monitor.html", "monitor-game.html", "monitor-handbook.html",
+    ...fs.readdirSync("site/learn").filter(f => f.endsWith(".html")).map(f => "learn/" + f)];
+  for (const p of pages) {
+    const h = fs.readFileSync("site/" + p, "utf8"), tags = h.match(/<script[^>]*plotly[^>]*>/gi) || [];
+    if (!p.startsWith("monitor")) { assert.equal(tags.length, 0, p + " loads no Plotly"); continue; }
+    assert.equal(tags.length, 1, p);
+    assert.match(tags[0], /^<script defer src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/plotly\.js\/\d+\.\d+\.\d+\/plotly\.min\.js" integrity="sha512-[\w+/=]+" crossorigin="anonymous"/, p + ": an exact version, the full bundle, SRI");
+    assert.ok(h.indexOf(tags[0]) < h.indexOf('<script type="module" src="monitor.js">'), p + ": deferred before the module, so it runs first");
+  }
+  const src = fs.readFileSync("site/monitor.js", "utf8");
+  assert.match(src, /topojsonURL: "topojson\/"/);
+  for (const f of fs.readdirSync("site").filter(f => f.endsWith(".js"))) assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /cdn\.plot\.ly/, f);
+  assert.ok(!fs.existsSync("site/charts.js"), "the SVG renderers are gone");
 });
 
 const explore = await import("./site/explore.js");
@@ -443,29 +461,30 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.deepEqual(p.series.map(s => s.label), ["<b>UK", "France", "E", "D", "C"], "top 5 by users over the period");
   assert.deepEqual(p.series[1].values, [0, 3, 5], "a missing day counts 0");
   assert.deepEqual(p.series.map(s => s.cls), ["c1", "c2", "c3", "c4", "c5"]);
-  assert.deepEqual(charts.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
+  assert.deepEqual(figures.dayTip(p.series, 1), [["5", "E", "c3"], ["4", "D", "c4"], ["3", "France", "c2"], ["3", "C", "c5"], ["0", "<b>UK", "c1"]], "largest first");
   const users = [{ date: "20261021", users: 12 }, { date: "20261022", users: 14 }];
   const html = monitor.breakdownHtml({ rows }, users, "country", 390);
   assert.ok(!html.includes("<b>UK") && html.includes("&#60;b&#62;UK"), "escaped");
   assert.ok(html.includes("Top 5 of 7 countries"), "the note");
-  assert.ok(html.includes("All visitors") && (html.match(/<path class="sl /g) || []).length === 6, "five lines and the total");
-  assert.equal((html.match(/<g class="hit"/g) || []).length, 2, "one hover strip per day");
-  assert.ok(html.includes('data-k="2026-10-22" data-v="14\tAll visitors\ttotal\n9\t&#60;b&#62;UK\tc1'), "the tooltip, sorted");
+  assert.ok(html.includes("All visitors") && figsOf(html)[0].data.filter(t => t.mode === "lines").length === 6, "five lines and the total");
+  const bf = figsOf(html)[0];
+  assert.ok(bf.data[0].line.color === "var(--ink)" && bf.data[0].opacity < 1 && bf.data[1].line.color === "var(--c1)", "the total in a neutral ink, then --c1..");
+  assert.equal(bf.data.at(-1).hovertext.length, 2, "one box per day");
+  assert.ok(bf.data.at(-1).hovertext[1].startsWith(figures.tipText("2026-10-22", [["14", "All visitors", "total"], ["9", "<b>UK", "c1"]])), "the box lists every line, largest first");
   assert.ok(html.includes("<summary>Raw data</summary><button") && html.includes("<td>2026-10-21</td>"), "date x series raw data");
   assert.ok(!monitor.breakdownHtml({ rows: rows.slice(0, 2) }, users, "country", 390).includes("Top "), "no note when every value is drawn");
   // the average per day: a dashed reference line (an option any line chart takes), the note and the raw data's footer
   assert.equal(monitor.dailyAverage([3, 0, 4]), 2.3);
   assert.equal(monitor.dailyAverage([]), null);
-  const plain = charts.lineSvg([{ label: "2026-10-21", value: 4 }], 390);
-  assert.ok(!plain.includes("ref-line"), "no reference line without the option");
-  const withRef = charts.lineSvg([{ label: "2026-10-21", value: 4 }], 390, "Users", "users", { ref: { value: 2, label: "avg <2>" } });
-  assert.ok(/<line class="ref-line"[^>]*y1="99" y2="99"/.test(withRef) && withRef.includes(">avg &#60;2&#62;</text>"), "dashed line at its value, label escaped");
-  assert.ok(charts.multiLineSvg(["2026-10-21"], [{ label: "a", values: [1], cls: "c1" }], 390, "Users", { ref: { value: 1, label: "avg 1" } }).includes("ref-line"), "multiLineSvg takes it too");
+  assert.ok(!figures.lineFig([{ label: "2026-10-21", value: 4 }]).layout.shapes, "no reference line without the option");
+  const withRef = figures.lineFig([{ label: "2026-10-21", value: 4 }], "Users", "users", { value: 2, label: "avg <2>" }).layout;
+  assert.ok(withRef.shapes[0].y0 === 2 && withRef.shapes[0].y1 === 2 && withRef.shapes[0].line.dash === "dash" && withRef.annotations[0].text === "avg &#60;2&#62;", "dashed line at its value, label escaped");
+  assert.equal(figures.multiLineFig(["2026-10-21"], [{ label: "a", values: [1], cls: "c1" }], "Users", { value: 1, label: "avg 1" }).layout.shapes.length, 1, "multiLineFig takes it too");
   const gap = monitor.breakdownHtml({ rows: [["20261020", "UK", 3], ["20261021", "UK", 4]] }, [{ date: "20261021", users: 12 }], "country", 390);
-  assert.ok(gap.includes(">avg 6</text>") && gap.includes("Average per day: 6 visitors") && (gap.match(/class="ref-line"/g) || []).length === 1, "a day without a total row counts 0; one line, for the total");
+  assert.ok(figsOf(gap)[0].layout.annotations[0].text === "avg 6" && gap.includes("Average per day: 6 visitors") && figsOf(gap)[0].layout.shapes.length === 1, "a day without a total row counts 0; one line, for the total");
   assert.ok(gap.includes('<tfoot><tr><td>Average per day</td><td class="num">6</td><td class="num">3.5</td>'), "footer per column");
   const one = monitor.usersHtml([{ date: "20261021", users: 10 }, { date: "20261022", users: 5 }], 390);
-  assert.ok(one.includes(">avg 7.5</text>") && one.includes("Average per day: 7.5") && one.includes("<td>Average per day</td><td class=\"num\">7.5</td>"), "users per day: line, note, footer");
+  assert.ok(figsOf(one)[0].layout.shapes[0].y0 === 7.5 && one.includes("Average per day: 7.5") && one.includes("<td>Average per day</td><td class=\"num\">7.5</td>"), "users per day: line, note, footer");
   const s = { users, chapters: [], devices: [], countries: [{ country: "France", users: 3 }], channels: [] };
   assert.ok(monitor.statsHtml(s, 390, null).includes('<option value="" selected>None</option>'), "None by default, the single line");
   assert.ok(monitor.statsHtml(s, 390, null, {}, { dim: "country" }).includes("Reading the breakdown"), "loading in place");
@@ -501,7 +520,7 @@ test("monitor donuts: each picks its metric, Visitors by default, loading and GA
   const err = monitor.statsHtml(s, 390, null, { channels: { error: "<i>quota" } }, { m: "sessions" });
   assert.ok(err.includes("Google Analytics said: &#60;i&#62;quota"), "GA's error, escaped");
   assert.ok(monitor.donutNote("channels", "sessions").includes("two channels") && monitor.donutNote("devices", "visitors").includes("more than the people"));
-  assert.ok(monitor.donutSection("devices", dnP({ rows: [] })).includes('<path class="slice empty"'), "no rows: the empty ring");
+  assert.ok(monitor.donutSection("devices", dnP({ rows: [] })).includes("var(--rule)"), "no rows: the empty ring");
 });
 
 test("monitor: one Count select drives users per day and both donuts; the five counts compared", () => {
@@ -511,12 +530,12 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.deepEqual(monitor.breakdownRequest(30, "browser", "sessions"), { days: 30, dimensions: ["date", "browser"], metrics: ["sessions"] });
   const s = { users: [{ date: "20261022", users: 5 }], chapters: [], countries: [] };
   // users per day: Visitors draws ?stats' users at once, any other count waits for its [date] report
-  assert.ok(monitor.statsHtml(s, 390, null).includes(">Visitors</text>"), "the axis title is the count");
+  assert.equal(figsOf(monitor.statsHtml(s, 390, null))[0].layout.yaxis.title.text, "Visitors", "the axis title is the count");
   assert.ok(monitor.statsHtml(s, 390, null, {}, { m: "sessions" }).includes("Reading the days"));
   const ses = monitor.statsHtml(s, 390, null, { users: { res: { total: { rows: [["20261021", 30], ["20261022", 40]] } } } }, { m: "sessions" });
-  assert.ok(ses.includes(">Sessions</text>") && ses.includes('data-k="2026-10-22" data-v="40\tsessions"') && ses.includes("<th>Sessions</th>"), "axis, tooltip and raw data follow the count");
+  assert.ok(figsOf(ses)[0].layout.yaxis.title.text === "Sessions" && hasTip(ses, "2026-10-22", "40\tsessions") && ses.includes("<th>Sessions</th>"), "axis, tooltip and raw data follow the count");
   const bdh = monitor.statsHtml(s, 390, null, { users: { res: { total: { rows: [["20261022", 9]] }, split: { rows: [["20261022", "France", 4]] } } } }, { m: "opened", dim: "country" });
-  assert.ok(bdh.includes("All players") && bdh.includes(">Players who opened a chapter</text>"), "the breakdown's total and axis too");
+  assert.ok(bdh.includes("All players") && figsOf(bdh)[0].layout.yaxis.title.text === "Players who opened a chapter", "the breakdown's total and axis too");
   const dn = { devices: dnP({ rows: [["mobile", 3]] }) };
   assert.ok(monitor.statsHtml(s, 390, null, dn, { m: "engaged" }).includes("3 sessions") && monitor.statsHtml(s, 390, null, dn, { m: "engaged" }).includes("Counts engaged sessions"), "the donuts follow the same count");
   // the comparison
@@ -532,18 +551,12 @@ test("monitor: one Count select drives users per day and both donuts; the five c
   assert.deepEqual(many.segs, ["a", "b", "c", "d", "e", "Other"]);
   assert.deepEqual(many.bars[0].values, [10, 9, 8, 7, 6, 9], "past six, the rest folds into Other");
   assert.equal(many.bars[1].total, 0, "a metric with no rows is an empty bar");
-  const svg = charts.groupSvg(st, 390);
-  assert.match(svg, /width="390"/);
-  assert.equal((svg.match(/class="seg /g) || []).length, 9, "one bar per non-zero segment");
-  assert.ok(svg.includes('data-k="Players who opened a chapter" data-v="25\tmobile\tc2\n56%\tof the total"'), "tooltip: metric, segment, value, share of the total");
-  assert.ok(svg.includes('text-anchor="middle">132</text>') && svg.includes(">Engaged</text>") && svg.includes(">Count</text>"), "totals on top, short names below, the axis titled");
-  assert.equal((svg.match(/class="val"/g) || []).length, 6, "one total per group");
-  assert.ok(svg.includes(">Visitors</text>") && /y="234"[^>]*>Visitors</.test(svg) && /y="246"[^>]*>Opened</.test(svg) && charts.groupSvg(st, 1200).includes('height="240"'), "narrow groups: names on two staggered lines");
-  const bars = [...svg.matchAll(/<path class="seg c\d"[^>]* d="M([\d.]+),([\d.]+)/g)];
-  assert.ok(bars.every(m => Math.abs(Number(m[2]) - 216) < 0.2), "every bar stands on the baseline (240 - 24)");
-  const xs = bars.slice(0, 2).map(m => Number(m[1]));
-  assert.ok(xs[1] > xs[0], "a group's bars side by side, not stacked");
-  assert.ok(!svg.includes("&<b>") && svg.includes("&#60;b&#62;tablet") && !/NaN|undefined/.test(svg));
+  const gf = figures.groupFig(st);
+  assert.deepEqual(gf.data.map(t => t.marker.color), ["var(--c1)", "var(--c2)", "var(--c3)"], "one trace per segment, in the segments' order");
+  assert.ok(gf.layout.barmode === "group" && gf.data[0].x.join() === "Visitors,Opened,Solved,Sessions,Engaged,Views" && gf.layout.yaxis.title.text === "Count", "grouped, short names below, the axis titled");
+  assert.equal(gf.data[1].hovertext[1], figures.tipText("Players who opened a chapter", [["25", "mobile", "c2"], ["56%", "of the total"]]), "box: metric, segment, value, share of the total");
+  assert.deepEqual(gf.layout.annotations.map(a => a.text), ["<b>90</b>", "<b>45</b>", "<b>5</b>", "<b>132</b>", "<b>50</b>", "<b>0</b>"], "GA's total once over each group");
+  assert.ok(gf.data[2].hovertext[3].includes("&#60;b&#62;tablet") && !/NaN|undefined/.test(JSON.stringify(gf)));
   const sec = monitor.compareSection({ res }, "country", 390);
   assert.ok(sec.includes("COUNT METRICS COMPARED") && sec.includes('<option value="country" selected>Country</option>') && sec.includes("do not share a unit"), "label, select, note");
   assert.ok(sec.includes('<i class="c3"></i>&#60;b&#62;tablet') && sec.includes("<td>Sessions</td>") && sec.includes('<td class="num">132</td>'), "legend and the metric x segment raw data");
@@ -580,12 +593,12 @@ test("monitor countries follow the Count: units, labels, the overlap note, GA's 
 
 test("a missing GA value reads (empty), never null or undefined", () => {
   const bad = /\bnull\b|\bundefined\b/;
-  const map = charts.mapHtml([{ country: null, users: 2 }, { country: undefined, users: 1 }], null);
+  const map = figures.mapHtml([{ country: null, users: 2 }, { country: undefined, users: 1 }], null);
   assert.ok(map.includes("(empty)") && !bad.test(map), "map raw data");
   const dn = monitor.donutSection("devices", dnP({ rows: [[null, 3], ["mobile", 1]] }));
   assert.ok(dn.includes("(empty)") && !bad.test(dn), "donut");
   const st = monitor.compareSection({ res: { visitors: { rows: [[null, 2]] } } }, "country", 390);
-  assert.ok(st.includes("(empty)") && !bad.test(st), "grouped bars");
+  assert.ok(st.includes("(empty)") && !bad.test(visible(st)) && !bad.test(hovers(st).join()), "grouped bars");
   assert.equal(monitor.pivotSeries([["20261021", null, 2]]).series[0].label, "(empty)");
   const res = { dimensions: ["date", "country"], metrics: ["activeUsers"], rowCount: 1, totals: null, rows: [["20261021", null, null]] };
   const pv = explore.pivotHtml(res);
@@ -596,16 +609,16 @@ test("a missing GA value reads (empty), never null or undefined", () => {
 test("monitor donuts: the centre is GA's own total, so both donuts agree on the visitors", () => {
   const rows = [["desktop", "70"], ["mobile", "40"]];
   const withTotal = monitor.donutSection("devices", dnP({ rows, totals: [100] }), "visitors");
-  assert.ok(withTotal.includes(">100</text>") && withTotal.includes("the slices add up to 110"), "GA's 100 in the centre, the 110 explained");
+  assert.ok(centres(withTotal)[0].includes("<b>100</b>") && withTotal.includes("the slices add up to 110"), "GA's 100 in the centre, the 110 explained");
   assert.ok(withTotal.includes("70%"), "shares of the people, not of the slices");
   const noTotal = monitor.donutSection("devices", dnP({ rows }), "visitors");
-  assert.ok(noTotal.includes(">110</text>") && !noTotal.includes("the slices add up to 110"), "without GA's total, the sum and no note");
+  assert.ok(centres(noTotal)[0].includes("<b>110</b>") && !noTotal.includes("the slices add up to 110"), "without GA's total, the sum and no note");
 });
 
 test("monitor raw data: an Export CSV button beside every Raw data toggle, and the CSV quoting", () => {
   const html = monitor.donutSection("devices", dnP({ rows: [["desktop", "7"]], totals: [7] }), "visitors");
   assert.ok(/<summary>Raw data<\/summary><button type="button" class="quiet csv" data-csv="devices">Export CSV<\/button>/.test(html));
-  assert.equal(charts.tableCsv([["Country", "Visitors"], ["Korea, South", " 3 "], ['A "b"', "1"]]),
+  assert.equal(figures.tableCsv([["Country", "Visitors"], ["Korea, South", " 3 "], ['A "b"', "1"]]),
     'Country,Visitors\r\n"Korea, South",3\r\n"A ""b""",1\r\n');
 });
 
@@ -642,33 +655,32 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const emptyPanels = (view, c = {}) => Object.fromEntries(Object.entries(monitor.PANELS[view]).map(([id, p]) => [id, { res: p.load ? { countries: empty, top: null }
     : Object.fromEntries(Object.entries(p.requests(monitor.context(view, c))).map(([k, q]) => [k, q && empty])) }]));
   const g = monitor.gameHtml(null, 390, emptyPanels("game"));
-  assert.ok(!bad.test(g) && !g.includes("No data yet") && !g.includes("within about a day") && !g.includes("Nothing in this period"));
+  assert.ok(!bad.test(visible(g)) && !bad.test(hovers(g).join()) && !g.includes("No data yet") && !g.includes("within about a day") && !g.includes("Nothing in this period"));
   assert.ok(g.includes("LEFT AN UNSOLVED CHAPTER") && g.includes("AVERAGE TIME BEFORE LEAVING") && g.includes("AVERAGE QUERIES BEFORE LEAVING") && g.includes("WRONG ANSWERS AND HINTS"));
-  assert.equal((g.match(/data-k="Chapter XII"/g) || []).length, 5, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints, solve route");
-  assert.ok(g.includes("SOLVE ROUTE") && g.includes('data-k="Unknown table" data-v="0\terrors\tc2\n0\tusers"') && g.includes("<td>Curly quotes</td>"), "the route grid and every error type at zero");
-  assert.ok(g.includes('data-k="Suspects opened" data-v="0\tusers\tc3\n0\tuses"'), "known features listed at zero");
+  assert.equal(heads(g, "Chapter XII"), 5, "chapters I-XII on the leave bars, its two average lines, wrong answers and hints, solve route");
+  assert.ok(g.includes("SOLVE ROUTE") && hasTip(g, "Unknown table", "0\terrors\tc2\n0\tusers") && g.includes("<td>Curly quotes</td>"), "the route grid and every error type at zero");
+  assert.ok(hasTip(g, "Suspects opened", "0\tusers\tc3\n0\tuses"), "known features listed at zero");
   // Google's ads: their own chart beside FEATURE USE (owner, 2026-10-25), clicks and impressions, GA's totals, zero frame
-  const adsKey = 'data-k="Google&#39;s ads on these pages" data-v="';
-  assert.ok(g.includes("GOOGLE ADS") && g.includes(adsKey + '0\tclicks\tc3\n0\timpressions\tc5"') && !g.includes("Ad clicks (Google)\" data-v"), "Google's ads at zero, out of the features");
+  const adsKey = "Google&#39;s ads on these pages";
+  assert.ok(g.includes("GOOGLE ADS") && hasTip(g, adsKey, "0\tclicks\tc3\n0\timpressions\tc5") && !heads(g, "Ad clicks (Google)"), "Google's ads at zero, out of the features");
   const fu = monitor.featuresHtml({ features: { rows: [["ad_house_click", 4, 5]] } }, 390, monitor.HANDBOOK_FEATURES);
-  assert.ok(fu.includes('data-k="House ad clicked" data-v="4\tusers\tc3\n5\tuses"') && !fu.includes("Ad clicks") && !fu.includes("impressions"), "users only");
+  assert.ok(hasTip(fu, "House ad clicked", "4\tusers\tc3\n5\tuses") && !fu.includes("Ad clicks") && !fu.includes("impressions"), "users only");
   const ads = monitor.adsHtml({ ads: { rows: [[7, 300]], totals: [9, 310] } }, 390, "handbook-google-ads");
-  assert.ok(ads.includes(adsKey + '9\tclicks\tc3\n310\timpressions\tc5"') && ads.includes('<td>Ad clicks (Google)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (Google)</td><td class="num">310</td>'), "GA's own totals, raw data");
+  assert.ok(hasTip(ads, adsKey, "9\tclicks\tc3\n310\timpressions\tc5") && ads.includes('<td>Ad clicks (Google)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (Google)</td><td class="num">310</td>'), "GA's own totals, raw data");
   assert.ok(/<summary>Raw data<\/summary><button[^>]*data-csv="handbook-google-ads"/.test(ads) && ads.includes('<i class="c5"></i>impressions'), "Export CSV and a legend");
-  assert.ok(monitor.adsHtml({ ads: empty }, 390).includes('class="axis"') && !bad.test(monitor.adsHtml({ ads: empty }, 390)), "no reply rows: the zero frame");
+  assert.ok(figsOf(monitor.adsHtml({ ads: empty }, 390))[0].data[0].x.join() === "0" && !bad.test(visible(monitor.adsHtml({ ads: empty }, 390))), "no reply rows: the zero frame");
   assert.equal(monitor.ctr(9, 310), "2.90%");
   assert.equal(monitor.ctr(3, 0), "-", "no impressions, no rate");
-  assert.ok(ads.includes("CTR): <b>2.90%</b>") && ads.includes('<td>Click-through rate (clicks / impressions)</td><td class="num">2.90%</td>') && !ads.includes("ctr\t"), "CTR as a stat line and in raw data, never a bar");
+  assert.ok(ads.includes("CTR): <b>2.90%</b>") && ads.includes('<td>Click-through rate (clicks / impressions)</td><td class="num">2.90%</td>') && figsOf(ads)[0].data.filter(t => t.type === "bar").length === 2 && !hovers(ads).join().includes("%"), "CTR as a stat line and in raw data, never a bar");
   assert.ok(monitor.adsHtml({ ads: empty }, 390).includes("CTR): <b>-</b>"), "a dash without impressions");
   const wideG = monitor.gameHtml(null, 1000, emptyPanels("game"));
   assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("GOOGLE ADS") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
-  assert.ok(/hbar-chart" width="648"[^]*FEATURE USE|FEATURE USE[^]*hbar-chart" width="648"/.test(wideG) && wideG.includes('hbar-chart" width="324"'), "each drawn at its column's width (1000 - 28 gap, 2:1)");
-  assert.equal((g.match(/class="slice empty"/g) || []).length, 3, "the failure kind and both mode donuts: empty rings");
+  assert.equal(emptyRings(g), 3, "the failure kind and both mode donuts: empty rings");
   assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
   const h = monitor.handbookHtml(390, emptyPanels("handbook", { m: "ran" }), { m: "ran" });
-  assert.ok(!bad.test(h) && h.includes('data-k="20. Word of mouth"') && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
-  assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && h.includes(">Readers who ran an exercise</text>"), "the handbook's breakdowns and Count");
-  assert.equal((h.match(/class="slice empty"/g) || []).length, 5, "pages, devices, channels, level and outcome donuts: empty rings");
+  assert.ok(!bad.test(visible(h)) && heads(h, "20. Word of mouth") === 2 && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
+  assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && figsOf(h)[0].layout.yaxis.title.text === "Readers who ran an exercise", "the handbook's breakdowns and Count");
+  assert.equal(emptyRings(h), 5, "pages, devices, channels, level and outcome donuts: empty rings");
   // Global's layout on /learn/: the countries map, then PAGES, devices and channels on one row, all following the Count
   assert.ok(h.indexOf("USERS PER DAY") < h.indexOf("COUNTRIES (TOP 10)") && h.indexOf("COUNTRIES (TOP 10)") < h.indexOf('<div class="donuts three"><div>') &&
     h.indexOf('<div class="donuts three"><div>') < h.indexOf(">PAGES<") && h.indexOf("CHANNELS") < h.indexOf("EXERCISES"), "users, countries, the three donuts, then the exercises");
@@ -678,31 +690,35 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
     assert.deepEqual(monitor.PANELS.handbook[k].requests(monitor.context("handbook", { m: "ran" })).slices.filters, { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } }, k + " on /learn/");
   }
   const hc = monitor.handbookHtml(390, { devices: dnP({ rows: [["mobile", 3]], totals: [2] }), countries: ctP({ rows: [["France", 4], ["Spain", 3], ["Italy", 1]] }) }, { m: "visitors", top: 5 });
-  assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && hc.includes(">2</text>") && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
-  assert.ok(charts.hbarSvg([], [["x", "c1"]], 390).includes('class="axis"'), "no rows: the empty frame");
+  assert.ok(hc.includes("COUNTRIES (TOP 5)") && hc.includes("<td>Italy</td>") && centres(hc).some(t => t.includes("<b>2</b>")) && hc.includes("Reading the channels"), "every country from GA, sliced by Top; GA's total in the centre; reading in place");
+  const hb0 = figures.hbarFig([], [["x", "c1"]], 390);
+  assert.ok(hb0.data.length === 1 && hb0.data[0].x.length === 0 && hb0.layout.height > 0, "no rows: the empty frame");
+  const hb = figures.hbarFig([{ label: "b", values: [0, 5] }, { label: "a", values: [3, 0] }], [["s1", "c3"], ["s2", "c5"]], 390);
+  assert.deepEqual(hb.data.slice(0, 2).map(t => [t.marker.color, t.text]), [["var(--c3)", ["0", "3"]], ["var(--c5)", ["5", "0"]]], "zeros listed, a value at every bar's end");
+  assert.deepEqual(hb.layout.annotations.map(a => a.text), ["b", "a"], "rows in the given order, labels above the bars");
   // the leave block reads GA's averages as they come, labelled as averages, no dot where nobody left
   const leave = monitor.leaveHtml({ leave: { rows: [["2", 7, 95.25, 4.5], ["(not set)", 1, 1, 1]] } }, 640);
   assert.ok(leave.includes('<td>II</td><td class="num">7</td><td class="num">95.3</td><td class="num">4.5</td>') && leave.includes('<td>III</td><td class="num">0</td><td class="num">-</td>'));
-  assert.ok(leave.includes('data-v="7\tusers who left\tc1\n95.3 s\tavg seconds\n4.5\tavg queries"') && leave.includes("an average, not a median") && leave.includes(">Avg seconds</text>"));
-  assert.equal((leave.match(/class="avg-dot"/g) || []).length, 2, "one dot per average line, chapter II only");
+  assert.ok(hasTip(leave, "Chapter II", "7\tusers who left\tc1\n95.3 s\tavg seconds\n4.5\tavg queries") && leave.includes("an average, not a median") && figsOf(leave)[1].layout.yaxis.title.text === "Avg seconds");
+  assert.equal(figsOf(leave).slice(1).flatMap(f => f.data[0].y.filter(v => v !== null)).length, 2, "one dot per average line, chapter II only");
   // failures: the kind as a donut of GA's totals, bars from the [rule] reply, never summed from the split
   const fails = monitor.failsHtml({ rule: { rows: [["<b>group-by", 12, 5]] }, split: { rows: [["group-by", "refused", "3", 7, 3], ["group-by", "refused", "4", 5, 4]] }, type: { rows: [["syntax", 9, 4], ["weird", 1, 1]] }, kind: { rows: [["refused", 12], ["error", 4]], totals: [16] } }, 390);
-  assert.ok(fails.includes('data-k="Syntax" data-v="9\terrors\tc2\n4\tusers"') && fails.includes('<td>Unknown column</td><td class="num">0</td><td class="num">0</td>') &&
+  assert.ok(hasTip(fails, "Syntax", "9\terrors\tc2\n4\tusers") && fails.includes('<td>Unknown column</td><td class="num">0</td><td class="num">0</td>') &&
     fails.indexOf("<td>Other</td>") < fails.indexOf("<td>weird</td>"), "error types in a fixed order, zeros listed, GA's other values after");
-  assert.ok(fails.includes('data-k="&#60;b&#62;group-by" data-v="12\tfailures\tc6\n5\tusers"') && fails.includes("<td>III</td>") && !fails.includes("<b>group"));
-  assert.ok(fails.indexOf("SQLite error") < fails.indexOf("Refused by") && fails.includes('data-k="Refused by the grammar check" data-v="12 failures\t75%"'), "kinds in a fixed order and colour");
+  assert.ok(hasTip(fails, "&#60;b&#62;group-by", "12\tfailures\tc6\n5\tusers") && fails.includes("<td>III</td>") && !fails.includes("<b>group"));
+  assert.ok(fails.indexOf("SQLite error") < fails.indexOf("Refused by") && hasTip(fails, "Refused by the grammar check", "12 failures\t75%"), "kinds in a fixed order and colour");
   const hf = monitor.failsHtml({ rule: empty, split: empty, type: empty, kind: null }, 390, "Exercise", "exercise-failures");
   assert.ok(!hf.includes("BY KIND") && hf.includes("SQLITE ERRORS BY TYPE") && hf.includes("<td>Syntax</td>"), "the handbook's failures: by type, no kind donut");
   const routes = monitor.routesHtml({ routes: { rows: [["3", "unseen", 2], ["3", "same_result", 7], ["(not set)", "found", 1]] } }, 390);
-  assert.ok(routes.includes('data-k="Chapter III" data-v="7\tSame result as the solution\tc3\n0\tAnswer seen in a result\tc1\n2\tAnswer never on screen\tc6"') &&
+  assert.ok(hasTip(routes, "Chapter III", "7\tSame result as the solution\tc3\n0\tAnswer seen in a result\tc1\n2\tAnswer never on screen\tc6") &&
     routes.includes('<td>III</td><td class="num">7</td><td class="num">0</td><td class="num">2</td>') && routes.includes("Data starts 2026-10-25"), "users per route per chapter, GA's rows");
   const plain = monitor.failsHtml({ rule: { rows: [["", 4, 2]] }, split: { rows: [["", "error", "1", 4, 2]] } }, 390);
-  assert.ok(plain.includes('data-k="SQL error"') && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
+  assert.ok(heads(plain, "SQL error") === 1 && plain.includes("<td>SQL error</td>") && !plain.includes("(empty)"), "an empty rule reads SQL error");
   // chapter I onboarding: every step GA's own count in the steps' order, zeros listed, the share of Investigate in raw data
   const ob = monitor.onboardingHtml({ begin: { rows: [[20]] }, features: { rows: [["tour_done", 6], ["prologue_skip", 4]] }, ran: { totals: [15] }, solved: { rows: [] } }, 390);
   assert.ok(ob.includes('<td>Pressed Investigate</td><td class="num">20</td><td class="num">100%</td>') && ob.includes('<td>Prologue skipped</td><td class="num">4</td><td class="num">20%</td>'));
   assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
-  assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(ob));
+  assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(visible(ob)));
   assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
   // by device: desktop, mobile, tablet in that order whatever GA's order, a missing device reads 0, the share per device
   const od = monitor.onboardingDevicesHtml({ begin: { rows: [["mobile", 10], ["desktop", 30]], totals: [39] }, byDevice: { rows: [["prologue_skip", "mobile", 6], ["prologue_skip", "desktop", 3]] },
@@ -711,7 +727,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(od.includes('<td>Pressed Investigate</td><td class="num">30</td><td class="num">100%</td><td class="num">10</td><td class="num">100%</td><td class="num">0</td><td class="num">-</td>'));
   assert.ok(od.includes('<td>Prologue skipped</td><td class="num">3</td><td class="num">10%</td><td class="num">6</td><td class="num">60%</td><td class="num">0</td>') &&
     od.includes('<td>Ran a first query in chapter I</td><td class="num">24</td><td class="num">80%</td><td class="num">0</td>') && od.includes('<td>Solved chapter I</td><td class="num">0</td>'));
-  assert.ok(od.includes("60%\tof Mobile Investigate pressers") && od.includes("Export CSV"));
+  assert.ok(hovers(od).some(t => t.includes("<b>60%</b> of Mobile Investigate pressers")) && od.includes("Export CSV"));
   const od0 = monitor.onboardingDevicesHtml({ begin: { rows: [] }, byDevice: { rows: [] }, ran: { rows: [] }, solved: { rows: [] } }, 390);
   assert.ok(od0.includes("<td>Tour finished</td>") && od0.includes('<th class="num">Tablet</th>') && ob.includes("BY DEVICE"), "the empty frame, and under the all-devices bars");
   assert.equal(monitor.onboardingHtml({ begin: { rows: [["desktop", 30], ["mobile", 10]], totals: [39] }, features: empty, byDevice: empty, ran: empty, solved: empty }, 390)
@@ -726,9 +742,9 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(sh0.includes('<td>LinkedIn</td><td class="num">0</td>') && sh0.includes("Export CSV") && g.includes("SHARES BY NETWORK"));
   assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).ran.filters,{ eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
   const wrong = monitor.wrongHintsHtml({ wrong: { rows: [["1", "1", 9], ["1", "3", 2]] }, hints: { rows: [["1", 4, 6]] } }, 390);
-  assert.ok(wrong.includes('data-v="9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens"') && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
+  assert.ok(hasTip(wrong, "Chapter I", "9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens") && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
   const modes = monitor.modesHtml({ opened: { rows: [["compete", 3], ["learn", 6]], totals: [8] }, begun: { rows: [["learn", 6], ["compete", 3]], totals: [8] }, seen: { rows: [[20]] } });
-  assert.ok(modes.includes("8 of the 20 visitors on the game page (40%)") && modes.includes('<td>All (GA&#39;s total)</td><td class="num">8</td>') && modes.includes(">8</text>"), "GA's total (8), not 6 + 3");
+  assert.ok(modes.includes("8 of the 20 visitors on the game page (40%)") && modes.includes('<td>All (GA&#39;s total)</td><td class="num">8</td>') && centres(modes).every(t => t.includes("<b>8</b>")), "GA's total (8), not 6 + 3");
   assert.ok(modes.indexOf('<i class="c1"></i><span>Learn') > 0 && modes.includes('<i class="c2"></i><span>Compete'), "learn and compete keep their colour whatever the order");
   assert.equal(monitor.gaTotal({ rows: [[20]] }), 20);
   assert.equal(monitor.gaTotal({ rows: [["a", 1], ["b", 2]] }), 0, "no total without GA's");
@@ -739,14 +755,14 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const titles = ["<i>LIKE -- The Ritz Affair", "B", "C", "D", "E", "F", "G"].map((t, i) => [t, 10 - i]);
   const pages = monitor.handbookPagesHtml({ rows: titles, totals: [30] }, "visitors");
   assert.ok(pages.includes("&#60;i&#62;LIKE</span>") && !pages.includes("<i>LIKE") && !pages.includes("Ritz Affair"));
-  assert.ok(pages.includes("<td>Other (sum of 2 rows)</td><td class=\"num\">9</td>") && pages.includes(">30</text>") && pages.includes("the slices add up to 49"));
+  assert.ok(pages.includes("<td>Other (sum of 2 rows)</td><td class=\"num\">9</td>") && centres(pages)[0].includes("<b>30</b>") && pages.includes("the slices add up to 49"));
   assert.deepEqual(monitor.PANELS.handbook.pages.requests(monitor.context("handbook", { m: "ran" })).pages, { days: 7, dimensions: ["pageTitle"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
   const ch = monitor.choicesHtml({ levels: { rows: [["challenge", 2, 5], ["warm-up", 4, 9]], totals: [5] }, outcomes: { rows: [["ok", 7], ["refused", 2]], totals: [9] } });
-  assert.ok(ch.indexOf("Warm-up") < ch.indexOf("Practice") && ch.includes("9 Warm-up, 0 Practice, 5 Challenge presses") && ch.includes('data-k="Ran" data-v="7 runs\t78%"'));
+  assert.ok(ch.indexOf("Warm-up") < ch.indexOf("Practice") && ch.includes("9 Warm-up, 0 Practice, 5 Challenge presses") && hasTip(ch, "Ran", "7 runs\t78%"));
   // Global's PAGES: a donut over the four sections, GA's unfiltered total in the centre, the overlap said
   const sec = monitor.pagesSection({ res: { Game: { totals: [5] }, Handbook: { totals: [3] }, Desk: { rows: [] }, Other: { totals: [1] }, all: { totals: [7] } } }, "visitors");
-  assert.ok(sec.includes('class="chart donut"') && sec.includes('<i class="c3"></i><span>Desk</span><b class="num">0</b>') && sec.includes('<td>Handbook</td><td class="num">3</td>'));
-  assert.ok(sec.includes(">7</text>") && sec.includes("the slices add up to 9") && sec.includes("both the game and the handbook") && sec.includes("<td>All (GA&#39;s total)</td><td class=\"num\">7</td>"));
+  assert.ok(figsOf(sec)[0].data[0].type === "pie" && sec.includes('<div class="donut">') && sec.includes('<i class="c3"></i><span>Desk</span><b class="num">0</b>') && sec.includes('<td>Handbook</td><td class="num">3</td>'));
+  assert.ok(centres(sec)[0].includes("<b>7</b>") && sec.includes("the slices add up to 9") && sec.includes("both the game and the handbook") && sec.includes("<td>All (GA&#39;s total)</td><td class=\"num\">7</td>"));
   assert.deepEqual(monitor.sectionRequests(7, "opened")[1], { days: 7, dimensions: [], metrics: ["totalUsers"], filters: { eventName: ["chapter_open"], pagePath: { beginsWith: ["/learn/"] } } });
   assert.deepEqual(monitor.sectionRequests(7, "opened")[4], { days: 7, dimensions: [], metrics: ["totalUsers"], filters: { eventName: ["chapter_open"] } }, "the total is requested unfiltered");
   assert.ok(!("topPagesHtml" in monitor) && !("topPages" in monitor.PANELS.global), "the top pages table is gone");
@@ -758,9 +774,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   // the compared groups print GA's total over each group when the reply has one
   const st = monitor.stackData({ visitors: { rows: [["desktop", 6], ["mobile", 5]], totals: [9] } });
   assert.deepEqual([st.bars[0].sum, st.bars[0].total], [11, 9]);
-  assert.ok(charts.groupSvg(st, 390).includes('text-anchor="middle">9</text>'));
-  const cb = charts.chapterBarsSvg(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]], 390);
-  assert.equal((cb.match(/class="bar c1"/g) || []).length, 1, "one bar, the zeros drawn as nothing");
+  assert.equal(figures.groupFig(st).layout.annotations[0].text, "<b>9</b>");
+  const cb = figures.chapterBarsFig(monitor.chapterGrid({ rows: [["3", 4]] }), [["users", "c1"]]);
+  assert.deepEqual(cb.data[0].y, [0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0], "the I-XII grid, zeros where GA has nothing");
+  assert.equal(cb.data[0].x.at(-1), "XII");
 });
 
 test("monitor panels: each view's panels cover everything its renderer reads; one loader keyed on deps", () => {
