@@ -2,7 +2,7 @@
 // the compete backend (apps_script.gs). Its /exec URL is public by design: it can only append a feedback row.
 // Script Property SHEET_ID: the owner's Sheet; rows go to its "Feedback" tab: [ms timestamp, page, message, email].
 // Each saved message is also emailed to NOTIFY_EMAIL (Script Property, else contact@alephb.uk); a failed email never
-// loses the row.
+// loses the row. A sender who gave an email gets a short fixed confirmation (confirm_).
 
 var FEEDBACK_TAB = "Feedback";
 var MAX_MESSAGE = 2000, MAX_EMAIL = 120, MAX_PAGE = 200;
@@ -38,7 +38,22 @@ function feedback_(b) {
     sheet.appendRow([Date.now(), "'" + page, "'" + message, "'" + email]);
   } finally { lock.releaseLock(); }
   notify_(page, message, email);
+  if (email) confirm_(email);
   return { ok: true };
+}
+
+// A short fixed confirmation to the sender. It never quotes the message (the form must not become a way to send
+// someone else text) and goes at most once a day to one address.
+function confirm_(email) {
+  try {
+    var cache = CacheService.getScriptCache(), key = "confirmed-" + email.toLowerCase();
+    if (cache.get(key)) return;
+    cache.put(key, "1", 21600);
+    MailApp.sendEmail({ to: email, name: "The Ritz Affair", replyTo: NOTIFY_DEFAULT,
+      subject: "We received your feedback on The Ritz Affair",
+      body: "Hello,\n\nThank you for your feedback on The Ritz Affair. It has reached us and is under review. If it " +
+        "needs an answer, we will reply to this address.\n\nAlephB\nhttps://mystery.alephb.uk\n" });
+  } catch (err) { console.warn("feedback confirmation failed: " + err); }
 }
 
 function notify_(page, message, email) {

@@ -352,7 +352,12 @@ test("feedback script: at most 30 messages per 10 minutes", () => {
 test("feedback script: each saved message is emailed; a failed email keeps the row", () => {
   const b = feedbackBackend();
   assert.ok(b.post({ message: "Nice game", email: "a@b.co", page: "/learn/" }).ok);
-  assert.equal(b.mails.length, 1);
+  assert.equal(b.mails.length, 2, "the owner's copy and the sender's confirmation");
+  const conf = b.mails.splice(1, 1)[0];
+  assert.equal(conf.to, "a@b.co");
+  assert.ok(!conf.body.includes("Nice game"), "the confirmation never quotes the message");
+  assert.ok(b.post({ message: "again", email: "A@b.co", page: "/" }).ok);
+  assert.equal(b.mails.splice(1).filter(m => m.to.toLowerCase() === "a@b.co").length, 0, "one confirmation per address per window");
   assert.deepEqual([b.mails[0].to, b.mails[0].replyTo, b.mails[0].subject], ["contact@alephb.uk", "a@b.co", "Ritz Affair feedback (/learn/)"]);
   assert.match(b.mails[0].body, /^Nice game\n/);
   assert.ok(b.post({ message: "no email", page: "/" }).ok);
@@ -361,5 +366,5 @@ test("feedback script: each saved message is emailed; a failed email keeps the r
   assert.equal(b.mails.length, 2, "a refused message sends nothing");
   b.mails.fail = true;
   assert.ok(b.post({ message: "still saved", page: "/" }).ok);
-  assert.equal(b.rows().length, 4);
+  assert.equal(b.rows().length, 5);
 });
