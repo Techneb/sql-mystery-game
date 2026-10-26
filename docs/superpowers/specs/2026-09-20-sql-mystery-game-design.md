@@ -342,8 +342,8 @@ into modules, one terminal, `version_site.mjs`, generated handbook chrome, named
 and Grammar redesign, SHARES BY NETWORK (GA dimensions `type`, `route` and `network` registered by the owner) and the
 Send feedback form (rows in the Sheet's Feedback tab). Waiting on Google: the AdSense re-review (requested
 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue. Waiting on the owner:
-a look at the new monitoring panels once GA has data, the desk controls on a phone, archiving the old
-personal-account backend project. Not verified end to end since the module split: a real compete season (the owner
+a look at the new monitoring panels once GA has data (the old personal-account backend was archived and the desk
+checked on a phone by the owner on 2026-10-25). Not verified end to end since the module split: a real compete season (the owner
 declined a test run on 2026-10-25), the Part I/II extra editions and films, the certificate print, the gated
 `?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
 device); the SQL Noir study.
@@ -749,7 +749,8 @@ device); the SQL Noir study.
   bubbles on a world map (`site/world.json`, 79 KB, Natural Earth 110m plus centroids under GA's English names);
   devices and channels as donuts; every chart with a closed Raw data table. `chapter_queries` reaches GA (Realtime,
   2026-10-23) but the Data API shows a new event only after up to a day; the funnel notes it while ran-N is empty.
-  Open (owner): a look at the live pages with real data; archive the old backend project once no old link uses it.
+  Open (owner): a look at the live pages with real data. The old backend project was archived by the owner on
+  2026-10-25 (its old /exec URL answers 404).
 - Monitoring for the 2026-10-25 onboarding (done 2026-10-25): the Game page's CHAPTER I ONBOARDING bars (learn mode:
   Investigate pressed, prologue finished / skipped, tour finished / skipped, a first query in chapter I, chapter I
   solved, each GA's own users count). FEATURE USE already lists prologue, tour, share, warm-up link, case card
@@ -783,9 +784,8 @@ device); the SQL Noir study.
   for the top N (one extra ?report= filtered on those countries, so a person in two counts once) and its share of
   GA's all-countries total; every native confirm()/prompt() is now the site's own dialog (`askDialog` in shared.js:
   New investigation in learn and compete, the certificate names, the desk's open-a-second-season and close-a-season;
-  the native box only where showModal is missing). Open: the owner's look on a phone (a 2 px overflow was seen on a
-  test copy of the desk's controls row at 390 px); the desk's two dialogs were not clicked through end to end (they
-  need the backend and the passphrase).
+  the native box only where showModal is missing). The owner checked the desk on a phone on 2026-10-25 (it works). Open: the
+  desk's open-a-second-season and close dialogs were not clicked through end to end (delete and rename were, live).
   2026-10-25 (owner registered `type` and `route` as GA custom dimensions): Game monitor's SOLVE ROUTE per chapter
   (same result, answer seen in a result, answer never on screen) and SQLite errors by type in QUERY FAILURES (the
   handbook's too); both dimensions whitelisted for the pivot table. Not yet seen with live data (needs the backend
