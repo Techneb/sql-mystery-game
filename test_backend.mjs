@@ -318,6 +318,14 @@ function feedbackBackend() {
     CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
     MailApp: { sendEmail: m => { if (mails.fail) throw new Error("quota"); mails.push(m); } },
+    // the Gmail API stub decodes the raw message into the same shape as a MailApp call
+    Gmail: { Users: { Messages: { send: (res, user) => {
+      if (mails.gmailFail || user !== "me") throw new Error("no gmail");
+      const [head, body] = Buffer.from(res.raw, "base64url").toString("utf8").split("\r\n\r\n");
+      const h = Object.fromEntries(head.split("\r\n").map(l => [l.slice(0, l.indexOf(":")).toLowerCase(), l.slice(l.indexOf(":") + 2)]));
+      mails.push({ to: h.to, from: h.from, subject: h.subject, body, gmail: true });
+    } } } },
+    Utilities: { base64EncodeWebSafe: t => Buffer.from(t, "utf8").toString("base64url") },
     console: { warn: () => {} },
   });
   vm.runInContext(fs.readFileSync(new URL("./feedback_script.gs", import.meta.url), "utf8"), ctx);
@@ -373,6 +381,7 @@ test("feedback script: each saved message is emailed; a failed email keeps the r
   const conf = b.mails.splice(1, 1)[0];
   assert.equal(conf.to, "a@b.co");
   assert.ok(!conf.body.includes("Nice game"), "the confirmation never quotes the message");
+  assert.deepEqual([conf.gmail, conf.from], [true, "The Ritz Affair <contact@alephb.uk>"], "sent as contact@ through Gmail");
   assert.ok(b.post({ message: "again", email: "A@b.co", page: "/" }).ok);
   assert.equal(b.mails.splice(1).filter(m => m.to.toLowerCase() === "a@b.co").length, 0, "one confirmation per address per window");
   assert.deepEqual([b.mails[0].to, b.mails[0].replyTo, b.mails[0].subject], ["contact@alephb.uk", "a@b.co", "Ritz Affair feedback (/learn/)"]);
@@ -384,6 +393,14 @@ test("feedback script: each saved message is emailed; a failed email keeps the r
   b.mails.fail = true;
   assert.ok(b.post({ message: "still saved", page: "/" }).ok);
   assert.equal(b.rows().length, 5);
+});
+
+test("feedback script: without Gmail the confirmation falls back to MailApp", () => {
+  const b = feedbackBackend();
+  b.mails.gmailFail = true;
+  assert.ok(b.post({ message: "hi", email: "c@d.co", page: "/" }).ok);
+  const conf = b.mails.find(m => m.to === "c@d.co");
+  assert.deepEqual([conf.gmail, conf.replyTo], [undefined, "contact@alephb.uk"]);
 });
 
 test("feedback script: the browser's context goes to the row and the email, cleaned", () => {

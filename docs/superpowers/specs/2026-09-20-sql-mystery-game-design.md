@@ -334,12 +334,12 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-10-26).** Everything is deployed (64e344c; compete backend @11, feedback script @7); the repo
+**Open right now (2026-10-26).** Everything is deployed (64e344c; compete backend @11, feedback script @8); the repo
 has only `main` (review branches deleted 2026-10-26, their reports in `docs/reviews/` and `docs/text-review-2026-10-25.md`).
 Added 2026-10-26: the onboarding panel split by device; CTR on GOOGLE ADS and a daily average line on USERS PER DAY;
 the "The Ritz Affair . The Clerk's Handbook" header on the game page with the current section in red (game and
 handbook); feedback emails (the owner notified, the sender confirmed) carrying the browser's context (device, system,
-browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part), one Sheet column per field with a `status` column for the owner; the game
+browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part), one Sheet column per field with a `status` column for the owner, the sender's confirmation from contact@alephb.uk; the game
 masthead without its date line, "Chapter I of VIII" in red beside The Ritz Affair; the SQL Noir and chapter I notes saved in
 `docs/research/`. Deployed head: see `git log -1`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
