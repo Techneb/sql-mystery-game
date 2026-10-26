@@ -1,12 +1,16 @@
 // feedback_script.gs -- the Send feedback form's backend (site/feedback.js), a separate Apps Script deployment from
 // the compete backend (apps_script.gs). Its /exec URL is public by design: it can only append a feedback row.
-// Script Property SHEET_ID: the owner's Sheet; rows go to its "Feedback" tab: [ms timestamp, page, message, email].
+// Script Property SHEET_ID: the owner's Sheet; rows go to its "Feedback" tab, one column per HEADERS name. Each row is
+// written by the names in the tab's first row, so the owner may reorder, hide or drop columns; a context field with no
+// column of its own goes to "other". "status" is left empty for the owner (replied, fixed...).
 // Each saved message is also emailed to NOTIFY_EMAIL (Script Property, else contact@alephb.uk); a failed email never
 // loses the row. A sender who gave an email gets a short fixed confirmation (confirm_).
 
 var FEEDBACK_TAB = "Feedback";
 var MAX_MESSAGE = 2000, MAX_EMAIL = 120, MAX_PAGE = 200;
 var MAX_CTX_KEYS = 20, MAX_CTX_VALUE = 80;   // the browser's context (feedback.js clientContext): short strings only
+var HEADERS = ["received", "status", "message", "email", "page", "chapter", "mode", "part", "device", "os", "browser",
+  "screen", "window", "pixelRatio", "touch", "language", "timezone", "localTime", "theme", "other"];
 var NOTIFY_DEFAULT = "contact@alephb.uk";
 var RATE_LIMIT = 30, RATE_WINDOW_S = 600;   // at most 30 messages per 10 minutes, all senders together
 
@@ -34,11 +38,10 @@ function feedback_(b) {
     if (n >= RATE_LIMIT) return { ok: false, error: "busy" };
     cache.put(key, String(n + 1), RATE_WINDOW_S);
     var book = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
-    var sheet = book.getSheetByName(FEEDBACK_TAB);
-    if (!sheet) { sheet = book.insertSheet(FEEDBACK_TAB); sheet.appendRow(["at", "page", "message", "email", "context"]); }
-    // text cells start with an apostrophe: never a formula, never coerced into a number or a date
-    if (sheet.getLastColumn && sheet.getLastColumn() < 5) sheet.getRange(1, 5).setValue("context");   // tabs made before 2026-10-26
-    sheet.appendRow([Date.now(), "'" + page, "'" + message, "'" + email, "'" + ctxText]);
+    var sheet = book.getSheetByName(FEEDBACK_TAB) || book.insertSheet(FEEDBACK_TAB);
+    if (!sheet.getLastRow()) sheet.appendRow(HEADERS);
+    var head = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+    sheet.appendRow(row_(head, new Date(), page, message, email, ctx));
   } finally { lock.releaseLock(); }
   notify_(page, message, email, ctxText);
   if (email) confirm_(email);
@@ -57,6 +60,20 @@ function confirm_(email) {
         "needs an answer, we will reply to this address.\n\nAlephB\nhttps://mystery.alephb.uk\n" });
     cache.put(key, "1", 21600);   // only once it is sent, so a failed attempt never blocks the next
   } catch (err) { console.warn("feedback confirmation failed: " + err); }
+}
+
+// One row in the tab's own column order. Text cells start with an apostrophe: never a formula, never coerced into a
+// number or a date.
+function row_(head, received, page, message, email, ctx) {
+  var cells = { received: received, page: page, message: message, email: email }, other = [];
+  Object.keys(ctx).forEach(function (k) {
+    if (head.indexOf(k) >= 0 && !(k in cells)) cells[k] = ctx[k]; else other.push(k + ": " + ctx[k]);
+  });
+  cells.other = other.join("\n");
+  return head.map(function (h) {
+    var v = Object.prototype.hasOwnProperty.call(cells, h) ? cells[h] : "";
+    return typeof v === "string" && v ? "'" + v : v;
+  });
 }
 
 // Keeps only short string values under plain keys: the context is information, never trusted.
@@ -83,5 +100,21 @@ function notify_(page, message, email, ctxText) {
 // Run once from the editor after setting SHEET_ID: Google asks the owner to allow the Sheet access, and the tab is made.
 function setup() {
   var book = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
-  if (!book.getSheetByName(FEEDBACK_TAB)) book.insertSheet(FEEDBACK_TAB).appendRow(["at", "page", "message", "email"]);
+  if (!book.getSheetByName(FEEDBACK_TAB)) book.insertSheet(FEEDBACK_TAB).appendRow(HEADERS);
+}
+
+// Run once from the editor (2026-10-26): rewrites the old [at, page, message, email, context] tab under HEADERS.
+function reorganise() {
+  var sheet = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID")).getSheetByName(FEEDBACK_TAB);
+  var old = sheet.getDataRange().getValues();
+  if (String(old[0][0]) !== "at") throw new Error("not the old layout");
+  var rows = old.slice(1).map(function (r) {
+    var ctx = {};
+    String(r[4]).split("\n").forEach(function (l) { var i = l.indexOf(": "); if (i > 0) ctx[l.slice(0, i)] = l.slice(i + 2); });
+    return row_(HEADERS, new Date(Number(r[0])), String(r[1]), String(r[2]), String(r[3]), ctx);
+  });
+  sheet.clear();
+  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight("bold");
+  if (rows.length) sheet.getRange(2, 1, rows.length, HEADERS.length).setValues(rows);
+  sheet.setFrozenRows(1);
 }

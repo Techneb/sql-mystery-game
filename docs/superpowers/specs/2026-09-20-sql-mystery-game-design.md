@@ -339,7 +339,7 @@ has only `main` (review branches deleted 2026-10-26, their reports in `docs/revi
 Added 2026-10-26: the onboarding panel split by device; CTR on GOOGLE ADS and a daily average line on USERS PER DAY;
 the "The Ritz Affair . The Clerk's Handbook" header on the game page with the current section in red (game and
 handbook); feedback emails (the owner notified, the sender confirmed) carrying the browser's context (device, system,
-browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part; a fifth Sheet column); the game
+browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part), one Sheet column per field with a `status` column for the owner; the game
 masthead without its date line, "Chapter I of VIII" in red beside The Ritz Affair; the SQL Noir and chapter I notes saved in
 `docs/research/`. Deployed head: see `git log -1`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first

@@ -301,13 +301,19 @@ test("?report: GA's error text comes back as {ok:false, error}, and totals are r
   assert.deepEqual([r.rowCount, r.rows, r.totals], [42, [], [1300]]);
 });
 
+function feedbackSheet(coerce, rows = []) {
+  return { rows, appendRow(r) { rows.push(Array.from(r, coerce)); }, getLastRow: () => rows.length,
+    getLastColumn: () => Math.max(0, ...rows.map(r => r.length)),
+    getRange: (r, c, nr, nc) => ({ getValues: () => rows.slice(r - 1, r - 1 + nr).map(x => Array.from({ length: nc }, (_, i) => x[c - 1 + i] ?? "")) }) };
+}
+
 // feedback_script.gs: its own small vm (doPost only), the same coercing Sheet stub idea.
 function feedbackBackend() {
   const tabs = new Map(), cache = new Map(), lock = { busy: false }, mails = [];
   const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
   const ctx = vm.createContext({
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => (k === "SHEET_ID" ? "sheet-1" : null) }) },
-    SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = { rows: [], appendRow(r) { this.rows.push(Array.from(r, coerce)); } }; tabs.set(n, s); return s; } }) },
+    SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = feedbackSheet(coerce); tabs.set(n, s); return s; } }) },
     LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
@@ -316,18 +322,29 @@ function feedbackBackend() {
   });
   vm.runInContext(fs.readFileSync(new URL("./feedback_script.gs", import.meta.url), "utf8"), ctx);
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === "string" ? body : JSON.stringify(body) } }).text);
-  return { post, tabs, lock, mails, rows: () => tabs.get("Feedback").rows };
+  return { post, tabs, lock, mails, coerce, rows: () => tabs.get("Feedback").rows };
 }
+
+const FEEDBACK_HEADERS = ["received", "status", "message", "email", "page", "chapter", "mode", "part", "device", "os", "browser",
+  "screen", "window", "pixelRatio", "touch", "language", "timezone", "localTime", "theme", "other"];
+const cell = (b, r, name) => b.rows()[r][b.rows()[0].indexOf(name)];
 
 test("feedback script: a valid message is one text row, the tab made with headers", () => {
   const b = feedbackBackend();
   assert.deepEqual(b.post({ message: "  007  ", email: "a@b.co", page: "/learn/like.html" }), { ok: true });
-  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email", "context"]);
-  const [at, ...rest] = b.rows()[1];
-  assert.equal(typeof at, "number");
-  assert.deepEqual(rest, ["/learn/like.html", "007", "a@b.co", ""], "text stays text, trimmed");
+  assert.deepEqual(b.rows()[0], FEEDBACK_HEADERS);
+  assert.ok(typeof cell(b, 1, "received").getTime === "function", "a real date cell");
+  assert.deepEqual(["message", "email", "page", "status", "other"].map(h => cell(b, 1, h)), ["007", "a@b.co", "/learn/like.html", "", ""],
+    "text stays text, trimmed; status is the owner's");
   assert.ok(b.post({ message: "=HYPERLINK(1)", email: "", page: "/" }).ok);
-  assert.equal(b.rows()[2][2], "=HYPERLINK(1)", "the apostrophe keeps a formula as text");
+  assert.equal(cell(b, 2, "message"), "=HYPERLINK(1)", "the apostrophe keeps a formula as text");
+});
+
+test("feedback script: rows follow the tab's own column order", () => {
+  const b = feedbackBackend();
+  b.tabs.set("Feedback", feedbackSheet(b.coerce, [["email", "notes", "browser", "message"]]));
+  assert.ok(b.post({ message: "hi", email: "a@b.co", page: "/", ctx: { browser: "Safari 27", os: "iOS" } }).ok);
+  assert.deepEqual(b.rows()[1], ["a@b.co", "", "Safari 27", "hi"], "reordered, an unknown column left empty, no column dropped");
 });
 
 test("feedback script: empty, oversized, bad email or page refused; never throws", () => {
@@ -373,10 +390,9 @@ test("feedback script: the browser's context goes to the row and the email, clea
   const b = feedbackBackend();
   const ctx = { os: "macOS", browser: "Chrome 141", window: "1400x900", chapter: "3", "bad key!": "x", long: "y".repeat(200), multi: "a\nb", obj: { z: 1 } };
   assert.ok(b.post({ message: "hi", page: "/", ctx }).ok);
-  const row = b.rows()[1];
-  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email", "context"]);
-  assert.match(row[4], /^os: macOS\nbrowser: Chrome 141\nwindow: 1400x900\nchapter: 3\nlong: y{80}\nmulti: a b\nobj: \[object Object\]$/);
+  assert.deepEqual(["os", "browser", "window", "chapter"].map(h => cell(b, 1, h)), ["macOS", "Chrome 141", "1400x900", "3"], "text, never a number");
+  assert.equal(cell(b, 1, "other"), "long: " + "y".repeat(80) + "\nmulti: a b\nobj: [object Object]", "the rest, cleaned, in other");
   assert.ok(b.mails[0].body.includes("browser: Chrome 141") && b.mails[0].body.includes("Received: "));
   assert.ok(b.post({ message: "no ctx", page: "/", ctx: "nonsense" }).ok, "a bad context is dropped, never refused");
-  assert.equal(b.rows()[2][4], "");
+  assert.equal(cell(b, 2, "os"), "");
 });
