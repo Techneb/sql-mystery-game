@@ -802,10 +802,9 @@ device).
 - ~~Competitor study~~ Done 2026-10-25 (owner, 2026-10-24): SQL Noir (https://www.sqlnoir.com/), public pages only;
   the note is `docs/research/2026-10-25-sql-noir.md`. Of its ten ranked items, built 2026-10-25: 1 the chapter I
   diagnosis, 2 the prologue, 3 the first query pre-filled, 6 SEO, 8 the share line (end of game only), 9 Tab
-  completion. Declined: 5 per-chapter recaps (owner: "no recaps", the case board improved instead). Open: 4 moving the
-  17th/18th trap out of chapter I (a plot decision for the owner; re-read GA after the onboarding first), 7 asking
-  SQL Noir's list to include us (folded into the outreach, which waits for ads), 10 naming the audience in the
-  landing's about text (small).
+  completion. Declined: 5 per-chapter recaps (owner: "no recaps", the case board improved instead); 4 moving the 17th/18th trap
+  out of chapter I, 7 asking SQL Noir's list to include us and 10 naming the audience on the landing (owner,
+  2026-10-26: "I don't want to do them"; do not propose them again).
 - ~~Strix security test~~ Done 2026-10-24, fixed 2026-10-25 (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
   throwaway season, never during a class, with request caps; Google's services out; findings in the uncommitted
   `docs/audits/`. It starts only after Compromise's Strix run (planned the night of 2026-10-24); Compromise Main will
