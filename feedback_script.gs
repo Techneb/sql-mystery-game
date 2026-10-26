@@ -48,11 +48,11 @@ function confirm_(email) {
   try {
     var cache = CacheService.getScriptCache(), key = "confirmed-" + email.toLowerCase();
     if (cache.get(key)) return;
-    cache.put(key, "1", 21600);
     MailApp.sendEmail({ to: email, name: "The Ritz Affair", replyTo: NOTIFY_DEFAULT,
       subject: "We received your feedback on The Ritz Affair",
       body: "Hello,\n\nThank you for your feedback on The Ritz Affair. It has reached us and is under review. If it " +
         "needs an answer, we will reply to this address.\n\nAlephB\nhttps://mystery.alephb.uk\n" });
+    cache.put(key, "1", 21600);   // only once it is sent, so a failed attempt never blocks the next
   } catch (err) { console.warn("feedback confirmation failed: " + err); }
 }
 
