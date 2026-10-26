@@ -343,7 +343,7 @@ browser, sizes, language, time zone, local time, theme, the game's chapter/mode/
 masthead without its date line, "Chapter I of VIII" in red beside The Ritz Affair; the SQL Noir and chapter I notes saved in
 `docs/research/`. The desk's monitoring charts are drawn with Plotly 3.5.1 (289795a: `site/figures.js` builds the figures,
 the map outline self-hosted; known quirks: the modebar always shown on phones and able to cover the funnel's 100% tick,
-close "0" labels on the by-device chart). Deployed head: see `git log -1`.
+close "0" labels on the by-device chart); since 551aaf1 a legend entry hides or shows its series. Deployed head: see `git log -1`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
 query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
 queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
@@ -353,8 +353,8 @@ Send feedback form (rows in the Sheet's Feedback tab). Waiting on Google: the Ad
 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue. Waiting on the owner:
 a look at the new monitoring panels and the Plotly charts once GA has data (which quirks to fix) (the old personal-account backend was archived and the desk
 checked on a phone by the owner on 2026-10-25). Not verified end to end since the module split: a real compete season (the owner
-declined a test run on 2026-10-25), the Part I/II extra editions and films, the certificate print, the gated
-`?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
+declined a test run on 2026-10-25). Checked headless on 2026-10-26 (a local copy with a test passphrase): all twelve
+answers and the Part II code, both extra editions and films, the certificate print, the gated `?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
 device).
 
 ## 8. Backlog (not scheduled)
@@ -362,6 +362,7 @@ device).
 - ~~Plotly desk charts~~ Done 2026-10-26 (owner chose Plotly): every chart of Global, Game and Handbook drawn with
   Plotly 3.5.1 (289795a; current rules in CLAUDE.md, Monitoring). Open: the owner's look with real GA data; quirks noted
   (modebar always shown on phones, it can cover the funnel's 100% tick, close "0" labels on the by-device chart).
+  Legend entries toggle their series since 551aaf1 (owner, 2026-10-26).
 - ~~Feedback emails~~ Done 2026-10-26 (owner): each saved message is emailed to the owner (`NOTIFY_EMAIL`, the
   AlephB Gmail, since contact@alephb.uk forwards there and Gmail drops a copy coming back to its sender) and a sender
   who gave an address gets one fixed confirmation (never quoting the message, one per address per 6 hours). The send
