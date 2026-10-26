@@ -322,10 +322,10 @@ function feedbackBackend() {
 test("feedback script: a valid message is one text row, the tab made with headers", () => {
   const b = feedbackBackend();
   assert.deepEqual(b.post({ message: "  007  ", email: "a@b.co", page: "/learn/like.html" }), { ok: true });
-  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email"]);
+  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email", "context"]);
   const [at, ...rest] = b.rows()[1];
   assert.equal(typeof at, "number");
-  assert.deepEqual(rest, ["/learn/like.html", "007", "a@b.co"], "text stays text, trimmed");
+  assert.deepEqual(rest, ["/learn/like.html", "007", "a@b.co", ""], "text stays text, trimmed");
   assert.ok(b.post({ message: "=HYPERLINK(1)", email: "", page: "/" }).ok);
   assert.equal(b.rows()[2][2], "=HYPERLINK(1)", "the apostrophe keeps a formula as text");
 });
@@ -367,4 +367,16 @@ test("feedback script: each saved message is emailed; a failed email keeps the r
   b.mails.fail = true;
   assert.ok(b.post({ message: "still saved", page: "/" }).ok);
   assert.equal(b.rows().length, 5);
+});
+
+test("feedback script: the browser's context goes to the row and the email, cleaned", () => {
+  const b = feedbackBackend();
+  const ctx = { os: "macOS", browser: "Chrome 141", window: "1400x900", chapter: "3", "bad key!": "x", long: "y".repeat(200), multi: "a\nb", obj: { z: 1 } };
+  assert.ok(b.post({ message: "hi", page: "/", ctx }).ok);
+  const row = b.rows()[1];
+  assert.deepEqual(b.rows()[0], ["at", "page", "message", "email", "context"]);
+  assert.match(row[4], /^os: macOS\nbrowser: Chrome 141\nwindow: 1400x900\nchapter: 3\nlong: y{80}\nmulti: a b\nobj: \[object Object\]$/);
+  assert.ok(b.mails[0].body.includes("browser: Chrome 141") && b.mails[0].body.includes("Received: "));
+  assert.ok(b.post({ message: "no ctx", page: "/", ctx: "nonsense" }).ok, "a bad context is dropped, never refused");
+  assert.equal(b.rows()[2][4], "");
 });

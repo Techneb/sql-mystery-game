@@ -1069,4 +1069,13 @@ test("feedback form: the payload follows feedback_script.gs's rules, the page is
   assert.ok(fb.feedbackPayload("x".repeat(2001), "", "/").error);
   assert.ok(fb.feedbackPayload("x".repeat(2000), "", "/").body);
   assert.ok(fb.feedbackPayload("hi", "not an email", "/").error);
+  const mac = fb.clientContext({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36", language: "fr-FR", maxTouchPoints: 0 },
+    { innerWidth: 1400, innerHeight: 900, devicePixelRatio: 2, screen: { width: 1512, height: 982 } }, { chapter: 3 });
+  assert.deepEqual([mac.device, mac.os, mac.browser, mac.touch, mac.window, mac.screen, mac.language, mac.chapter], ["desktop", "macOS", "Chrome 141", "no", "1400x900", "1512x982", "fr-FR", "3"]);
+  const iphone = fb.clientContext({ userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1", maxTouchPoints: 5 }, {});
+  assert.deepEqual([iphone.device, iphone.os, iphone.browser], ["mobile", "iOS", "Safari 18"]);
+  const win = fb.clientContext({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0" }, {});
+  assert.deepEqual([win.os, win.browser], ["Windows", "Edge 141"]);
+  assert.deepEqual(JSON.parse(fb.feedbackPayload("hi", "", "/", { os: "macOS" }).body).ctx, { os: "macOS" });
+  assert.ok(!/pseudo|team|answer|query/i.test(Object.keys(mac).join(" ")), "never the pseudo, answers or queries");
 });

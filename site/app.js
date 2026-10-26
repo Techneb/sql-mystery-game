@@ -811,7 +811,8 @@ async function boot() {
   // The query box; it completes only the tables the schema shows (learn or compete): never one the evidence has not reached.
   syncSql = wireEditor($("sql"), $("sql-hl"), { run: () => db && state && runQuery(), cols: visibleColumns, minHeight: 160 });
   $("btn-theme").onclick = toggleTheme;
-  wireFeedback(() => useFeature("feedback", { chapter: curChapter() }));
+  wireFeedback(() => useFeature("feedback", { chapter: curChapter() }),
+    () => state ? { chapter: String(curChapter()), mode: state.mode, part: state.part2 ? "2" : "1" } : {});
   initConsent();
   initAds();
   applyMood();   // the reader's palette on the landing page too, before any state is loaded

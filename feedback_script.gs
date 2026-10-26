@@ -6,6 +6,7 @@
 
 var FEEDBACK_TAB = "Feedback";
 var MAX_MESSAGE = 2000, MAX_EMAIL = 120, MAX_PAGE = 200;
+var MAX_CTX_KEYS = 20, MAX_CTX_VALUE = 80;   // the browser's context (feedback.js clientContext): short strings only
 var NOTIFY_DEFAULT = "contact@alephb.uk";
 var RATE_LIMIT = 30, RATE_WINDOW_S = 600;   // at most 30 messages per 10 minutes, all senders together
 
@@ -23,6 +24,7 @@ function feedback_(b) {
   if (!message || message.length > MAX_MESSAGE) return { ok: false, error: "message must be 1 to 2000 characters" };
   if (email && (email.length > MAX_EMAIL || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return { ok: false, error: "bad email" };
   if (page.length > MAX_PAGE || page.charAt(0) !== "/") return { ok: false, error: "bad page" };
+  var ctx = context_(b.ctx), ctxText = Object.keys(ctx).map(function (k) { return k + ": " + ctx[k]; }).join("\n");
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return { ok: false, error: "busy" };
   try {
@@ -33,11 +35,12 @@ function feedback_(b) {
     cache.put(key, String(n + 1), RATE_WINDOW_S);
     var book = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty("SHEET_ID"));
     var sheet = book.getSheetByName(FEEDBACK_TAB);
-    if (!sheet) { sheet = book.insertSheet(FEEDBACK_TAB); sheet.appendRow(["at", "page", "message", "email"]); }
+    if (!sheet) { sheet = book.insertSheet(FEEDBACK_TAB); sheet.appendRow(["at", "page", "message", "email", "context"]); }
     // text cells start with an apostrophe: never a formula, never coerced into a number or a date
-    sheet.appendRow([Date.now(), "'" + page, "'" + message, "'" + email]);
+    if (sheet.getLastColumn && sheet.getLastColumn() < 5) sheet.getRange(1, 5).setValue("context");   // tabs made before 2026-10-26
+    sheet.appendRow([Date.now(), "'" + page, "'" + message, "'" + email, "'" + ctxText]);
   } finally { lock.releaseLock(); }
-  notify_(page, message, email);
+  notify_(page, message, email, ctxText);
   if (email) confirm_(email);
   return { ok: true };
 }
@@ -56,11 +59,22 @@ function confirm_(email) {
   } catch (err) { console.warn("feedback confirmation failed: " + err); }
 }
 
-function notify_(page, message, email) {
+// Keeps only short string values under plain keys: the context is information, never trusted.
+function context_(c) {
+  var out = {};
+  if (!c || typeof c !== "object") return out;
+  Object.keys(c).slice(0, MAX_CTX_KEYS).forEach(function (k) {
+    if (/^[A-Za-z]{1,20}$/.test(k) && c[k] != null) out[k] = String(c[k]).replace(/[\r\n]+/g, " ").slice(0, MAX_CTX_VALUE);
+  });
+  return out;
+}
+
+function notify_(page, message, email, ctxText) {
   try {
     var mail = { to: PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAIL") || NOTIFY_DEFAULT,
       subject: "Ritz Affair feedback (" + page + ")",
-      body: message + "\n\nPage: https://mystery.alephb.uk" + page + "\nEmail: " + (email || "(none)") };
+      body: message + "\n\nPage: https://mystery.alephb.uk" + page + "\nEmail: " + (email || "(none)") +
+        "\nReceived: " + new Date().toISOString() + (ctxText ? "\n\n" + ctxText : "") };
     if (email) mail.replyTo = email;
     MailApp.sendEmail(mail);
   } catch (err) { console.warn("feedback email failed: " + err); }
