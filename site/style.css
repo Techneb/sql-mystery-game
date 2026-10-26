@@ -60,6 +60,9 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* the handbook's chrome: its header nav under the masthead lines, its footer in .landing-foot (also privacy.html) */
 .landing-nav { margin-top: 6px; }
 .landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
+/* the section the page belongs to (the game or the handbook) in the red, bold, lightly underlined, like the desk menu's current item */
+.landing-nav .current, .learn-nav .current { color: var(--rel); font-weight: 700; text-decoration: underline 1px color-mix(in srgb, var(--rel) 45%, transparent); text-underline-offset: 4px; }
+.masthead .landing-nav { margin-top: 2px; }   /* the game page: under the date line, tight */
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }

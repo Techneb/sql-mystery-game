@@ -38,6 +38,9 @@ test("handbook: the generated blocks are fresh (node colour_learn.mjs changes no
   assert.ok(sitemapXml(dropped, "2099-01-01").includes("learn/like.html</loc><lastmod>2099-01-01<"), "a new page gets today's date");
 });
 const one = (html, re, what) => { const m = html.match(re); assert.ok(m, what); return m[1]; };
+// the header nav's two items, a link or the current section's span, and the current one alone
+const navItems = (h) => [...h.matchAll(/<(?:a href="[^"]+"|span class="current" aria-current="page")(?: title="[^"]*")?>([^<]*)<\/(?:a|span)>/g)].map((m) => m[1]);
+const navCurrent = (h) => [...h.matchAll(/<span class="current" aria-current="page"(?: title="[^"]*")?>([^<]*)<\/span>/g)].map((m) => m[1]);
 const unentity = (s) => s.replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 
 test("handbook: every page carries the same masthead nav and footer; the generated menu has one current item, in order", () => {
@@ -45,10 +48,13 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   const nav = one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav");
   const foot = one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer");
   const links = (h) => [...h.matchAll(/<a href="([^"]+)"(?: title="[^"]*")?>([^<]*)<\/a>/g)].map((m) => m[2]);
-  assert.deepEqual(links(nav), ["The Ritz Affair", "The Clerk's Handbook"], "the header: the game and the handbook only (owner, 2026-10-24)");
+  assert.deepEqual(navItems(nav), ["The Ritz Affair", "The Clerk's Handbook"], "the header: the game and the handbook only (owner, 2026-10-24)");
+  assert.deepEqual(navCurrent(nav), ["The Clerk's Handbook"], "the handbook's section in colour, a span (owner, 2026-10-26)");
   assert.deepEqual(links(foot), ["Privacy notice", "The Clerk's Desk", "AlephB", "Contact"], "the footer: the rest, the desk included (Statistics has an id)");
   const admin = fs.readFileSync("site/admin.html", "utf8");
-  assert.deepEqual(links(one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav")), links(nav), "the admin page's header");
+  const adminNav = one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav");
+  assert.deepEqual(navItems(adminNav), navItems(nav), "the admin page's header");
+  assert.deepEqual(navCurrent(adminNav), [], "the desk is neither section");
   assert.deepEqual(links(one(admin, /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "admin footer")), links(foot), "the admin page's footer");
   const desk = ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html"].map(f => [f, fs.readFileSync("site/" + f, "utf8")]);
   for (const [f, h] of desk.slice(1))
@@ -95,15 +101,21 @@ test("handbook: every page carries the same masthead nav and footer; the generat
 test("landing and privacy: the handbook's header nav under the masthead, its footer in .landing-foot", () => {
   const page = fs.readFileSync("site/index.html", "utf8");
   const labels = (h) => [...h.matchAll(/<a href="[^"]+"(?: id="[^"]+")?>([^<]*)<\/a>/g)].map((m) => m[1]);
-  const nav = labels(one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav"));
+  const nav = navItems(one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav"));
   const foot = labels(one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer"));
-  assert.deepEqual(labels(one(page, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "landing nav")), nav);
+  const gameNavs = [...page.matchAll(/<nav class="landing-nav muted">([\s\S]*?)<\/nav>/g)].map((m) => m[1]);
+  assert.equal(gameNavs.length, 2, "the landing card and the game's masthead");
+  assert.equal(gameNavs[1], gameNavs[0], "the same nav on both");
+  assert.deepEqual(navItems(gameNavs[0]), nav);
+  assert.deepEqual(navCurrent(gameNavs[0]), ["The Ritz Affair"], "the game's section in colour");
   const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");
   assert.match(landingFoot, /<span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
   assert.deepEqual(labels(landingFoot), foot, "the handbook's footer, Statistics included");
   // privacy.html runs no consent code: the same header, the footer without Statistics or a link to itself
   const privacy = fs.readFileSync("site/privacy.html", "utf8");
-  assert.deepEqual(labels(one(privacy, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "privacy nav")), nav);
+  const privacyNav = one(privacy, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "privacy nav");
+  assert.deepEqual(navItems(privacyNav), nav);
+  assert.deepEqual(navCurrent(privacyNav), [], "privacy.html is neither section");
   assert.deepEqual(labels(one(privacy, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "privacy footer")), foot.filter((t) => t !== "Statistics" && t !== "Privacy notice"));
 });
 
