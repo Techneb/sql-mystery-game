@@ -62,7 +62,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
 /* the section the page belongs to (the game or the handbook) in the red, bold, lightly underlined, like the desk menu's current item */
 .landing-nav .current, .learn-nav .current { color: var(--rel); font-weight: 700; text-decoration: underline 1px color-mix(in srgb, var(--rel) 45%, transparent); text-underline-offset: 4px; }
-.masthead .landing-nav { margin-top: 4px; }   /* the game page: section nav with the chapter line next to The Ritz Affair */
+.masthead .landing-nav { margin-top: 4px; }
+.masthead .mast-nav { font-size: 16px; opacity: 1; }   /* full red on the section and chapter; the other link stays muted */
+.masthead .mast-nav a { opacity: .75; }
+#masthead-chapter { color: var(--rel); font-weight: 700; }   /* the chapter line in the section's red, its numeral bigger */
+#masthead-chapter b { font-size: 1.4em; line-height: 1; }   /* the game page: section nav with the chapter line next to The Ritz Affair */
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }
