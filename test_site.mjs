@@ -541,9 +541,9 @@ test("erdButtonHtml: an enlarge icon, an X once the schema is large, named eithe
 });
 
 test("mastheadChapterHtml: only the current chapter's numeral is bold", () => {
-  assert.equal(mastheadChapterHtml(1, 8, false), "CHAPTER <b>I</b> OF VIII");
-  assert.equal(mastheadChapterHtml(3, 8, true), "REVIEWING CHAPTER <b>III</b> OF VIII");
-  assert.equal(mastheadChapterHtml(12, 12, false), "CHAPTER <b>XII</b> OF XII");
+  assert.equal(mastheadChapterHtml(1, 8, false), "Chapter <b>I</b> of VIII");
+  assert.equal(mastheadChapterHtml(3, 8, true), "Reviewing chapter <b>III</b> of VIII");
+  assert.equal(mastheadChapterHtml(12, 12, false), "Chapter <b>XII</b> of XII");
   for (const h of [mastheadChapterHtml(9, 12, true), mastheadChapterHtml(8, 8, false)]) assert.equal(h.match(/<b>/g).length, 1);
 });
 

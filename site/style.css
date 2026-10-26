@@ -62,7 +62,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-foot a, .landing-nav a, .mast-sub a { color: inherit; }
 /* the section the page belongs to (the game or the handbook) in the red, bold, lightly underlined, like the desk menu's current item */
 .landing-nav .current, .learn-nav .current { color: var(--rel); font-weight: 700; text-decoration: underline 1px color-mix(in srgb, var(--rel) 45%, transparent); text-underline-offset: 4px; }
-.masthead .landing-nav { margin-top: 2px; }   /* the game page: under the date line, tight */
+.masthead .landing-nav { margin-top: 4px; }   /* the game page: section nav with the chapter line next to The Ritz Affair */
 /* About this game: crawlable prose for readers without JavaScript, closed so the card looks the same */
 .landing-about { margin: 16px 0 0; border-top: 1px solid var(--rule); padding-top: 8px; }
 .landing-about summary { cursor: pointer; }
@@ -308,6 +308,8 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 }
 
 @media (max-width: 900px) {
+  .masthead .landing-nav { padding: 0 40px; }   /* clear of the 32 px corner buttons; wraps under the title */
+  .masthead .landing-nav a, .mast-chapter { white-space: nowrap; }
   .columns { grid-template-columns: minmax(0, 1fr); padding: 16px; }
   /* a phone reads the story first, then the terminal, the schema last (the markup order is schema first) */
   .col-story { order: 1; } .col-terminal { order: 2; } .col-erd { order: 3; }

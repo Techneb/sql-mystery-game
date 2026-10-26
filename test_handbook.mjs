@@ -103,9 +103,12 @@ test("landing and privacy: the handbook's header nav under the masthead, its foo
   const labels = (h) => [...h.matchAll(/<a href="[^"]+"(?: id="[^"]+")?>([^<]*)<\/a>/g)].map((m) => m[1]);
   const nav = navItems(one(learnHtml["index.html"], /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "index nav"));
   const foot = labels(one(learnHtml["index.html"], /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "index footer"));
-  const gameNavs = [...page.matchAll(/<nav class="landing-nav muted">([\s\S]*?)<\/nav>/g)].map((m) => m[1]);
+  const gameNavs = [...page.matchAll(/<nav class="landing-nav muted( mast-nav)?">([\s\S]*?)<\/nav>/g)].map((m) => m[2]);
   assert.equal(gameNavs.length, 2, "the landing card and the game's masthead");
-  assert.equal(gameNavs[1], gameNavs[0], "the same nav on both");
+  // the masthead's nav also carries the chapter line (next to The Ritz Affair) and the Back button
+  const bare = gameNavs[1].replace(/<span class="mast-chapter">[\s\S]*?<\/span><\/span>/, "").replace(/<button id="btn-back"[\s\S]*?<\/button>/, "");
+  assert.match(gameNavs[1], /The Ritz Affair<\/span><span class="mast-chapter"> &mdash; <span id="masthead-chapter"/);
+  assert.equal(bare, gameNavs[0], "otherwise the same nav on both");
   assert.deepEqual(navItems(gameNavs[0]), nav);
   assert.deepEqual(navCurrent(gameNavs[0]), ["The Ritz Affair"], "the game's section in colour");
   const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");

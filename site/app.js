@@ -732,14 +732,13 @@ const THEME_KEY = "ritz.theme";
 function chosenTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
 // Masthead "CHAPTER I OF VIII": the current chapter's numeral in bold, the rest plain.
 export function mastheadChapterHtml(n, total, reviewing) {
-  return (reviewing ? "REVIEWING " : "") + "CHAPTER <b>" + ROMAN[n] + "</b> OF " + ROMAN[total];
+  return (reviewing ? "Reviewing chapter <b>" : "Chapter <b>") + ROMAN[n] + "</b> of " + ROMAN[total];
 }
 const setErdButton = large => setIconButton($("btn-erd"), erdButtonHtml(large));
 function applyMood() {
   const mood = chosenTheme() || (state && state.part2 ? "night" : "day");
   document.documentElement.dataset.mood = mood;
   setIconButton($("btn-theme"), { html: themeButtonHtml(mood), label: mood === "night" ? "Day edition" : "Night edition" });
-  if (state) $("masthead-date").textContent = state.part2 ? "21 MAY 1912" : "18 MAY 1912";
 }
 function toggleTheme() {
   try { localStorage.setItem(THEME_KEY, document.documentElement.dataset.mood === "night" ? "day" : "night"); } catch {}
