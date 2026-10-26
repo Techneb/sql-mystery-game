@@ -336,7 +336,10 @@ GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, a
 
 **Open right now (2026-10-26).** Everything is deployed (43acdca; compete backend @11, feedback script @1); the repo
 has only `main` (review branches deleted 2026-10-26, their reports in `docs/reviews/` and `docs/text-review-2026-10-25.md`).
-Added 2026-10-26: the onboarding panel split by device, the SQL Noir and chapter I notes saved in `docs/research/`.
+Added 2026-10-26: the onboarding panel split by device; CTR on GOOGLE ADS and a daily average line on USERS PER DAY;
+the "The Ritz Affair . The Clerk's Handbook" header on the game page with the current section in red (game and
+handbook); feedback emails (the owner notified, the sender confirmed); the SQL Noir and chapter I notes saved in
+`docs/research/`. Deployed head: see `git log -1`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
 query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
 queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
@@ -352,6 +355,15 @@ device).
 
 ## 8. Backlog (not scheduled)
 
+- ~~Feedback emails~~ Done 2026-10-26 (owner): each saved message is emailed to the owner (`NOTIFY_EMAIL`, the
+  AlephB Gmail, since contact@alephb.uk forwards there and Gmail drops a copy coming back to its sender) and a sender
+  who gave an address gets one fixed confirmation (never quoting the message, one per address per 6 hours). The send
+  permission had to be granted from an incognito window signed into AlephB alone. Tested end to end in Gmail.
+- ~~Monitoring: CTR and daily average~~ Done 2026-10-26 (owner): GOOGLE ADS shows clicks / impressions as a CTR line;
+  USERS PER DAY draws the period's average of daily counts as a dashed reference line (`ref` option in charts.js).
+- ~~Section header~~ Done 2026-10-26 (owner): the game page carries the landing's "The Ritz Affair . The Clerk's
+  Handbook" nav under its masthead; the current section is a red `.current` span (game and landing: The Ritz Affair;
+  every handbook page: The Clerk's Handbook; privacy and desk: neither).
 - ~~Send feedback.~~ Done 2026-10-25 (owner): a Feedback button beside Day/Night on every page opens a form
   (message, optional email, the page path) posting to its own Apps Script, `feedback_script.gs`, which appends to the
   Sheet's Feedback tab; the owner chose the in-site form over a mailto link. Tested end to end with the owner.
