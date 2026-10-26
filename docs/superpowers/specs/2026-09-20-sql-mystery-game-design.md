@@ -359,6 +359,9 @@ device).
 
 ## 8. Backlog (not scheduled)
 
+- ~~Plotly desk charts~~ Done 2026-10-26 (owner chose Plotly): every chart of Global, Game and Handbook drawn with
+  Plotly 3.5.1 (289795a; current rules in CLAUDE.md, Monitoring). Open: the owner's look with real GA data; quirks noted
+  (modebar always shown on phones, it can cover the funnel's 100% tick, close "0" labels on the by-device chart).
 - ~~Feedback emails~~ Done 2026-10-26 (owner): each saved message is emailed to the owner (`NOTIFY_EMAIL`, the
   AlephB Gmail, since contact@alephb.uk forwards there and Gmail drops a copy coming back to its sender) and a sender
   who gave an address gets one fixed confirmation (never quoting the message, one per address per 6 hours). The send
