@@ -341,7 +341,9 @@ the "The Ritz Affair . The Clerk's Handbook" header on the game page with the cu
 handbook); feedback emails (the owner notified, the sender confirmed) carrying the browser's context (device, system,
 browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part), one Sheet column per field with a `status` column for the owner, the sender's confirmation from contact@alephb.uk; the game
 masthead without its date line, "Chapter I of VIII" in red beside The Ritz Affair; the SQL Noir and chapter I notes saved in
-`docs/research/`. Deployed head: see `git log -1`.
+`docs/research/`. The desk's monitoring charts are drawn with Plotly 3.5.1 (289795a: `site/figures.js` builds the figures,
+the map outline self-hosted; known quirks: the modebar always shown on phones and able to cover the funnel's 100% tick,
+close "0" labels on the by-device chart). Deployed head: see `git log -1`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
 query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
 queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
@@ -349,7 +351,7 @@ into modules, one terminal, `version_site.mjs`, generated handbook chrome, named
 and Grammar redesign, SHARES BY NETWORK (GA dimensions `type`, `route` and `network` registered by the owner) and the
 Send feedback form (rows in the Sheet's Feedback tab). Waiting on Google: the AdSense re-review (requested
 2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue. Waiting on the owner:
-a look at the new monitoring panels once GA has data (the old personal-account backend was archived and the desk
+a look at the new monitoring panels and the Plotly charts once GA has data (which quirks to fix) (the old personal-account backend was archived and the desk
 checked on a phone by the owner on 2026-10-25). Not verified end to end since the module split: a real compete season (the owner
 declined a test run on 2026-10-25), the Part I/II extra editions and films, the certificate print, the gated
 `?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
