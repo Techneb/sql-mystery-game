@@ -75,6 +75,8 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .chart .axis { stroke: var(--ink); stroke-width: 1; opacity: .5; }
 .chart .line { fill: none; stroke: var(--rel); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .area { fill: var(--rel); opacity: .1; }
+.chart .ref-line { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 5 4; opacity: .55; pointer-events: none; }
+.chart .ref-label { font-size: 11px; pointer-events: none; paint-order: stroke; stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
 .chart .dot { fill: var(--rel); stroke: var(--paper); stroke-width: 2; }
 .chart .hit rect { fill: transparent; }
 .chart .hit .cross, .chart .hit .dot { visibility: hidden; }
@@ -123,6 +125,7 @@ abbr { text-decoration: none; cursor: help; color: var(--rel); }
 .chart-tip .key { display: inline-block; width: 10px; height: 2px; margin-right: 6px; vertical-align: middle; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 13px "Special Elite", monospace; margin: 4px 0; }
 .legend i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.stat-line { margin: 4px 0; font-variant-numeric: tabular-nums; }
 .legend i.key-line { width: 16px; height: 3px; vertical-align: middle; }
 .numbers { margin: 0 0 16px; }
 .numbers summary { cursor: pointer; font-size: 15px; }

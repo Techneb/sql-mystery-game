@@ -53,12 +53,18 @@ export const r1 = v => +v.toFixed(1);
 export const yAxis = (tk, y, L, x2, fmt, title) => '<text class="axis-title" x="2" y="11">' + esc(title) + "</text>" +
   tk.map(v => '<line class="grid" x1="' + L + '" x2="' + x2 + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="tick" x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmt(v) + "</text>").join("");
 
+// opts.ref {value, label}: a dashed horizontal reference line across the plot (an average, say), labelled at its right
+// end; the ticks reach it. Any line chart takes one.
+export const refLine = (ref, y, L, x2) => !ref ? "" : '<line class="ref-line" x1="' + L + '" x2="' + x2 + '" y1="' + y(ref.value) + '" y2="' + y(ref.value) +
+  '"/><text class="ref-label" x="' + (x2 - 10) + '" y="' + r1(y(ref.value) - 4) + '" text-anchor="end">' + esc(ref.label) + "</text>";
+const refMax = opts => (opts.ref ? opts.ref.value : 0);
+
 // One series as a line (no legend, the label names it): 2 px line over a 10% wash, hairline grid, the last value
 // labelled at its end dot; each point owns a full-height hover strip (crosshair and dot on :hover, the tooltip from
 // its data-k/data-v).
-export function lineSvg(points, w = 640, title = "Users", unit = "users") {
+export function lineSvg(points, w = 640, title = "Users", unit = "users", opts = {}) {
   const H = 200, L = 40, R = 44, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B;
-  const tk = ticks(Math.max(...points.map(p => p.value))), top = tk.at(-1);
+  const tk = ticks(Math.max(...points.map(p => p.value), refMax(opts))), top = tk.at(-1);
   const x = i => r1(L + (points.length < 2 ? pw / 2 : (i * pw) / (points.length - 1)));
   const y = v => r1(T + ph - (v * ph) / top);
   const xy = points.map((p, i) => [x(i), y(p.value)]);
@@ -72,7 +78,7 @@ export function lineSvg(points, w = 640, title = "Users", unit = "users") {
     yAxis(tk, y, L, L + pw, compact, title) +
     points.map((p, i) => (i % step && i !== points.length - 1) || (i !== points.length - 1 && points.length - 1 - i < step / 2) ? "" :
       '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(p.label.slice(5)) + "</text>").join("") +
-    '<path class="area" d="' + line + "L" + last[0] + "," + (T + ph) + "L" + xy[0][0] + "," + (T + ph) + 'Z"/><path class="line" d="' + line + '"/>' +
+    '<path class="area" d="' + line + "L" + last[0] + "," + (T + ph) + "L" + xy[0][0] + "," + (T + ph) + 'Z"/><path class="line" d="' + line + '"/>' + refLine(opts.ref, y, L, L + pw) +
     '<circle class="dot end" cx="' + last[0] + '" cy="' + last[1] + '" r="4"/><text class="val" x="' + (last[0] + 8) + '" y="' + (last[1] + 4) + '">' + esc(compact(points.at(-1).value)) + "</text>" +
     points.map((p, i) => '<g class="hit"' + tipAttrs(p.label, [[compact(p.value), unit]]) + '><rect x="' + r1(xy[i][0] - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph + '"/><line class="cross" x1="' + xy[i][0] + '" x2="' + xy[i][0] + '" y1="' + T + '" y2="' + (T + ph) +
       '"/><circle class="dot" cx="' + xy[i][0] + '" cy="' + xy[i][1] + '" r="4"/></g>').join("") + "</svg>";
@@ -82,9 +88,9 @@ export function lineSvg(points, w = 640, title = "Users", unit = "users") {
 export const dayTip = (series, i) => series.map(s => [s.values[i], s.label, s.cls]).sort((a, b) => b[0] - a[0]).map(([v, l, c]) => [compact(v), l, c]);
 // Several lines on one axis, lineSvg's frame; the total (cls "total") drawn first, under the others. Each day's hover
 // strip shows the crosshair and a dot per series.
-export function multiLineSvg(labels, series, w = 640, title = "Users") {
+export function multiLineSvg(labels, series, w = 640, title = "Users", opts = {}) {
   const H = 200, L = 40, R = 16, T = 22, B = 24, pw = Math.max(1, w - L - R), ph = H - T - B, n = labels.length;
-  const tk = ticks(Math.max(1, ...series.flatMap(s => s.values))), top = tk.at(-1);
+  const tk = ticks(Math.max(1, ...series.flatMap(s => s.values), refMax(opts))), top = tk.at(-1);
   const x = i => r1(L + (n < 2 ? pw / 2 : (i * pw) / (n - 1))), y = v => r1(T + ph - (v * ph) / top);
   const step = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(pw / 70)))), strip = r1(n < 2 ? pw : pw / (n - 1));
   const col = s => "var(--" + (s.cls === "total" ? "ink" : s.cls) + ")";
@@ -92,7 +98,7 @@ export function multiLineSvg(labels, series, w = 640, title = "Users") {
     yAxis(tk, y, L, L + pw, compact, title) +
     labels.map((l, i) => (i % step && i !== n - 1) || (i !== n - 1 && n - 1 - i < step / 2) ? "" :
       '<text class="tick" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(l.slice(5)) + "</text>").join("") +
-    series.map(s => '<path class="sl ' + esc(s.cls) + '" style="stroke:' + col(s) + '" d="M' + s.values.map((v, i) => x(i) + "," + y(v)).join("L") + '"/>').join("") +
+    series.map(s => '<path class="sl ' + esc(s.cls) + '" style="stroke:' + col(s) + '" d="M' + s.values.map((v, i) => x(i) + "," + y(v)).join("L") + '"/>').join("") + refLine(opts.ref, y, L, L + pw) +
     labels.map((l, i) => '<g class="hit"' + tipAttrs(l, dayTip(series, i)) + '><rect x="' + r1(x(i) - strip / 2) + '" y="' + T + '" width="' + strip + '" height="' + ph +
       '"/><line class="cross" x1="' + x(i) + '" x2="' + x(i) + '" y1="' + T + '" y2="' + (T + ph) + '"/>' +
       series.map(s => '<circle class="dot" style="fill:' + col(s) + '" cx="' + x(i) + '" cy="' + y(s.values[i]) + '" r="4"/>').join("") + "</g>").join("") + "</svg>";

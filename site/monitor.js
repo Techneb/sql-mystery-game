@@ -18,9 +18,16 @@ const isoDate = d => String(d).replace(/^(\d{4})(\d\d)(\d\d)$/, "$1-$2-$3");
 // GA dates come as YYYYMMDD. The line, then the same numbers as raw data; m picks the axis title and the unit.
 export function usersHtml(users, w, m) {
   const pts = [...users].sort((a, b) => (a.date < b.date ? -1 : 1)).map(u => ({ label: isoDate(u.date), value: Number(u.users) || 0 }));
-  const d = metricOf(m);
-  return lineSvg(pts, w, d.label, d.unit) + raw("users-per-day", barTable("Day", pts.map(p => [p.label, p.value]), d.label));
+  const d = metricOf(m), avg = dailyAverage(pts.map(p => p.value));
+  return lineSvg(pts, w, d.label, d.unit, avgRef(avg)) + avgNote(avg, pts.length, d.unit) +
+    raw("users-per-day", barTable("Day", pts.map(p => [p.label, p.value]), d.label, pts.length ? [["Average per day", avg]] : []));
 }
+// The mean of the daily counts over the days shown (a day without a row is a 0 in values), to one decimal; null with no
+// days. A person active on several days counts on each: it is an average of daily counts, not of people.
+export const dailyAverage = values => (values.length ? r1(values.reduce((a, b) => a + b, 0) / values.length) : null);
+const avgRef = avg => (avg === null ? {} : { ref: { value: avg, label: "avg " + compact(avg) } });
+const avgNote = (avg, n, unit) => (avg === null ? "" : '<p class="muted">Average per day: ' + esc(compact(avg)) + " " + esc(unit) +
+  " (the mean of the daily counts over the " + n + " days shown, the dashed line; a person active on several days counts on each).</p>");
 // A ?report= on [date] as usersHtml's [{date, users}].
 export const daysFrom = res => (res.rows || []).map(([date, users]) => ({ date, users }));
 
@@ -58,12 +65,13 @@ export function breakdownHtml(res, users, dim, w, m) {
   const p = pivotSeries(res.rows || [], total.map(u => u.date));
   const tot = new Map(total.map(u => [String(u.date), Number(u.users) || 0]));
   const all = { label: "All " + d.unit, values: p.dates.map(d => tot.get(d) || 0), cls: "total" }, series = [all, ...p.series];
-  const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values";
+  const labels = p.dates.map(isoDate), name = BREAKDOWNS[dim] || "values", avg = dailyAverage(all.values);
   return '<p class="legend">' + series.map(s => '<span><i class="' + s.cls + ' key-line"></i>' + esc(s.label) + "</span>").join("") + "</p>" +
-    multiLineSvg(labels, series, w, d.label) +
+    multiLineSvg(labels, series, w, d.label, avgRef(avg)) + avgNote(avg, labels.length, d.unit) +
     (p.count > p.series.length ? '<p class="muted">Top ' + p.series.length + " of " + p.count + " " + esc(name) + " (by " + esc(d.unit) + " summed over the days).</p>" : "") +
     raw("users-per-day-breakdown", '<div class="wide"><table class="detail stats"><thead><tr><th>Day</th>' + series.map(s => '<th class="num">' + esc(s.label) + "</th>").join("") + "</tr></thead><tbody>" +
-      labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>");
+      labels.map((l, i) => "<tr><td>" + esc(l) + "</td>" + series.map(s => '<td class="num">' + s.values[i] + "</td>").join("") + "</tr>").join("") + "</tbody>" +
+      (labels.length ? "<tfoot><tr><td>Average per day</td>" + series.map(s => '<td class="num">' + dailyAverage(s.values) + "</td>").join("") + "</tr></tfoot>" : "") + "</table></div>");
 }
 const optionsHtml = (pairs, cur) => pairs.map(([v, l]) => '<option value="' + esc(v) + '"' + (String(v) === String(cur) ? " selected" : "") + ">" + esc(l) + "</option>").join("");
 const breakdownSelect = (cur, keys) => '<label class="pick">Breakdown <select id="bd-dim">' +
@@ -478,11 +486,14 @@ export function featuresHtml({ features }, w, names, name = "feature-use") {
 // GA's own count, beside FEATURE USE (owner, 2026-10-25: clicks are not users, so they have their own chart).
 export function adsHtml({ ads }, w, name = "google-ads") {
   const t = (ads && ads.totals) || (ads && ads.rows && ads.rows[0]) || [], clicks = Number(t[0]) || 0, shown = Number(t[1]) || 0;
-  const series = [["clicks", "c3"], ["impressions", "c5"]];
-  return legendOf(series) + hbarSvg([{ label: "Google's ads on these pages", values: [clicks, shown] }], series, w, compact, "Google's ad clicks and impressions") +
-    '<p class="muted">GA&#39;s count of clicks on Google&#39;s ads and of their impressions on these pages, not users. GA shows AdSense data about a day after the link.</p>' +
-    raw(name, tableHtml(["Metric", "Count"], [["Ad clicks (Google)", clicks], ["Ad impressions (Google)", shown]]));
+  const series = [["clicks", "c3"], ["impressions", "c5"]], rate = ctr(clicks, shown);
+  return '<p class="stat-line">Click-through rate (CTR): <b>' + rate + "</b></p>" + legendOf(series) +
+    hbarSvg([{ label: "Google's ads on these pages", values: [clicks, shown] }], series, w, compact, "Google's ad clicks and impressions") +
+    '<p class="muted">GA&#39;s count of clicks on Google&#39;s ads and of their impressions on these pages, not users. The CTR is clicks / impressions, a ratio of those two GA totals. GA shows AdSense data about a day after the link.</p>' +
+    raw(name, tableHtml(["Metric", "Count"], [["Ad clicks (Google)", clicks], ["Ad impressions (Google)", shown], ["Click-through rate (clicks / impressions)", rate]]));
 }
+// Clicks over impressions as a percentage to two decimals (ad CTRs are small); "-" without impressions.
+export const ctr = (clicks, shown) => (shown ? (Math.round((10000 * clicks) / shown) / 100).toFixed(2) + "%" : "-");
 // FEATURE USE and GOOGLE ADS side by side (two thirds and one third) when the box is wide enough, else stacked.
 const PAIR_GAP = 28;
 function featuresRow(P, w, names, prefix = "") {

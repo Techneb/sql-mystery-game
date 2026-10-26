@@ -453,6 +453,19 @@ test("monitor: users per day broken down by a dimension, the countries' N", () =
   assert.ok(html.includes('data-k="2026-10-22" data-v="14\tAll visitors\ttotal\n9\t&#60;b&#62;UK\tc1'), "the tooltip, sorted");
   assert.ok(html.includes("<summary>Raw data</summary><button") && html.includes("<td>2026-10-21</td>"), "date x series raw data");
   assert.ok(!monitor.breakdownHtml({ rows: rows.slice(0, 2) }, users, "country", 390).includes("Top "), "no note when every value is drawn");
+  // the average per day: a dashed reference line (an option any line chart takes), the note and the raw data's footer
+  assert.equal(monitor.dailyAverage([3, 0, 4]), 2.3);
+  assert.equal(monitor.dailyAverage([]), null);
+  const plain = charts.lineSvg([{ label: "2026-10-21", value: 4 }], 390);
+  assert.ok(!plain.includes("ref-line"), "no reference line without the option");
+  const withRef = charts.lineSvg([{ label: "2026-10-21", value: 4 }], 390, "Users", "users", { ref: { value: 2, label: "avg <2>" } });
+  assert.ok(/<line class="ref-line"[^>]*y1="99" y2="99"/.test(withRef) && withRef.includes(">avg &#60;2&#62;</text>"), "dashed line at its value, label escaped");
+  assert.ok(charts.multiLineSvg(["2026-10-21"], [{ label: "a", values: [1], cls: "c1" }], 390, "Users", { ref: { value: 1, label: "avg 1" } }).includes("ref-line"), "multiLineSvg takes it too");
+  const gap = monitor.breakdownHtml({ rows: [["20261020", "UK", 3], ["20261021", "UK", 4]] }, [{ date: "20261021", users: 12 }], "country", 390);
+  assert.ok(gap.includes(">avg 6</text>") && gap.includes("Average per day: 6 visitors") && (gap.match(/class="ref-line"/g) || []).length === 1, "a day without a total row counts 0; one line, for the total");
+  assert.ok(gap.includes('<tfoot><tr><td>Average per day</td><td class="num">6</td><td class="num">3.5</td>'), "footer per column");
+  const one = monitor.usersHtml([{ date: "20261021", users: 10 }, { date: "20261022", users: 5 }], 390);
+  assert.ok(one.includes(">avg 7.5</text>") && one.includes("Average per day: 7.5") && one.includes("<td>Average per day</td><td class=\"num\">7.5</td>"), "users per day: line, note, footer");
   const s = { users, chapters: [], devices: [], countries: [{ country: "France", users: 3 }], channels: [] };
   assert.ok(monitor.statsHtml(s, 390, null).includes('<option value="" selected>None</option>'), "None by default, the single line");
   assert.ok(monitor.statsHtml(s, 390, null, {}, { dim: "country" }).includes("Reading the breakdown"), "loading in place");
@@ -643,6 +656,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(ads.includes(adsKey + '9\tclicks\tc3\n310\timpressions\tc5"') && ads.includes('<td>Ad clicks (Google)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (Google)</td><td class="num">310</td>'), "GA's own totals, raw data");
   assert.ok(/<summary>Raw data<\/summary><button[^>]*data-csv="handbook-google-ads"/.test(ads) && ads.includes('<i class="c5"></i>impressions'), "Export CSV and a legend");
   assert.ok(monitor.adsHtml({ ads: empty }, 390).includes('class="axis"') && !bad.test(monitor.adsHtml({ ads: empty }, 390)), "no reply rows: the zero frame");
+  assert.equal(monitor.ctr(9, 310), "2.90%");
+  assert.equal(monitor.ctr(3, 0), "-", "no impressions, no rate");
+  assert.ok(ads.includes("CTR): <b>2.90%</b>") && ads.includes('<td>Click-through rate (clicks / impressions)</td><td class="num">2.90%</td>') && !ads.includes("ctr\t"), "CTR as a stat line and in raw data, never a bar");
+  assert.ok(monitor.adsHtml({ ads: empty }, 390).includes("CTR): <b>-</b>"), "a dash without impressions");
   const wideG = monitor.gameHtml(null, 1000, emptyPanels("game"));
   assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("GOOGLE ADS") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
   assert.ok(/hbar-chart" width="648"[^]*FEATURE USE|FEATURE USE[^]*hbar-chart" width="648"/.test(wideG) && wideG.includes('hbar-chart" width="324"'), "each drawn at its column's width (1000 - 28 gap, 2:1)");
