@@ -303,7 +303,7 @@ test("?report: GA's error text comes back as {ok:false, error}, and totals are r
 
 // feedback_script.gs: its own small vm (doPost only), the same coercing Sheet stub idea.
 function feedbackBackend() {
-  const tabs = new Map(), cache = new Map(), lock = { busy: false };
+  const tabs = new Map(), cache = new Map(), lock = { busy: false }, mails = [];
   const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
   const ctx = vm.createContext({
     PropertiesService: { getScriptProperties: () => ({ getProperty: k => (k === "SHEET_ID" ? "sheet-1" : null) }) },
@@ -311,10 +311,12 @@ function feedbackBackend() {
     LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
+    MailApp: { sendEmail: m => { if (mails.fail) throw new Error("quota"); mails.push(m); } },
+    console: { warn: () => {} },
   });
   vm.runInContext(fs.readFileSync(new URL("./feedback_script.gs", import.meta.url), "utf8"), ctx);
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === "string" ? body : JSON.stringify(body) } }).text);
-  return { post, tabs, lock, rows: () => tabs.get("Feedback").rows };
+  return { post, tabs, lock, mails, rows: () => tabs.get("Feedback").rows };
 }
 
 test("feedback script: a valid message is one text row, the tab made with headers", () => {
@@ -345,4 +347,19 @@ test("feedback script: at most 30 messages per 10 minutes", () => {
   for (let i = 0; i < 30; i++) assert.ok(b.post({ message: "m" + i, page: "/" }).ok);
   assert.deepEqual(b.post({ message: "one more", page: "/" }), { ok: false, error: "busy" });
   assert.equal(b.rows().length, 31);
+});
+
+test("feedback script: each saved message is emailed; a failed email keeps the row", () => {
+  const b = feedbackBackend();
+  assert.ok(b.post({ message: "Nice game", email: "a@b.co", page: "/learn/" }).ok);
+  assert.equal(b.mails.length, 1);
+  assert.deepEqual([b.mails[0].to, b.mails[0].replyTo, b.mails[0].subject], ["contact@alephb.uk", "a@b.co", "Ritz Affair feedback (/learn/)"]);
+  assert.match(b.mails[0].body, /^Nice game\n/);
+  assert.ok(b.post({ message: "no email", page: "/" }).ok);
+  assert.equal(b.mails[1].replyTo, undefined);
+  assert.equal(b.post({ message: "", page: "/" }).ok, false);
+  assert.equal(b.mails.length, 2, "a refused message sends nothing");
+  b.mails.fail = true;
+  assert.ok(b.post({ message: "still saved", page: "/" }).ok);
+  assert.equal(b.rows().length, 4);
 });

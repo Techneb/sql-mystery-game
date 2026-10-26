@@ -1,9 +1,12 @@
 // feedback_script.gs -- the Send feedback form's backend (site/feedback.js), a separate Apps Script deployment from
 // the compete backend (apps_script.gs). Its /exec URL is public by design: it can only append a feedback row.
 // Script Property SHEET_ID: the owner's Sheet; rows go to its "Feedback" tab: [ms timestamp, page, message, email].
+// Each saved message is also emailed to NOTIFY_EMAIL (Script Property, else contact@alephb.uk); a failed email never
+// loses the row.
 
 var FEEDBACK_TAB = "Feedback";
 var MAX_MESSAGE = 2000, MAX_EMAIL = 120, MAX_PAGE = 200;
+var NOTIFY_DEFAULT = "contact@alephb.uk";
 var RATE_LIMIT = 30, RATE_WINDOW_S = 600;   // at most 30 messages per 10 minutes, all senders together
 
 function doPost(e) {
@@ -33,8 +36,19 @@ function feedback_(b) {
     if (!sheet) { sheet = book.insertSheet(FEEDBACK_TAB); sheet.appendRow(["at", "page", "message", "email"]); }
     // text cells start with an apostrophe: never a formula, never coerced into a number or a date
     sheet.appendRow([Date.now(), "'" + page, "'" + message, "'" + email]);
-    return { ok: true };
   } finally { lock.releaseLock(); }
+  notify_(page, message, email);
+  return { ok: true };
+}
+
+function notify_(page, message, email) {
+  try {
+    var mail = { to: PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAIL") || NOTIFY_DEFAULT,
+      subject: "Ritz Affair feedback (" + page + ")",
+      body: message + "\n\nPage: https://mystery.alephb.uk" + page + "\nEmail: " + (email || "(none)") };
+    if (email) mail.replyTo = email;
+    MailApp.sendEmail(mail);
+  } catch (err) { console.warn("feedback email failed: " + err); }
 }
 
 // Run once from the editor after setting SHEET_ID: Google asks the owner to allow the Sheet access, and the tab is made.
