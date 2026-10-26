@@ -346,7 +346,7 @@ a look at the new monitoring panels once GA has data (the old personal-account b
 checked on a phone by the owner on 2026-10-25). Not verified end to end since the module split: a real compete season (the owner
 declined a test run on 2026-10-25), the Part I/II extra editions and films, the certificate print, the gated
 `?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
-device); the SQL Noir study.
+device).
 
 ## 8. Backlog (not scheduled)
 
@@ -799,10 +799,13 @@ device); the SQL Noir study.
   GA4; the three metrics are in the whitelist (and the pivot table), and both the Game and Handbook FEATURE USE show
   "Ad clicks (Google)" (GA's own total on their pages, impressions in its tooltip, zero until GA has data, about a day
   after the link). Backend deployed.
-- Competitor study (owner, 2026-10-24): research SQL Noir (https://www.sqlnoir.com/), a detective-themed SQL game,
-  and note what it does well to borrow: onboarding, case structure and difficulty, hints, the editor and results,
-  progress and accounts, how it earns money, SEO and sharing. Output: a short findings note with what to adopt here.
-  Not started.
+- ~~Competitor study~~ Done 2026-10-25 (owner, 2026-10-24): SQL Noir (https://www.sqlnoir.com/), public pages only;
+  the note is `docs/research/2026-10-25-sql-noir.md`. Of its ten ranked items, built 2026-10-25: 1 the chapter I
+  diagnosis, 2 the prologue, 3 the first query pre-filled, 6 SEO, 8 the share line (end of game only), 9 Tab
+  completion. Declined: 5 per-chapter recaps (owner: "no recaps", the case board improved instead). Open: 4 moving the
+  17th/18th trap out of chapter I (a plot decision for the owner; re-read GA after the onboarding first), 7 asking
+  SQL Noir's list to include us (folded into the outreach, which waits for ads), 10 naming the audience in the
+  landing's about text (small).
 - ~~Strix security test~~ Done 2026-10-24, fixed 2026-10-25 (owner, 2026-10-24): scope approved: the live site and its browser code; the backend only with a
   throwaway season, never during a class, with request caps; Google's services out; findings in the uncommitted
   `docs/audits/`. It starts only after Compromise's Strix run (planned the night of 2026-10-24); Compromise Main will
