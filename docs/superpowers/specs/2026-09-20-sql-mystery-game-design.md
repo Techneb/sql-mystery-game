@@ -334,7 +334,9 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-10-25, evening).** Everything is deployed (f6a75ee; compete backend @11, feedback script @1).
+**Open right now (2026-10-26).** Everything is deployed (43acdca; compete backend @11, feedback script @1); the repo
+has only `main` (review branches deleted 2026-10-26, their reports in `docs/reviews/` and `docs/text-review-2026-10-25.md`).
+Added 2026-10-26: the onboarding panel split by device, the SQL Noir and chapter I notes saved in `docs/research/`.
 Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
 query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
 queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
