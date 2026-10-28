@@ -268,13 +268,13 @@ CHAPTERS = [
 # Table names in `backticks` render as links to the schema (app.js whereHtml). Owner-approved texts, 2026-10-28.
 WHERE = {
  1: "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry.",
- 2: "Read the theft report from chapter I again: it describes the suite the thief came from. `suite` has the prices, and `hotel_register` says who slept where, and when.",
- 3: "Read what the neighbour told Ganimard in `interview`. He remembers part of the plate and how the man paid, and both are columns of `cab_ride`.",
+ 2: "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price.",
+ 3: "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date.",
  4: "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address.",
  5: "The address from chapter IV has its own id in `address`. `person` points to it: one of the people living there has a trade that fits.",
  6: "Start from the jeweller's own account in `bank_account`, then his May payments in `bank_transaction`. \"Three pieces\" means three payments to the same account, so group by the account that received them.",
  7: "Before choosing a box, count the Ritz wires of the 18th in each of Ganimard's four boxes, with CASE WHEN inside a GROUP BY. The quietest box is not the one most people guess. A suspect's card gives the signature letter.",
- 8: "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches.",
+ 8: "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches. The register names its guest.",
  9: "Put each of the neighbour's trunks next to the ticket it travelled on and the name of that ticket's holder. Then ask who belongs to his household and who does not.",
  10: "First find the regulars, guests with six stays or more. Two stays share a night when each one starts before the other ends, so join `hotel_register` to itself on that.",
  11: "A suite can make noise in three ledgers: the lift, room service and telegrams. Put that night's events from all three into one list, then use LAG to measure each suite's gap since its previous event.",

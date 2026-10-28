@@ -251,7 +251,7 @@
    "answer_sha256": [
     "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432"
    ],
-   "where": "Read the theft report from chapter I again: it describes the suite the thief came from. `suite` has the prices, and `hotel_register` says who slept where, and when."
+   "where": "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price."
   },
   {
    "title": "A Plate in the Dark",
@@ -268,7 +268,7 @@
    "answer_sha256": [
     "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5"
    ],
-   "where": "Read what the neighbour told Ganimard in `interview`. He remembers part of the plate and how the man paid, and both are columns of `cab_ride`."
+   "where": "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date."
   },
   {
    "title": "The Cab's Week",
@@ -356,7 +356,7 @@
     "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40",
     "de6f9b0fe8953bd5654b84b3e3cb7cda3b2c0cf2b7b08b514ef5b70855766662"
    ],
-   "where": "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches."
+   "where": "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches. The register names its guest."
   },
   {
    "title": "The Trunk",
