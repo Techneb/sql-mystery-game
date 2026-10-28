@@ -646,8 +646,9 @@ def plant_part1(conn, V, r):
          "Night porter {porter} heard the lift at 02:10. The thief came over the balcony of the "
          "neighbouring suite, the most expensive one on the floor. A calling card signed A. L. on the pillow.".format(**V)))
     c.execute("INSERT INTO interview VALUES (2,?,?,?)", ("Marcel Duroc", T,
-        "I was in the lobby the whole night of the 17th, monsieur, and I heard the lift at ten past two. "
-        "Past midnight, so write the 18th of May, as the inspector likes things exact."))
+        "I sat at my desk in the lobby all night, monsieur, from the evening of Friday the 17th of May 1912. "
+        "At ten past two I heard the lift. That is after midnight, so for your files it was already Saturday, "
+        "the 18th of May 1912. The inspector likes his dates exact."))
     # decoy Ritz reports: the eve (a student who files the night under the 17th), the same day, the same week
     c.execute("INSERT INTO police_report VALUES (4,?,?,?,?,?)", (E, "Paris", "Hotel Ritz", "theft",
         "A bottle of Pommery 1906 taken from a room-service trolley on the first floor. Drunk on the spot, by the smell."))
