@@ -359,22 +359,21 @@ device).
 
 ## 8. Backlog (not scheduled)
 
-- How it's done, every chapter (owner, 2026-10-28, from a player's feedback; built 2026-10-28 on a branch, learn only, not shipped:
-  the owner reads the twelve texts first; AES-GCM became PBKDF2 + an HMAC-SHA256 keystream and tag, which the stdlib build
-  can do; compete stays open): once a chapter is solved,
-  its review shows the intended route in a few plain steps (which clue, which tables, which construct, the traps) and
-  the reference SQL (the chapter's discovery queries and `solution`, as `solution.sql` prints them), under the
-  player's own winning query. Every chapter, I to XII. The text must not ship readable: `chapters.json` is public, so
-  each chapter's walkthrough is encrypted at build time with a key derived from its normalised answer (AES-GCM via
-  WebCrypto, PBKDF2 with its own salt, never the shipped `answer_sha256`) and decrypted in the browser on the correct
-  answer, kept in the save so a reload shows it. Brute force costs what it costs on the answer hashes already shipped.
-  Open: compete (season answers differ; after the finish, or learn only), the walkthrough's wording per chapter.
+- ~~How it's done~~ Live 2026-10-28 in learn mode (owner): every solved chapter's review (solved screen and case
+  board) has a closed "How it's done": the route in four or five steps (`HOWTO` in plot.py, checked against the data
+  by a Fable review) and the reference SQL (discovery queries and solution), under the player's winning query. Shipped
+  encrypted under each accepted answer form (PBKDF2 + HMAC-SHA256 keystream and tag, stdlib and WebCrypto;
+  `howto.js`), decrypted on the correct answer and kept in `state.howto`. Open: compete (season answers differ; show
+  it after the finish?), owner's call.
 
 - ~~Feedback reply drafts by Claude~~ Live 2026-10-28 (owner; feedback script @10, inbox.html): every 5 minutes
   the feedback script drafts a reply (Claude Opus 5.5, key "ritz-feedback") to each message with an email and an
   empty status, saved as a Gmail draft from contact@; the desk's Feedback page lists the messages and lets the owner
   rewrite a draft with an instruction, save it, send it (status "replied <date>") or mark it done. Hints come from
   chapter notes that hold no answer; a stuck player's draft quotes last week's GA figures for their chapter.
+  Since @11: replies are written in a Markdown subset (bold, `code`, sql blocks, lists) and sent as HTML plus text (a
+  text-only reply was re-wrapped at 70 characters by Outlook iOS); the desk previews it live; "Mark done" became
+  Discard ("discarded <date>") with its own Discarded filter.
 
 - ~~Plotly desk charts~~ Done 2026-10-26 (owner chose Plotly): every chart of Global, Game and Handbook drawn with
   Plotly 3.5.1 (289795a; current rules in CLAUDE.md, Monitoring). Open: the owner's look with real GA data; quirks noted
