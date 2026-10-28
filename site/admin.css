@@ -150,5 +150,26 @@ button.key[aria-pressed="false"] { opacity: .45; text-decoration: line-through; 
 .explore #filter-add .ms > summary { border-style: dashed; }
 .explore .ms-hint { font-size: 13px; margin: 2px 0 0; }
 /* end Pivot table dropdowns */
+/* Feedback page (inbox.html): one card per message, newest first, reading width */
+#inbox { max-width: 900px; margin: 0 auto; }
+#inbox .label-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+#inbox .days { margin-left: 0; }
+.fb-note { font-size: 14px; margin: 4px 0 12px; }
+.fb-card { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 10px 14px; margin: 0 0 14px; }
+.fb-head { display: flex; flex-wrap: wrap; gap: 2px 14px; align-items: baseline; font-size: 14px; }
+.fb-date { font-weight: 700; }
+.fb-status { border: 1px solid var(--rule); border-radius: var(--r-box); padding: 0 6px; font-size: 13px; }
+.fb-status.todo { color: var(--rel); border-color: var(--rel); font-weight: 700; }
+.fb-where { opacity: .8; overflow-wrap: anywhere; }
+.fb-msg { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; }
+.fb-meta { font-size: 13px; margin: 2px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.fb-label { display: block; font-size: 14px; font-weight: 700; margin: 10px 0 4px; overflow-wrap: anywhere; }
+.fb-draft { display: block; width: 100%; box-sizing: border-box; min-height: 9em; resize: vertical; font-size: 16px; line-height: 1.45; }
+.fb-rewrite { display: flex; gap: 8px; margin: 8px 0; }
+.fb-instr { flex: 1; min-width: 0; font-size: 15px; }
+.fb-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+.fb-say { min-height: 1.2em; font-size: 14px; font-style: italic; margin: 6px 0 0; }
+.fb-say.bad { color: var(--rel); }
+.fb-sent summary { cursor: pointer; font-size: 14px; }
 /* the desk's menu row: the current page in the red, bold, with a light underline (the handbook keeps learn.css's plain look) */
 .learn-menu .current { color: var(--rel); font-weight: 700; text-decoration: underline 1px color-mix(in srgb, var(--rel) 45%, transparent); text-underline-offset: 4px; }
