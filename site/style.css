@@ -233,6 +233,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 
 /* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
 .suspect .note { font-style: italic; margin-top: 4px; }
+#btn-badges[data-unseen]:not([data-unseen=""])::after { content: attr(data-unseen); display: inline-block; min-width: 16px; height: 16px; margin-left: 5px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: var(--red); color: #fff; font: 700 10px/16px sans-serif; text-align: center; vertical-align: 1px; }
 #btn-suspects.new::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 4px; border-radius: 50%; background: var(--red); vertical-align: 2px; }
 .suspects { position: fixed; inset: 0; z-index: 19; background: var(--paper); overflow: auto; padding: 20px 16px 40px;
   display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; align-content: flex-start; }

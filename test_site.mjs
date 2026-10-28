@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables } from "./site/state.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges } from "./site/state.js";
 import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml } from "./site/app.js";
 import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
@@ -1119,4 +1119,12 @@ test("Hint: learn nests a closed Where to look, escaped, table names as schema l
   const c = objectiveHtml("o", "A:", "v", compete);
   assert.ok(c.includes("chapter-tools") && !c.includes("hint-where") && !c.includes("Where to look"));
   assert.deepEqual(freshState().hintsWhere, [], "hint_where once per chapter, kept in the saved state");
+});
+
+test("unseenBadges: badges earned since the panel was opened; an older save starts with none unseen", () => {
+  const s = { ...freshState(), badges: ["A", "B", "C"], badgesSeen: 1 };
+  assert.equal(unseenBadges(s), 2);
+  assert.equal(unseenBadges({ ...s, badgesSeen: 3 }), 0);
+  assert.equal(unseenBadges(migrateSave({ badges: ["A", "B"], solved: [1] })), 0);
+  assert.equal(unseenBadges(freshState()), 0);
 });

@@ -5,7 +5,7 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, milestones: {}, fails: {}, hints: [], hintsWhere: [], suspects: [], suspectsSeen: 0, introduced: null, runs: {}, cracked: {}, howto: {},
+           film: [], opened: {}, milestones: {}, fails: {}, hints: [], hintsWhere: [], suspects: [], suspectsSeen: 0, badgesSeen: 0, introduced: null, runs: {}, cracked: {}, howto: {},
            extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0, onboarding: "prologue" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }; runs[n] tracks the open chapter's successful runs
@@ -27,8 +27,12 @@ export function migrateSave(saved) {
   if (!("onboarding" in s) && Object.keys(s).length)
     s.onboarding = s.tour ? "done" : s.prologue ? "tour" : (s.solved || []).length || s.totalQueries ? "done" : "prologue";
   delete s.prologue; delete s.tour;
+  if (!("badgesSeen" in s)) s.badgesSeen = (s.badges || []).length;   // an older save: its badges count as seen
   return { ...freshState(), ...s };
 }
+
+// Badges earned since the player last opened the Badges panel (the count on its button).
+export const unseenBadges = state => Math.max(0, state.badges.length - (state.badgesSeen || 0));
 
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;

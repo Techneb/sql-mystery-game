@@ -5,7 +5,7 @@
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables } from "./state.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges } from "./state.js";
 import { highlightSql, wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
@@ -122,7 +122,7 @@ function showTable(t) {
 }
 
 function renderChapter() {
-  markSuspects();
+  markSuspects(); markBadges();
   const total = state.part2 ? 12 : 8;
   // Speed Reader: when the current chapter was first put in front of the player
   if (reviewing == null) { const n = currentChapter(state, data.chapters).n; if (!state.opened[n]) { state.opened[n] = Date.now(); save(state); track("chapter_open", { chapter: n, mode: state.mode }); } }
@@ -293,7 +293,7 @@ function award(list) {
     const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
     $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000 + i * 400);   // stagger so a badge burst doesn't vanish as one block
   });
-  if (list.length) save(state);
+  if (list.length) { save(state); markBadges(); }
 }
 
 // Seconds per wrong answer on the board; a compete game takes its season record's penalty.
@@ -389,6 +389,14 @@ function renderBadges() {
       ? '<div class="badge"><b>' + esc(name) + "</b><p>" + esc(text) + "</p></div>"
       : '<div class="badge locked"><b>???</b><p>Not yet earned.</p></div>').join("");
   el.querySelector(".suspects-close").onclick = () => el.hidden = true;
+  state.badgesSeen = state.badges.length; save(state);
+  markBadges();
+}
+// The Badges button carries a red count of the badges earned since the panel was last opened.
+function markBadges() {
+  const n = unseenBadges(state), b = $("btn-badges");
+  b.dataset.unseen = n || "";
+  b.setAttribute("aria-label", n ? "Badges, " + n + " new" : "Badges");
 }
 
 let visBefore = new Set();
