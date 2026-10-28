@@ -898,8 +898,10 @@ async function boot() {
     e.stopPropagation();
     const menu = $("chapter-menu");
     if (!menu.hidden) { menu.hidden = true; return; }
-    menu.innerHTML = ['<div class="chapter-menu-item" data-n="0">Current</div>']
-      .concat(state.solved.map(n => '<div class="chapter-menu-item" data-n="' + n + '">' + ROMAN[n] + "</div>")).join("");
+    // Every chapter reached, by its numeral: the solved ones to review and the open one (data-n 0: back to it).
+    const open = currentChapter(state, data.chapters).n;
+    menu.innerHTML = [...state.solved].sort((a, b) => a - b).map(n => '<div class="chapter-menu-item" data-n="' + n + '">' + ROMAN[n] + "</div>")
+      .concat(state.solved.includes(open) ? [] : ['<div class="chapter-menu-item" data-n="0" aria-current="step">' + ROMAN[open] + "</div>"]).join("");
     menu.querySelectorAll(".chapter-menu-item").forEach(el => btnLike(el, () => {
       const n = Number(el.dataset.n);
       if (n === 0) backToInvestigation(); else reviewChapter(n);

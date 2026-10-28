@@ -33,6 +33,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .chapter-menu[hidden] { display: none; }
 .chapter-menu-item { cursor: pointer; padding: 4px 10px; border: 1px solid var(--rule); border-radius: var(--r-box); background: var(--paper); font-size: 13px; }
 .chapter-menu-item:hover { background: var(--shade); }
+.chapter-menu-item[aria-current] { font-weight: 700; color: var(--rel); border-color: currentColor; }
 .mast-title { font: 900 32px/1 "Playfair Display", serif; letter-spacing: 1px; }
 .reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
 /* fixed, above the landing overlay (z-index 20), so it works on the landing page and in the game */
