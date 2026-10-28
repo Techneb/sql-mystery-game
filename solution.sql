@@ -109,7 +109,7 @@ WHERE person_id = (
   FROM person
   WHERE name = 'Ernest Grimaud'
 );
--- What it paid each account in May. Decoys: the biggest single cheque (one payment), the biggest total (four payments, a supplier), and a second account paid in three small pieces.
+-- What it paid each account in May. Decoys: the biggest single payment, the biggest total (four payments to one account), and a second account paid in three small pieces.
 SELECT counterparty_id, COUNT(*) AS payments, SUM(amount) AS total, MAX(amount) AS biggest
 FROM bank_transaction
 WHERE account_id = 2170
