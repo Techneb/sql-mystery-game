@@ -309,11 +309,21 @@ function feedbackSheet(coerce, rows = []) {
       setValue: v => { while (rows.length < r) rows.push([]); rows[r - 1][c - 1] = coerce(v); } }) };
 }
 
-// A Draft id per raw message; drafts.sent lists what was sent, drafts.byId the current raw of each.
-const decodeMime = raw => {
-  const [head, body] = Buffer.from(raw, "base64url").toString("utf8").split("\r\n\r\n");
+// A Draft id per raw message; drafts.sent lists what was sent, drafts.byId the current raw of each. A multipart
+// message reads as its text/plain part in body, its text/html part in html, every part in parts.
+const mimePart = text => {
+  const i = text.indexOf("\r\n\r\n"), head = text.slice(0, i), body = text.slice(i + 4);
   const h = Object.fromEntries(head.split("\r\n").map(l => [l.slice(0, l.indexOf(":")).toLowerCase(), l.slice(l.indexOf(":") + 2)]));
-  return { h, body: h["content-transfer-encoding"] === "base64" ? Buffer.from(body, "base64").toString("utf8") : body };
+  return { h, body: h["content-transfer-encoding"] === "base64" ? Buffer.from(body, "base64").toString("utf8") : body, raw: body };
+};
+const decodeMime = raw => {
+  const m = mimePart(Buffer.from(raw, "base64url").toString("utf8")), b = /boundary="([^"]+)"/.exec(m.h["content-type"] || "");
+  if (!b) return m;
+  const chunks = m.raw.split("--" + b[1]);
+  assert.equal(chunks.at(-1), "--\r\n", "the closing boundary ends the message");
+  const parts = chunks.slice(1, -1).map(c => mimePart(c.replace(/^\r\n/, "").replace(/\r\n$/, "")));
+  const of = t => parts.find(p => p.h["content-type"].startsWith(t));
+  return { h: m.h, parts, body: of("text/plain").body, html: of("text/html").body };
 };
 
 // feedback_script.gs: its own small vm, the same coercing Sheet stub idea, plus Claude (UrlFetchApp), Gmail drafts,
@@ -484,7 +494,7 @@ test("feedback drafts: the trigger drafts only rows with an email, an empty stat
   sent(b, "Already handled", "c@d.co");
   sent(b, "Has a draft", "e@f.co");
   const head = b.rows()[0];
-  b.rows()[3][head.indexOf("status")] = "done";
+  b.rows()[3][head.indexOf("status")] = "discarded 2026-10-27";
   b.rows()[4][head.indexOf("draftId")] = "d-old";
   b.ctx.draftPending();
   assert.equal(b.calls.length, 1, "one Claude call: the other rows are skipped");
@@ -493,7 +503,12 @@ test("feedback drafts: the trigger drafts only rows with an email, an empty stat
   assert.deepEqual([cell(b, 2, "draft"), cell(b, 3, "draft"), cell(b, 4, "draftId")], ["", "", "d-old"]);
   const d = decodeMime(b.drafts.byId.get("d1"));
   assert.deepEqual([d.h.from, d.h.to, d.h.subject], ["The Ritz Affair <contact@alephb.uk>", "a@b.co", "Re: The Ritz Affair feedback: chapter III"]);
-  assert.match(d.h["content-type"], /charset=UTF-8/);
+  assert.match(d.h["content-type"], /^multipart\/alternative; boundary="ritz-[a-z0-9]+"$/);
+  assert.deepEqual(d.parts.map(p => [p.h["content-type"], p.h["content-transfer-encoding"]]),
+    [["text/plain; charset=UTF-8", "base64"], ["text/html; charset=UTF-8", "base64"]], "the Markdown, then its HTML");
+  assert.equal(d.body, "Hello,\n\nThank you.\n\nAlephB");
+  assert.match(d.html, /^<!DOCTYPE html>[^]*<body style="font-family:[^"]*sans-serif[^"]*"[^]*<p style="[^"]*">Hello,<\/p>[^]*<\/body><\/html>$/);
+  for (const p of d.parts) assert.ok(p.raw.split("\r\n").every(l => l.length <= 76), "base64 lines of 76 at most");
   const c = b.calls[0];
   assert.equal(c.url, "https://api.anthropic.com/v1/messages");
   assert.equal(c.body.model, "claude-opus-5-5");
@@ -548,7 +563,7 @@ test("feedback desk: the list and every action refuse without the key", () => {
   assert.equal(b.get({ list: "1", key: "" }).ok, false, "no ADMIN_KEY set: nobody reads the list");
   b.props.set("ADMIN_KEY", KEY);
   const r = fbRow(b, 2);
-  for (const action of ["draft", "redraft", "save", "send", "done"])
+  for (const action of ["draft", "redraft", "save", "send", "discard"])
     assert.deepEqual(b.post({ action, row: 2, received: r.received, text: "x", key: "nope" }), { ok: false, error: "wrong admin key" }, action);
   assert.equal(b.calls.length + b.drafts.n, 0, "nothing called");
   assert.equal(cell(b, 1, "status"), "");
@@ -563,10 +578,12 @@ test("feedback desk: the list, newest first; a row named by its number and recei
   assert.deepEqual(l.rows.map(r => [r.row, r.message, r.device]), [[3, "second", "mobile"], [2, "first", ""]]);
   assert.equal(typeof l.rows[0].received, "number");
   const r = l.rows[1];
-  assert.deepEqual(b.post({ action: "done", row: 2, received: r.received + 1, key: KEY }), { ok: false, error: "the row changed: reload the page" });
-  assert.deepEqual(b.post({ action: "done", row: 9, received: r.received, key: KEY }), { ok: false, error: "no such row" });
-  assert.deepEqual(b.post({ action: "done", row: 2, received: r.received, key: KEY }), { ok: true, status: "done" });
-  assert.equal(cell(b, 1, "status"), "done");
+  assert.deepEqual(b.post({ action: "discard", row: 2, received: r.received + 1, key: KEY }), { ok: false, error: "the row changed: reload the page" });
+  assert.deepEqual(b.post({ action: "discard", row: 9, received: r.received, key: KEY }), { ok: false, error: "no such row" });
+  const d = b.post({ action: "discard", row: 2, received: r.received, key: KEY });
+  assert.ok(d.ok && /^discarded \d{4}-\d{2}-\d{2}$/.test(d.status), JSON.stringify(d));
+  assert.equal(cell(b, 1, "status"), d.status);
+  assert.equal(b.post({ action: "done", row: 2, received: r.received, key: KEY }).error, "unknown action", "renamed: discard");
   assert.equal(b.post({ action: "send", row: 3, received: l.rows[0].received, text: "Hello", key: KEY }).error, "this row has no usable email");
 });
 
@@ -608,4 +625,42 @@ test("feedback desk: Draft now on a row with no draft; setup adds the columns an
   b.props.delete("ANTHROPIC_API_KEY");
   assert.match(b.post({ action: "redraft", row: 2, received: r.received, key: KEY, instruction: "x" }).error, /ANTHROPIC_API_KEY/);
   assert.equal(b.post({ action: "nope", row: 2, received: r.received, key: KEY }).error, "unknown action");
+});
+
+// The draft's Markdown: feedback_script.gs mdHtml_ renders the email, site/inbox.js mdHtml the desk's preview.
+const MD_SAMPLES = [
+  "",
+  "Hello,\n\nRead **the valet's interview** again, then filter `cab_ride` on `currency`.\n\nAlephB\nThe Ritz Affair, https://mystery.alephb.uk",
+  "Two questions:\n- which chapter?\n- learn or **compete**?\n\nThanks",
+  "Try this shape:\n\n```sql\nSELECT plate, COUNT(*)\nFROM cab_ride\nWHERE date < '1912-05-18' AND x > 1\nGROUP BY plate;\n```\n\nThen look again.",
+  "<script>alert(1)</script> & \"quotes\" 'too'\r\n\r\n`<b>` **<i>x</i>** ``` not a fence",
+  "**bold `code` inside** and `**not bold**`\n```\nunterminated <fence>",
+  "été, **naïve** `café`",
+];
+test("feedback drafts: one Markdown renderer, the same HTML in the script and on the desk, everything escaped", async () => {
+  const b = feedbackBackend(), { mdHtml } = await import("./site/inbox.js");
+  for (const md of MD_SAMPLES) assert.equal(b.ctx.mdHtml_(md), mdHtml(md), JSON.stringify(md));
+  const h = mdHtml(MD_SAMPLES[1]);
+  assert.match(h, /^<p style="[^"]*">Hello,<\/p>\n<p [^>]*>Read <strong>the valet&#39;s interview<\/strong> again, then filter <code style="font-family:Menlo[^"]*">cab_ride<\/code>/);
+  assert.match(h, /<p [^>]*>AlephB<br>The Ritz Affair, https:\/\/mystery\.alephb\.uk<\/p>$/, "the signature's lines kept");
+  assert.match(mdHtml(MD_SAMPLES[2]), /<p [^>]*>Two questions:<\/p>\n<ul [^>]*><li>which chapter\?<\/li><li>learn or <strong>compete<\/strong>\?<\/li><\/ul>/);
+  const pre = mdHtml(MD_SAMPLES[3]);
+  assert.match(pre, /<pre style="[^"]*white-space:pre-wrap[^"]*">SELECT plate, COUNT\(\*\)\nFROM cab_ride\nWHERE date &#60; &#39;1912-05-18&#39; AND x &#62; 1\nGROUP BY plate;<\/pre>/);
+  const evil = mdHtml(MD_SAMPLES[4]);
+  assert.ok(!/<(script|b|i)>/.test(evil) && evil.includes("&#60;script&#62;alert(1)&#60;/script&#62; &#38; &#34;quotes&#34;"), evil);
+  assert.match(evil, /<code [^>]*>&#60;b&#62;<\/code> <strong>&#60;i&#62;x&#60;\/i&#62;<\/strong>/);
+  assert.match(mdHtml(MD_SAMPLES[5]), /<code [^>]*>\*\*not bold\*\*<\/code>[^]*<pre [^>]*>unterminated &#60;fence&#62;<\/pre>$/);
+  assert.equal(b.ctx.SYSTEM_PROMPT.match(/Format: [^"]*/)[0].includes("**bold**"), true, "the prompt teaches the same marks");
+});
+
+test("feedback desk: a <script> in a draft reaches the email escaped in its HTML part, as typed in its text part", () => {
+  const b = feedbackBackend();
+  sent(b, "Hi", "a@b.co");
+  const r = fbRow(b, 2), text = "Hello <script>alert(1)</script>,\n\n**Read** `lift_log`.";
+  assert.ok(b.post({ action: "send", row: 2, received: r.received, key: KEY, text }).ok);
+  const m = b.drafts.sent[0];
+  assert.equal(m.body, text);
+  assert.ok(!m.html.includes("<script") && m.html.includes("Hello &#60;script&#62;alert(1)&#60;/script&#62;,"));
+  assert.match(m.html, /<strong>Read<\/strong> <code [^>]*>lift_log<\/code>/);
+  assert.deepEqual([m.h.to, m.h.from, m.h.subject], ["a@b.co", "The Ritz Affair <contact@alephb.uk>", "Re: The Ritz Affair feedback: landing page"]);
 });

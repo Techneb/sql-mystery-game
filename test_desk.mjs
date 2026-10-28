@@ -259,24 +259,33 @@ test("inbox: the Feedback page, kept out of search, every backend value escaped,
     { row: 4, received: Date.UTC(2026, 9, 26), status: "replied 2026-10-26", message: "thanks", email: "c@d.co", draft: "Sent text" },
     { row: 3, received: Date.UTC(2026, 9, 25), status: "", message: "no email", email: "" },
     { row: 2, received: Date.UTC(2026, 9, 24), status: "done", message: "old", email: "" },
+    { row: 1, received: Date.UTC(2026, 9, 23), status: "discarded 2026-10-23", message: "spam", email: "x@y.co", draft: "Hi" },
+    { row: 0, received: Date.UTC(2026, 9, 22), status: "call him", message: "owner's words", email: "" },
   ];
+  assert.deepEqual(["", " ", "replied 2026-10-26", "Replied", "discarded 2026-10-28", "done", "call him"].map(inbox.statusKind),
+    ["todo", "todo", "replied", "replied", "discarded", "discarded", "other"], "one pure classifier; the older done reads as discarded");
   const all = inbox.listHtml(rows, "all");
   assert.ok(!all.includes("<img") && all.includes("&#60;img"), "message, context, draft and other escaped");
-  assert.deepEqual(["todo", "replied", "all"].map(f => (inbox.listHtml(rows, f).match(/class="fb-card"/g) || []).length), [2, 1, 4]);
-  assert.equal(inbox.counts(rows), "To do 2, Replied 1, All 4");
+  assert.deepEqual(["todo", "replied", "discarded", "all"].map(f => (inbox.listHtml(rows, f).match(/class="fb-card"/g) || []).length), [2, 1, 2, 6]);
+  assert.equal(inbox.counts(rows), "To do 2, Replied 1, Discarded 2, All 6");
+  assert.deepEqual(inbox.FILTERS.map(f => f[1]), ["To do", "Replied", "Discarded", "All"]);
   const open = inbox.rowHtml(rows[0]);
   assert.match(open, /data-row="5" data-received="1793109780000"/);
   assert.match(open, /2026-10-27 14:03 UTC/);
-  for (const act of ["redraft", "save", "send", "done"]) assert.ok(open.includes('data-act="' + act + '"'), act);
+  for (const act of ["redraft", "save", "send", "discard"]) assert.ok(open.includes('data-act="' + act + '"'), act);
+  assert.match(open, /<button data-act="discard"[^>]*title="Discard[^"]*"[^>]*aria-label="Discard[^"]*">Discard<\/button>/);
+  assert.ok(!/done|Mark/.test(open), "no Mark done left");
+  assert.match(open, /<div class="fb-preview"><p style="[^"]*">Dear &#60;img/, "the preview, rendered and escaped");
   assert.ok(!open.includes('data-act="draft"'), "Draft now only while there is no draft");
   assert.match(open, /<textarea[^>]*class="fb-draft"[^>]*>Dear &#60;img/);
   assert.match(open, /placeholder="Instructions for Claude/);
   assert.ok(inbox.rowHtml({ ...rows[0], draft: "" }).includes('data-act="draft"'));
   const replied = inbox.rowHtml(rows[1]);
   assert.ok(!replied.includes("data-act") && !replied.includes("<textarea") && replied.includes("Sent text"), "a replied row is read-only");
+  assert.match(replied, /<div class="fb-preview"><p [^>]*>Sent text<\/p><\/div>/, "the reply shown as it was sent");
   const noMail = inbox.rowHtml(rows[2]);
-  assert.ok(!noMail.includes("<textarea") && noMail.includes('data-act="done"') && !noMail.includes('data-act="send"'), "no email: Mark done only");
-  assert.ok(!inbox.rowHtml(rows[3]).includes("data-act"), "a done row has no action");
+  assert.ok(!noMail.includes("<textarea") && noMail.includes('data-act="discard"') && !noMail.includes('data-act="send"'), "no email: Discard only");
+  for (const r of rows.slice(3, 5)) assert.ok(!inbox.rowHtml(r).includes("data-act") && !inbox.rowHtml(r).includes("<textarea"), "a discarded row has no action");
   assert.deepEqual(JSON.parse(inbox.actionBody("redraft", rows[0], "k", { text: "t", instruction: "shorter" })),
     { action: "redraft", row: 5, received: rows[0].received, key: "k", text: "t", instruction: "shorter" });
   assert.match(fs.readFileSync("site/inbox.js", "utf8"), /import \{ FEEDBACK_URL, wireFeedback \} from "\.\/feedback\.js"/, "the feedback script, never the compete board");

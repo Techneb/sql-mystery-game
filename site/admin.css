@@ -153,7 +153,7 @@ button.key[aria-pressed="false"] { opacity: .45; text-decoration: line-through; 
 /* Feedback page (inbox.html): one card per message, newest first, reading width */
 #inbox { max-width: 900px; margin: 0 auto; }
 #inbox .label-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-#inbox .days { margin-left: 0; }
+#inbox .days { margin-left: 0; flex-wrap: wrap; }
 .fb-note { font-size: 14px; margin: 4px 0 12px; }
 .fb-card { background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-panel); padding: 10px 14px; margin: 0 0 14px; }
 .fb-head { display: flex; flex-wrap: wrap; gap: 2px 14px; align-items: baseline; font-size: 14px; }
@@ -165,6 +165,10 @@ button.key[aria-pressed="false"] { opacity: .45; text-decoration: line-through; 
 .fb-meta { font-size: 13px; margin: 2px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .fb-label { display: block; font-size: 14px; font-weight: 700; margin: 10px 0 4px; overflow-wrap: anywhere; }
 .fb-draft { display: block; width: 100%; box-sizing: border-box; min-height: 9em; resize: vertical; font-size: 16px; line-height: 1.45; }
+/* the rendered email (inbox.js mdHtml: inline styles; code keeps its own light chip in both editions) */
+.fb-preview { background: var(--paper); border: 1px dashed var(--rule); border-radius: var(--r-box); padding: 10px 12px; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.fb-preview :last-child { margin-bottom: 0 !important; }
+.fb-preview:empty::before { content: "Nothing to show yet."; opacity: .6; font-style: italic; }
 .fb-rewrite { display: flex; gap: 8px; margin: 8px 0; }
 .fb-instr { flex: 1; min-width: 0; font-size: 15px; }
 .fb-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
