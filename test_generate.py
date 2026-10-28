@@ -631,6 +631,31 @@ class Suspects(unittest.TestCase):
                 text.encode("ascii")
 
 
+class WhereToLook(unittest.TestCase):
+    """The Hint's second level: learn only, ASCII, no answer or withheld fact of its chapter or a later one."""
+    def test_learn_lines_hold_no_answer(self):
+        V = built(1912)[1]
+        learn = {c["n"]: c for c in g.chapters_json(V)["chapters"]}
+        seen = set()
+        for ch in plot.CHAPTERS:
+            seen.update(ch["tables"])
+            text = learn[ch["n"]]["where"]
+            self.assertEqual(text, ch["where"])
+            text.encode("ascii")
+            for t in re.findall(r"`([^`]*)`", text):   # each backticked name a revealed table (it becomes a schema link)
+                self.assertIn(t, seen, "chapter %d names %s" % (ch["n"], t))
+            for later in plot.CHAPTERS[ch["n"] - 1:]:
+                self.assertNotIn(str(V[later["answer_key"]]).lower(), text.lower(), "where %d" % ch["n"])
+                for d in later.get("discovery", []):
+                    needles = d.get("must_contain", [])
+                    for needle in [needles] if isinstance(needles, str) else needles:
+                        self.assertNotIn(needle.format(**V).lower(), text.lower(), "where %d" % ch["n"])
+
+    def test_compete_has_none(self):
+        for c in g.chapters_json(built(7)[1], mode="compete")["chapters"]:
+            self.assertNotIn("where", c)
+
+
 class ChapterSeven(unittest.TestCase):
     def test_the_letter_is_only_in_the_suspects(self):
         ch = [c for c in plot.CHAPTERS if c["n"] == 7][0]

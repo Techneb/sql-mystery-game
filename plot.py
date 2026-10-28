@@ -264,6 +264,25 @@ CHAPTERS = [
          "SELECT p.name FROM bank_account AS b JOIN person AS p ON p.id = b.person_id ORDER BY b.id DESC LIMIT 1"]),
 ]
 
+# "Where to look": the Hint's second level, learn only (chapters_json ships it as `where`; season files never carry it).
+# Table names in `backticks` render as links to the schema (app.js whereHtml). Owner-approved texts, 2026-10-28.
+WHERE = {
+ 1: "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry.",
+ 2: "Read the theft report from chapter I again: it describes the suite the thief came from. `suite` has the prices, and `hotel_register` says who slept where, and when.",
+ 3: "Read what the neighbour told Ganimard in `interview`. He remembers part of the plate and how the man paid, and both are columns of `cab_ride`.",
+ 4: "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address.",
+ 5: "The address from chapter IV has its own id in `address`. `person` points to it: one of the people living there has a trade that fits.",
+ 6: "Start from the jeweller's own account in `bank_account`, then his May payments in `bank_transaction`. \"Three pieces\" means three payments to the same account, so group by the account that received them.",
+ 7: "Before choosing a box, count the Ritz wires of the 18th in each of Ganimard's four boxes, with CASE WHEN inside a GROUP BY. The quietest box is not the one most people guess. A suspect's card gives the signature letter.",
+ 8: "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches.",
+ 9: "Put each of the neighbour's trunks next to the ticket it travelled on and the name of that ticket's holder. Then ask who belongs to his household and who does not.",
+ 10: "First find the regulars, guests with six stays or more. Two stays share a night when each one starts before the other ends, so join `hotel_register` to itself on that.",
+ 11: "A suite can make noise in three ledgers: the lift, room service and telegrams. Put that night's events from all three into one list, then use LAG to measure each suite's gap since its previous event.",
+ 12: "Start from the account of chapter VI. At each step, follow the one transfer worth 98 per cent of the previous one. Some transfers are paid in parts, so add them up per pair of accounts first. WITH RECURSIVE repeats the step.",
+}
+for _ch in CHAPTERS:
+    _ch["where"] = WHERE[_ch["n"]]
+
 # The Suspects gallery. A suspect appears once met: when the story of an unlocked chapter names them (`meet`),
 # or earlier if a query result the student sees shows their name. Each note is added to the bio once chapter n
 # is unlocked (reached), so it may tell what the chapter before it revealed, never the one being played.

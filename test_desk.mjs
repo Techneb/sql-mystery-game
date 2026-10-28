@@ -761,8 +761,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(sh.includes('<td>X</td><td class="num">3</td><td class="num">5</td>') && sh.includes('<td>Copy link</td><td class="num">0</td>') && sh.includes("starts 2026-10-25"));
   assert.ok(sh0.includes('<td>LinkedIn</td><td class="num">0</td>') && sh0.includes("Export CSV") && g.includes("SHARES BY NETWORK"));
   assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).ran.filters,{ eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], "customEvent:mode": ["learn"] });
-  const wrong = monitor.wrongHintsHtml({ wrong: { rows: [["1", "1", 9], ["1", "3", 2]] }, hints: { rows: [["1", 4, 6]] } }, 390);
-  assert.ok(hasTip(wrong, "Chapter I", "9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n6\thint opens") && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">6</td>'));
+  const wrong = monitor.wrongHintsHtml({ wrong: { rows: [["1", "1", 9], ["1", "3", 2]] }, hints: { rows: [["1", 4, 6]] }, where: { rows: [["1", 3]] } }, 390);
+  assert.ok(hasTip(wrong, "Chapter I", "9\t1st wrong answer\tc1\n2\t3rd wrong answer\tc2\n4\topened the hint\tc4\n3\topened Where to look\tc5\n6\thint opens") && wrong.includes("<td>XII</td>") && wrong.includes('<td>I</td><td class="num">9</td><td class="num">2</td><td class="num">4</td><td class="num">3</td><td class="num">6</td>'));
+  assert.deepEqual(monitor.PANELS.game.wrongHints.requests(monitor.context("game")).where.filters, { eventName: ["hint_where"] }, "Where to look: its own event");
+  assert.ok(figsOf(wrong)[0].data.filter(t => t.hoverinfo === "skip").length >= 4, "four drawn series");
   const modes = monitor.modesHtml({ opened: { rows: [["compete", 3], ["learn", 6]], totals: [8] }, begun: { rows: [["learn", 6], ["compete", 3]], totals: [8] }, seen: { rows: [[20]] } });
   assert.ok(modes.includes("8 of the 20 visitors on the game page (40%)") && modes.includes('<td>All (GA&#39;s total)</td><td class="num">8</td>') && centres(modes).every(t => t.includes("<b>8</b>")), "GA's total (8), not 6 + 3");
   assert.ok(modes.indexOf('<i class="c1"></i><span>Learn') > 0 && modes.includes('<i class="c2"></i><span>Compete'), "learn and compete keep their colour whatever the order");

@@ -232,7 +232,8 @@
    "construct": "SELECT / WHERE",
    "answer_sha256": [
     "06ceef9715535b739e13f0eff2d08f2a4d57b537aaa549facff529eaa2af02d0"
-   ]
+   ],
+   "where": "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry."
   },
   {
    "title": "The Neighbouring Suite",
@@ -249,7 +250,8 @@
    "construct": "ORDER BY / LIMIT",
    "answer_sha256": [
     "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432"
-   ]
+   ],
+   "where": "Read the theft report from chapter I again: it describes the suite the thief came from. `suite` has the prices, and `hotel_register` says who slept where, and when."
   },
   {
    "title": "A Plate in the Dark",
@@ -265,7 +267,8 @@
    "construct": "LIKE",
    "answer_sha256": [
     "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5"
-   ]
+   ],
+   "where": "Read what the neighbour told Ganimard in `interview`. He remembers part of the plate and how the man paid, and both are columns of `cab_ride`."
   },
   {
    "title": "The Cab's Week",
@@ -279,7 +282,8 @@
    "construct": "GROUP BY / HAVING",
    "answer_sha256": [
     "6d71eb5495c5a18d933c60ee4d5e9999e9bef84fbf614721e3d3ac425287c4cb"
-   ]
+   ],
+   "where": "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address."
   },
   {
    "title": "The Boarding House",
@@ -298,7 +302,8 @@
    "answer_sha256": [
     "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c",
     "5dde5e4b49fe2adc11c9311f47537f78a166acb40c1e6873d9915a7c2b0f7190"
-   ]
+   ],
+   "where": "The address from chapter IV has its own id in `address`. `person` points to it: one of the people living there has a trade that fits."
   },
   {
    "title": "Follow the Francs",
@@ -315,7 +320,8 @@
    "construct": "JOIN x3 + SUM + HAVING",
    "answer_sha256": [
     "fe6340be87fd5e43b7f0cac5741e76205dd69a68b2024fda16c696848a720f7a"
-   ]
+   ],
+   "where": "Start from the jeweller's own account in `bank_account`, then his May payments in `bank_transaction`. \"Three pieces\" means three payments to the same account, so group by the account that received them."
   },
   {
    "title": "The Quietest Hour",
@@ -331,7 +337,8 @@
    "construct": "CASE WHEN + GROUP BY",
    "answer_sha256": [
     "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729"
-   ]
+   ],
+   "where": "Before choosing a box, count the Ritz wires of the 18th in each of Ganimard's four boxes, with CASE WHEN inside a GROUP BY. The quietest box is not the one most people guess. A suspect's card gives the signature letter."
   },
   {
    "title": "The First Order Before Dawn",
@@ -348,7 +355,8 @@
    "answer_sha256": [
     "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40",
     "de6f9b0fe8953bd5654b84b3e3cb7cda3b2c0cf2b7b08b514ef5b70855766662"
-   ]
+   ],
+   "where": "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches."
   },
   {
    "title": "The Trunk",
@@ -365,7 +373,8 @@
    "construct": "CTE + JOIN",
    "answer_sha256": [
     "20377cec9f51f6bf5ba1fa64649f3b1614e4eee833fd0fc5893f24f6e0accbaf"
-   ]
+   ],
+   "where": "Put each of the neighbour's trunks next to the ticket it travelled on and the name of that ticket's holder. Then ask who belongs to his household and who does not."
   },
   {
    "title": "Never Seen Together",
@@ -379,7 +388,8 @@
    "construct": "Self-join",
    "answer_sha256": [
     "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46"
-   ]
+   ],
+   "where": "First find the regulars, guests with six stays or more. Two stays share a night when each one starts before the other ends, so join `hotel_register` to itself on that."
   },
   {
    "title": "The Silence",
@@ -395,7 +405,8 @@
    "construct": "LAG() OVER",
    "answer_sha256": [
     "802b906a18591ead8a6dd809b262ace4c65c16e89764c40ae326cfcff811e10c"
-   ]
+   ],
+   "where": "A suite can make noise in three ledgers: the lift, room service and telegrams. Put that night's events from all three into one list, then use LAG to measure each suite's gap since its previous event."
   },
   {
    "title": "Follow the Money",
@@ -409,7 +420,8 @@
    "construct": "WITH RECURSIVE",
    "answer_sha256": [
     "5f4b9a3cb0977d77cc43bb37fbe173d26ede96c880d6074ae72555b7c0adcd8c"
-   ]
+   ],
+   "where": "Start from the account of chapter VI. At each step, follow the one transfer worth 98 per cent of the previous one. Some transfers are paid in parts, so add them up per pair of accounts first. WITH RECURSIVE repeats the step."
   }
  ],
  "decoys": {

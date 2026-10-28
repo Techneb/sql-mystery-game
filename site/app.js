@@ -98,12 +98,27 @@ function backToInvestigation() {
   reviewing = null; nextPending = 0; clearTerminal(); renderChapter();
   if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
 }
-const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
+// A table name in the Hint: a button that scrolls to the schema and flashes that table (showTable).
+const tableLink = t => '<button type="button" class="table-link" data-table="' + esc(t) + '"><code>' + esc(t) + "</code></button>";
+// "Where to look" (learn only, chapters.json `where`): escaped first, then each `name` becomes a table link.
+export const whereHtml = s => esc(s).replace(/`([a-z_]+)`/g, (_, t) => tableLink(t));
+export const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
   // the chapter's SQL tool and new tables sit under a closed Hint toggle (a native <details>), so the
-  // student tries first and opens it when stuck
-  (ch && (ch.construct || (ch.tables || []).length) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
+  // student tries first and opens it when stuck; a nested closed "Where to look" holds the chapter's line
+  (ch && (ch.construct || (ch.tables || []).length || ch.where) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
     (ch.construct ? "<div><b>This chapter's tool:</b> " + esc(ch.construct) + "</div>" : "") +
-    (ch.tables.length ? "<div><b>New evidence:</b> " + esc(ch.tables.join(", ")) + "</div>" : "") + "</details>" : "");
+    ((ch.tables || []).length ? "<div><b>New evidence:</b> " + ch.tables.map(tableLink).join(", ") + "</div>" : "") +
+    (ch.where ? '<details class="hint-where"><summary>Where to look</summary><div>' + whereHtml(ch.where) + "</div></details>" : "") +
+    "</details>" : "");
+
+// Scroll the page to the schema box, then the box to table t, and flash its outline for a moment.
+function showTable(t) {
+  const box = $("erd"), g = box.querySelector('g.table[data-table="' + CSS.escape(t) + '"]:not(.hidden)');
+  (g || box).scrollIntoView({ behavior: "smooth", block: "center" });   // the page and the schema box both move to it
+  if (!g) return;
+  g.classList.remove("flash"); void g.getBoundingClientRect(); g.classList.add("flash");
+  setTimeout(() => g.classList.remove("flash"), 2400);
+}
 
 function renderChapter() {
   markSuspects();
@@ -888,6 +903,8 @@ async function boot() {
   $("results").addEventListener("click", e => { if (e.target.closest(".strict a")) useFeature("grammar_link", { chapter: curChapter() }); });
   // The house ad and the landing's warm-up link, as on the handbook (GA audit, 2026-10-25).
   document.addEventListener("click", e => {
+    const tl = e.target.closest && e.target.closest(".table-link");
+    if (tl) return showTable(tl.dataset.table);
     const a = e.target.closest && e.target.closest("a");
     if (!a) return;
     if (a.closest(".press-notice")) useFeature("ad_house_click", { chapter: curChapter() });
@@ -902,6 +919,12 @@ async function boot() {
       if (state.hints.includes(n)) return;
       state.hints.push(n); save(state);
       track("hint_open", { chapter: n, mode: state.mode });
+    }
+    if (d.matches("details.hint-where")) {   // once per chapter per save, like hint_open
+      const n = reviewing ?? curChapter();
+      if (state.hintsWhere.includes(n)) return;
+      state.hintsWhere.push(n); save(state);
+      track("hint_where", { chapter: n, mode: state.mode });
     }
   }, true);
   // Leaving with the chapter unsolved: once per chapter per page load, sent as a beacon so the close does not drop it.

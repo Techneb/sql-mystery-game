@@ -1242,6 +1242,8 @@ def chapters_json(V, mode="learn"):
         d["board"] = ch.get("board" + suf, ch["board"])   # what the answer is, on its case-board card
         d.update(n=ch["n"], tables=ch["tables"], construct=ch.get("construct" + suf, ch["construct"]))
         d["answer_sha256"] = hashes(V[ch["answer_key" + suf]], ch["answer_form" + suf])   # checked in the browser
+        if mode == "learn":
+            d["where"] = ch["where"]   # the Hint's "Where to look" line, learn only
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,
                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,

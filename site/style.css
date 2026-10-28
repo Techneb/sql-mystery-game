@@ -342,6 +342,12 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .chapter-tools { margin-top: 6px; }
 .chapter-tools summary { cursor: pointer; width: max-content; }
 .chapter-tools b { font-weight: 700; }
+.hint-where { margin: 4px 0 0 12px; }
+/* a table name in the Hint: a chip that takes the reader to that table in the schema (showTable, app.js) */
+.table-link { font: inherit; color: var(--ink); background: var(--shade); border: 1px solid var(--rule); border-radius: var(--r-box); padding: 0 5px; margin: 1px 0; cursor: pointer; }
+.table-link code { font-family: "Special Elite", monospace; font-size: .92em; }
+.table-link:hover, .table-link:focus-visible { border-color: var(--accent); }
+.erd .flash rect:first-child { animation: glow 2.4s ease-out both; }
 /* night edition: a darker accent behind the Next chapter button keeps its text at AA (T8) */
 :root[data-mood="night"] .next-chapter { background: #2b5190; }
 /* keyboard users see where they are (T7) */

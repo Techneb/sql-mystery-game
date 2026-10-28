@@ -397,7 +397,8 @@ export const PANELS = {
     onboarding: { deps: [], requests: c => onboardingRequests(c.days) },
     leave: once("leave", d => ev(d, ["customEvent:chapter"], ["totalUsers", "averageCustomEvent:seconds", "averageCustomEvent:queries"], { eventName: ["chapter_leave"] })),
     wrongHints: { deps: [], requests: c => ({ wrong: ev(c.days, ["customEvent:chapter", "customEvent:n"], ["totalUsers"], { eventName: ["answer_wrong"] }),
-      hints: ev(c.days, ["customEvent:chapter"], ["totalUsers", "eventCount"], { eventName: ["hint_open"] }) }) },
+      hints: ev(c.days, ["customEvent:chapter"], ["totalUsers", "eventCount"], { eventName: ["hint_open"] }),
+      where: ev(c.days, ["customEvent:chapter"], ["totalUsers"], { eventName: ["hint_where"] }) }) },
     routes: once("routes", d => ev(d, ["customEvent:chapter", "customEvent:route"], ["totalUsers"], { eventName: ["chapter_solve"] })),
     fails: failsPanel("customEvent:chapter", true),
     modes: { deps: [], requests: c => ({ opened: ev(c.days, ["customEvent:mode"], ["totalUsers"], { eventName: ["chapter_open"] }),
@@ -463,15 +464,16 @@ export function routesHtml({ routes }, w) {
     '<p class="muted">Answer never on screen means no query run in the chapter showed the answer before it was typed: a guess or a copied answer. Data starts 2026-10-25.</p>' +
     raw("solve-route", tableHtml(["Chapter", ...keys.map(k => ROUTES[k])], g.map(c => [roman(c.chapter), ...c.values])));
 }
-// wrong: answer_wrong by chapter x n; hints: hint_open by chapter: users with a 1st and a 3rd wrong answer and users
-// who opened the hint, side by side per chapter on the funnel's grid.
-export function wrongHintsHtml({ wrong, hints }, w) {
+// wrong: answer_wrong by chapter x n; hints: hint_open by chapter; where: hint_where by chapter (learn's "Where to
+// look"): users with a 1st and a 3rd wrong answer, who opened the hint and its second level, side by side per chapter.
+export function wrongHintsHtml({ wrong, hints, where }, w) {
   const by = new Map();
   for (const [c, n, u] of (wrong && wrong.rows) || []) by.set(c + "|" + n, Number(u) || 0);
-  const g = chapterGrid(hints, 2).map((h, i) => ({ chapter: i + 1, values: [by.get(i + 1 + "|1") || 0, by.get(i + 1 + "|3") || 0, h.values[0]], tip: [[h.values[1], "hint opens"]] }));
-  const series = [["1st wrong answer", "c1"], ["3rd wrong answer", "c2"], ["opened the hint", "c4"]];
+  const wh = chapterGrid(where);
+  const g = chapterGrid(hints, 2).map((h, i) => ({ chapter: i + 1, values: [by.get(i + 1 + "|1") || 0, by.get(i + 1 + "|3") || 0, h.values[0], wh[i].values[0]], tip: [[h.values[1], "hint opens"]] }));
+  const series = [["1st wrong answer", "c1"], ["3rd wrong answer", "c2"], ["opened the hint", "c4"], ["opened Where to look", "c5"]];
   return legendOf(series) + plotHtml(chapterBarsFig(g, series, "Users")) +
-    raw("wrong-answers-hints", tableHtml(["Chapter", "Users with a 1st wrong answer", "Users with a 3rd", "Users who opened the hint", "Hint opens"],
+    raw("wrong-answers-hints", tableHtml(["Chapter", "Users with a 1st wrong answer", "Users with a 3rd", "Users who opened the hint", "Users who opened Where to look", "Hint opens"],
       g.map(c => [roman(c.chapter), ...c.values, c.tip[0][0]])));
 }
 // Every known feature (zeros included) in its list's order, then any other GA reports, most users first.
