@@ -359,12 +359,20 @@ device).
 
 ## 8. Backlog (not scheduled)
 
-- Feedback reply drafts by Claude, built 2026-10-28 (owner), not deployed yet: every 5 minutes the feedback script
-  drafts a reply (Claude Opus 5.5) to each message with an email and saves it as a Gmail draft from contact@; the
-  desk's new Feedback page (inbox.html) lists the messages and lets the owner rewrite a draft with an instruction,
-  save it, send it (status "replied <date>") or mark a message done. Readable subjects for the owner's copy and the
-  draft. Hints come from chapter notes that hold no answer; last week's solve rates from GA. To go live: the manifest's
-  new scopes, Script Properties ANTHROPIC_API_KEY and ADMIN_KEY, `setup()` from an AlephB-only window, a redeploy.
+- How it's done, every chapter (owner, 2026-10-28, from a player's feedback; not started): once a chapter is solved,
+  its review shows the intended route in a few plain steps (which clue, which tables, which construct, the traps) and
+  the reference SQL (the chapter's discovery queries and `solution`, as `solution.sql` prints them), under the
+  player's own winning query. Every chapter, I to XII. The text must not ship readable: `chapters.json` is public, so
+  each chapter's walkthrough is encrypted at build time with a key derived from its normalised answer (AES-GCM via
+  WebCrypto, PBKDF2 with its own salt, never the shipped `answer_sha256`) and decrypted in the browser on the correct
+  answer, kept in the save so a reload shows it. Brute force costs what it costs on the answer hashes already shipped.
+  Open: compete (season answers differ; after the finish, or learn only), the walkthrough's wording per chapter.
+
+- ~~Feedback reply drafts by Claude~~ Live 2026-10-28 (owner; feedback script @10, inbox.html): every 5 minutes
+  the feedback script drafts a reply (Claude Opus 5.5, key "ritz-feedback") to each message with an email and an
+  empty status, saved as a Gmail draft from contact@; the desk's Feedback page lists the messages and lets the owner
+  rewrite a draft with an instruction, save it, send it (status "replied <date>") or mark it done. Hints come from
+  chapter notes that hold no answer; a stuck player's draft quotes last week's GA figures for their chapter.
 
 - ~~Plotly desk charts~~ Done 2026-10-26 (owner chose Plotly): every chart of Global, Game and Handbook drawn with
   Plotly 3.5.1 (289795a; current rules in CLAUDE.md, Monitoring). Open: the owner's look with real GA data; quirks noted
