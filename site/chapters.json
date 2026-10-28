@@ -233,7 +233,7 @@
    "answer_sha256": [
     "06ceef9715535b739e13f0eff2d08f2a4d57b537aaa549facff529eaa2af02d0"
    ],
-   "where": "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry.",
+   "where": "Before searching the reports, read what the night porter told the police in `interview`. He says when he heard the lift. Which date does that hour fall on?",
    "howto": {
     "iter": 200000,
     "salts": [

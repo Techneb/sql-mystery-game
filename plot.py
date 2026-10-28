@@ -267,7 +267,7 @@ CHAPTERS = [
 # "Where to look": the Hint's second level, learn only (chapters_json ships it as `where`; season files never carry it).
 # Table names in `backticks` render as links to the schema (app.js whereHtml). Owner-approved texts, 2026-10-28.
 WHERE = {
- 1: "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry.",
+ 1: "Before searching the reports, read what the night porter told the police in `interview`. He says when he heard the lift. Which date does that hour fall on?",
  2: "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price.",
  3: "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date.",
  4: "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address.",
