@@ -360,7 +360,7 @@ device).
 ## 8. Backlog (not scheduled)
 
 - ~~How it's done~~ Live 2026-10-28 in learn mode (owner): every solved chapter's review (solved screen and case
-  board) has a closed "How it's done": the route in four or five steps (`HOWTO` in plot.py, checked against the data
+  board) shows an open HOW IT'S DONE under the answer row (owner, 2026-10-28: no toggle, right under the Correct reply): the route in four or five steps (`HOWTO` in plot.py, checked against the data
   by a Fable review) and the reference SQL (discovery queries and solution), under the player's winning query. Shipped
   encrypted under each accepted answer form (PBKDF2 + HMAC-SHA256 keystream and tag, stdlib and WebCrypto;
   `howto.js`), decrypted on the correct answer and kept in `state.howto`. Open: compete (season answers differ; show
