@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Feedback -- The Clerk's Desk</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="learn/learn.css">
+<script src="learn/theme.js"></script>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="corners">
+<button id="btn-feedback" class="quiet feedback-corner" title="Send feedback" aria-label="Send feedback"><svg class="icon mail" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M2 4.5L8 9L14 4.5"/></svg><span class="btn-text">Feedback</span></button>
+<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition"><svg class="icon moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg><span class="btn-text">Night edition</span></button>
+</div>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S DESK</div>
+  <nav class="learn-nav muted"><a href="./" title="The game">The Ritz Affair</a> &middot; <a href="learn/" title="Training content: SQL lessons and exercises">The Clerk's Handbook</a></nav>
+</header>
+<nav class="learn-menu"><a id="setup-link" href="admin.html">Setup</a> &middot;
+  <a id="monitor-link" href="monitor.html">Global</a> &middot;
+  <a id="game-link" href="monitor-game.html">Game</a> &middot;
+  <a id="handbook-link" href="monitor-handbook.html">Handbook</a> &middot;
+  <a id="explore-link" href="explore.html">Pivot table</a> &middot;
+  <span class="current" aria-current="page">Feedback</span></nav>
+<main class="desk">
+  <p id="status" class="status" role="status" aria-live="polite"></p>
+  <div id="inbox" hidden>
+    <div class="label-row"><span class="label">FEEDBACK</span><span id="filters" class="days"></span> <button id="reload" class="quiet">Reload</button></div>
+    <p class="muted fb-note">Claude drafts a reply to each message with an email within 5 minutes; the draft waits in Gmail (contact@alephb.uk) until you send it here or there.</p>
+    <div id="list"></div>
+  </div>
+</main>
+<footer class="learn-foot muted"><a href="privacy.html">Privacy notice</a> &middot; <a href="admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<dialog id="passgate" class="part2"><form method="dialog">
+  <div class="label">THE CLERK'S DESK</div>
+  <p><label for="pass">Passphrase</label> <input id="pass" type="password" autocomplete="current-password"></p>
+  <p class="gate-msg" aria-live="polite"></p>
+  <button value="ok">Unlock</button> <button value="" class="quiet" formnovalidate>Cancel</button>
+</form></dialog>
+<dialog id="ask" class="part2" aria-labelledby="ask-title" aria-describedby="ask-msg"><form method="dialog">
+  <div class="label" id="ask-title">THE CLERK'S DESK</div>
+  <p id="ask-msg" class="ask-msg"></p>
+  <button value="" class="quiet" autofocus>Cancel</button> <button value="ok">Send</button>
+</form></dialog>
+<script type="module" src="inbox.js"></script>
+</body>
+</html>

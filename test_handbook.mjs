@@ -56,14 +56,14 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   assert.deepEqual(navItems(adminNav), navItems(nav), "the admin page's header");
   assert.deepEqual(navCurrent(adminNav), [], "the desk is neither section");
   assert.deepEqual(links(one(admin, /<footer class="learn-foot muted">([\s\S]*?)<\/footer>/, "admin footer")), links(foot), "the admin page's footer");
-  const desk = ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html"].map(f => [f, fs.readFileSync("site/" + f, "utf8")]);
+  const desk = ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html", "inbox.html"].map(f => [f, fs.readFileSync("site/" + f, "utf8")]);
   for (const [f, h] of desk.slice(1))
     for (const tag of [/<nav class="learn-nav muted">[\s\S]*?<\/nav>/, /<footer class="learn-foot muted">[\s\S]*?<\/footer>/, /<dialog id="passgate"[\s\S]*?<\/dialog>/])
       assert.equal(h.match(tag)[0], admin.match(tag)[0], f + " repeats the desk's " + tag.source.slice(1, 9));
-  // The desk's own menu row: Setup, the three monitoring views and Pivot table, the same on the five pages but for the current marker.
+  // The desk's own menu row: Setup, the three monitoring views, Pivot table and Feedback, the same on the six pages but for the current marker.
   const deskMenu = (h, f) => one(h, /<\/header>\n<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " desk menu");
   const deskItems = ['<a id="setup-link" href="admin.html">Setup</a>', '<a id="monitor-link" href="monitor.html">Global</a>', '<a id="game-link" href="monitor-game.html">Game</a>',
-    '<a id="handbook-link" href="monitor-handbook.html">Handbook</a>', '<a id="explore-link" href="explore.html">Pivot table</a>'];
+    '<a id="handbook-link" href="monitor-handbook.html">Handbook</a>', '<a id="explore-link" href="explore.html">Pivot table</a>', '<a id="inbox-link" href="inbox.html">Feedback</a>'];
   desk.forEach(([f, h], i) => {
     const want = deskItems.map((it, j) => (j === i ? '<span class="current" aria-current="page">' + it.match(/>([^<]*)</)[1] + "</span>" : it)).join(" &middot;\n  ");
     assert.equal(deskMenu(h, f), want, f + " menu: one current item, the others linked");

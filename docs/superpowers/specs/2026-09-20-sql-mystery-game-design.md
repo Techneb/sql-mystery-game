@@ -359,6 +359,13 @@ device).
 
 ## 8. Backlog (not scheduled)
 
+- Feedback reply drafts by Claude, built 2026-10-28 (owner), not deployed yet: every 5 minutes the feedback script
+  drafts a reply (Claude Opus 5.5) to each message with an email and saves it as a Gmail draft from contact@; the
+  desk's new Feedback page (inbox.html) lists the messages and lets the owner rewrite a draft with an instruction,
+  save it, send it (status "replied <date>") or mark a message done. Readable subjects for the owner's copy and the
+  draft. Hints come from chapter notes that hold no answer; last week's solve rates from GA. To go live: the manifest's
+  new scopes, Script Properties ANTHROPIC_API_KEY and ADMIN_KEY, `setup()` from an AlephB-only window, a redeploy.
+
 - ~~Plotly desk charts~~ Done 2026-10-26 (owner chose Plotly): every chart of Global, Game and Handbook drawn with
   Plotly 3.5.1 (289795a; current rules in CLAUDE.md, Monitoring). Open: the owner's look with real GA data; quirks noted
   (modebar always shown on phones, it can cover the funnel's 100% tick, close "0" labels on the by-device chart).

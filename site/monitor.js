@@ -280,7 +280,7 @@ const donutsRow = (P, m, pages = pagesSection) => '<div class="donuts three"><di
 
 // Page sections as pagePath filters (apps_script.gs report_: a list is exact paths, an object adds prefixes and not).
 export const GAME_PATHS = ["/", "/index.html"];
-export const DESK_PATHS = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/leaderboard.html"];
+export const DESK_PATHS = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"];
 export const LEARN = { beginsWith: ["/learn/"] };
 export const SECTIONS = [["Game", GAME_PATHS], ["Handbook", LEARN], ["Desk", DESK_PATHS],
   ["Other", { exact: [...GAME_PATHS, ...DESK_PATHS], beginsWith: ["/learn/"], not: true }]];

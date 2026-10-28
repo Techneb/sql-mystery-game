@@ -241,8 +241,45 @@ test("admin and board pages: not in the sitemap, admin kept out of robots, pure 
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/explore\.html$/m);
   assert.match(fs.readFileSync("site/explore.html", "utf8"), /<meta name="robots" content="noindex">/);
   assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
-  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/figures.js", "site/world.json", "site/topojson/world_110m.json", "site/monitor-game.html", "site/monitor-handbook.html"])
+  for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/figures.js", "site/world.json", "site/topojson/world_110m.json", "site/monitor-game.html", "site/monitor-handbook.html", "site/inbox.html", "site/inbox.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
+});
+
+const inbox = await import("./site/inbox.js");
+test("inbox: the Feedback page, kept out of search, every backend value escaped, filters by status", async () => {
+  const h = fs.readFileSync("site/inbox.html", "utf8");
+  assert.match(h, /<meta name="robots" content="noindex">/);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/inbox\.html$/m);
+  assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /inbox/);
+  assert.ok((await import("./site/monitor.js")).DESK_PATHS.includes("/inbox.html"));
+  assert.match(h, /<dialog id="ask"[^]*class="ask-msg"/, "Send asks in a native dialog");
+  const evil = '<img src=x onerror="alert(1)">';
+  const rows = [
+    { row: 5, received: Date.UTC(2026, 9, 27, 14, 3), status: "", message: evil, email: "a@b.co", page: "/", chapter: "3", mode: "learn", device: evil, draft: "Dear " + evil, draftId: "d1", other: evil },
+    { row: 4, received: Date.UTC(2026, 9, 26), status: "replied 2026-10-26", message: "thanks", email: "c@d.co", draft: "Sent text" },
+    { row: 3, received: Date.UTC(2026, 9, 25), status: "", message: "no email", email: "" },
+    { row: 2, received: Date.UTC(2026, 9, 24), status: "done", message: "old", email: "" },
+  ];
+  const all = inbox.listHtml(rows, "all");
+  assert.ok(!all.includes("<img") && all.includes("&#60;img"), "message, context, draft and other escaped");
+  assert.deepEqual(["todo", "replied", "all"].map(f => (inbox.listHtml(rows, f).match(/class="fb-card"/g) || []).length), [2, 1, 4]);
+  assert.equal(inbox.counts(rows), "To do 2, Replied 1, All 4");
+  const open = inbox.rowHtml(rows[0]);
+  assert.match(open, /data-row="5" data-received="1793109780000"/);
+  assert.match(open, /2026-10-27 14:03 UTC/);
+  for (const act of ["redraft", "save", "send", "done"]) assert.ok(open.includes('data-act="' + act + '"'), act);
+  assert.ok(!open.includes('data-act="draft"'), "Draft now only while there is no draft");
+  assert.match(open, /<textarea[^>]*class="fb-draft"[^>]*>Dear &#60;img/);
+  assert.match(open, /placeholder="Instructions for Claude/);
+  assert.ok(inbox.rowHtml({ ...rows[0], draft: "" }).includes('data-act="draft"'));
+  const replied = inbox.rowHtml(rows[1]);
+  assert.ok(!replied.includes("data-act") && !replied.includes("<textarea") && replied.includes("Sent text"), "a replied row is read-only");
+  const noMail = inbox.rowHtml(rows[2]);
+  assert.ok(!noMail.includes("<textarea") && noMail.includes('data-act="done"') && !noMail.includes('data-act="send"'), "no email: Mark done only");
+  assert.ok(!inbox.rowHtml(rows[3]).includes("data-act"), "a done row has no action");
+  assert.deepEqual(JSON.parse(inbox.actionBody("redraft", rows[0], "k", { text: "t", instruction: "shorter" })),
+    { action: "redraft", row: 5, received: rows[0].received, key: "k", text: "t", instruction: "shorter" });
+  assert.match(fs.readFileSync("site/inbox.js", "utf8"), /import \{ FEEDBACK_URL, wireFeedback \} from "\.\/feedback\.js"/, "the feedback script, never the compete board");
 });
 
 const monitor = await import("./site/monitor.js");
@@ -859,7 +896,7 @@ test("desk type: the five desk pages get Nunito through admin.css; the game, the
   for (const m of faces) assert.ok(fs.existsSync("site/" + m[2]), m[2] + " is self-hosted");
   assert.ok(fs.existsSync("site/fonts/OFL.txt"), "the OFL licence ships with the fonts");
   assert.match(css, /body, body \*:not\(code, pre\) \{ font-family: "Nunito Sans"[^}]*!important/);
-  for (const f of ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html"]) {
+  for (const f of ["admin.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html", "inbox.html"]) {
     const h = fs.readFileSync("site/" + f, "utf8");
     assert.match(h, /<link rel="stylesheet" href="admin\.css">/, f + " loads admin.css");
     assert.doesNotMatch(h, /fonts\.googleapis/, f + " no longer asks Google Fonts for the 1912 faces");

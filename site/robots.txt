@@ -5,5 +5,6 @@ Disallow: /monitor.html
 Disallow: /monitor-game.html
 Disallow: /monitor-handbook.html
 Disallow: /explore.html
+Disallow: /inbox.html
 
 Sitemap: https://mystery.alephb.uk/sitemap.xml
