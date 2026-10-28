@@ -220,6 +220,16 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 .cracked { margin-top: 6px; }
 .cracked .sql-view { margin: 4px 0 0; padding: 6px 8px; background: var(--term); color: var(--term-text); border-radius: var(--r-panel);
   font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* "How it's done" under a solved chapter (howto.js howtoHtml, learn only): steps, then the reference SQL */
+.howto-done { margin-top: 8px; }
+.howto-done summary { cursor: pointer; width: max-content; font-weight: 700; }
+.howto-done ol { margin: 6px 0; padding-left: 22px; }
+.howto-done li { margin: 3px 0; }
+.howto-done li code { font-size: .85em; }
+.howto-done .label { margin-top: 8px; }
+.howto-done p { margin: 6px 0 2px; }
+.howto-done .sql-view { margin: 2px 0 0; padding: 6px 8px; background: var(--term); color: var(--term-text); border-radius: var(--r-panel);
+  font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; overflow-x: auto; }
 
 /* suspects gallery: portraits are site/portraits/*.jpg (Style A/Lavery colour, see the spec) */
 .suspect .note { font-style: italic; margin-top: 4px; }

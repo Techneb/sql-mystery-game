@@ -283,6 +283,67 @@ WHERE = {
 for _ch in CHAPTERS:
     _ch["where"] = WHERE[_ch["n"]]
 
+# "How it's done": shown in learn mode once the chapter is solved, above the reference SQL (its discovery queries and
+# solution). chapters_json ships each chapter's steps and SQL encrypted under its own answer (howto_box). Story rules:
+# never quote an earlier chapter's answer literally, never a planted value (a test checks). `name` renders as code.
+HOWTO = {
+ 1: ['The story names one witness, the night porter Marcel Duroc. Read his statement in `interview` before touching the reports.',
+     "He heard the lift go after two in the morning. Past midnight is already the next day, so the theft is filed under the 18th of May, not the 17th of the chapter's title.",
+     'In `police_report`, filter on three columns at once with WHERE and AND: the place (the Ritz), the type (a theft) and that date. One row is left, and its id is the answer.',
+     "The trap is LIKE on the story's words (sapphire, balcony, the calling card): many reports use them, and the eve's theft at the Ritz is filed on the 17th. The date is what tells them apart."],
+ 2: ['Read the description of the theft report from chapter I. It says the thief came from the next suite, the most expensive one on the floor, on the night of the 17th.',
+     '`hotel_register` has one row per stay. Keep the second floor and the stays that cover that night: checked in on or before the 17th, checked out after it.',
+     'Sort those stays by price, highest first (ORDER BY price DESC), and keep the first row with LIMIT 1. Its guest is the answer.',
+     "The trap is sorting by price without the dates. The register goes back to January, so the dearest suite of the spring belongs to somebody else's stay."],
+ 3: ["His Lordship sends you to his valet. The neighbour's statement in `interview` says the valet saw how the plate began, and that the man tipped in English coins.",
+     "`cab_ride` has a column for each fact: `plate`, `currency` and `date`. A quick SELECT DISTINCT currency shows that English coins are written 'pound'.",
+     'LIKE with a % after the known start matches every plate that begins that way. Add the night of the 18th and the currency, and one cab is left.',
+     'Each condition closes a trap. The pattern alone matches dozens of cabs, the pickup the valet names also has a cab that night paid in francs, and a fare in pounds runs on the 17th.'],
+ 4: ['Start from the plate you found in chapter III and the week the story gives, the 13th to the 19th of May (BETWEEN on `date`).',
+     'That cab made about sixty rides that week, too many to read one by one. GROUP BY dropoff puts the rides to each address together, and COUNT(*) counts them.',
+     "Keep the groups with HAVING COUNT(*) >= 3 (or sort by the count): one address comes back three times. That is the fence's door.",
+     'The trap is the ride of the theft night. That night the cab drops its man somewhere else in Montmartre; the visits to the fence are by day, before the job.'],
+ 5: ['The address from chapter IV has its own row in `address`, split into a number and a street. That row has an id.',
+     '`person` stores no street, only `address_id`. A JOIN of `person` to `address` ON person.address_id = address.id lists the five tenants the story promised.',
+     "One of them has the trade Ganimard expects of a fence: occupation = 'jeweller'. That tenant's name is the answer.",
+     'A subquery works too: find the address id first, then the people whose address_id equals it.'],
+ 6: ['The jeweller from chapter V has an account in `bank_account`, linked to him by `person_id`.',
+     'His payments are the rows of `bank_transaction` whose account_id is that account; the account paid is `counterparty_id`. Keep May, the 1st to the 31st.',
+     '"Three pieces" means three payments to the same account: GROUP BY counterparty_id, then HAVING COUNT(*) = 3.',
+     'Two accounts were paid that way. "Paid best" means the bigger total, so ORDER BY SUM(amount) DESC LIMIT 1.',
+     'Without the count of three you land on a decoy: the biggest single cheque is one payment, and the biggest total overall is four payments to a supplier.'],
+ 7: ['Lupin\'s telegram in chapter VI says he wired from the Ritz desk "at its quietest". The story defines quiet: of Ganimard\'s four boxes, the one with the fewest Ritz wires on the 18th.',
+     "Each wire's hour is in `telegram.time`. CASE WHEN turns a time into its box: before 06:00 night, before 12:00 morning, before 18:00 afternoon, else evening. The WHENs are tried in order, so a wire at 09:30 fails the first test and lands in the morning.",
+     'GROUP BY that box and COUNT(*) gives four numbers, one per box. Read them before guessing. The night is busy, and the afternoon has the fewest wires, because Paris was at the races at Longchamp.',
+     "Ortega's card in the Suspects file gives Lupin's letter, R. Four wires from the Ritz were signed R. that day, one in each box, and three of them read alike, so the text cannot tell you which is his.",
+     'Keep the R. wire that sits in the quietest box, the afternoon. Its id is the answer. The guess "a thief wires at night" picks the night\'s R. wire, which is not his.'],
+ 8: ['The wire from chapter VII reads "as always my first order before dawn" and names a champagne. Ganimard adds that before dawn means before six.',
+     '`room_service` holds every order of the 18th with its suite and time. "First order" means the earliest order of each suite. RANK() OVER (PARTITION BY suite ORDER BY time) numbers each suite\'s orders from 1 and starts again at 1 for the next suite.',
+     'Keep the rows ranked 1 whose item is that champagne and whose time is before 06:00. One suite is left.',
+     'Room service knows suites, not names. `hotel_register` says who slept in that suite on the night of the 18th (checked in on or before the 18th, out after it). That guest is the answer.',
+     'The rank closes two traps: the earliest champagne of the night, and Ortega, who drank the same champagne before dawn after a coffee. For him it was not the first order, so it is not ranked 1.'],
+ 9: ['`luggage` lists every trunk with the name on its label (`owner_name`) and the ticket it travelled on (`ticket_id`). Keep the trunks labelled for the neighbour from chapter II.',
+     "Join each trunk to `train_ticket` on ticket_id, then the ticket to `person` on person_id, to read the name of the ticket's holder.",
+     "His household is three people: His Lordship, his valet and his maid, named in the story. NOT IN removes them, and one trunk is left: it travelled on an outsider's ticket.",
+     "A trunk alone on its ticket, or a holder seen only once, looks odd but proves nothing: the valet and the maid hold their own tickets. The holder's name is what to check."],
+ 10: ['The telegram of chapter IX says a regular bought the ticket. Regulars have six stays or more: GROUP BY guest_name HAVING COUNT(*) >= 6 in `hotel_register`.',
+     'Two stays share a night when each one starts before the other ends: a.checkin < b.checkout AND b.checkin < a.checkout. Joining the register to itself on that finds everyone who slept at the Ritz on a night the gentleman from chapter VIII was there.',
+     'Keep the regulars missing from that list (a LEFT JOIN with IS NULL, or NOT IN). Almagro and Sernine each crossed him at least once, so one regular is left: the same man under a second name.',
+     'His suite, his price or the length of his stays all lead to other guests. The second name shows up only through dates that never overlap.'],
+ 11: ['The porter heard the lift at 02:10. A suite whose guest was out then made no noise in any ledger for about an hour around that time.',
+     "Three ledgers record a suite's noise at night: `lift_log`, `room_service` and `telegram` (the wires charged to a suite). UNION ALL stacks their (suite, time) pairs into one list for the 18th before 06:00.",
+     "LAG(time) OVER (PARTITION BY suite ORDER BY time) puts each event next to the same suite's previous one. The time between the two is that suite's silence.",
+     'Keep the silence that starts before the lift went and ends after it. One suite fits.',
+     "The longest silence is a trap: Velmont's suite is quiet for longer, but it starts after the lift went, while he was painting. The lift log alone misleads too, because it misses the orders and wires that break the other suites' silence."],
+ 12: ["Start from the shell account of chapter VI and its forty thousand francs, as the story's table says.",
+     'One door was paid in two halves, so first add up the transfers after the theft per pair of accounts: GROUP BY account_id, counterparty_id with SUM(amount).',
+     'WITH RECURSIVE repeats a step. The first row is the shell account; each next row is the transfer out of the current account worth 98 per cent of the current amount, give or take a franc.',
+     "Stop at the seventh door, then join that account to `bank_account` and `person` to read its owner's name.",
+     'Other large transfers run in the same weeks, so following the biggest one, or any account above a sum, leads elsewhere. The 98 per cent rule, to the franc, is the one that stays on the road.'],
+}
+for _ch in CHAPTERS:
+    _ch["howto"] = HOWTO[_ch["n"]]
+
 # The Suspects gallery. A suspect appears once met: when the story of an unlocked chapter names them (`meet`),
 # or earlier if a query result the student sees shows their name. Each note is added to the bio once chapter n
 # is unlocked (reached), so it may tell what the chapter before it revealed, never the one being played.

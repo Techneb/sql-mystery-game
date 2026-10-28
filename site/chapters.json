@@ -233,7 +233,18 @@
    "answer_sha256": [
     "06ceef9715535b739e13f0eff2d08f2a4d57b537aaa549facff529eaa2af02d0"
    ],
-   "where": "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry."
+   "where": "Before searching the reports, read what the night porter told the police in `interview`. He says when the lift went. Check which date a report for that hour would carry.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "xB5MyPooeP9CZALPKMGa2A=="
+    ],
+    "wraps": [
+     "ceaVNiAYlxHwk2j0mlag0In1ZEDoT13lhVYuiXkBBEn0rySch9vm8iB+mDFBmTru"
+    ],
+    "ct": "JxLjzenX7b5haD48HUzW7xeZmhI8PVc3m8irT5+Dj8Q8mB75XlpiEXrK/hFQ7v472zm+PcgT7fKGx4rsX+l5BW0W4+qT5Zsvhypvj1sXkVVpvl5kJ4OC45XWubS6s/Rlb/KubwWXhTAjmYJjyKrPKrePLlnzu1/1lk3zhRFzVqj12H323iX1A0dpBc0ToAbyO4rVAwIz8Ak1tbLI3JT/V5DQQt5h0TnaFz5smQnyozRnH0Jb8PzF5ayox5pWEF5RGFZZKd6IfgbyGw3iKxO4Pe8ANPUoJQf+irC3jOSp5KtkKznfnmGx8h+YWDB+zdj04Rb5i/klPLolJbt0dABwjQtPlc69t6xZpF5rqcVYVq5+q4uPDOYTmmb9eM6WTjmwALMg/9POKowF1sTGwa8LkLsY4lgsDJgJPxIUJ8JHBtWMcRjfKFcoV8Igrbgy7eSwgNaCogLPQab12sBX84DN0QltvCFhSYViW6UuTf4CHKX6K4UA57AdiJIN3LO/kErYRAJ55W/3Z/5wkZyZ41HnqDN1V0UA4EG74lNnMa4BrLjq5OS1Al0sy5wo2d5lMQwNKd3Jh7pj61XrcWUOK+d/hRBUOl//jMT66Q8xTZQHLDNE9rybyEEANoJelf6HNMUuqcZp65yuf11ucMdnV6Gf306KnlcDQqSLk3mo4UUuUuIQjm2EJkE7xnaBhHu9iItifYal8zJsxCMg6pwBlMwayoCwDYLIoHvMVFWMxEiuYAn4Y30GQ7L+jYACNFdwP4m7VWKpkOIe5aa7xyHSykihadO+qZm4f6iklUvTLw1VT7Sc8XleW//Uxf7xBC+4CnKY/9n33AdTjlYVDM//myfOpoSAxEhKDb6kCHSVHS6k6ncXZLliP5B2bX9jBzvk8VFqZnCe8x24r0RSR+Nvm3Ygmjk4o/whoYFCnexvnoJB+HWzkHuiDp04EKAFttguCUpv9UgtI4MOFIcNOvt4nvTluX+eJg98sPNXdjTvf7f9PeumQhAr7k6Q+Nhz6eZOFJDJGrXFYV+GRxre6W5NfrgMqe4s97zo7rlDhPkVgEWpRM2Czu7QbPcw/vA5ZTy6HrZ34AE25r916KXKjyvtwr3E9FKLh1swZ61gdpVKAwBjfJo6y/tdC4UUuIqfWMGnK16ph9vq95nF38OnHKfBwY2TUJAykhaYycAHAN6V6MDggkhUcA5Xeeb9bR0CbQ83HhMHlVEUIaqU6ERRQIUAtE8VtIluDaDTTzO1nTe1pA32gpBb2YULkWx4TqOcAi85up0QNQKYY9aCNL+Lbje9e6Y=",
+    "tag": "Kvgd3EiEXEy0XPktB7ei9iqs9VEZdzp+yWo77CQ/5rE="
+   }
   },
   {
    "title": "The Neighbouring Suite",
@@ -251,7 +262,18 @@
    "answer_sha256": [
     "2bfed5243b13cf6ecaaef3b52f924a77ace86b858b6877633ffe1afd9f2b7432"
    ],
-   "where": "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price."
+   "where": "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "ZrMAZ3Twcg9upjC248HdeA=="
+    ],
+    "wraps": [
+     "+xt0lMCM03k1vxDF+ilMF/dLQk0ANdAb0wtg8JFpjWGKXbKdpPpq3LOii+VtQM4l"
+    ],
+    "ct": "uuvYpfLC+/CemMyRcc/FOgp7GTMHPOAlrssh4xI1BouDfjoYR5MadV6NV4RgCVruQNhd2mYdGpGhn2hseB36srHXodmH1snOv0po2izt4VrEVBCv4jbc0KaCQZvvHW8lCZCH40Y0Ec+k/FXC17ruin/a1kKa5LCoWlmCiZOBEBh8lni5SSS8zHkbeVK75rqlH22MT3xQ5rHOLpPlBwCtM3uTZqVB9sNJF4MxkSWZ0A9bitBiMrgGQRTlq6oYJlmn1lJAuFJ5UB6gFv1RccxW6UkfeM401vVaZBHgsPxuJJsR75Eq26FTz34HfY4AYjumtSXC5BuIv98z1XwfbCL8V1Rdu8eD73oqb1fL+pW99RY93U4QSY2K3IpafEQedGW0PoE75EPbOwgxeECBQOzLpkciEjIWPLUqSkSnyIy3n3lgpDRBPsMZfo/hIg4s8G68Sdl9AiwuudCDF2NYVAHYmjvbgKn+eza0c2ByeOyQUQ5KO56FjJc2pCIytw8alhwlOLEf5m8NRSvzGvUuFx0B7rWlH+ZcMkfm/5I7hq7OQRDuOqAurpN/UvriGec+nHbt/1Zxag73mhMEYthZYoltstcoiOh8phfHeIM+YxjPNatMcstSoTCMqaakdQWg7PHvIyJMq4pTyCODeYUrCThjzSTRgmwKrOf71ZHwQINRLvI0KDOzZUQ+e/lei+suKaZMPxVJOKZaWJoSWZh9CLvduD345IT99SstrN8jwPk8kVE9thKdeFZU3gkHRN2ND3Q2o4IWCS4GAgsPRymt6c6mY9akuo4XX7J7QJP6zttQJiS7jfXea4DGYobnUnNXyKvgyf3MvBfWYksL/t+++OvaE3UvFI3qQrsC5yWDp3PoesMgE++2cH3BopPRfL5sNFtNa5cRMKQbLW8CGXhwjvJjQ+PE2cnByKGCdOT/Akt1+SKaPfCT0RpN79QvuNS0DPYtimCc9jmG+QyS7YwQhmP+TOWXKkSfjKIFKZPi3wPynHL79ble63R0huxDPpEUYIS2qJP12R40ERDFdyumc0PXOUS8JR93apc1tdVgNLhxckGFJQww03/hN3g03Yrr7C45qsws/q8yaRScDHBPOtF7XwNkrs/yN1pQwwSrwruo7nm3LidzJayRPYpLlrLQkPoiFig4nM4xUAfzXgbqxfMC601et6ZdXJ9t4DdqwnemsUj/zsvxyi81sQUloRUoYW44JutKr2tRJ6jA/Ci07Q9ykxfECgfKnpnEH62GbNnoA+0laDdIhPcbJ+pEdJqT1A==",
+    "tag": "ph6mKpesqAwmB2g7Jl6UBZpNehMUV6JVmcpN0rutUUc="
+   }
   },
   {
    "title": "A Plate in the Dark",
@@ -268,7 +290,18 @@
    "answer_sha256": [
     "27d6a6ca8995fb021b2bc928319ec3b3b3ab82d0744fc45077c5ca8175638ea5"
    ],
-   "where": "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date."
+   "where": "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "G+Og1QV/hB5tlSMqK85Vhg=="
+    ],
+    "wraps": [
+     "rtCwHLIqfbzuRzpb+1aILUQf22PxUCb5qiBaPrrP57Mjl1gLtWIBwuQiM1+doWDj"
+    ],
+    "ct": "eAU5rfL8ywJpQIMaVZ3+LGz5h011WAmi9lIP7gMdPtqq1AZRRGL0QPj0zmar7JQP3s8gArR6o0wz+A7FPDTu4bAz8J/xz3qshj+xnwvztyzJauWkCmz/JCQvy9EIW16DQjntAPs+lliFfpfJwMzFDwyPNbLECHjpJ07An5B8RbA3VQA4t5WfJ1xlGYs78ckprS1Yv9Y18CjJUwDBvnL5B15gi9K97yL2F1v9IudZ2uT+c2IawWD014U0hMw7yebtd4KNuoXO3HTx7gMKuN/xV6Q/LbIfwKa61h8oBKATws2AgOEeQqhHFQzTdJQ7EezIiB6R/FLpCe7U7Y7BFNZFUr8jUChx73GhDpXIVU0xWA1rTSVW5ZHVK8IcptOI1ASJ1Iwh+N9rw0qiqU1grv+s5KrErWGVrHfDTPN0eaZ9FrrznHLy/j59RmApGvaPbKrtKBVpK1aCHXI1acFBVo5jmGsAHJ7pP8m4cXijKjjdtRAj4hPjCoxFg/hASglULRmYzpnXYnhWpy6fucK3V5jy8KrKW9zqPPgUIqMzzsjW7usFLlHf8NQD1u5oQ2mO1bV6r88XdhUWu6He4/56F4fZUCX8Qrny5CMvrM+w9ytqL9dEul7w3KOSmUOLl20FRHMTIy3y9ZRMIy6fQnRQ85hcUzYMgYKBrlsaCQyhu6u5IUwALWR/IulUuXXOpLoGH1mtZUIF3KwgERhri7JwVvpVWTkq39oXbO76iNujKqLiqMjiFOsmD8dhtJMoe/dnquCgLXADccjMQvOTQviNFtSDsjkIN+5uRtniakAdA4kCqBkrlR5gPYSq/ideT1yUv4DBpDza45DcnV9cw5XjZXUhUknjnF6pSyTgZpbOJrDZ2Y491shpZWFapjmSkeoKMwxg/gGKmvtoKSeK+wIqQHM2Izg7omBxd1TDDIXBnLUK+0/1bYWsAUlXg6ZXMixRmgZRy+f6uum+sgY6TWJI9pEeX7zGk6GyD2qmY/Io14KM91eYiphOlN+HUihdHXa5HgdKPSrFluhjQa6k3sOTVlL+9wbZUBDc5ErqgY5/AWDqbbCyjfLjugegmoCjyXTE8ZwxuinEHIXI3WtN3dhJ38IymZx1/a9kJeRZUZUDtXf3smuYbCjfwvTS/bGqjWOWWv/YfZ0WqjyVjgatH7dDBGHo2bBVXV4kutQDzskYwR20OBefAqsxgptkp76BBHcW9IllM6Fx/hcLIcdTrvX/w/uikVJPnhm5VkhWH4DbdVml57kUScjGuvVC2KGNnxK+G30+YbODVR+Fs5TlwyFqxPnEM/qcUmh5wAhSvODXhXyH+SZTaPu+Dw9hVGssaULpKeGqjNO+Ghj8+1SLSgyEFHE42550a1k3wBohIgFXz0J9WjI2ClWuPxjCpslUDQ7I3p5Q",
+    "tag": "8O3XKnTZIT+I0arfOVC0dxg/Kx3BjSFTOa4UACgacvc="
+   }
   },
   {
    "title": "The Cab's Week",
@@ -283,7 +316,18 @@
    "answer_sha256": [
     "6d71eb5495c5a18d933c60ee4d5e9999e9bef84fbf614721e3d3ac425287c4cb"
    ],
-   "where": "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address."
+   "where": "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "ZMz61Bl6uCBpD+z++/wIAQ=="
+    ],
+    "wraps": [
+     "5ZsYueWb5qZ6ZV5z6T6fu0QhIF3BgOsM7aqJOjeExiv0jXpbI4GOFWVxA4YSLeRU"
+    ],
+    "ct": "8P6thIXyJZkYLL7y/MBrfNvNW7D9dVeXJDxtuHiHX0As4Wm918CxdHSknXX5yd4+Vb9HobsOkm+zY1uom/lSBlTPtXQAi3h4nXQ7xxy938esp7Yin5NeG/nBfsTVPpj+oE0ibsycC0KPBXwpmrT/1JqU6PFFxKW/wws7PMMksRmB8A4HaIGyu1rQgOEVz6b6hVbwn/dJ1QjxlYd74FgchMAWLGhoOffRUnSWxvhA0cdtISF0hV60tMOHeVrkSbZW+rSO9VKiewaxpHz48PwhuOYPNE/0dV3pzHIKfR8qq8DPq2OeYjKG90aUyirLJSf9/Ao9gNobszqDTMiCILKbVymnHpqgucn4HHe85JkcHZZd1bU3qZeXt96l55EzTRAXBtV+6mx3V9oteR2ACjlp5aaAB83VG9zJxyvlR7DgS4HDu4HKgvsiGAMK6bCKc+9zhv2evIERezrWNkKfVbRTKzdLgwTcAWtHPynhE4RKQjr71KJHtznA2BhHX0IEQesPeTKQ6zTmiA2vcWOukY6el9WcSQvG8FXCAAkLUpUDULqsPpJBmm+uy2vXAD6o0c9w+5tuHfFlLamO30dtWoZgIt1nJU9zcjPl2iCVWUdoGNRezWLtotPfR1A76LOA8xX4IsGx+tEXDrZewmbATT70lZbncYrngS4Oi7afCA1wHhxPxKuQf5MenF+wVpLI3ttRcvWBN0o3PD8fhCgKG9RYgjxjAOiIisYxWcjeXP9VZ5LMKSK1I+aSXw5X9Kztg08Vp0rwJTA4on6v/euHUil8OtOAHLcOzMy+G7JuGQkXCj5L55XMM9LOLEz51bu0ZSRALIyl+DR7tGeECx4yn2yO6Kwo2qqqN0Vr7KxuJvt7WIdXstWTMm5thoJRi3rZ8d/AgCjYBc+JhWKLB9q0baNDgxI2Dm7zeOe/T1XloHuvdZ6mzb4dy7VZOghWkaPdUrIdKJhJX8VENM63ckCtwVUJNr08UrHFsLjytsVBHL4huQv6qH105Gc71maWbRxjE3elU8q3TJz4EVBsXURKEecgI1n/98dOf6ucN4CFRaxHb+bDud6KxIJSFHzALxPhZt834V/POCf3UKAQPrygjlCtdiHIfBaf0nXq2qjsQtrsEAYOHHVaCEzlUa0W0R6dxXpyx/IkVP4PTL+r55M9I8YaHA3I9Ny0vbERHIzv3c8bOgKYpixqv8D2N2v2Lk1WYNH76OEppo5nu5SuomS0NZKHKg23DNcDPpN1/U+cfSpPWkvl9fOBBvl/CLzXVqkTeUhIRm/ihIsJ",
+    "tag": "esGn/wkkFQS/mdaFWgexMthrXEfhlDWKihCl0MzuTGY="
+   }
   },
   {
    "title": "The Boarding House",
@@ -303,7 +347,20 @@
     "19ff3eb5cfacb9fdaa755c9ce0fb8774ba68f4821b0d6d44998db1b0553ecf2c",
     "5dde5e4b49fe2adc11c9311f47537f78a166acb40c1e6873d9915a7c2b0f7190"
    ],
-   "where": "The address from chapter IV has its own id in `address`. `person` points to it: one of the people living there has a trade that fits."
+   "where": "The address from chapter IV has its own id in `address`. `person` points to it: one of the people living there has a trade that fits.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "xq0jp5NGoL0Tq8eKSG1qIA==",
+     "e7PFfjpyq2Mn5xUeUXZa4A=="
+    ],
+    "wraps": [
+     "vMiF6hLJ8pgOfL45xTXGNZH7CJIq5OM8FrHvoyjh+82dipk4Lu+3wrkmVkBiDpYd",
+     "azOXCQa3VQlnQLDER1sxBLkXAC03pw/NOv6IV1Q+ChypIYwXm7eNjPgZ6CRXrNT9"
+    ],
+    "ct": "nRX92okTqDprM92OpUAmakvNjflTGpV8YuhwvgWl8cV1TKNZUV4BKwV8ZeXKdFFPh7oZM3KesJMNOxDr/0nRW5dpfgBQ1EVdOYHSV8xUTpMQ4WTcDg/nZdvZVSIhARf/EmdGR2Fsr0d2/snhWuUA37KuKm7cKcSKPZk6O4YeAVjIbQRJy5amkOrq4kosKbW5KY78BQ+VNx88I2BzTarzUR9oLuhRDd8jV85I+MfI5fqW0iQK5iogAmn2eJYjvTKuGUFIaWb4ZZGqAxNE67T1S2D06ZxJy0WLMZjfUUAbUbfEKfzkAjGdwF4SEVzwwv/+WLIZiwTWX2Qnm2lcuss76m3WZQF8V7DUDX2tV5MMWpmbYPdQRTtLnkrXOS/Uwp1NH2HP7FR6mJ/R/9EjLQwSxHhuLOCL9Z4tSUx0ok4OXplte7DP02BlEAyMn2ZhvJY/wCA+1h0OqC135WiVz55dZ/q6f8whcnMJnFy5AfMD3LuJwiqP9Qx7baGcPltmMAT4m3dCloaYZgJBycdf0bLnI88VDtK5tq6QfxShlnANsjVNn5Nmxs8ayZ/u8p9lV7taEriPnse3h4ldTmOEUqbgu2izlJdn3AbFgjRYjBThkUg9buyCBndNDuhyTQ+K6wKgLTLB/exgb4txTosVxjIvWpkSj8PXetLzeurBqdmrmHYam3hrceqDdbrRIjindFKHrB1ZaOLFXE32LucRBGnyd5Zc3+J8berRuwI6Lx9wmOF7u2/ZxPNn8O0SkXRakmWDX2OVBY4nlFOfd5N3Br0zMTShw0XhcMxTX7kCjtyUtg1Fy4NUDg8Y5imIm1YQ4iHnTB0WcR6HQdfQfBdty7Tc8/Tt17m5ua9WdOvvK1wtaXKkIhdqKIjLrLIdcWlZ7tHzGVusZ3AMgdXd8zcnJNlDfIttVH4yIWojgmFHMLYQQor7WwAOGuGskPGDMIbIwR+ACcoQWC7Fe/lMMKdxlrNfnspb1tXPYB+F1Axug+7bcp8cYW/J0CQv+Bp3FgymEowwwRB/VVYIimXLYqzJf3o9i4JDdOLoIPH8Aqthz+fzHyqJJCEeVFpklH5N3CHR6zUnqMqIAWRJlnsEmcCvCaZU0heHxigN0egLBtjG75CIv6Y2fI8df2yoDbqTAPW3Q4NwNoLE+MTUWYXzX+kJuY+lB9vigYnztoDmivHX3hw4LELbuFVm0mGvkr8mfmBztLm1DudcKcPHRGc561eYdoMQL8B/yTIzOEnY1/6uj+FIqPTI1fGnd58p8kHiO4zMj108GAn9dh+XFx7gI5J+VTU8N90QTLjYcuP6/bOt",
+    "tag": "jzRU83I+NQy+RRMJIV1V5v8umH4bUlt/30CY7A99EJU="
+   }
   },
   {
    "title": "Follow the Francs",
@@ -321,7 +378,18 @@
    "answer_sha256": [
     "fe6340be87fd5e43b7f0cac5741e76205dd69a68b2024fda16c696848a720f7a"
    ],
-   "where": "Start from the jeweller's own account in `bank_account`, then his May payments in `bank_transaction`. \"Three pieces\" means three payments to the same account, so group by the account that received them."
+   "where": "Start from the jeweller's own account in `bank_account`, then his May payments in `bank_transaction`. \"Three pieces\" means three payments to the same account, so group by the account that received them.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "615+i6j0a03HEnlEXW85Gg=="
+    ],
+    "wraps": [
+     "+FN0gpji14O2VVDwQlchhLaY8n3ajzvc7zc9c7zvAhR/DtIxmUYIXYl6Fupc0K9G"
+    ],
+    "ct": "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",
+    "tag": "coTbU2YdcB7jGKRwifI7+3ioaV7w4mUepiDRfP6gvow="
+   }
   },
   {
    "title": "The Quietest Hour",
@@ -338,7 +406,18 @@
    "answer_sha256": [
     "c47e82e01e20ad22f816159eb3c3c048308ffca5b116cfc0c9aaaf012ee5b729"
    ],
-   "where": "Before choosing a box, count the Ritz wires of the 18th in each of Ganimard's four boxes, with CASE WHEN inside a GROUP BY. The quietest box is not the one most people guess. A suspect's card gives the signature letter."
+   "where": "Before choosing a box, count the Ritz wires of the 18th in each of Ganimard's four boxes, with CASE WHEN inside a GROUP BY. The quietest box is not the one most people guess. A suspect's card gives the signature letter.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "iQOi3E6RfPpCRLlvqxRz0w=="
+    ],
+    "wraps": [
+     "8y2uRXCePjljtAD98Fd+b6X7thqeboscwQIRdp7dZAqqDOd2NoZzyDmE/3VqJ57M"
+    ],
+    "ct": "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",
+    "tag": "2Ya+9GDVwlIQL7Wj+HhKHLeRvf93b1L4WcdpIHBmjrw="
+   }
   },
   {
    "title": "The First Order Before Dawn",
@@ -356,7 +435,20 @@
     "024c19a5b3272788562f6b42e508f38d594761b102bed30d5edfe37ef18a8c40",
     "de6f9b0fe8953bd5654b84b3e3cb7cda3b2c0cf2b7b08b514ef5b70855766662"
    ],
-   "where": "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches. The register names its guest."
+   "where": "Read the wire from chapter VII again: it names a drink and a habit. Number each suite's orders of the 18th by time, and look for a suite whose first order matches. The register names its guest.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "Gfdo3Rj1Nm+voXtAHoXlSw==",
+     "VTEO2GfDqeWCN4ikwFME9w=="
+    ],
+    "wraps": [
+     "XL0wWj8xbVcsxTLAxsU2GDOT1KCBN0+POiRNY4q2GqJXyGZmfJ/sgHm/aPa1kg+f",
+     "Vs+//sUZB6gup5VwL2Fr+V+3orOP9M2QKyI/pvLGIZOTTHw76fgq84MGpD5xoxNf"
+    ],
+    "ct": "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",
+    "tag": "DwSgK2eXifnqcZ+SkqaMRIFcmlN14bmBHDtobbPrv7Y="
+   }
   },
   {
    "title": "The Trunk",
@@ -374,7 +466,18 @@
    "answer_sha256": [
     "20377cec9f51f6bf5ba1fa64649f3b1614e4eee833fd0fc5893f24f6e0accbaf"
    ],
-   "where": "Put each of the neighbour's trunks next to the ticket it travelled on and the name of that ticket's holder. Then ask who belongs to his household and who does not."
+   "where": "Put each of the neighbour's trunks next to the ticket it travelled on and the name of that ticket's holder. Then ask who belongs to his household and who does not.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "4UYq+CQJ7zw44FWBocNzSA=="
+    ],
+    "wraps": [
+     "CctKui1rbqdjIQdBQ/WI48ChFt8O3vb2Sv8haKkyauxXZ9jLUTujmk84XaK2iCFk"
+    ],
+    "ct": "wP3mIvAcjfgLeoFTwohb/aZMcoHlQ1lEkIBRJnoKcdkuTXlyp3WKVXeme21FbrUIP1buF3Uzmjz1DEIr2STQ4TYlcgnszMIyDK9+6fj02pdlnnw4S0zFvYkWV8wg9UPJcHYF1Ke0CuY5GGmdQ/q6axBUo1d+Kf1xVvwzjUTcP9zrBnEv6krBsFfRiPH6D8GlhlQzIPfkpAzaiFp2D9y01hO0O7tdvwxoCzeiTHxQ5qufhTRrJGYLm7fO0YFFvRH23TJCU9fPKW/oHjkqW590VVE/02rB/MhlWW77VdpPpWF2hGaLAdapXwEK1L1v7K83zoSfsdXfPk6O3WVuVr1gbxsf12TnxaWOYn3CkDgkihEDhtPNwXRoK1t8SiswsaLJG2o9vPGaAg72TRpYxBQtD47BpUfkSP4Qzh9DYbzv30iXD6EMuoSqQtmoxnj56rntQw+8oWsWmS2cPIhki/3aYFLE2uQViOhLaUPniuXra0or5BIvLPq+rDVQxkH0YAPlppRkwRohvPVbduNYHbdlkOBNcngDGsOnszMwGr39qkWJHGH8WZckwCUGsBdz5O/AyHp3IMvekolpEQt1fZ/CPayZOXF1CTC2WekYJSeWsj2D7vZxCK6x6OQ1E2kBEkWIpv9gcQnq+kDxj2NXY9K6Pu/APo0V7u92IVQskudNO+G8EsjKvy0NGPJ4lB8MKIS1o0tHnmo3wRyrn97lTCD5Yrnx6n6hZ48+y8D1K6rzCM6B9xl99t/pTJX0/eaZAMClFaNiDYQCz88yJ646qckIihL9/fWCGCkJn4F/OYIRU82K8RP34SBfYl5+TjuvTVr2Qmo1/5x5QVqw1mA+c/3T6pnF9tcevbowEi6teA3MNLuueHbi8TnJiC4VmAszuHVp22jV1zAkZu5oEGIjxmL/eZ9uFodjTAObbwRzEy8xOTvaId182prQWLxEM9M7Pt1RjO8p84lObogoilPdCUHsyPBIBBDequAB2cIMkXqWTJv/SEmZQfbSXaOByiLli0HZv0DpZ6IX/TSnPk9X64chHcFr5DS9C7KNeZp3qsa3KWSj3pDDSQh3b4NvLTv3IfLJO257ujxdNWKWnJk02kyLFE7f9DvM26yjsdq7u9p2my1tK7oQH4KtbNZV4xKz75LkIUWfFs5tXd1RqSAC12daDFiEfdt41IEnrcaqhXGTAkQOZ43ksQWeNqKXr0iM2mppHdxeOW4kYpFPecfornCdfveI+IErvi7sAiafyug7JkrTz3b0JCS+rDypsf6dLzr/C53OeoyPpi0nJGUaWjFqwqs0MKx7nYxWkq8xId3UMNq/QsXp79/8az2BZpWOfGDcie0tcTUGvExuLkQwvZrm2SFkGuj6NpBpTDk9yokkM3VtB96Z+HLO/wPKvo0V7IYruPfbClBQbKfF0EdtXXjUcp5HI9UL2a/iEvD4f+AafQdu3VsXljNn0CI3peTLcsRTeTbiPn3vFewUKAeX/8nAqk3xdEBMoGcUHXgjy7AbCsHgX5KbsaPbwqu7wwUHNquhAjwf7aQNNhC+2b77pRBE3R6W+Gf6bzFpAODtnUKy0cv5eOE6kqE8NZ3pCAfsJ9TzLxJyNlCm/yOjqqSQlkKI/QPX+UHUvM5weKhyi+akTB7rqFVdQ8U=",
+    "tag": "ekx9Nmc5tJFcN4pPnWBA4w6FLktrfGJu04LVvRnRTls="
+   }
   },
   {
    "title": "Never Seen Together",
@@ -389,7 +492,18 @@
    "answer_sha256": [
     "67fc36385bb47db091a4d850d450021a8b7ba3b58615fc918808d4e636d8ad46"
    ],
-   "where": "First find the regulars, guests with six stays or more. Two stays share a night when each one starts before the other ends, so join `hotel_register` to itself on that."
+   "where": "First find the regulars, guests with six stays or more. Two stays share a night when each one starts before the other ends, so join `hotel_register` to itself on that.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "EtrXMm23fdy+tQEZU+YASw=="
+    ],
+    "wraps": [
+     "YACBGjklKSe8dZXlwfFCn3rQVKMKURngAOuIA6w7asi7f57Jy/hlJTDGwxaVrkWt"
+    ],
+    "ct": "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",
+    "tag": "e/a9e0Rmhtj5ah9UU9GVz6TOCati50M6bagFjVn4oEw="
+   }
   },
   {
    "title": "The Silence",
@@ -406,7 +520,18 @@
    "answer_sha256": [
     "802b906a18591ead8a6dd809b262ace4c65c16e89764c40ae326cfcff811e10c"
    ],
-   "where": "A suite can make noise in three ledgers: the lift, room service and telegrams. Put that night's events from all three into one list, then use LAG to measure each suite's gap since its previous event."
+   "where": "A suite can make noise in three ledgers: the lift, room service and telegrams. Put that night's events from all three into one list, then use LAG to measure each suite's gap since its previous event.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "2eD3GoSavmxRBIs/cew+VA=="
+    ],
+    "wraps": [
+     "4vGI1iHJGBSkSEbHYJswC8mo9dEA49i8zLQap16IEqZkpWapKoWRO02CP7NTrJca"
+    ],
+    "ct": "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",
+    "tag": "RSi20LVhV7HN7NWYesTgAaRWLux7JxOZV6TuhLtcqlQ="
+   }
   },
   {
    "title": "Follow the Money",
@@ -421,7 +546,18 @@
    "answer_sha256": [
     "5f4b9a3cb0977d77cc43bb37fbe173d26ede96c880d6074ae72555b7c0adcd8c"
    ],
-   "where": "Start from the account of chapter VI. At each step, follow the one transfer worth 98 per cent of the previous one. Some transfers are paid in parts, so add them up per pair of accounts first. WITH RECURSIVE repeats the step."
+   "where": "Start from the account of chapter VI. At each step, follow the one transfer worth 98 per cent of the previous one. Some transfers are paid in parts, so add them up per pair of accounts first. WITH RECURSIVE repeats the step.",
+   "howto": {
+    "iter": 200000,
+    "salts": [
+     "3d/blOvzp+1nYFs7O0+d2g=="
+    ],
+    "wraps": [
+     "wIic7qQBnjqZdpXsNmBWsjDTWjnMBODEITJgxT0QE4BP+MxMGieYYmHP6hzixy9/"
+    ],
+    "ct": "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",
+    "tag": "n6yMvAYPEpqXhV/VF5wwGhsfuU1gxKwtlRbJetU7dNw="
+   }
   }
  ],
  "decoys": {

@@ -656,6 +656,44 @@ class WhereToLook(unittest.TestCase):
             self.assertNotIn("where", c)
 
 
+class HowItsDone(unittest.TestCase):
+    """The solved chapter's walkthrough: encrypted under its answer in learn, absent in compete, story rules in its steps."""
+    def test_ships_encrypted_and_opens_with_every_accepted_form(self):
+        V = built(1912)[1]
+        js = g.chapters_json(V)
+        raw = json.dumps(js)
+        for ch, c in zip(plot.CHAPTERS, js["chapters"]):
+            forms = g.answer_forms(V[ch["answer_key"]], ch["answer_form"])
+            self.assertEqual([g.sha(f) for f in forms], c["answer_sha256"])   # same forms, same order as the hashes
+            payload = g.howto_payload(V, ch)
+            for i, f in enumerate(forms):
+                self.assertEqual(g.howto_open(c["howto"], f, i), payload)
+            self.assertIsNone(g.howto_open(c["howto"], "wrong answer", 0))
+            for s in payload["steps"] + [q for _, q in payload["sql"]] + [n for n, _ in payload["sql"] if len(n) > 20]:
+                self.assertNotIn(json.dumps(s)[1:-1], raw)   # nothing readable in the public file
+        self.assertEqual(json.dumps(g.chapters_json(V)), raw)   # deterministic: a rebuild does not churn the file
+
+    def test_steps_keep_the_story_rules(self):
+        V = built(1912)[1]
+        answers = [f for ch in plot.CHAPTERS for f in g.answer_forms(V[ch["answer_key"]], ch["answer_form"])]
+        planted = {str(x) for v in V.values() for x in (v if isinstance(v, (list, tuple)) else [v]) if len(str(x)) >= 3}
+        for ch in plot.CHAPTERS:
+            self.assertTrue(3 <= len(ch["howto"]) <= 6, ch["n"])
+            story = ch["story"].format(**V).lower()
+            for s in ch["howto"]:
+                s.encode("ascii")
+                words = " %s " % g.normalise(s)
+                for a in answers:
+                    self.assertNotIn(" %s " % a, words, "chapter %d step names an answer" % ch["n"])
+                for p in planted:
+                    if p.lower() not in story:
+                        self.assertNotIn(p.lower(), s.lower(), "chapter %d step names %r" % (ch["n"], p))
+
+    def test_compete_has_none(self):
+        for c in g.chapters_json(built(7)[1], mode="compete")["chapters"]:
+            self.assertNotIn("howto", c)
+
+
 class ChapterSeven(unittest.TestCase):
     def test_the_letter_is_only_in_the_suspects(self):
         ch = [c for c in plot.CHAPTERS if c["n"] == 7][0]
