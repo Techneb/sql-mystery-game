@@ -137,9 +137,8 @@ function renderChapter() {
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]) +
-      (pendingHere ? "" : howtoHtml(state.howto[ch.n]));
-    $("howto-now").innerHTML = pendingHere ? howtoHtml(state.howto[ch.n]) : "";
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]);
+    $("howto-now").innerHTML = howtoHtml(state.howto[ch.n]);   // under the answer row, just solved or reviewed
     showTelegram(ch.telegram);
     return;
   }
