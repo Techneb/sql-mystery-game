@@ -33,9 +33,10 @@ export async function openHowto(box, form, i) {
   return JSON.parse(new TextDecoder().decode(await stream(ck, ct)));
 }
 
-// The closed <details> under the solved chapter (and its board review); "" without a walkthrough (older saves).
-export const howtoHtml = h => h && h.steps ? '<details class="howto-done"><summary>How it\'s done</summary><ol>' +
+// Under the "Correct" reply as soon as the chapter is solved, and in its board review, always open (owner,
+// 2026-10-28); "" without a walkthrough (older saves).
+export const howtoHtml = h => h && h.steps ? '<div class="howto-done"><div class="label">HOW IT\'S DONE</div><ol>' +
   h.steps.map(s => "<li>" + esc(s).replace(/`([^`]+)`/g, "<code>$1</code>") + "</li>").join("") + "</ol>" +
   '<div class="label">REFERENCE SQL</div>' +
   h.sql.map(([note, sql], i) => (i === h.sql.length - 1 ? '<p class="muted"><b>The answer:</b> ' + esc(note) + "</p>" : note ? '<p class="muted">' + esc(note) + "</p>" : "") + '<pre class="sql-view">' + highlightSql(sql) + "</pre>").join("") +
-  "</details>" : "";
+  "</div>" : "";

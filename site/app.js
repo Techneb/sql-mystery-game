@@ -137,11 +137,14 @@ function renderChapter() {
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]) + howtoHtml(state.howto[ch.n]);
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]) +
+      (pendingHere ? "" : howtoHtml(state.howto[ch.n]));
+    $("howto-now").innerHTML = pendingHere ? howtoHtml(state.howto[ch.n]) : "";
     showTelegram(ch.telegram);
     return;
   }
   const ch = currentChapter(state, data.chapters);
+  $("howto-now").innerHTML = "";
   $("masthead-chapter").innerHTML = mastheadChapterHtml(ch.n, total, false);
   $("chapter-icon").src = iconSrc(ch.n);
   $("chapter-title").textContent = ch.title;

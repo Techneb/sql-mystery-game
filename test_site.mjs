@@ -438,7 +438,7 @@ test("How it's done: each chapter's box opens with every accepted answer, as sub
     assert.equal(await openHowto(ch.howto, full, 5), null, "no such form");
   }
   const html = howtoHtml(want[6]);
-  assert.match(html, /^<details class="howto-done"><summary>How it's done<\/summary><ol><li>/);
+  assert.match(html, /^<div class="howto-done"><div class="label">HOW IT'S DONE<\/div><ol><li>/);
   assert.equal((html.match(/<pre class="sql-view">/g) || []).length, want[6].sql.length);
   assert.match(html, /The answer:/);
   assert.equal(howtoHtml(null), "", "an older save shows nothing extra");

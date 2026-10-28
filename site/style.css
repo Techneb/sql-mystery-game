@@ -228,7 +228,6 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
   font: 13px/1.4 "Special Elite", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 /* "How it's done" under a solved chapter (howto.js howtoHtml, learn only): steps, then the reference SQL */
 .howto-done { margin-top: 8px; }
-.howto-done summary { cursor: pointer; width: max-content; font-weight: 700; }
 .howto-done ol { margin: 6px 0; padding-left: 22px; }
 .howto-done li { margin: 3px 0; }
 .howto-done li code { font-size: .85em; }
