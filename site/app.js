@@ -11,6 +11,7 @@ import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
 import { showExtra, showExtra2, part2Ending, certificateHtml } from "./endings.js";
 import { prologueOn, tourOn, showPrologue, CALLOUTS } from "./onboarding.js";
+import { openHowto, howtoHtml } from "./howto.js";
 import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText } from "./ui.js";
 
 const NAMES_ASK = "Names for the certificate (both of you):";   // #names' label, and prompt()'s where <dialog> cannot open
@@ -136,7 +137,7 @@ function renderChapter() {
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]);
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]) + howtoHtml(state.howto[ch.n]);
     showTelegram(ch.telegram);
     return;
   }
@@ -406,6 +407,7 @@ async function submitAnswer() {
     await scanning;   // the last run's scan is in
     const run = state.runs[ch.n];
     state.cracked[ch.n] = winningQuery(run); delete state.runs[ch.n];
+    if (ch.howto) state.howto[ch.n] = await openHowto(ch.howto, norm, ch.answer_sha256.indexOf(hash)).catch(() => null);   // learn only
     state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
     track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
                              queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0, route: solveRoute(run) });

@@ -5,11 +5,12 @@ export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
-           film: [], opened: {}, milestones: {}, fails: {}, hints: [], hintsWhere: [], suspects: [], suspectsSeen: 0, introduced: null, runs: {}, cracked: {},
+           film: [], opened: {}, milestones: {}, fails: {}, hints: [], hintsWhere: [], suspects: [], suspectsSeen: 0, introduced: null, runs: {}, cracked: {}, howto: {},
            extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0, onboarding: "prologue" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }; runs[n] tracks the open chapter's successful runs
-// (scanRun) and cracked[n] keeps the query shown on its case-board card once solved (winningQuery)
+// (scanRun) and cracked[n] keeps the query shown on its case-board card once solved (winningQuery);
+// howto[n] the decrypted "How it's done" of a solved learn chapter (howto.js openHowto), opened by the typed answer
 // mode is "learn" (the 12-chapter investigation) or "compete" (Part I only, against the clock, season-<db>.*);
 // in compete, season is the season record's id, db its database, startedAt its openedAt (the teacher's Open),
 // token what "join" returned; outbox holds events not yet accepted by the Apps Script, so a lost connection

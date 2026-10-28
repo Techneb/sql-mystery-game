@@ -359,7 +359,9 @@ device).
 
 ## 8. Backlog (not scheduled)
 
-- How it's done, every chapter (owner, 2026-10-28, from a player's feedback; not started): once a chapter is solved,
+- How it's done, every chapter (owner, 2026-10-28, from a player's feedback; built 2026-10-28 on a branch, learn only, not shipped:
+  the owner reads the twelve texts first; AES-GCM became PBKDF2 + an HMAC-SHA256 keystream and tag, which the stdlib build
+  can do; compete stays open): once a chapter is solved,
   its review shows the intended route in a few plain steps (which clue, which tables, which construct, the traps) and
   the reference SQL (the chapter's discovery queries and `solution`, as `solution.sql` prints them), under the
   player's own winning query. Every chapter, I to XII. The text must not ship readable: `chapters.json` is public, so

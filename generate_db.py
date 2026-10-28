@@ -1,7 +1,10 @@
 """Builds the Ritz Affair database, chapters.json, schema.svg and solution.sql. Stdlib only."""
 import argparse
+import base64
 import datetime
+import functools
 import hashlib
+import hmac
 import json
 import os
 import random
@@ -1230,6 +1233,72 @@ FIXTURE = [("  Phileas Fogg, Esq. ", "phileas fogg"), ("phileas   fogg", "philea
            ("Trunk no B-3", "b3"), ("B 3", "b3"), ("B3", "b3"), ("WIRE 12 STOP", "12"),
            ("stop at the door stop", "stop at door"), ("STOP", "stop")]
 
+# "How it's done" (learn only): each chapter's walkthrough ships encrypted under its own answer, stdlib on this side,
+# WebCrypto in site/howto.js. Per accepted form i (hashes' order): K_i = PBKDF2-HMAC-SHA256(form, salt_i, HOWTO_ITER);
+# the content key CK = HMAC(K_0, "content") is wrapped as CK xor HMAC(K_i, "wrap") + HMAC(K_i, "wrap-mac")[:16];
+# the payload is XORed with HMAC(HMAC(CK, "enc"), counter) blocks and tagged with HMAC(HMAC(CK, "mac"), ct).
+# Salts come from a Random seeded by seed and chapter, so a rebuild without changes leaves chapters.json alone.
+HOWTO_ITER = 200000
+
+
+def _hm(key, msg):
+    return hmac.new(key, msg.encode() if isinstance(msg, str) else msg, hashlib.sha256).digest()
+
+
+def _stream(ck, data):
+    enc = _hm(ck, "enc")
+    ks = b"".join(_hm(enc, i.to_bytes(4, "big")) for i in range((len(data) + 31) // 32))
+    return bytes(a ^ b for a, b in zip(data, ks))
+
+
+@functools.lru_cache(maxsize=None)
+def _pbkdf2(form, salt):
+    return hashlib.pbkdf2_hmac("sha256", form.encode(), salt, HOWTO_ITER, 32)
+
+
+def howto_box(payload, forms, seed, n):
+    """payload (JSON-able) encrypted for every accepted normalised form; base64 fields for chapters.json."""
+    r = random.Random("howto|%d|%d" % (seed, n))
+    salts = [bytes(r.getrandbits(8) for _ in range(16)) for _ in forms]
+    keys = [_pbkdf2(f, s) for f, s in zip(forms, salts)]
+    ck = _hm(keys[0], "content")
+    wraps = []
+    for k in keys:
+        w = bytes(a ^ b for a, b in zip(ck, _hm(k, "wrap")))
+        wraps.append(w + _hm(_hm(k, "wrap-mac"), w)[:16])
+    ct = _stream(ck, json.dumps(payload, ensure_ascii=True).encode())
+    b64 = lambda b: base64.b64encode(b).decode()
+    return {"iter": HOWTO_ITER, "salts": [b64(s) for s in salts], "wraps": [b64(w) for w in wraps],
+            "ct": b64(ct), "tag": b64(_hm(_hm(ck, "mac"), ct))}
+
+
+def howto_open(box, form, i):
+    """The decryption, as site/howto.js does it (tests); None when the form or the box is wrong."""
+    d = lambda s: base64.b64decode(s)
+    k = hashlib.pbkdf2_hmac("sha256", form.encode(), d(box["salts"][i]), box["iter"], 32)
+    w = d(box["wraps"][i])
+    if not hmac.compare_digest(w[32:], _hm(_hm(k, "wrap-mac"), w[:32])[:16]):
+        return None
+    ck = bytes(a ^ b for a, b in zip(w[:32], _hm(k, "wrap")))
+    ct = d(box["ct"])
+    if not hmac.compare_digest(d(box["tag"]), _hm(_hm(ck, "mac"), ct)):
+        return None
+    return json.loads(_stream(ck, ct))
+
+
+def answer_forms(answer, form):
+    """The normalised spellings hashes() accepts, in the same order."""
+    n = normalise(str(answer))
+    return [n] + [n.split()[-1]] * ("name" in form and " " in n)
+
+
+def howto_payload(V, ch):
+    """The walkthrough's steps and the reference SQL, as solution.sql prints them."""
+    sql = [[d.get("note", "").format(**V), format_sql(d["query"].format(**V) + ";")] for d in ch.get("discovery", [])]
+    sql.append([ch.get("explain", "").format(**V), format_sql(ch["solution"].format(**V) + ";")])
+    return {"steps": ch["howto"], "sql": sql}
+
+
 def chapters_json(V, mode="learn"):
     chapters = []
     src = plot.CHAPTERS if mode == "learn" else plot.CHAPTERS[:8]
@@ -1244,6 +1313,7 @@ def chapters_json(V, mode="learn"):
         d["answer_sha256"] = hashes(V[ch["answer_key" + suf]], ch["answer_form" + suf])   # checked in the browser
         if mode == "learn":
             d["where"] = ch["where"]   # the Hint's "Where to look" line, learn only
+            d["howto"] = howto_box(howto_payload(V, ch), answer_forms(V[ch["answer_key"]], ch["answer_form"]), V["seed"], ch["n"])
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,
                cast=plot.CAST, wrong_suspects=plot.WRONG_SUSPECTS, wrong_default=plot.WRONG_DEFAULT,

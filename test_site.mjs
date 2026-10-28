@@ -17,6 +17,7 @@ import { shareText, shareLinks, shareHtml, SHARE_URL } from "./site/endings.js";
 import { execFileSync } from "node:child_process";
 import * as shared from "./site/shared.js";
 import { levelId } from "./site/learn/exercises.js";
+import { openHowto, howtoHtml } from "./site/howto.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 
@@ -418,6 +419,31 @@ test("route and winning query: what the clerk's own runs showed", async () => {
   assert.equal(solveRoute(await scanRun(undefined, "SELECT 'Ashcombe'", { values: [["Ashcombe"]] }, hashes)), "unseen", "a typed constant is no find");
   assert.equal(crackedHtml(""), "");
   assert.match(crackedHtml("SELECT '<b>'"), /&lt;b&gt;/);
+});
+
+test("How it's done: each chapter's box opens with every accepted answer, as submitAnswer types it, and not otherwise", async () => {
+  const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
+  const key = fs.readFileSync("solution.sql", "utf8").split("\n").filter(l => /^-- {3,}\d+\. /.test(l)).map(l => l.slice(40).trim());
+  const want = JSON.parse(execFileSync("python3", ["-c", "import json, generate_db as g, plot; V = g.plant_values(1912); " +
+    "print(json.dumps([g.howto_payload(V, c) for c in plot.CHAPTERS]))"], { encoding: "utf8" }));
+  assert.equal(key.length, 12);
+  for (const ch of data.chapters) {
+    const full = normalise(key[ch.n - 1]), typed = [key[ch.n - 1], ...(ch.answer_sha256.length > 1 ? [full.split(" ").pop()] : [])];
+    for (const t of typed) {
+      const norm = normalise(t), i = ch.answer_sha256.indexOf(await sha256(norm));
+      assert.ok(i >= 0, "chapter " + ch.n + " accepts " + t);
+      assert.deepEqual(await openHowto(ch.howto, norm, i), want[ch.n - 1], "chapter " + ch.n + " opens with " + t);
+    }
+    assert.equal(await openHowto(ch.howto, "not the answer", 0), null);
+    assert.equal(await openHowto(ch.howto, full, 5), null, "no such form");
+  }
+  const html = howtoHtml(want[6]);
+  assert.match(html, /^<details class="howto-done"><summary>How it's done<\/summary><ol><li>/);
+  assert.equal((html.match(/<pre class="sql-view">/g) || []).length, want[6].sql.length);
+  assert.match(html, /The answer:/);
+  assert.equal(howtoHtml(null), "", "an older save shows nothing extra");
+  assert.equal(howtoHtml({ steps: ["<b>`x`</b>"], sql: [["", "SELECT 1"]] }).includes("&lt;b&gt;<code>x</code>"), true);
+  assert.deepEqual(freshState().howto, {});
 });
 
 test("case-board cards: a portrait for a cast person, the chapter's icon otherwise", () => {
