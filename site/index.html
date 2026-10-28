@@ -60,27 +60,33 @@
     <p id="status" class="muted">Loading the archives...</p>
     <details class="landing-about">
       <summary class="label">ABOUT THIS GAME</summary>
-      <p>The Ritz Affair is a detective story you play by writing SQL. Paris, May 1912: the Blue Star, a famous sapphire, has vanished from the Hotel Ritz, and Inspector Ganimard needs a clerk who can read his archives. The archives are a SQLite database that runs entirely in your browser. There is nothing to install and no account to create, and in learning mode nothing you type is sent to a server.</p>
-      <p>It is written for students of a first SQL course, and for teachers who want a graded or timed class session built on real queries rather than multiple-choice questions. Each chapter practises one construct, from a plain SELECT to a recursive query.</p>
-      <p>A chapter works the same way every time. You read the story and the objective, then query the archives: police reports, the hotel register, cab rides, telegrams, bank transfers. When you think you have it, you type the answer. A correct answer opens the next chapter and reveals its tables in the schema beside the terminal. In learning mode a wrong one costs nothing but pride.</p>
+      <p><b>The Ritz Affair is a detective story you play by writing SQL.</b> Paris, May 1912: the Blue Star, a famous sapphire, has vanished from the Hotel Ritz, and Inspector Ganimard needs a clerk who can read his archives. The archives are a <b>SQLite database that runs in your browser</b>. There is nothing to install and no account to create, and in learning mode nothing you type is sent to a server.</p>
+      <p>It is written for <b>students of a first SQL course</b>, and for <b>teachers</b> who want a graded or timed class session built on real queries instead of multiple-choice questions.</p>
+      <p class="landing-sub"><b>How a chapter works</b></p>
+      <p>You read the story and the objective, then query the archives: police reports, the hotel register, cab rides, telegrams, bank transfers. Your first query is already waiting in the terminal:</p>
+      <pre class="landing-sql"><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">police_report</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">5</span>;</pre>
+      <p>When you think you have it, type the answer. A correct answer opens the next chapter and <b>reveals its tables</b> in the schema beside the terminal. In learning mode a wrong one costs nothing but pride. Once a chapter is solved, its review shows <b>how it's done</b>, with the reference SQL.</p>
+      <p class="landing-sub"><b>The twelve chapters</b> (each construct links to its lesson in the handbook)</p>
       <table class="landing-chapters">
         <tr><th>Chapter</th><th>SQL practised</th></tr>
-        <tr><td>I. The Night of the 17th</td><td>SELECT / WHERE</td></tr>
-        <tr><td>II. The Neighbouring Suite</td><td>ORDER BY / LIMIT</td></tr>
-        <tr><td>III. A Plate in the Dark</td><td>LIKE</td></tr>
-        <tr><td>IV. The Cab's Week</td><td>GROUP BY / HAVING</td></tr>
-        <tr><td>V. The Boarding House</td><td>JOIN</td></tr>
-        <tr><td>VI. Follow the Francs</td><td>three JOINs, SUM and HAVING</td></tr>
-        <tr><td>VII. The Quietest Hour</td><td>CASE WHEN with GROUP BY</td></tr>
-        <tr><td>VIII. The First Order Before Dawn</td><td>RANK() OVER and a CTE</td></tr>
-        <tr><td>IX. The Trunk</td><td>CTE and JOIN</td></tr>
-        <tr><td>X. Never Seen Together</td><td>Self-join</td></tr>
-        <tr><td>XI. The Silence</td><td>LAG() OVER</td></tr>
-        <tr><td>XII. Follow the Money</td><td>WITH RECURSIVE</td></tr>
+        <tr><td>I. The Night of the 17th</td><td><a href="learn/select-where.html"><code>SELECT</code></a> / <a href="learn/select-where.html"><code>WHERE</code></a></td></tr>
+        <tr><td>II. The Neighbouring Suite</td><td><a href="learn/order-by-limit.html"><code>ORDER BY</code></a> / <a href="learn/order-by-limit.html"><code>LIMIT</code></a></td></tr>
+        <tr><td>III. A Plate in the Dark</td><td><a href="learn/like.html"><code>LIKE</code></a></td></tr>
+        <tr><td>IV. The Cab's Week</td><td><a href="learn/group-by-having.html"><code>GROUP BY</code></a> / <a href="learn/group-by-having.html"><code>HAVING</code></a></td></tr>
+        <tr><td>V. The Boarding House</td><td><a href="learn/joins.html"><code>JOIN</code></a></td></tr>
+        <tr><td>VI. Follow the Francs</td><td>three <a href="learn/joins.html#several-joins-in-a-row"><code>JOIN</code></a>s, <a href="learn/group-by-having.html"><code>SUM</code></a> and <a href="learn/group-by-having.html"><code>HAVING</code></a></td></tr>
+        <tr><td>VII. The Quietest Hour</td><td><a href="learn/case-when.html"><code>CASE WHEN</code></a> with <a href="learn/group-by-having.html"><code>GROUP BY</code></a></td></tr>
+        <tr><td>VIII. The First Order Before Dawn</td><td><a href="learn/window-functions.html#numbering-and-ranking"><code>RANK() OVER</code></a> and a <a href="learn/ctes.html"><code>CTE</code></a></td></tr>
+        <tr><td>IX. The Trunk</td><td><a href="learn/ctes.html#several-steps-and-joining-a-cte"><code>CTE</code></a> and <a href="learn/joins.html"><code>JOIN</code></a></td></tr>
+        <tr><td>X. Never Seen Together</td><td><a href="learn/joins.html#a-table-joined-to-itself"><code>self-join</code></a></td></tr>
+        <tr><td>XI. The Silence</td><td><a href="learn/window-functions.html#looking-at-the-previous-row-lag"><code>LAG() OVER</code></a></td></tr>
+        <tr><td>XII. Follow the Money</td><td><a href="learn/ctes.html#with-recursive-following-a-chain"><code>WITH RECURSIVE</code></a></td></tr>
       </table>
-      <p>After chapter VIII the paper switches to its night edition: Part II follows the case after dark through four more chapters and new tables.</p>
-      <p>In compete mode a teacher hands out a season link; each player picks a pseudo, the teacher starts every clock at once, and a class leaderboard ranks everyone by time.</p>
-      <p>The story borrows Arsene Lupin, Ganimard, the Comtesse de Cagliostro and the names Sernine and Velmont from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate. For the SQL itself, <a href="learn/">The Clerk's Handbook</a> explains every construct the chapters use, on a separate example database.</p>
+      <p>After chapter VIII the paper switches to its <b>night edition</b>: Part II follows the case after dark through four more chapters and new tables.</p>
+      <p>In <b>compete mode</b> a teacher hands out a season link; each player picks a pseudo, the teacher starts every clock at once, and a class leaderboard ranks everyone by time.</p>
+      <p class="landing-sub"><b>Learn the SQL first</b></p>
+      <p><a href="learn/">The Clerk's Handbook</a> explains every construct the chapters use, on a separate <a href="learn/database.html">bakery database</a>, with <a href="learn/exercises.html">twenty graded exercises</a> you can run in the page and <a href="learn/grammar.html">the grammar of SQL</a> in one place.</p>
+      <p>The story borrows Arsene Lupin, Ganimard, the Comtesse de Cagliostro and the names Sernine and Velmont from Maurice Leblanc. Everyone else in the archives is invented, and every name, sum and timetable in the database is fictional. The jokes hidden among its rows are deliberate.</p>
     </details>
     <p class="muted landing-foot"><a href="privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></p>
   </div>
