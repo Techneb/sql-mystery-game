@@ -728,11 +728,11 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(hasTip(g, "Suspects opened", "0\tusers\tc3\n0\tuses"), "known features listed at zero");
   // Google's ads: their own chart beside FEATURE USE (owner, 2026-10-25), clicks and impressions, GA's totals, zero frame
   const adsKey = "Google&#39;s ads on these pages";
-  assert.ok(g.includes("ADSENSE") && hasTip(g, adsKey, "0\tclicks\tc3\n0\timpressions\tc5") && !heads(g, "Ad clicks (Google)"), "Google's ads at zero, out of the features");
+  assert.ok(g.includes("ADSENSE") && hasTip(g, adsKey, "0\tclicks\tc3\n0\timpressions\tc5") && !heads(g, "Ad clicks (AdSense)"), "Google's ads at zero, out of the features");
   const fu = monitor.featuresHtml({ features: { rows: [["ad_house_click", 4, 5]] } }, 390, monitor.HANDBOOK_FEATURES);
   assert.ok(hasTip(fu, "House ad clicked", "4\tusers\tc3\n5\tuses") && !fu.includes("Ad clicks") && !fu.includes("impressions"), "users only");
   const ads = monitor.adsHtml({ ads: { rows: [[7, 300]], totals: [9, 310] } }, 390, "handbook-google-ads");
-  assert.ok(hasTip(ads, adsKey, "9\tclicks\tc3\n310\timpressions\tc5") && ads.includes('<td>Ad clicks (Google)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (Google)</td><td class="num">310</td>'), "GA's own totals, raw data");
+  assert.ok(hasTip(ads, adsKey, "9\tclicks\tc3\n310\timpressions\tc5") && ads.includes('<td>Ad clicks (AdSense)</td><td class="num">9</td>') && ads.includes('<td>Ad impressions (AdSense)</td><td class="num">310</td>'), "GA's own totals, raw data");
   assert.ok(/<summary>Raw data<\/summary><button[^>]*data-csv="handbook-google-ads"/.test(ads) && ads.includes('<i class="c5"></i>impressions'), "Export CSV and a legend");
   assert.ok(figsOf(monitor.adsHtml({ ads: empty }, 390))[0].data[0].x.join() === "0" && !bad.test(visible(monitor.adsHtml({ ads: empty }, 390))), "no reply rows: the zero frame");
   assert.equal(monitor.ctr(9, 310), "2.90%");

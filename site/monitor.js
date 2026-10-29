@@ -493,7 +493,7 @@ export function adsHtml({ ads }, w, name = "google-ads") {
   return '<p class="stat-line">Click-through rate (CTR): <b>' + rate + "</b></p>" + legendOf(series) +
     hbar([{ label: "Google's ads on these pages", values: [clicks, shown] }], series, w, compact, "Google's ad clicks and impressions") +
     '<p class="muted">GA&#39;s count of clicks on Google&#39;s ads and of their impressions on these pages, not users. The CTR is clicks / impressions, a ratio of those two GA totals. GA shows AdSense data about a day after the link.</p>' +
-    raw(name, tableHtml(["Metric", "Count"], [["Ad clicks (Google)", clicks], ["Ad impressions (Google)", shown], ["Click-through rate (clicks / impressions)", rate]]));
+    raw(name, tableHtml(["Metric", "Count"], [["Ad clicks (AdSense)", clicks], ["Ad impressions (AdSense)", shown], ["Click-through rate (clicks / impressions)", rate]]));
 }
 // Clicks over impressions as a percentage to two decimals (ad CTRs are small); "-" without impressions.
 export const ctr = (clicks, shown) => (shown ? (Math.round((10000 * clicks) / shown) / 100).toFixed(2) + "%" : "-");

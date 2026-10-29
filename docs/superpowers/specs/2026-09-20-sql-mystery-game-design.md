@@ -835,7 +835,7 @@ device).
   call), then `publisherAdClicks` / `publisherAdImpressions` / `totalAdRevenue` in the backend whitelist and an "ad
   clicks (Google)" bar in Handbook's FEATURE USE beside `ad_house_click`. Done 2026-10-25: the owner linked AdSense to
   GA4; the three metrics are in the whitelist (and the pivot table), and both the Game and Handbook FEATURE USE show
-  "Ad clicks (Google)" (GA's own total on their pages, impressions in its tooltip, zero until GA has data, about a day
+  "Ad clicks (AdSense)" (GA's own total on their pages, impressions in its tooltip, zero until GA has data, about a day
   after the link). Backend deployed.
 - ~~Competitor study~~ Done 2026-10-25 (owner, 2026-10-24): SQL Noir (https://www.sqlnoir.com/), public pages only;
   the note is `docs/research/2026-10-25-sql-noir.md`. Of its ten ranked items, built 2026-10-25: 1 the chapter I
