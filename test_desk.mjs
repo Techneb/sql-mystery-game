@@ -728,7 +728,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(hasTip(g, "Suspects opened", "0\tusers\tc3\n0\tuses"), "known features listed at zero");
   // Google's ads: their own chart beside FEATURE USE (owner, 2026-10-25), clicks and impressions, GA's totals, zero frame
   const adsKey = "Google&#39;s ads on these pages";
-  assert.ok(g.includes("GOOGLE ADS") && hasTip(g, adsKey, "0\tclicks\tc3\n0\timpressions\tc5") && !heads(g, "Ad clicks (Google)"), "Google's ads at zero, out of the features");
+  assert.ok(g.includes("ADSENSE") && hasTip(g, adsKey, "0\tclicks\tc3\n0\timpressions\tc5") && !heads(g, "Ad clicks (Google)"), "Google's ads at zero, out of the features");
   const fu = monitor.featuresHtml({ features: { rows: [["ad_house_click", 4, 5]] } }, 390, monitor.HANDBOOK_FEATURES);
   assert.ok(hasTip(fu, "House ad clicked", "4\tusers\tc3\n5\tuses") && !fu.includes("Ad clicks") && !fu.includes("impressions"), "users only");
   const ads = monitor.adsHtml({ ads: { rows: [[7, 300]], totals: [9, 310] } }, 390, "handbook-google-ads");
@@ -740,7 +740,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(ads.includes("CTR): <b>2.90%</b>") && ads.includes('<td>Click-through rate (clicks / impressions)</td><td class="num">2.90%</td>') && figsOf(ads)[0].data.filter(t => t.type === "bar").length === 2 && !hovers(ads).join().includes("%"), "CTR as a stat line and in raw data, never a bar");
   assert.ok(monitor.adsHtml({ ads: empty }, 390).includes("CTR): <b>-</b>"), "a dash without impressions");
   const wideG = monitor.gameHtml(null, 1000, emptyPanels("game"));
-  assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("GOOGLE ADS") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
+  assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("ADSENSE") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
   assert.equal(emptyRings(g), 3, "the failure kind and both mode donuts: empty rings");
   assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
   const h = monitor.handbookHtml(390, emptyPanels("handbook", { m: "ran" }), { m: "ran" });

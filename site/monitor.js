@@ -497,12 +497,12 @@ export function adsHtml({ ads }, w, name = "google-ads") {
 }
 // Clicks over impressions as a percentage to two decimals (ad CTRs are small); "-" without impressions.
 export const ctr = (clicks, shown) => (shown ? (Math.round((10000 * clicks) / shown) / 100).toFixed(2) + "%" : "-");
-// FEATURE USE and GOOGLE ADS side by side (two thirds and one third) when the box is wide enough, else stacked.
+// FEATURE USE and ADSENSE side by side (two thirds and one third) when the box is wide enough, else stacked.
 const PAIR_GAP = 28;
 function featuresRow(P, w, names, prefix = "") {
   const wide = w >= 900, w1 = wide ? Math.floor(((w - PAIR_GAP) * 2) / 3) : w, w2 = wide ? w - PAIR_GAP - w1 : w;
   return '<div class="' + (wide ? "side-pair" : "") + '"><div>' + panel("FEATURE USE", P.features, res => featuresHtml(res, w1, names, prefix + "feature-use")) +
-    "</div><div>" + panel("GOOGLE ADS", P.ads, res => adsHtml(res, w2, prefix + "google-ads")) + "</div></div>";
+    "</div><div>" + panel("ADSENSE", P.ads, res => adsHtml(res, w2, prefix + "google-ads")) + "</div></div>";
 }
 // onboardingRequests' replies: one bar per stage, each GA's own users (never a difference), the share of the
 // Investigate pressers only in the tooltip and raw data.
