@@ -7,6 +7,8 @@ import { themeButtonHtml, erdButtonHtml, feedbackButtonHtml } from "./site/ui.js
 import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPages, sitemapXml, READING, CHAPTERS } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
 import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
+import path from "node:path";
+import { exportFiles, stubHtml, pruneSitemap, gameLinks, ADSENSE_META } from "./move_handbook.mjs";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 // The Clerk's Handbook (site/learn/): colour_learn.mjs writes its menu row, pagers, side menus and index list from
@@ -348,4 +350,39 @@ test("exercises: the level shown first and the question each level button select
   assert.ok(page.indexOf('id="press-box"') > page.indexOf("<!-- /bakery schema -->") && page.indexOf('id="press-box"') < page.indexOf('<div class="wb-terminal">'), "under the schema");
   for (const f of learnPages) if (f !== "exercises.html") assert.doesNotMatch(learnHtml[f], /press-box|adsbygoogle/, f + " carries no ad");
   assert.match(fs.readFileSync("site/privacy.html", "utf8"), /ritz\.exercises\.history/);
+});
+
+// The handbook is served from https://alephb.uk/learn/ (move_handbook.mjs export); the game's site/learn/ pages become
+// redirects at deploy (stubs).
+test("handbook move: the export resolves every local URL and import, keeps no ../, and points canonicals at alephb.uk", () => {
+  const files = exportFiles("site");
+  const has = (f) => Object.hasOwn(files, path.posix.normalize(f));
+  for (const [f, t] of Object.entries(files)) {
+    if (typeof t !== "string") continue;
+    const dir = path.posix.dirname(f);
+    if (f.endsWith(".html")) {
+      assert.doesNotMatch(t, /(src|href)="\.\.\//, f + " keeps no ../");
+      assert.doesNotMatch(t, /mystery\.alephb\.uk\/learn\//, f + " names the handbook at its new address");
+      assert.equal(t.split(ADSENSE_META).length, 2, f + " carries the AdSense account tag once");
+      for (const [, u] of t.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
+        const p = u.split(/[?#]/)[0];
+        if (!p || /^([a-z]+:|\/\/)/i.test(u)) continue;
+        assert.ok(has(dir + "/" + (p.endsWith("/") ? p + "index.html" : p)), f + " links a missing file: " + u);
+      }
+    }
+    if (f.endsWith(".js"))
+      for (const [, u] of t.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)"(\.\.?\/[^"?#]+)"/g))
+        assert.ok(has(dir + "/" + u), f + " imports a missing module: " + u);
+  }
+  assert.match(files["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);
+  assert.equal([...files["learn/sitemap.xml"].matchAll(/<loc>https:\/\/alephb\.uk\/learn\//g)].length, learnPages.length, "the /learn/ sitemap lists every page");
+});
+
+test("handbook move: each game copy redirects to its alephb.uk page, the game's sitemap drops them, its links go there", () => {
+  assert.match(stubHtml("like.html"), /location\.replace\("https:\/\/alephb\.uk\/learn\/like\.html" \+ location\.search \+ location\.hash\)/);
+  assert.match(stubHtml("index.html"), /rel="canonical" href="https:\/\/alephb\.uk\/learn\/"/);
+  const xml = pruneSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));
+  assert.doesNotMatch(xml, /\/learn\//);
+  assert.match(xml, /<loc>https:\/\/mystery\.alephb\.uk\/<\/loc>/);
+  assert.doesNotMatch(gameLinks(fs.readFileSync("site/index.html", "utf8")), /href="learn\//);
 });

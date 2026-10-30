@@ -34,6 +34,10 @@ jobs:
         # After the season build (the season-file test is skipped without it), before anything is versioned or
         # uploaded: a failing test stops the deploy.
         run: node --test test_site.mjs test_desk.mjs test_handbook.mjs test_backend.mjs
+      - name: Redirect the handbook to alephb.uk
+        # The Clerk's Handbook is served at https://alephb.uk/learn/ (move_handbook.mjs export, pushed to alephb-site):
+        # after the tests, each site/learn/ page becomes a redirect, the sitemap drops them, the game links there.
+        run: node move_handbook.mjs stubs site
       - name: Tie the pages to this deploy's scripts and stylesheets
         # Browsers keep scripts and stylesheets for 10 minutes; versioned URLs stop a fresh page from running a stale
         # cached script (app.js passes the same ?v= to the data files it fetches). One rule, no list: every local
