@@ -43,8 +43,8 @@ B2. Home page, Ritz Affair section: check the handbook bullet and the "Open the 
 B3. `ritz-affair.html` and the articles: one sentence each where the handbook is named, linking a specific
     lesson (e.g. joins, GROUP BY) with a relative `learn/...` URL. Original wording only (no text copied from
     the handbook or the game: duplicate content).
-B4. Check: every new or changed link returns 200 (`curl -sI`), `LC_ALL=C grep` not required here (the site
-    has UTF-8 copy), then push and check `pages-build-deployment` and `curl -s https://alephb.uk/learn/` serve it.
+B4. Check: every new or changed link returns 200 (`curl -sI`), then push and check `pages-build-deployment`
+    and that `curl -s https://alephb.uk/` and `https://alephb.uk/learn/` serve the change.
 
 ## C. Game repo
 
