@@ -465,6 +465,14 @@ test("bridge import: a key the new origin lacks is written; a held key is kept u
   assert.deepEqual(importWrites({ "ritz.learn": save([1], 9) }, have({ "ritz.learn": save([1], 3) })), { "ritz.learn": save([1], 9) }, "same chapters, more queries");
   assert.deepEqual(importWrites({ "ritz.learn": save([1], 3) }, have({ "ritz.learn": save([1], 3) })), {}, "a tie keeps what is here");
   assert.deepEqual(importWrites({ "ritz.learn": save([1], 3) }, have({ "ritz.learn": "{broken" })), { "ritz.learn": save([1], 3) }, "an unreadable save here loses");
+  assert.deepEqual(importWrites({ "ritz.learn": save([], 0) }, have({ "ritz.learn": "{broken" })), { "ritz.learn": save([], 0) }, "even an empty save beats an unreadable one");
+  assert.deepEqual(importWrites({ "ritz.compete": save([1, 2], 0) }, have({ "ritz.compete": save([1], 9) })), { "ritz.compete": save([1, 2], 0) }, "a compete save ahead wins too");
+  assert.deepEqual(importWrites({ "ritz.exercises": "[\"a\"]" }, have({ "ritz.exercises": "{broken" })), {}, "only the two saves are compared; any other held key stays");
+  assert.deepEqual(importWrites({ "x.ritz.theme": "night" }, have({})), {}, "the ritz. prefix starts the key");
+  const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  assert.deepEqual(readImport("#import=" + b64({ "ritz.theme": "night" })), { "ritz.theme": "night" });
+  for (const h of ["x#import=" + b64({ "ritz.theme": "night" }), "#import=" + b64({ "ritz.theme": "night" }) + "!", "#import=" + b64(5), "#import=" + b64("ritz")])
+    assert.equal(readImport(h), null, h + " is no import");
   for (const h of ["", "#", "#import=", "#import=!!", "#the-cheap-shelf", "#import=" + Buffer.from("[1]").toString("base64url"), "#import=" + Buffer.from("nope").toString("base64url")])
     assert.equal(readImport(h), null, h + " is no import");
   // app.js imports before anything reads storage, then drops the fragment

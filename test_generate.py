@@ -32,6 +32,7 @@ FIXTURE = [
     ("Report id 4127", "4127"), ("Suite no 0214", "214"), ("Monsieur Ernest Grimaud", "ernest grimaud"),
     ("WIRE 2718 STOP", "2718"), ("STOP READING THE NOISE", "stop reading noise"), ("READING THE NOISE STOP", "reading noise"),
     ("stop", "stop"), ("STOP STOP", "stop"), ("27 rue des Martyrs, Paris", "27 des martyrs"), ("0", "0"), ("000", "0"),
+    ("12 B 3", "12 b3"), ("B 12", "b12"), ("7 B X", "7 b x"), ("B 7a", "b 7a"), ("A7 12", "a7 12"), ("7a 12", "7a 12"), ("007", "7"),
 ]
 
 
@@ -39,6 +40,12 @@ class Normalise(unittest.TestCase):
     def test_fixture(self):
         for raw, want in FIXTURE + g.FIXTURE:
             self.assertEqual(g.normalise(raw), want, raw)
+
+    def test_date_forms_spell_every_month_and_ordinal(self):
+        for d, want in [(19120101, "1st january"), (19120101, "1 janvier"), (19120202, "2nd february"), (19120202, "2 fevrier"),
+                        (19120303, "3rd march"), (19120303, "3 mars"), (19120411, "11th april"), (19120411, "11 avril"),
+                        (19120421, "21st april"), (19120612, "12th june"), (19120612, "12 juin"), (19120623, "23rd june"), (19120625, "25th june")]:
+            self.assertIn(want, g.date_forms(d), d)
 
 
 class StrictSemantics(unittest.TestCase):
