@@ -26,7 +26,7 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 30 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 31 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
   included, runs in your browser. Its handbook, The Clerk's Handbook, is served from
@@ -41,15 +41,17 @@
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
   (<code>ritz.learn</code>, <code>ritz.compete</code>, <code>ritz.theme</code>) so you can pick up where you
-  left off; the handbook, the Clerk's Desk and the leaderboard read and write the same day/night choice
+  left off; the Clerk's Desk and the leaderboard read and write the same day/night choice
   (<code>ritz.theme</code>). Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
   <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
   questions you have solved and its own query history are kept in its local storage (<code>ritz.exercises</code>,
   <code>ritz.exercises.history</code>, separate from the game's), never sent. It carries the same advertising
   box as the game (see Advertising). Every handbook page asks the game's question about usage statistics and
-  loads them under the same rules (see Usage statistics). One answer, kept in <code>ritz.consent</code>, covers
-  the game and the handbook.</p>
+  loads them under the same rules (see Usage statistics). Because the handbook is served from alephb.uk, your
+  browser keeps its keys (<code>ritz.theme</code>, <code>ritz.consent</code>, <code>ritz.exercises</code>,
+  <code>ritz.exercises.history</code>, <code>ritz.exercises.tour</code>) for alephb.uk, separately from the game's:
+  its day/night choice and its answer about usage statistics are its own, and clearing alephb.uk's data erases them.</p>
 
   <h2>Your consent</h2>
   <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user

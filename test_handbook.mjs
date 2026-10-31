@@ -34,8 +34,8 @@ test("handbook: the generated blocks are fresh (node colour_learn.mjs changes no
   assert.notEqual(blank, learnHtml["like.html"]);
   assert.equal(buildPages({ ...learnHtml, "like.html": blank })["like.html"], learnHtml["like.html"]);
   assert.throws(() => buildPages({ ...learnHtml, "new.html": "" }), /CHAPTERS and site\/learn\/ disagree/);
-  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
-  assert.equal(sitemapXml(xml, "today"), xml, "sitemap.xml: run node colour_learn.mjs");
+  const xml = fs.readFileSync("site/learn/sitemap.xml", "utf8");
+  assert.equal(sitemapXml(xml, "today"), xml, "learn/sitemap.xml: run node colour_learn.mjs");
   const dropped = xml.replace(/ {2}<url><loc>[^<]*\/learn\/like\.html<[^\n]*\n/, "");
   assert.ok(sitemapXml(dropped, "2099-01-01").includes("learn/like.html</loc><lastmod>2099-01-01<"), "a new page gets today's date");
 });
@@ -155,20 +155,27 @@ test("handbook: the previous/next pager follows the table of contents, links res
   });
 });
 
-test("handbook: sitemap lists the landing page, privacy and every learn page, and nothing missing", () => {
-  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
-  const files = [...xml.matchAll(/<loc>https:\/\/mystery\.alephb\.uk\/([^<]*)<\/loc>/g)]
-    .map((m) => (m[1] === "" || m[1].endsWith("/") ? m[1] + "index.html" : m[1]));
-  assert.equal(files.length, (xml.match(/<loc>/g) || []).length, "every loc is on mystery.alephb.uk");
-  for (const f of files) assert.ok(fs.existsSync("site/" + f), "sitemap entry exists: " + f);
-  assert.deepEqual([...new Set(files)].sort(), ["index.html", "privacy.html", ...learnPages.map((f) => "learn/" + f)].sort());
+// Each indexed page's file under site/ and the sitemap that lists it: the game's on mystery.alephb.uk, the handbook's on
+// alephb.uk/learn/ (learn/sitemap.xml, exported there by move_handbook.mjs).
+const SITEMAPS = [["site/sitemap.xml", "https://mystery.alephb.uk/", "site/"], ["site/learn/sitemap.xml", "https://alephb.uk/learn/", "site/learn/"]];
+const indexed = () => SITEMAPS.flatMap(([sm, host, dir]) => {
+  const xml = fs.readFileSync(sm, "utf8"), locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
+  return locs.map((loc) => {
+    assert.ok(loc.startsWith(host), sm + " lists only " + host + ": " + loc);
+    const rel = loc.slice(host.length);
+    return { loc, rel, f: dir + (rel === "" || rel.endsWith("/") ? rel + "index.html" : rel) };
+  });
+});
+test("handbook: the sitemaps list the landing page and privacy, and every learn page on alephb.uk, and nothing missing", () => {
+  const files = indexed().map((e) => e.f);
+  for (const f of files) assert.ok(fs.existsSync(f), "sitemap entry exists: " + f);
+  assert.deepEqual([...new Set(files)].sort(), ["site/index.html", "site/privacy.html", ...learnPages.map((f) => "site/learn/" + f)].sort());
+  assert.equal(files.length, new Set(files).size, "each page once");
 });
 
 test("search and previews: every indexed page has its own title, a description, a canonical at its sitemap URL, og tags and JSON-LD that parses", () => {
-  const locs = [...fs.readFileSync("site/sitemap.xml", "utf8").matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
   const titles = new Set();
-  for (const loc of locs) {
-    const rel = loc.replace("https://mystery.alephb.uk/", ""), f = "site/" + (rel === "" || rel.endsWith("/") ? rel + "index.html" : rel);
+  for (const { loc, rel, f } of indexed()) {
     const h = fs.readFileSync(f, "utf8"), meta = (re) => (h.match(re) || [])[1];
     const title = meta(/<title>([^<]+)<\/title>/);
     assert.ok(title && !titles.has(title), f + " has a unique title");
@@ -182,6 +189,7 @@ test("search and previews: every indexed page has its own title, a description, 
     assert.ok(fs.existsSync("site/landing-pillow.jpg") && h.includes('<meta name="twitter:card" content="summary_large_image">'), f + " twitter card");
     const ld = JSON.parse(meta(/<script type="application\/ld\+json">([^<]+)<\/script>/));
     assert.equal(ld["@context"], "https://schema.org", f + " JSON-LD");
+    if (f.startsWith("site/learn/")) assert.deepEqual(ld.isPartOf, { "@type": "WebSite", name: "AlephB", url: "https://alephb.uk/" }, f + " is part of alephb.uk");
   }
   for (const f of ["admin.html", "leaderboard.html", "monitor.html", "explore.html"]) assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /canonical|og:title/, f + " stays out of search");
 });
@@ -376,12 +384,14 @@ test("handbook move: the export resolves every local URL and import, keeps no ..
   }
   assert.match(files["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);
   assert.equal([...files["learn/sitemap.xml"].matchAll(/<loc>https:\/\/alephb\.uk\/learn\//g)].length, learnPages.length, "the /learn/ sitemap lists every page");
+  for (const f of learnPages) assert.doesNotMatch(fs.readFileSync("site/learn/" + f, "utf8"), /mystery\.alephb\.uk\/learn\//, f + ": the source names alephb.uk/learn/ (exportText's rewrite is a guard)");
 });
 
 test("handbook move: each game copy redirects to its alephb.uk page, the game's sitemap drops them, its links go there", () => {
   assert.match(stubHtml("like.html"), /location\.replace\("https:\/\/alephb\.uk\/learn\/like\.html" \+ location\.search \+ location\.hash\)/);
   assert.match(stubHtml("index.html"), /rel="canonical" href="https:\/\/alephb\.uk\/learn\/"/);
-  const xml = pruneSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));
+  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
+  assert.equal(pruneSitemap(xml), xml, "the game's sitemap lists no learn page");
   assert.doesNotMatch(xml, /\/learn\//);
   assert.match(xml, /<loc>https:\/\/mystery\.alephb\.uk\/<\/loc>/);
   assert.doesNotMatch(gameLinks(fs.readFileSync("site/index.html", "utf8")), /href="learn\//);

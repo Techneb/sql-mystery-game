@@ -3,8 +3,10 @@
 //   node move_handbook.mjs export <commit> <alephb-site dir>   copies site/learn/ to <dir>/learn/ and the game modules
 //                                                              and assets it uses to <dir>/learn/lib/, versioned
 //   node move_handbook.mjs stubs [dir]                          what the deploy runs on site/: every learn page becomes
-//                                                              a redirect to its alephb.uk URL, the sitemap drops them,
+//                                                              a redirect to its alephb.uk URL, learn/sitemap.xml goes,
 //                                                              the game's own links to learn/ point there directly
+// The learn pages and learn/sitemap.xml (colour_learn.mjs) name https://alephb.uk/learn/ at the source; the rewrites
+// of the old address below (exportText, pruneSitemap) are guards that change nothing today.
 import fs from "node:fs";
 import path from "node:path";
 import { versionText } from "./version_site.mjs";
@@ -24,18 +26,11 @@ export function exportText(name, text) {
   if (!name.endsWith(".html")) return text;
   return text
     .replace('<meta charset="utf-8">', (m) => (text.includes(ADSENSE_META) ? m : m + "\n" + ADSENSE_META))
-    .replaceAll("https://mystery.alephb.uk/learn/", HOME)
+    .replaceAll(GAME + "learn/", HOME)   // guard: the sources already say HOME
     .replace(/\b(src|href)="\.\.\/([^"]*)"/g, (m, a, u) => {
       const f = u.split(/[?#]/)[0];
       return LIB.includes(f) ? `${a}="lib/${u}"` : `${a}="${GAME}${u}"`;
     });
-}
-
-// The robots.txt-free sitemap of /learn/: the learn entries of the game's sitemap, moved.
-export function learnSitemap(xml) {
-  const urls = [...xml.matchAll(/<url>[\s\S]*?<\/url>/g)].map((m) => m[0]).filter((u) => u.includes(GAME + "learn/"));
-  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    + urls.map((u) => "  " + u.replaceAll(GAME + "learn/", HOME)).join("\n") + "\n</urlset>\n";
 }
 
 export function exportFiles(site) {
@@ -43,10 +38,9 @@ export function exportFiles(site) {
   for (const f of fs.readdirSync(path.join(site, "learn"), { recursive: true })) {
     const p = path.join(site, "learn", f);
     if (fs.statSync(p).isDirectory()) continue;
-    out["learn/" + f] = /\.(html|js|css)$/.test(f) ? exportText(f, fs.readFileSync(p, "utf8")) : fs.readFileSync(p);
+    out["learn/" + f] = /\.(html|js|css|xml)$/.test(f) ? exportText(f, fs.readFileSync(p, "utf8")) : fs.readFileSync(p);
   }
   for (const f of LIB) out["learn/lib/" + f] = /\.(js|css)$/.test(f) ? fs.readFileSync(path.join(site, f), "utf8") : fs.readFileSync(path.join(site, f));
-  out["learn/sitemap.xml"] = learnSitemap(fs.readFileSync(path.join(site, "sitemap.xml"), "utf8"));
   return out;
 }
 
@@ -62,6 +56,7 @@ export function stubHtml(page) {
 `;
 }
 
+// Guard: site/sitemap.xml lists no learn page since 2026-10-31.
 export const pruneSitemap = (xml) => xml.replace(/\s*<url>(?:(?!<\/url>)[\s\S])*?\/learn\/[\s\S]*?<\/url>/g, "");
 // The game's own pages link the handbook directly (the stubs catch the rest, terminal.js's grammar links included).
 export const gameLinks = (html) => html.replace(/\bhref="learn\//g, `href="${HOME}`);
@@ -79,6 +74,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url
   } else if (mode === "stubs") {
     const site = a || "site";
     for (const f of fs.readdirSync(path.join(site, "learn"))) if (f.endsWith(".html")) fs.writeFileSync(path.join(site, "learn", f), stubHtml(f));
+    fs.rmSync(path.join(site, "learn", "sitemap.xml"), { force: true });   // alephb.uk's, not the game's
     for (const f of fs.readdirSync(site)) if (f.endsWith(".html")) {
       const p = path.join(site, f), t = fs.readFileSync(p, "utf8");
       if (gameLinks(t) !== t) fs.writeFileSync(p, gameLinks(t));

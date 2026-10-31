@@ -45,6 +45,8 @@ export function fmtTime(ms) {
 // asked again until the passphrase matches; resolves the passphrase, or "" on Cancel. An accepted passphrase is kept for the
 // tab's session in sessionStorage DESK_KEY (never localStorage: it must die with the tab), so moving between desk pages asks once;
 // a stored one that no longer matches the hash (the passphrase changed) is dropped and the gate asks again.
+// The Clerk's Handbook, served from alephb.uk since 2026-10-30: the game links it there directly (terminal.js strictHtml).
+export const HANDBOOK = "https://alephb.uk/learn/";
 export const BOARD_KEY = "ritz.admin.board";
 export const DESK_KEY = "ritz.desk.key";
 // The pages' own question boxes instead of confirm()/prompt(): opens the native <dialog> d (its .ask-msg reads text

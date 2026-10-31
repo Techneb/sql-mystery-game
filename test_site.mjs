@@ -659,7 +659,8 @@ test("strict terminal: each rule refuses its example, with PostgreSQL's error li
   assert.match(strictCheck(cases[0][1], GAME).why, /add cab_ride.date to GROUP BY/, "the why names the column");
   const html = strictHtml(strictCheck(cases[0][1], GAME));
   assert.match(html, /^<div class="error strict"><div class="pg-error">ERROR: column "cab_ride.date" must appear/);
-  assert.match(html, /href="learn\/group-by-having\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/);
+  assert.match(html, /href="https:\/\/alephb\.uk\/learn\/group-by-having\.html#group-by" target="_blank" rel="noopener">Grammar: GROUP BY<\/a>/, "the game links alephb.uk directly");
+  assert.match(strictHtml(strictCheck(cases[0][1], GAME), ""), /href="group-by-having\.html#group-by"/, "the exercises page links it relative");
   assert.match(strictHtml({ error: "<b>", why: "<i>", anchor: "types" }), /&lt;b&gt;.*&lt;i&gt;/, "escaped");
 });
 

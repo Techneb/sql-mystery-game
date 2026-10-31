@@ -536,7 +536,7 @@ device).
     backend (no cookie, no consent banner, no third party, but the stats view has to be built);
     cookie-free hosted counters (GoatCounter, Plausible, Cloudflare), which count visits well but not
     chapter funnels without custom events.
-- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below): ads live since 2026-10-19 (bdd594a: `AD_SLOT` set, house-ad fallback until Google fills the slot), verdict pending. GA4 is live with Google signals and ads
+- **Advertising** (course owner, 2026-10-03; refused 2026-10-11 as low-value content, re-review requested 2026-10-19, see below; refused again 2026-10-30 as low-value content on alephb.uk, whose own pages were too thin, so the same day the handbook moved to https://alephb.uk/learn/ (873f5e0, `move_handbook.mjs export` into alephb-site; the game's `learn/` pages redirect there, the canonicals, `learn/sitemap.xml` and the game's links name alephb.uk/learn/ directly since 2026-10-31); the third review request is the owner's call, see `docs/superpowers/plans/2026-10-30-handbook-on-alephb-followups.md`): ads live since 2026-10-19 (bdd594a: `AD_SLOT` set, house-ad fallback until Google fills the slot), verdict pending. GA4 is live with Google signals and ads
   personalisation off and Consent Mode v2 keeping `ad_storage`, `ad_user_data` and `ad_personalization`
   denied. Turning ads on needs, in one change: (1) a separate consent question in the banner ("Allow
   personalised ads?"), since the CNIL wants advertising consent asked apart from statistics, whose Yes alone

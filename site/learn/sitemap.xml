@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://alephb.uk/learn/</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/database.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/schema.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/select-where.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/order-by-limit.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/like.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/dates-times.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/group-by-having.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/joins.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/nulls.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/case-when.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/subqueries.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/set-operations.html</loc><lastmod>2026-10-18</lastmod></url>
+  <url><loc>https://alephb.uk/learn/window-functions.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/ctes.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/exercises.html</loc><lastmod>2026-10-16</lastmod></url>
+  <url><loc>https://alephb.uk/learn/grammar.html</loc><lastmod>2026-10-16</lastmod></url>
+</urlset>

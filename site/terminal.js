@@ -4,6 +4,7 @@
 // Side-effect free at import; the DOM is touched only inside wireEditor.
 import { strictCheck, toSqlite, ilike, ymd, STRICT_SECTIONS } from "./strict.js";
 import { esc } from "./ui.js";
+import { HANDBOOK } from "./shared.js";
 
 // SQL colouring for the terminal: a <pre> under a transparent textarea (index.html .editor).
 export const SQL_KEYWORDS = new Set(("select from where and or not in is null like ilike glob between join inner left right full outer " +
@@ -225,7 +226,7 @@ export function readSchema(db) {
   return Object.fromEntries(names.map(t => [t, db.exec("PRAGMA table_info(" + t + ")")[0].values.map(r => [r[1], r[2], r[5]])]));
 }
 
-export function strictHtml(r, base = "learn/") {   // base: the handbook folder as the caller links it (learn/exercises.js: "")
+export function strictHtml(r, base = HANDBOOK) {   // base: the handbook folder as the caller links it (learn/exercises.js: "", served from it)
   const [page, label] = STRICT_SECTIONS[r.anchor];
   return '<div class="error strict"><div class="pg-error">ERROR: ' + esc(r.error) + '</div><p class="why">' + esc(r.why) + '</p><a href="' + base + page + ".html#" + r.anchor +
     '" target="_blank" rel="noopener">Grammar: ' + esc(label) + "</a></div>";

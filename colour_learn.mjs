@@ -107,14 +107,14 @@ export function buildPages(pages) {
     return [f, sideMenuPage(h, f)];
   }));
 }
-// sitemap.xml: its other entries as they are, then the handbook in reading order, each keeping its lastmod (a new page
-// gets today's).
+// learn/sitemap.xml (served at https://alephb.uk/learn/sitemap.xml, move_handbook.mjs export): the handbook in reading
+// order, each page keeping its lastmod from xml, the file as it is (a new page gets today's).
+export const HOME = "https://alephb.uk/learn/";
 export function sitemapXml(xml, today) {
-  const loc = (f) => "https://mystery.alephb.uk/learn/" + (f === "index.html" ? "" : f);
+  const loc = (f) => HOME + (f === "index.html" ? "" : f);
   const last = (f) => (xml.match(new RegExp(`<loc>${loc(f).replace(/\./g, "\\.")}</loc><lastmod>([^<]*)</lastmod>`)) || [, today])[1];
-  const lines = xml.split("\n"), first = lines.findIndex((l) => l.includes("<url>"));
-  return [...lines.slice(0, first), ...lines.filter((l) => l.includes("<url>") && !l.includes("/learn/")),
-    ...READING.map((f) => `  <url><loc>${loc(f)}</loc><lastmod>${last(f)}</lastmod></url>`), "</urlset>", ""].join("\n");
+  return '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + READING.map((f) => `  <url><loc>${loc(f)}</loc><lastmod>${last(f)}</lastmod></url>\n`).join("") + "</urlset>\n";
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -122,6 +122,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const pages = Object.fromEntries(fs.readdirSync(dir).filter((f) => f.endsWith(".html")).map((f) => [f, fs.readFileSync(dir + f, "utf8")]));
   for (const [f, out] of Object.entries(buildPages(pages)))
     if (out !== pages[f]) { fs.writeFileSync(dir + f, out); console.log("wrote " + dir + f); }
-  const xml = fs.readFileSync("site/sitemap.xml", "utf8"), out = sitemapXml(xml, new Date().toISOString().slice(0, 10));
-  if (out !== xml) { fs.writeFileSync("site/sitemap.xml", out); console.log("wrote site/sitemap.xml"); }
+  const sm = dir + "sitemap.xml", xml = fs.readFileSync(sm, "utf8"), out = sitemapXml(xml, new Date().toISOString().slice(0, 10));
+  if (out !== xml) { fs.writeFileSync(sm, out); console.log("wrote " + sm); }
 }
