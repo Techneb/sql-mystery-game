@@ -1,0 +1,46 @@
+name: Export the handbook to alephb.uk
+
+# The Clerk's Handbook is written and tested here (site/learn/) but served from https://alephb.uk/learn/ (the
+# alephb-site repo). After every push to main, export it there (move_handbook.mjs export) and push only learn/,
+# so the two copies never drift. Needs the secret ALEPHB_SITE_DEPLOY_KEY: the private half of a write deploy key
+# on Techneb/alephb-site. Without it the job says so and stops; nothing else depends on it.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: export-handbook
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the deploy key
+        env:
+          KEY: ${{ secrets.ALEPHB_SITE_DEPLOY_KEY }}
+        run: test -n "$KEY" || { echo "::error::ALEPHB_SITE_DEPLOY_KEY is not set"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          repository: Techneb/alephb-site
+          ssh-key: ${{ secrets.ALEPHB_SITE_DEPLOY_KEY }}
+          path: alephb-site
+      - name: Export
+        run: node move_handbook.mjs export "${GITHUB_SHA::7}" alephb-site
+      - name: Push learn/ if it changed
+        working-directory: alephb-site
+        run: |
+          git add -A learn
+          if git diff --cached --quiet; then echo "Handbook already current."; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Handbook export from game ${GITHUB_SHA::7}"
+          git push
