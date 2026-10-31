@@ -359,6 +359,15 @@ device).
 
 ## 8. Backlog (not scheduled)
 
+- **The game moves to alephb.uk/ritz-affair/** (owner, 2026-10-31; built, waiting for go-live). The game and the
+  desk at <https://alephb.uk/ritz-affair/>, next to the handbook at <https://alephb.uk/learn/>, both pushed to the
+  alephb-site repo by `.github/workflows/publish-alephb.yml` (`publish.mjs`; tests first). mystery.alephb.uk becomes
+  a bridge (`pages.yml` with the repository variable `BRIDGE` = `on`): its `/` carries the browser's `ritz.*` keys to
+  the new game in the URL fragment (`#import=`), which writes a key only where alephb.uk has none (a saved game also
+  when the import is further along); every other old page redirects, and a Cloudflare 301 covers everything but `/`.
+  Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. Left for alephb-site:
+  the robots.txt lines (the desk's Disallow lines and the game's sitemap), the home page and footers linking
+  `ritz-affair/` instead of mystery.alephb.uk, and its own ritz-affair.html beside the new `ritz-affair/` folder.
 - ~~Chapter I in two questions~~ Done 2026-10-31 (owner's decisions: two steps inside chapter I, same numeral;
   step 1 the date the theft is filed under, the 18th, from Duroc's interview; the title's 17th is the decoy and is
   refused). As built: `plot.CHAPTERS[0]["step1"]` (objective "Mr. Duroc knows which night. Under which date is the

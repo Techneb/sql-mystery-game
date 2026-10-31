@@ -38,10 +38,11 @@ Tests for the site's pure functions (no browser needed): `node --test test_site.
 
 ## Deploying
 
-GitHub Pages via `.github/workflows/pages.yml` on every push to `main`: the workflow builds the five compete
-databases, then publishes `site/`. Live at <https://mystery.alephb.uk/> (the old techneb.github.io address redirects there).
-The handbook is served from <https://alephb.uk/learn/> since 2026-10-30: `node move_handbook.mjs export <commit> <alephb-site>`
-copies it into the alephb.uk site, and the deploy turns the game's copies under `learn/` into redirects there.
+The game is live at <https://alephb.uk/ritz-affair/> and its handbook at <https://alephb.uk/learn/>, both served
+from the alephb.uk site's repository. On every push to `main`, `.github/workflows/publish-alephb.yml` builds the five
+compete databases, runs the tests, and `node publish.mjs <commit> <alephb-site>` writes the game into `ritz-affair/`
+and the handbook into `learn/` there. The game's earlier address, mystery.alephb.uk (`.github/workflows/pages.yml`),
+now only forwards visitors, carrying the progress their browser saved there.
 The page is fully static: no server, no environment variables.
 
 ## Tuning
@@ -84,7 +85,7 @@ The penalty per wrong answer is set per season by the teacher; the rest is in th
 | `solution.sql` | generated: the reference path, each chapter's discovery queries then its final query |
 | `site/mystery.sqlite`, `site/chapters.json`, `site/schema.svg` | generated, committed (the site is static) |
 | `site/index.html`, `site/app.js`, `site/style.css` | the game; `site/leaderboard.html` the standalone compete leaderboard |
-| `site/learn/` | The Clerk's Handbook: static SQL reference pages on a separate example database, served from <https://alephb.uk/learn/> (`move_handbook.mjs`) |
+| `site/learn/` | The Clerk's Handbook: static SQL reference pages on a separate example database, served from <https://alephb.uk/learn/> (`publish.mjs`) |
 | `bakery.py` | generates the handbook's bakery database (seeded, stdlib); `--paste` rewrites the pages' result tables |
 | `site/portraits/*.jpg` | suspect portraits (Style A/Lavery colour, generated), shown in the Suspects panel |
 | `apps_script.gs` | compete backend (Google Apps Script) |
