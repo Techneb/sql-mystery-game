@@ -359,6 +359,36 @@ device).
 
 ## 8. Backlog (not scheduled)
 
+- **Chapter I in two questions** (owner, 2026-10-31; not started). Today chapter I asks one answer, the police
+  report (board "Police report"), and the date it needs comes from Duroc's interview alone, so a student has to find
+  both before anything is checked; 45% of chapter I openers ran no query (2026-10-25). Split it: **step 1, the date
+  of the theft** (from `interview`), checked on its own; **step 2, the police report** (from `police_report`, with
+  that date), the current answer. Open points to settle before building:
+  - **Shape.** Two steps inside chapter I (one numeral, two answer boxes in turn; recommended: the I-XII numbering,
+    the case board, the GA chapter grids, the handbook's "In the game" numerals, `RANKS`, badges and compete's
+    chapter 0-8 / seven-`progress` rules all stay as they are) or a new chapter (renumbers everything; not
+    recommended). With steps: `plot.CHAPTERS[0]` gets a `steps` list (objective, `answer_key`, `answer_form`,
+    `discovery`, `solution`, `naive`, `traps` per step), `chapters.json` ships per-step `answer_sha256`, state keeps
+    the step (`state.step[1]`, `migrateSave`: an old save in chapter I starts at step 1 unless chapter I is solved),
+    the case board shows the date beside the report once found, HOW IT'S DONE covers both steps (encrypted under the
+    step 2 answer, or one box per step).
+  - **The date answer.** Which forms count (`1912-05-18`, `18 May 1912`, `18/05/1912`, `May 18`...) and the
+    night-of-the-17th question: the title says "The Night of the 17th" and Duroc names the 17th and the 18th, so
+    decide whether the date asked is the night (17th) or the report's date (18th) and say so in the objective
+    without giving it. `normalise` joins all-digit answers, so `1912-05-18` and `19120518` agree; month names need
+    accepted forms in `answer_key` (both normalisers and `normalise_fixture` untouched if possible).
+  - **Shortcut check** on step 1: the title, the landing page and the prologue must not hand the date out (the title
+    names the 17th already: decide if that is the decoy or the answer); LIKE on the story's words over `interview`;
+    a trap per shortcut, `check_discovery` per step.
+  - **GA.** `chapter_solve` stays per chapter; add the step to `chapter_open` / a `step_solve` event, or a `step`
+    param, and the Game view's onboarding chart gains "date found" between "first query" and "chapter I solved".
+  - **Compete.** Its chapter I is a different puzzle (a night given with a day either side): split it the same way,
+    or keep compete in one step (owner's call); the backend's chapter range and `finish` rule are unchanged with
+    steps.
+  - **Tests and docs:** traps and discovery per step in the build, `test_site.mjs` for the state migration and the
+    two answer boxes, the tour's callouts (CALLOUTS name the objective box), `docs/badges.md` if a badge reads the
+    first answer, CLAUDE.md (Chapter I's date bullet under Badges).
+
 - ~~How it's done~~ Live 2026-10-28 in learn mode (owner): every solved chapter's review (solved screen and case
   board) shows an open HOW IT'S DONE under the answer row (owner, 2026-10-28: no toggle, right under the Correct reply): the route in four or five steps (`HOWTO` in plot.py, checked against the data
   by a Fable review) and the reference SQL (discovery queries and solution), under the player's winning query. Shipped
