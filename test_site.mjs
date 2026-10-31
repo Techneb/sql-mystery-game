@@ -1044,6 +1044,7 @@ test("share line: rank and count only, X and LinkedIn links carry the site", () 
   assert.equal(l.linkedin, "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent("https://mystery.alephb.uk/"));
   const h = shareHtml(t);
   for (const n of ["x", "linkedin", "copy", "native"]) assert.ok(h.includes('data-net="' + n + '"'), n);
+  assert.ok(h.includes('aria-label="Share on X"') && h.includes('aria-label="Share on LinkedIn"') && (h.match(/<svg class="logo"/g) || []).length === 2, "X and LinkedIn as named logos");
   assert.ok(!/&(?!amp;)/.test(h), "ampersands escaped in the markup");
 });
 

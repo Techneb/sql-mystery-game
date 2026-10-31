@@ -4,7 +4,7 @@
 import { BADGES, rank } from "./badges.js";
 import { part1Done, partStats } from "./state.js";
 import { portraitSrc } from "./suspects.js";
-import { esc, richText } from "./ui.js";
+import { esc, richText, ICON_ATTRS } from "./ui.js";
 import { useFeature } from "./stats.js";
 
 const $ = id => document.getElementById(id);
@@ -98,13 +98,20 @@ export function shareLinks(text, url = SHARE_URL) {
   return { x: "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url),
            linkedin: "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url) };
 }
+// Logos from Simple Icons (CC0); X in the ink colour, LinkedIn in its own blue. Copy and the device's Share keep the
+// game's stroked 16 px icons with their words.
+const LOGO = 'width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"';
+const X_LOGO = `<svg class="logo" ${LOGO} fill="currentColor"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>`;
+const LINKEDIN_LOGO = `<svg class="logo" ${LOGO} fill="#0A66C2"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.83 3.37-1.83 3.6 0 4.27 2.37 4.27 5.46v6.26zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>`;
+const LINK_ICON = `<svg class="icon" ${ICON_ATTRS}><path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-.8.8M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8a3 3 0 0 0 4.2 4.2l.8-.8"/></svg>`;
+const SHARE_ICON = `<svg class="icon" ${ICON_ATTRS}><path d="M8 10V2M5 5l3-3 3 3M3 9v4h10V9"/></svg>`;
 export function shareHtml(text) {
   const l = shareLinks(text);
   return '<div class="extra-badge share"><div class="label">SHARE</div><p class="share-text">' + esc(text) + "</p>" +
-    '<button class="quiet" data-net="native" hidden>Share</button> ' +
-    '<a class="btn quiet" data-net="x" href="' + l.x.replace(/&/g, "&amp;") + '" target="_blank" rel="noopener">X</a> ' +
-    '<a class="btn quiet" data-net="linkedin" href="' + l.linkedin + '" target="_blank" rel="noopener">LinkedIn</a> ' +
-    '<button class="quiet" data-net="copy">Copy link</button> <span class="muted share-done" aria-live="polite"></span></div>';
+    '<div class="share-row"><button class="quiet" data-net="native" hidden>' + SHARE_ICON + ' Share</button>' +
+    '<a class="btn quiet logo-btn" data-net="x" href="' + l.x.replace(/&/g, "&amp;") + '" target="_blank" rel="noopener" title="Share on X" aria-label="Share on X">' + X_LOGO + "</a>" +
+    '<a class="btn quiet logo-btn" data-net="linkedin" href="' + l.linkedin + '" target="_blank" rel="noopener" title="Share on LinkedIn" aria-label="Share on LinkedIn">' + LINKEDIN_LOGO + "</a>" +
+    '<button class="quiet" data-net="copy">' + LINK_ICON + ' Copy link</button> <span class="muted share-done" aria-live="polite"></span></div></div>';
 }
 function wireShare(root, chapter) {
   const box = root.querySelector(".share"); if (!box) return;
