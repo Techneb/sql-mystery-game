@@ -11,6 +11,7 @@ import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 import { highlightSql } from "./site/terminal.js";
 import { strictCheck } from "./site/strict.js";
+import { HANDBOOK as HOME } from "./site/shared.js";
 
 const ENT = { "&lt;": "<", "&gt;": ">", "&amp;": "&", "&quot;": '"', "&#x27;": "'", "&#39;": "'" };
 export const plainSql = (inner) => inner.replace(/<\/?span[^>]*>/g, "").replace(/&(lt|gt|amp|quot|#x27|#39);/g, (e) => ENT[e]);
@@ -107,9 +108,9 @@ export function buildPages(pages) {
     return [f, sideMenuPage(h, f)];
   }));
 }
-// learn/sitemap.xml (served at https://alephb.uk/learn/sitemap.xml, move_handbook.mjs export): the handbook in reading
+// learn/sitemap.xml (served at https://alephb.uk/learn/sitemap.xml, publish.mjs writes it to alephb-site): the handbook in reading
 // order, each page keeping its lastmod from xml, the file as it is (a new page gets today's).
-export const HOME = "https://alephb.uk/learn/";
+export { HOME };
 export function sitemapXml(xml, today) {
   const loc = (f) => HOME + (f === "index.html" ? "" : f);
   const last = (f) => (xml.match(new RegExp(`<loc>${loc(f).replace(/\./g, "\\.")}</loc><lastmod>([^<]*)</lastmod>`)) || [, today])[1];

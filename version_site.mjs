@@ -5,6 +5,7 @@
 // learn/handbook.js) has one URL, one instance. app.js passes its own ?v= to the data files it fetches (VERSION).
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const local = (u) => !/^([a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(u);
 
@@ -20,7 +21,7 @@ export function versionText(name, text, v) {
 export const versionSite = (files, v) =>
   Object.fromEntries(Object.entries(files).map(([f, t]) => [f, versionText(f, t, v)]));
 
-if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const [v, dir = "site"] = process.argv.slice(2);
   if (!/^[0-9a-f]{4,40}$/i.test(v || "")) throw new Error("usage: node version_site.mjs <commit> [dir]");
   for (const f of fs.readdirSync(dir, { recursive: true })) {

@@ -377,7 +377,7 @@ test("publish: alephb-site gets every file of site/, every local URL and import 
   const modules = new Map();   // module path -> the URLs it is reached by
   for (const [f, t] of Object.entries(out)) {
     if (typeof t !== "string") continue;
-    if (f !== "ritz-affair/privacy.html") assert.doesNotMatch(t, /mystery\.alephb\.uk/, f + " names the new home");   // privacy tells of the bridge
+    if (f !== "ritz-affair/privacy.html" && f !== "ritz-affair/shared.js") assert.doesNotMatch(t, /mystery\.alephb\.uk/, f + " names the new home");   // privacy tells of the bridge; shared.js OLD_ORIGIN, the only origin boot imports from
     const dir = path.posix.dirname(f);
     if (f.endsWith(".html")) {
       assert.equal(t.split(ADSENSE_META).length, 2, f + " carries the AdSense account tag once");
@@ -413,7 +413,7 @@ test("publish: alephb-site gets every file of site/, every local URL and import 
 
 test("publish: mystery.alephb.uk is named only by the bridge, the docs and test fixtures", () => {
   const named = execFileSync("git", ["grep", "-l", "mystery\\.alephb\\.uk"], { encoding: "utf8" }).split("\n").filter(Boolean);
-  const allowed = (f) => f === "publish.mjs" || f === "site/privacy.html" || f === "CLAUDE.md" || f === "README.md" || f.startsWith("docs/") || /^test_\w+\.(mjs|py)$/.test(f) || f.startsWith(".github/workflows/");
+  const allowed = (f) => f === "publish.mjs" || f === "site/shared.js" || f === "site/privacy.html" || f === "CLAUDE.md" || f === "README.md" || f.startsWith("docs/") || /^test_\w+\.(mjs|py)$/.test(f) || f.startsWith(".github/workflows/");
   assert.deepEqual(named.filter((f) => !allowed(f)), [], "the site and the scripts name alephb.uk");
 });
 
@@ -478,4 +478,106 @@ test("privacy: the notice lives with the game on alephb.uk and says the game and
   assert.match(h, /<link rel="canonical" href="https:\/\/alephb\.uk\/ritz-affair\/privacy\.html">/);
   assert.match(h, /One answer, kept in <code>ritz\.consent<\/code>, covers\s+the game and the handbook/);
   assert.match(h, /the handbook, the Clerk's Desk and the leaderboard read and write the same day\/night choice/);
+});
+
+// --- Review of 2026-10-31 (the move to alephb.uk): findings 1, 2, 3, 9, 10, 11, 12, 13 -------------------------------
+
+test("review 1: an imported compete save never replaces this origin's save of another season", async () => {
+  const { importWrites } = await import("./site/state.js");
+  const c = (season, solved, q) => JSON.stringify({ mode: "compete", season, solved, totalQueries: q });
+  const have = (o) => (k) => (k in o ? o[k] : null);
+  assert.deepEqual(importWrites({ "ritz.compete": c("s1", [1, 2, 3], 9) }, have({ "ritz.compete": c("s2", [1], 1) })), {}, "another season: kept");
+  assert.deepEqual(importWrites({ "ritz.compete": c("s2", [1, 2], 9) }, have({ "ritz.compete": c("s2", [1], 1) })), { "ritz.compete": c("s2", [1, 2], 9) }, "same season, ahead");
+  assert.deepEqual(importWrites({ "ritz.compete": c("s1", [1], 1) }, have({})), { "ritz.compete": c("s1", [1], 1) }, "none here: filled");
+});
+
+test("review 2: the bridge carries the keys once, then redirects plainly; list keys merge as a union", async () => {
+  const { bridgeTarget, bridgeHtml, MOVED, GAME } = await import("./publish.mjs");
+  const { importWrites } = await import("./site/state.js");
+  const saved = [["ritz.theme", "night"]];
+  assert.match(bridgeTarget("", saved), /#import=/);
+  assert.equal(bridgeTarget("?a=1", [...saved, [MOVED, "2026-10-31T00:00:00Z"]]), GAME + "?a=1", "moved already: plain");
+  const js = bridgeHtml().match(/<script>([\s\S]*?)<\/script>/)[1];
+  const store = new Map(saved), went = [];
+  const ls = { get length() { return store.size; }, key: (i) => [...store.keys()][i], getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
+  for (let i = 0; i < 2; i++) new Function("localStorage", "location", js)(ls, { search: "", replace: (x) => went.push(x) });
+  assert.match(went[0], /#import=/);
+  assert.equal(went[1], GAME, "the second visit redirects without the keys");
+  assert.match(store.get(MOVED), /^\d{4}-\d\d-\d\dT/);
+  assert.equal(store.get("ritz.theme"), "night", "the old keys stay as a backup");
+  const have = (o) => (k) => (k in o ? o[k] : null);
+  assert.deepEqual(importWrites({ "ritz.exercises": '["a","b"]' }, have({ "ritz.exercises": '["c","a"]' })), { "ritz.exercises": '["c","a","b"]' });
+  assert.deepEqual(importWrites({ "ritz.exercises": '["a"]' }, have({ "ritz.exercises": '["a"]' })), {}, "nothing new: untouched");
+  const h = (n, p) => JSON.stringify(Array.from({ length: n }, (_, i) => p + i));
+  assert.equal(JSON.parse(importWrites({ "ritz.exercises.history": h(15, "old") }, have({ "ritz.exercises.history": h(10, "new") }))["ritz.exercises.history"]).length, 20, "a history keeps 20");
+});
+
+test("review 3: an import is taken only from the bridge's origin, and never the desk's board URL", async () => {
+  const { bridgeImport } = await import("./site/state.js");
+  const { bridgeTarget, bridgeHtml, OLD } = await import("./publish.mjs");
+  const hash = new URL(bridgeTarget("", [["ritz.theme", "night"], ["ritz.consent", "yes"], ["ritz.admin.board", "https://script.google.com/x/exec"]])).hash;
+  assert.deepEqual(bridgeImport(hash, OLD), { "ritz.theme": "night", "ritz.consent": "yes" }, "consent kept, the board dropped");
+  for (const ref of ["", "https://evil.example/", "https://alephb.uk/ritz-affair/", "https://mystery.alephb.uk.evil.example/", "not a url"])
+    assert.equal(bridgeImport(hash, ref), null, ref || "no referrer");
+  assert.equal(bridgeImport("#x", OLD), null);
+  assert.doesNotMatch(bridgeHtml(), /referrer/i, "the bridge sets no referrer policy, so location.replace sends its origin");
+  assert.match(fs.readFileSync("site/app.js", "utf8"), /bridgeImport\(location\.hash, document\.referrer\)/);
+});
+
+test("review 9: publish.mjs runs as a CLI from a path with spaces", async () => {
+  const os = (await import("node:os")).default;
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "pub lish "));
+  try {
+    fs.mkdirSync(path.join(dir, "site"));
+    for (const f of ["publish.mjs", "version_site.mjs", "site/shared.js"]) fs.copyFileSync(f, path.join(dir, f));
+    assert.throws(() => execFileSync("node", [path.join(dir, "publish.mjs")], { stdio: "pipe" }), /usage: node publish\.mjs/, "no arguments: the usage error, so the guard ran");
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("review 10: publish.mjs refuses a target that is, holds or sits inside the source site/", async () => {
+  const { overlaps } = await import("./publish.mjs");
+  for (const t of ["site", "./site/", "site/learn", ".", ".."]) assert.ok(overlaps(t, "site"), t);
+  for (const t of ["out", "../alephb-site", "sites"]) assert.ok(!overlaps(t, "site"), t);
+  const before = fs.readdirSync("site").length;
+  assert.throws(() => execFileSync("node", ["publish.mjs", "abc1234", "."], { stdio: "pipe" }), /overlaps the source/);
+  assert.throws(() => execFileSync("node", ["publish.mjs", "bridge", "site/learn"], { stdio: "pipe" }), /overlaps the source/);
+  assert.equal(fs.readdirSync("site").length, before, "nothing removed");
+});
+
+test("review 11: with BRIDGE on, pages.yml skips the season build and the tests (publish-alephb.yml keeps them)", () => {
+  const y = fs.readFileSync(".github/workflows/pages.yml", "utf8");
+  for (const step of ["Build the compete databases", "Test the site and the backend"])
+    assert.match(y, new RegExp("- name: " + step + "\\n(?:\\s+#.*\\n)*\\s+if: vars\\.BRIDGE != 'on'\\n"), step);
+  const p = fs.readFileSync(".github/workflows/publish-alephb.yml", "utf8");
+  assert.match(p, /generate_db\.py --seasons/);
+  assert.match(p, /node --test test_site\.mjs test_desk\.mjs test_handbook\.mjs test_backend\.mjs/);
+});
+
+test("review 12: a stubs deploy (rollback) serves a robots.txt and sitemap for mystery.alephb.uk's root", async () => {
+  const os = (await import("node:os")).default;
+  const { stubsRobots, stubsSitemap, OLD, GAME } = await import("./publish.mjs");
+  const r = stubsRobots(fs.readFileSync("site/robots.txt", "utf8"));
+  for (const p of ["admin", "monitor", "monitor-game", "monitor-handbook", "explore", "inbox"]) assert.match(r, new RegExp("^Disallow: /" + p + "\\.html$", "m"), p);
+  assert.doesNotMatch(r, /ritz-affair|https:\/\/alephb/);
+  assert.match(r, new RegExp("^Sitemap: " + OLD + "sitemap\\.xml$", "m"));
+  const s = stubsSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));
+  assert.ok(!s.includes(GAME) && s.includes("<loc>" + OLD + "</loc>"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stubs-"));
+  try {
+    fs.cpSync("site", dir, { recursive: true, filter: (f) => !/\.sqlite$|video/.test(f) });
+    execFileSync("node", ["publish.mjs", "stubs", dir]);
+    assert.equal(fs.readFileSync(path.join(dir, "robots.txt"), "utf8"), r, "the stubs command writes it");
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("review 13: alephb.uk, the game and the handbook are defined once, in shared.js", async () => {
+  const shared = await import("./site/shared.js");
+  const pub = await import("./publish.mjs"), cl = await import("./colour_learn.mjs"), end = await import("./site/endings.js");
+  assert.equal(shared.GAME_URL, shared.SITE + "ritz-affair/");
+  assert.equal(shared.HANDBOOK, shared.SITE + "learn/");
+  assert.deepEqual([pub.GAME, pub.HOME, pub.SITE, pub.OLD, cl.HOME, end.SHARE_URL], [shared.GAME_URL, shared.HANDBOOK, shared.SITE, shared.OLD_ORIGIN + "/", shared.HANDBOOK, shared.GAME_URL]);
+  const lit = /"https:\/\/(mystery\.)?alephb\.uk\/[^"]*"/;
+  for (const f of ["publish.mjs", "colour_learn.mjs", "site/endings.js", "site/state.js", "site/app.js"])
+    assert.doesNotMatch(fs.readFileSync(f, "utf8"), lit, f + " names no alephb.uk URL literal");
+  assert.doesNotMatch(fs.readFileSync("colour_learn.mjs", "utf8"), /move_handbook/);
 });

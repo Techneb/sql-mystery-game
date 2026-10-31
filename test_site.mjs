@@ -1145,6 +1145,8 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
     assert.ok(st.eve_sha256.includes(await sha256(normalise(t))), "the 17th gets its own reply: " + t);
   for (const h of st.answer_sha256) assert.ok(!st.eve_sha256.includes(h), "no accepted spelling reads as the 17th");
   assert.ok(!/18|saturday|samedi/i.test(EVE_REPLY) && /17th/.test(EVE_REPLY), "the 17th's reply never gives the 18th");
+  assert.ok(!/next|following|tomorrow|after midnight|morning|later|day after/i.test(EVE_REPLY), "nor implies the next day");
+  assert.equal(EVE_REPLY, "The 17th is when the night began, clerk, not where the police filed it. Mr. Duroc knows the hour: read him.", "the owner's wording, 2026-10-31");
   assert.ok(!/18|saturday|samedi/i.test(st.objective + st.answer_form + st.where + ch1.story + ch1.objective), "nothing hands the date out");
   const fresh = freshState();
   assert.equal(stepOn(fresh, ch1), st);
@@ -1162,4 +1164,23 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
   assert.equal((done.match(/class="card"/g) || []).length, 1);
   assert.ok(done.includes('data-n="1"') && done.includes("Police report") && done.includes('<span class="card-step">Date of the theft: 18 May 1912</span>'));
   for (const n of [1, 2, 3, 4, 5]) if (fs.existsSync("site/season-" + n + ".json")) assert.ok(!JSON.parse(fs.readFileSync("site/season-" + n + ".json", "utf8")).chapters[0].step1, "compete keeps one step");
+});
+
+// --- Review of 2026-10-31: findings 4 and 7 ------------------------------------------------------------------------
+
+test("review 4: the landing About's first-query block is FIRST_QUERY, coloured as the terminal colours it", async () => {
+  const app = await import("./site/app.js"), term = await import("./site/terminal.js");
+  const block = fs.readFileSync("site/index.html", "utf8").match(/<pre class="landing-sql">([\s\S]*?)<\/pre>/)[1];
+  assert.equal(block, term.highlightSql(app.FIRST_QUERY + ";").trimEnd());
+});
+
+test("review 7: chapter I's two steps count their Where to look apart (hint_where carries the step)", async () => {
+  const { whereOpened } = await import("./site/app.js");
+  const { freshState } = await import("./site/state.js");
+  const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
+  const ch1 = data.chapters.find(c => c.n === 1), ch2 = data.chapters.find(c => c.n === 2), s = freshState();
+  assert.deepEqual(whereOpened(s, ch1, 1), [1, { chapter: 1, mode: "learn", step: 1 }]);
+  assert.deepEqual(whereOpened({ ...s, step1: "18 May 1912" }, ch1, 1), ["1b", { chapter: 1, mode: "learn", step: 2 }]);
+  assert.deepEqual(whereOpened(s, ch2, 2), [2, { chapter: 2, mode: "learn" }], "other chapters unchanged");
+  assert.match(fs.readFileSync("site/app.js", "utf8"), /const \[key, params\] = whereOpened\(state, data\.chapters\.find\(c => c\.n === n\), n\);\n\s+if \(state\.hintsWhere\.includes\(key\)\) return;/);
 });

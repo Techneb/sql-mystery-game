@@ -6,6 +6,7 @@ import { part1Done, partStats } from "./state.js";
 import { portraitSrc } from "./suspects.js";
 import { esc, richText, ICON_ATTRS } from "./ui.js";
 import { useFeature } from "./stats.js";
+import { GAME_URL } from "./shared.js";
 
 const $ = id => document.getElementById(id);
 
@@ -92,7 +93,7 @@ export function certificateHtml(state) {
 
 // --- Share, at the end of the game only (owner, 2026-10-25): never a clue or an answer, only the rank and the count.
 // The rank is Part I's (RANKS are tuned on it, as on the certificate); the count is the whole game's.
-export const SHARE_URL = "https://alephb.uk/ritz-affair/";
+export const SHARE_URL = GAME_URL;
 export const shareText = (rankName, queries) => "I solved The Ritz Affair, a free SQL detective game, as " + rankName + " in " + queries + " queries.";
 export function shareLinks(text, url = SHARE_URL) {
   return { x: "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url),

@@ -1,5 +1,6 @@
 // site/state.js -- the game's saved state and what is read from it (pure: app.js keeps the storage and the page).
 // Split out so badges.js, suspects.js and endings.js read the state without importing the game module.
+import { OLD_ORIGIN, BOARD_KEY } from "./shared.js";
 
 export function freshState() {
   return { mode: "learn", season: "", team: "", startedAt: 0, finishedAt: 0, outbox: [], db: 0, seasonName: "", penalty: 10, over: false, board: "",
@@ -74,19 +75,37 @@ export function readImport(hash) {
     return o && typeof o === "object" && !Array.isArray(o) ? o : null;
   } catch { return null; }
 }
+// The import boot accepts (app.js importSaves): only from the bridge, i.e. when the page came from OLD_ORIGIN (the
+// bridge's location.replace sends it as document.referrer under the default referrer policy; the bridge sets none),
+// and never the desk's board URL (a live endpoint, entered on the desk). Null when there is nothing to import.
+export function bridgeImport(hash, referrer) {
+  let from = "";
+  try { from = new URL(referrer).origin; } catch {}
+  const o = from === OLD_ORIGIN ? readImport(hash) : null;
+  if (o) delete o[BOARD_KEY];
+  return o;
+}
 // A saved game's progress: chapters solved, then queries run (an unreadable save has none).
 function progress(raw) {
   try { const s = JSON.parse(raw) || {}; return [(s.solved || []).length, s.totalQueries || 0]; } catch { return [-1, 0]; }
 }
 const ahead = (a, b) => { const x = progress(a), y = progress(b); return x[0] > y[0] || (x[0] === y[0] && x[1] > y[1]); };
+const seasonOf = (raw) => { try { return String((JSON.parse(raw) || {}).season || ""); } catch { return null; } };
+const list = (raw) => { try { const a = JSON.parse(raw); return Array.isArray(a) ? a : null; } catch { return null; } };
 // The writes an import makes, as {key: value}: only ritz.* keys with a string value; a key this origin already holds
-// is kept, except a saved game (ritz.learn, ritz.compete) the imported one is ahead of. have(key): this origin's value.
+// is kept, except a learn save the imported one is ahead of, a compete save of the same season it is ahead of (one of
+// another season is never replaced), and a list (ritz.exercises, its history) merged with it, this origin's first
+// (a history keeps its 20 newest). have(key): this origin's value.
 export function importWrites(imported, have) {
   const out = {};
   for (const [k, v] of Object.entries(imported || {})) {
     if (!/^ritz\./.test(k) || typeof v !== "string") continue;
-    const cur = have(k);
-    if (cur == null || ((k === "ritz.learn" || k === "ritz.compete") && ahead(v, cur))) out[k] = v;
+    const cur = have(k), a = list(v), b = cur == null ? null : list(cur);
+    if (cur == null || (k === "ritz.learn" && ahead(v, cur)) || (k === "ritz.compete" && seasonOf(v) === seasonOf(cur) && ahead(v, cur))) out[k] = v;
+    else if (a && b) {
+      const m = [...b, ...a.filter(x => !b.some(y => JSON.stringify(y) === JSON.stringify(x)))].slice(0, k.endsWith(".history") ? 20 : undefined);
+      if (m.length > b.length) out[k] = JSON.stringify(m);
+    }
   }
   return out;
 }

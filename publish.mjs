@@ -10,12 +10,13 @@
 // Run both on the built site/ (python3 generate_db.py --seasons, then the tests): the season-N files are gitignored.
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { versionText } from "./version_site.mjs";
 
-export const OLD = "https://mystery.alephb.uk/";
-export const SITE = "https://alephb.uk/";
-export const GAME = SITE + "ritz-affair/";
-export const HOME = SITE + "learn/";
+import { SITE, GAME_URL as GAME, HANDBOOK as HOME, OLD_ORIGIN } from "./site/shared.js";
+
+export { SITE, GAME, HOME };
+export const OLD = OLD_ORIGIN + "/";
 // Every alephb.uk page carries the AdSense account tag (alephb-site's CLAUDE.md).
 export const ADSENSE_META = '<meta name="google-adsense-account" content="ca-pub-9765732642926043">';
 // alephb.uk serves its own robots.txt and ads.txt at its root (site/robots.txt holds the lines its robots.txt needs).
@@ -47,10 +48,13 @@ export function publishFiles(site) {
 // The bridge's index.html runs this, its own source inlined (bridgeHtml): search = the old address's query, saved =
 // [[key, value]] of the old origin's localStorage. The keys travel in the fragment only (#import=, base64url JSON,
 // state.js readImport), which never reaches a server; with nothing saved, a plain redirect. Query kept either way.
+// They travel once: the page then sets MOVED (the date) here, and with it a later visit redirects plainly, the old
+// keys staying in place as a backup. GAME is the module's import here and a var of the page there (bridgeHtml).
+export const MOVED = "ritz.moved";
 export function bridgeTarget(search, saved) {
-  const to = "https://alephb.uk/ritz-affair/" + (search || "");
+  const to = GAME + (search || "");
   const keep = saved.filter(([k, v]) => /^ritz\./.test(k) && typeof v === "string");
-  if (!keep.length) return to;
+  if (!keep.length || saved.some(([k]) => k === MOVED)) return to;
   const bytes = new TextEncoder().encode(JSON.stringify(Object.fromEntries(keep)));
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);
@@ -64,10 +68,13 @@ export function bridgeHtml() {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="canonical" href="${GAME}">
 <script>
+var GAME = ${JSON.stringify(GAME)}, MOVED = ${JSON.stringify(MOVED)};
 ${bridgeTarget.toString()}
 var saved = [];
 try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); saved.push([k, localStorage.getItem(k)]); } } catch (e) {}
-location.replace(bridgeTarget(location.search, saved));
+var to = bridgeTarget(location.search, saved);
+try { if (to.indexOf("#import=") > 0) localStorage.setItem(MOVED, new Date().toISOString()); } catch (e) {}
+location.replace(to);
 </script>
 <noscript><meta http-equiv="refresh" content="0; url=${GAME}"></noscript>
 </head><body><p>The Ritz Affair has moved to <a href="${GAME}">${GAME}</a>.</p></body></html>
@@ -98,6 +105,18 @@ export function bridgeFiles(site) {
   return out;
 }
 
+// Before a stubs deploy (BRIDGE off: the rollback, mystery.alephb.uk serving the game at its root again): site/robots.txt
+// and site/sitemap.xml are written for alephb.uk/ritz-affair/, so their paths and host move to this origin's root.
+export const stubsRobots = (robots) => robots.replace(/\/ritz-affair\//g, "/").replace(/^Sitemap: .*$/m, "Sitemap: " + OLD + "sitemap.xml");
+export const stubsSitemap = (xml) => xml.split(GAME).join(OLD);
+
+// True when a and b are the same directory or one holds the other: a target like that would rmSync the source.
+export function overlaps(a, b) {
+  const inside = (x, y) => { const r = path.relative(path.resolve(y), path.resolve(x)); return !r.startsWith("..") && !path.isAbsolute(r); };
+  return inside(a, b) || inside(b, a);
+}
+const guard = (dir, site) => { if (overlaps(dir, site)) throw new Error("publish.mjs: " + dir + " overlaps the source " + site + "; refusing to write there"); };
+
 function writeTree(dir, files, v) {
   for (const [f, t] of Object.entries(files)) {
     const p = path.join(dir, f);
@@ -106,9 +125,10 @@ function writeTree(dir, files, v) {
   }
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const [a, b, c] = process.argv.slice(2);
   if (a === "bridge" && b) {
+    guard(b, c || "site");
     fs.rmSync(b, { recursive: true, force: true });
     writeTree(b, bridgeFiles(c || "site"));
   } else if (a === "stubs") {
@@ -117,7 +137,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === new URL(import.meta.url
     const site = b || "site", stubs = Object.entries(bridgeFiles(site)).filter(([f]) => f.startsWith("learn/"));
     writeTree(site, Object.fromEntries(stubs));
     fs.rmSync(path.join(site, "learn", "sitemap.xml"), { force: true });
+    for (const [f, fix] of [["robots.txt", stubsRobots], ["sitemap.xml", stubsSitemap]])
+      fs.writeFileSync(path.join(site, f), fix(fs.readFileSync(path.join(site, f), "utf8")));
   } else if (/^[0-9a-f]{4,40}$/i.test(a || "") && b) {
+    guard(b, "site");
     for (const d of ["ritz-affair", "learn"]) fs.rmSync(path.join(b, d), { recursive: true, force: true });
     writeTree(b, publishFiles("site"), a);
   } else throw new Error("usage: node publish.mjs <commit> <alephb-site dir> | bridge <out dir> [site] | stubs [site]");
