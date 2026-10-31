@@ -51,6 +51,18 @@ A3. URL Inspection > Request indexing (about 10 a day), in this order:
 A4. Optional: link Search Console to GA4 (GA4 Admin > Product links > Search Console), once AlephB owns both.
     **Check:** GA4 Admin > Search Console links lists the property and web stream; after 1-2 days GA4 Reports >
     Search Console shows queries.
+A5'. Before A5, adapt to the 2026-10-31 move (the game now at alephb.uk/ritz-affair/, mystery.alephb.uk a bridge
+    behind Cloudflare 301s, the article renamed about-the-ritz-affair.html):
+    - live ads and consent on the new address: on https://alephb.uk/ritz-affair/ and /learn/exercises.html the ad box
+      tries Google's `<ins>` (house ad as fallback), adsbygoogle.js loads with `client=ca-pub-9765732642926043`, and from
+      a European time zone the consent banner (or Google's message, once live) shows; no console error [browser];
+    - `curl -s https://alephb.uk/ads.txt` has the pub line; the bridge `https://mystery.alephb.uk/` carries no ad code;
+    - AdSense > Privacy & messaging: the European and US messages still list alephb.uk (they apply to every path);
+      AdSense > Sites: alephb.uk only (never add mystery.alephb.uk, never remove and re-add alephb.uk);
+    - Search Console: the game, the handbook and the about page read "URL is on Google" (the review judges what is
+      indexed); note the Pages > Indexed count for alephb.uk in the tally below;
+    - privacy links on alephb.uk point at ritz-affair/privacy.html, and that page names the new addresses.
+    **Check:** each bullet holds; any miss is fixed before A5.
 A5. AdSense: Sites > alephb.uk > confirm the issues are fixed > **Request review**, never remove and re-add the
     site. Owner's call on timing: as soon as A3's day-1 pages read "URL is on Google" (a few days), or at once.
     Record the date in both CLAUDE.md files (D1).
