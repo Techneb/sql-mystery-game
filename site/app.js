@@ -88,8 +88,8 @@ const visibleColumns = () => !data || !state ? {} : columns(schema, [...visibleT
 // After a correct answer the solved chapter stays on screen (telegram, answer) until the clerk presses
 // Next chapter; the new chapter's tables are revealed only then, so the reveal is actually seen.
 let reviewing = null, nextPending = 0, pendingReveal = [];
-// Chapter I's box on first arrival: a plain look-up, noise only (test_generate pins its rows, learn and seasons).
-export const FIRST_QUERY = "SELECT * FROM police_report LIMIT 5";
+// Chapter I's box on first arrival: a plain look-up on the table its first question needs (the interviews), noise only (test_generate pins its rows, learn and seasons).
+export const FIRST_QUERY = "SELECT * FROM interview LIMIT 5";
 // The query box's empty value: that first query, until a first chapter I query or a solve.
 export const starterSql = state => !state.queries[1] && !state.solved.length ? FIRST_QUERY : "";
 let syncSql = () => {};   // the query box's redraw, once boot has wired it (wireEditor)
@@ -272,6 +272,9 @@ export const TAUNTS = [
   "MY DEAR CLERK STOP A QUERY IS CHEAPER THAN A GUESS STOP RUN ONE STOP A L",
 ];
 
+// Chapter I's step 1 answered with the 17th (any spelling, `step1.eve_sha256`): still a wrong answer, with its own line.
+export const EVE_REPLY = "The night began on the 17th, clerk. Under which date did the police file it?";
+
 export function judgeWrong(norm, data, state, met) {
   if (Object.hasOwn(data.wrong_suspects, norm) && (!met || met.includes(norm))) return data.wrong_suspects[norm];
   return data.wrong_default[state.wrongStreak % data.wrong_default.length];
@@ -317,7 +320,7 @@ function ctx(extra) {
            norm: "", text: "", lines: state.lastQueryLines, hour: new Date().getHours(),
            elapsed: Date.now() - (state.opened[currentChapter(state, data.chapters).n] || Date.now()),
            decoy: data.decoys ? data.decoys[currentChapter(state, data.chapters).n] : undefined,
-           stepDecoys: (stepOn(state, currentChapter(state, data.chapters)) || {}).decoys || [], ...extra };
+           ...extra };
 }
 
 function renderBoard() {
@@ -432,7 +435,7 @@ async function submitAnswer() {
     else { $("reply").textContent = "That is not the code. Four words, the first of them STOP, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
   }
-  const step = stepOn(state, ch);
+  const step = stepOn(state, ch), eve = !!step && (step.eve_sha256 || []).includes(hash);
   if (step && step.answer_sha256.includes(hash)) {   // chapter I's step 1, the date: the report is asked next
     state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
     track("step_solve", { chapter: ch.n, step: 1, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
@@ -458,9 +461,9 @@ async function submitAnswer() {
   } else {
     state.wrong[ch.n] = (state.wrong[ch.n] || 0) + 1; state.wrongStreak++;
     if ([1, 3].includes(state.wrong[ch.n])) track("answer_wrong", { chapter: ch.n, mode: state.mode, n: state.wrong[ch.n] });
-    $("reply").textContent = judgeWrong(norm, data, state, metSuspects(data.cast, state, data.chapters).map(s => normalise(s.name)));
+    $("reply").textContent = eve ? EVE_REPLY : judgeWrong(norm, data, state, metSuspects(data.cast, state, data.chapters).map(s => normalise(s.name)));
     if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length], "taunt");
-    afterWrong(norm);
+    afterWrong(norm, eve);
   }
   $("answer").value = ""; save(state);
 }
@@ -572,8 +575,8 @@ function afterSolve(ch, event) {
     award(detectBadges(ctx({ event: "code" }), state.badges));
   }
 }
-function afterWrong(norm) {
-  award(detectBadges(ctx({ event: "answer", norm }), state.badges));
+function afterWrong(norm, stepEve) {
+  award(detectBadges(ctx({ event: "answer", norm, stepEve }), state.badges));
 }
 
 // --- compete mode: the clock and the outbox ----------------------------------------------------

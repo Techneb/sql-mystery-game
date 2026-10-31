@@ -199,15 +199,14 @@ class PartI(unittest.TestCase):
         # chapter I's box starts with app.js FIRST_QUERY (learn and compete): its rows must be plain noise in every build
         js = open("site/app.js").read()
         query = re.search(r'export const FIRST_QUERY = "([^"]+)"', js).group(1)
-        self.assertEqual(query, "SELECT * FROM police_report LIMIT 5")
+        self.assertEqual(query, "SELECT * FROM interview LIMIT 5")
         for seed in [1912] + list(range(1, g.SEASONS + 1)):
             conn, V = built(seed)
-            dates = {v for v in V.values() if isinstance(v, int) and 19120000 < v < 19130000}   # the nights, eves and windows
-            ids = {V["report_id"], V["compete_report_id"], V["decoy_report_id"]}
-            for row in conn.execute(query):
-                self.assertNotIn(row[0], ids, seed)
-                self.assertNotIn(row[1], dates, (seed, row))
-                self.assertIn(row[5], g.REPORT_TEXT, (seed, row))   # a noise line, never a planted report
+            for row in conn.execute(query):   # id, person_name, date, transcript, person_id
+                self.assertIn(row[1], g.GUESTS + g.WITNESSES, (seed, row))   # a noise guest: no Duroc, Morand or cast
+                self.assertIn(row[3], g.INTERVIEW_TEXT, (seed, row))         # a noise line, never a planted transcript
+                if seed == 1912:   # learn: nor the night or the eve chapter I's step 1 asks about
+                    self.assertNotIn(row[2], (V["theft_date"], V["eve_date"]), row)
 
     def test_pinned_ids_hide_among_the_noise(self):
         # D2: MAX(id), ORDER BY id DESC and id ranges land on noise (scatter_planted swaps every planted id but the

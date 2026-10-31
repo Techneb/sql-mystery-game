@@ -1341,7 +1341,7 @@ def chapters_json(V, mode="learn"):
                 st = ch["step1"]
                 d["step1"] = dict(objective=st["objective"], answer_form=st["answer_form"], board=st["board"], where=st["where"],
                                   answer_sha256=[sha(f) for f in date_forms(V[st["answer_key"]])],
-                                  decoys=sorted(set(date_forms(V["eve_date"]) + [normalise(w) for w in st["wrong"]])))   # the eve, for the "Filed Under the 17th" badge
+                                  eve_sha256=sorted(sha(f) for f in set(date_forms(V["eve_date"]) + [normalise(w) for w in st["wrong"]])))   # the eve's spellings, hashed: its own reply and the "Filed Under the 17th" badge
             d["howto"] = howto_box(howto_payload(V, ch), answer_forms(V[ch["answer_key"]], ch["answer_form"]), V["seed"], ch["n"])
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,

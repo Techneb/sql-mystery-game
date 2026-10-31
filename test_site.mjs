@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.js";
 import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./site/state.js";
-import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml } from "./site/app.js";
+import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml, EVE_REPLY } from "./site/app.js";
 import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
 import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
@@ -272,7 +272,7 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   assert.ok(ev("answer", { norm: "4100", decoy: 4100 }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
-  assert.ok(ev("answer", { norm: "17 may 1912", stepDecoys: ["17 may 1912"] }).includes("Filed Under the 17th"), "the eve typed at step 1");
+  assert.ok(ev("answer", { norm: "17 may 1912", stepEve: true }).includes("Filed Under the 17th"), "the eve typed at step 1");
 });
 
 test("story markup: bold and italic only, everything else escaped", () => {
@@ -893,7 +893,7 @@ test("date mistakes: a quoted date names the YYYYMMDD number, an unquoted one is
   assert.equal(dateArithmeticNote("SELECT * FROM police_report WHERE date = 1912-05-17", GAME),
     "1912-05-17 without quotes is arithmetic: 1912 minus 5 minus 17, which is 1890. date holds dates as numbers written YYYYMMDD, as in date = 19120517.");
   assert.equal(dateArithmeticNote("SELECT * FROM police_report WHERE place = '1912-05-17'", GAME), "");
-  assert.equal(FIRST_QUERY, "SELECT * FROM police_report LIMIT 5");
+  assert.equal(FIRST_QUERY, "SELECT * FROM interview LIMIT 5");
   assert.equal(strictCheck(FIRST_QUERY, GAME), null);
 });
 
@@ -1139,7 +1139,11 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
     assert.ok(st.answer_sha256.includes(await sha256(normalise(t))), "step 1 accepts " + t);
   for (const t of ["1912-05-17", "17 May 1912", "Friday the 17th of May 1912", "19120519", "2127", "18"])
     assert.ok(!st.answer_sha256.includes(await sha256(normalise(t))), "step 1 refuses " + t);
-  assert.ok(st.decoys.includes(normalise("17 May 1912")) && st.decoys.includes(normalise("1912-05-17")));
+  assert.ok(!("decoys" in st) && !JSON.stringify(st).includes("17 may"), "the 17th ships hashed only");
+  for (const t of ["17 May 1912", "1912-05-17", "19120517", "Friday the 17th of May 1912", "17th of May", "the night of the 17th"])
+    assert.ok(st.eve_sha256.includes(await sha256(normalise(t))), "the 17th gets its own reply: " + t);
+  for (const h of st.answer_sha256) assert.ok(!st.eve_sha256.includes(h), "no accepted spelling reads as the 17th");
+  assert.ok(!/18|saturday|samedi/i.test(EVE_REPLY) && /17th/.test(EVE_REPLY), "the 17th's reply never gives the 18th");
   assert.ok(!/18|saturday|samedi/i.test(st.objective + st.answer_form + st.where + ch1.story + ch1.objective), "nothing hands the date out");
   const fresh = freshState();
   assert.equal(stepOn(fresh, ch1), st);

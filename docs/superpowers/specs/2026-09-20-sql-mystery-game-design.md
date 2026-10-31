@@ -366,7 +366,7 @@ device).
   matching a Ritz report of the 17th or 19th too, plus the Ritz thefts of 16-19 May and the latest one; `wrong` lists
   spellings of the 17th the build refuses). `generate_db.date_forms` gives the accepted spellings (ISO, 18/05/1912,
   05/18/1912, 18 May, May 18th, the 18th of May, Saturday/samedi, mai, with or without the year; 78 hashes), the
-  normalisers untouched; chapters.json ships `step1` {objective, answer_form, board, where, answer_sha256, decoys}.
+  normalisers untouched; chapters.json ships `step1` {objective, answer_form, board, where, answer_sha256, eve_sha256} (the 17th's spellings hashed: its own reply, owner 2026-10-31).
   Step 2 objective: "Which report is ours, filed under that date?". Defaults taken (not decided by the owner): compete
   keeps its chapter I as one step; `state.step1` holds the typed date (an old save mid-chapter I starts at step 1);
   the case board shows the date on its own card, then under the report on chapter I's card; the objective shows it
