@@ -233,6 +233,40 @@ class PartI(unittest.TestCase):
             self.assertNotRegex(t, r"1912\d{4}")
 
 
+class DateAnswer(unittest.TestCase):
+    """Chapter I's step 1 (review 2026-10-31, findings 5 and 6): the date's spellings, and traps on many rows."""
+
+    def test_short_spellings_of_the_night_and_of_the_eve(self):
+        ok, eve = set(g.date_forms(19120518)), set(g.date_forms(19120517))
+        for f in ["18th", "the 18th", "the night of the 18th", "Saturday 18th", "18/5", "5/18", "18/05", "1912-05-18", "05/18/1912"]:
+            self.assertIn(g.normalise(f), ok, f)
+            self.assertNotIn(g.normalise(f), eve, f)
+        for f in ["17th", "the 17th", "the night of the 17th", "Friday 17th", "17/5"]:
+            self.assertIn(g.normalise(f), eve, f)
+            self.assertNotIn(g.normalise(f), ok, f)
+        step = next(c for c in json.load(open("site/chapters.json"))["chapters"] if c["n"] == 1)["step1"]
+        for f in ["17th", "the 17th"]:
+            self.assertIn(g.sha(f), step["eve_sha256"], f)
+        self.assertIn(g.sha("the 18th"), step["answer_sha256"])
+
+    def test_any_day_and_month(self):
+        forms = set(g.date_forms(19120903))   # a day under 10, a month after June
+        for f in ["03/09/1912", "3/9/1912", "09/03/1912", "1912-09-03", "3 September 1912", "September 3rd", "the 3rd",
+                  "Tuesday the 3rd of September", "mardi 3 septembre 1912", "3/9", "03/09"]:
+            self.assertIn(g.normalise(f), forms, f)
+
+    def test_a_trap_on_many_rows_of_the_answer_date_fails_the_build(self):
+        conn, V = built(1912)
+        st = plot.CHAPTERS[0]["step1"]
+        many = "SELECT date FROM police_report WHERE date = {theft_date}"
+        self.assertGreater(len(conn.execute(many.format(**V)).fetchall()), 1)
+        with self.assertRaises(AssertionError):
+            g.check_chapter(conn, V, {**st, "distinct": True, "traps": [many]})
+        with self.assertRaises(AssertionError):
+            g.check_chapter(conn, V, {**st, "distinct": True, "naive": many})
+        g.check_chapter(conn, V, {**st, "distinct": True})   # the shipped traps all bite
+
+
 class PartII(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

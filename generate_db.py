@@ -1178,17 +1178,19 @@ def check_chapter(conn, V, ch, compete=False):
     check_discovery(conn, V, ch, compete)
     suf = "_compete" if compete else ""
     want = normalise(str(V[ch["answer_key" + suf]]))
+    # a date answer (chapter I's step 1, "distinct"): a result whose first column holds only the answer gives it away on any number of rows
+    gives = lambda rows: (len(rows) == 1 or ch.get("distinct", False)) and bool(rows) and {normalise(str(r[0])) for r in rows} == {want}
     rows = conn.execute(sqlite_sql(ch["solution" + suf].format(**V))).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
         "chapter %d%s: solution returned %r" % (ch["n"], suf, rows[:3])
     for trap in [v for t in ch.get("traps" + suf, []) for v in like_variants(t.format(**V))]:   # other plausible shortcuts that must not reach the answer
         rows = conn.execute(sqlite_sql(trap)).fetchall()
-        assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap %r does not bite" % (ch["n"], suf, trap)
+        assert not gives(rows), "chapter %d%s: trap %r does not bite" % (ch["n"], suf, trap)
     rows = conn.execute(sqlite_sql(ch["naive" + suf].format(**V))).fetchall()
     naive_rows = ch["naive_rows" + suf]
     assert naive_rows is None or len(rows) == naive_rows, \
         "chapter %d%s: naive returned %d rows, expected %d" % (ch["n"], suf, len(rows), naive_rows)
-    assert not (len(rows) == 1 and normalise(str(rows[0][0])) == want), "chapter %d%s: trap does not bite" % (ch["n"], suf)
+    assert not gives(rows), "chapter %d%s: trap does not bite" % (ch["n"], suf)
     return len(rows)
 
 
@@ -1291,23 +1293,31 @@ WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 
+MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+MOIS = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"]
+
+
 def date_forms(d):
-    """The normalised spellings a date answer accepts (chapter I's step 1): 1912-05-18, 18/05/1912, 05/18/1912,
-    18 May 1912, May 18th, Saturday the 18th of May 1912, samedi 18 mai..., with or without the weekday or the year."""
+    """The normalised spellings a date answer accepts (chapter I's step 1): 1912-05-18, 18/05/1912, 05/18/1912, 18/5,
+    18 May 1912, May 18th, the 18th, the night of the 18th, Saturday the 18th of May 1912, samedi 18 mai..., with or
+    without the weekday, the month or the year. Each is written as a player would and goes through normalise."""
     y, m, day = d // 10000, d // 100 % 100, d % 100
     wd = datetime.date(y, m, day).weekday()
-    month = ["january", "february", "march", "april", "may", "june"][m - 1]
-    mois = ["janvier", "fevrier", "mars", "avril", "mai", "juin"][m - 1]
     nth = "%d%s" % (day, "th" if 10 <= day <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th"))
-    forms = {"%d%02d%02d" % (y, m, day), "%d%d%d" % (y, m, day), "%02d%02d%d" % (day, m, y), "%d%d%d" % (day, m, y),
-             "%d%02d%d" % (m, day, y), "%02d%02d" % (day, m)}
+    raw = {"%d%02d%02d" % (y, m, day)}
+    for a, b in [(day, m), (m, day)]:
+        for f in ["%d/%d", "%02d/%02d"]:
+            raw |= {f % (a, b), f % (a, b) + "/%d" % y}
+    raw |= {"%d-%d-%d" % (y, m, day), "%d-%02d-%02d" % (y, m, day)}
     for w in ["", WEEKDAYS[wd], JOURS[wd]]:
-        for dd in [str(day), nth]:
-            for mo in [month, mois]:
-                for shape in ["{d} {m}", "{d} of {m}", "{m} {d}"]:
-                    for yr in ["", " %d" % y]:
-                        forms.add(normalise(" ".join(x for x in [w, shape.format(d=dd, m=mo) + yr] if x)))
-    return sorted(forms)
+        for night in ["", "the night of"]:
+            raw.add(" ".join(x for x in [night, w, "the", nth] if x))
+            for dd in [str(day), nth]:
+                for mo in [MONTHS[m - 1], MOIS[m - 1]]:
+                    for shape in ["{d} {m}", "{d} of {m}", "{m} {d}"]:
+                        for yr in ["", " %d" % y]:
+                            raw.add(" ".join(x for x in [night, w, shape.format(d=dd, m=mo) + yr] if x))
+    return sorted({normalise(f) for f in raw})
 
 
 def answer_forms(answer, form):
@@ -1479,7 +1489,7 @@ def self_check(conn, V, mode="learn"):
         check_chapter(conn, V, ch)
         if "step1" in ch:   # chapter I's step 1 (learn): checked like a chapter, and no spelling of the eve accepted
             st = ch["step1"]
-            check_chapter(conn, V, {**st, "story": ch["story"]})
+            check_chapter(conn, V, {**st, "story": ch["story"], "distinct": True})
             ok = set(date_forms(V[st["answer_key"]]))
             for w in st["wrong"] + date_forms(V["eve_date"]):
                 assert normalise(w) not in ok, "chapter 1 step 1 accepts %r" % w

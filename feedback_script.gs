@@ -381,7 +381,7 @@ function claude_(p) {
 // leak them). Derived from plot.py / solution.sql; the compete chapters differ (their own stories and shapes).
 var CHAPTER_NOTES = [
   ["I", "The Night of the 17th", "SELECT / WHERE", "police_report, interview",
-    "Find the id of the police report of the theft at the Ritz. The night watchman's interview gives the time the lift went; that time is past midnight, so the report is filed under a different date than the night in the title. Read interview transcripts by person, then filter police_report on place, date and type."],
+    "Learn mode asks two questions. First, the date the theft is filed under: the night porter's interview gives the time he heard the lift; that time is past midnight, so the date is not the night in the title. Read interview transcripts by person. Then the id of the police report of the theft at the Ritz: filter police_report on place, type and that date."],
   ["II", "The Neighbouring Suite", "ORDER BY / LIMIT", "hotel_register, suite",
     "Find the name of the guest in the neighbouring suite. The report's description says the thief came from the most expensive suite on the same floor that night. Filter hotel_register on the floor and on a stay covering the night, ORDER BY price DESC, LIMIT 1."],
   ["III", "A Plate in the Dark", "LIKE", "cab_ride",
