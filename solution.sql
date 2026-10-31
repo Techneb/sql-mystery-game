@@ -1,6 +1,7 @@
 -- The Ritz Affair: reference path (seed 1912). Each chapter first finds the facts the story withholds, then answers.
 
 -- Answers, in play order:
+--       Step 1: date of the theft      19120518
 --    1. The Night of the 17th          2127
 --    2. The Neighbouring Suite         Lord Ashcombe
 --    3. A Plate in the Dark            75-2041
@@ -20,6 +21,12 @@
 SELECT transcript
 FROM interview
 WHERE person_name = 'Marcel Duroc';
+-- Step 1, the date (any spelling of that day: 1912-05-18, 18 May 1912...):
+SELECT date
+FROM interview
+WHERE person_name = 'Marcel Duroc';
+-- Step 1 answer: 19120518
+-- Step 2:
 -- The answer:
 SELECT id
 FROM police_report

@@ -53,7 +53,7 @@ new investigation to hunt for them. Keep this page in step with `BADGES` when a 
 
 | Badge | How to get it |
 |---|---|
-| Filed Under the 17th | Chapter 1: answer the decoy report of the 17th instead of the 18th. |
+| Filed Under the 17th | Chapter 1: answer the 17th (any spelling) as the date at step 1, or the decoy report of the 17th instead of the 18th. |
 | Anagram | Answer "Paul Sernine" (an anagram of Arsene Lupin). |
 | Wrong Frenchman | Answer "Horace Velmont". |
 | Gentleman | Answer "Arsene Lupin". |
