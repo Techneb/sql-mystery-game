@@ -359,7 +359,7 @@ device).
 
 ## 8. Backlog (not scheduled)
 
-- **The game moves to alephb.uk/ritz-affair/** (owner, 2026-10-31; built, waiting for go-live). The game and the
+- **The game moves to alephb.uk/ritz-affair/** (owner, 2026-10-31; live the same evening). The game and the
   desk at <https://alephb.uk/ritz-affair/>, next to the handbook at <https://alephb.uk/learn/>, both pushed to the
   alephb-site repo by `.github/workflows/publish-alephb.yml` (`publish.mjs`; tests first). mystery.alephb.uk becomes
   a bridge (`pages.yml` with the repository variable `BRIDGE` = `on`): its `/` carries the browser's `ritz.*` keys to
