@@ -92,7 +92,7 @@ export function certificateHtml(state) {
 
 // --- Share, at the end of the game only (owner, 2026-10-25): never a clue or an answer, only the rank and the count.
 // The rank is Part I's (RANKS are tuned on it, as on the certificate); the count is the whole game's.
-export const SHARE_URL = "https://mystery.alephb.uk/";
+export const SHARE_URL = "https://alephb.uk/ritz-affair/";
 export const shareText = (rankName, queries) => "I solved The Ritz Affair, a free SQL detective game, as " + rankName + " in " + queries + " queries.";
 export function shareLinks(text, url = SHARE_URL) {
   return { x: "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url),

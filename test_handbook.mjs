@@ -8,7 +8,9 @@ import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPag
 import { execFileSync } from "node:child_process";
 import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
 import path from "node:path";
-import { exportFiles, stubHtml, pruneSitemap, gameLinks, ADSENSE_META } from "./move_handbook.mjs";
+import { publishFiles, bridgeFiles, bridgeTarget, bridgeHtml, ADSENSE_META, OLD, GAME, HOME } from "./publish.mjs";
+import { versionText } from "./version_site.mjs";
+import { readImport, importWrites } from "./site/state.js";
 
 const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 // The Clerk's Handbook (site/learn/): colour_learn.mjs writes its menu row, pagers, side menus and index list from
@@ -155,9 +157,9 @@ test("handbook: the previous/next pager follows the table of contents, links res
   });
 });
 
-// Each indexed page's file under site/ and the sitemap that lists it: the game's on mystery.alephb.uk, the handbook's on
-// alephb.uk/learn/ (learn/sitemap.xml, exported there by move_handbook.mjs).
-const SITEMAPS = [["site/sitemap.xml", "https://mystery.alephb.uk/", "site/"], ["site/learn/sitemap.xml", "https://alephb.uk/learn/", "site/learn/"]];
+// Each indexed page's file under site/ and the sitemap that lists it: the game's on alephb.uk/ritz-affair/, the handbook's on
+// alephb.uk/learn/ (publish.mjs serves site/sitemap.xml as ritz-affair/sitemap.xml and learn/sitemap.xml as is).
+const SITEMAPS = [["site/sitemap.xml", "https://alephb.uk/ritz-affair/", "site/"], ["site/learn/sitemap.xml", "https://alephb.uk/learn/", "site/learn/"]];
 const indexed = () => SITEMAPS.flatMap(([sm, host, dir]) => {
   const xml = fs.readFileSync(sm, "utf8"), locs = [...xml.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
   return locs.map((loc) => {
@@ -185,7 +187,7 @@ test("search and previews: every indexed page has its own title, a description, 
     assert.ok(meta(/<meta name="description" content="([^"]{50,})">/), f + " description");
     assert.ok(meta(/<meta property="og:title" content="([^"]+)">/), f + " og:title");
     assert.equal(meta(/<meta property="og:url" content="([^"]+)">/), loc, f + " og:url");
-    assert.equal(meta(/<meta property="og:image" content="([^"]+)">/), "https://mystery.alephb.uk/landing-pillow.jpg", f + " og:image");
+    assert.equal(meta(/<meta property="og:image" content="([^"]+)">/), "https://alephb.uk/ritz-affair/landing-pillow.jpg", f + " og:image");
     assert.ok(fs.existsSync("site/landing-pillow.jpg") && h.includes('<meta name="twitter:card" content="summary_large_image">'), f + " twitter card");
     const ld = JSON.parse(meta(/<script type="application\/ld\+json">([^<]+)<\/script>/));
     assert.equal(ld["@context"], "https://schema.org", f + " JSON-LD");
@@ -360,39 +362,120 @@ test("exercises: the level shown first and the question each level button select
   assert.match(fs.readFileSync("site/privacy.html", "utf8"), /ritz\.exercises\.history/);
 });
 
-// The handbook is served from https://alephb.uk/learn/ (move_handbook.mjs export); the game's site/learn/ pages become
-// redirects at deploy (stubs).
-test("handbook move: the export resolves every local URL and import, keeps no ../, and points canonicals at alephb.uk", () => {
-  const files = exportFiles("site");
-  const has = (f) => Object.hasOwn(files, path.posix.normalize(f));
-  for (const [f, t] of Object.entries(files)) {
+// alephb.uk serves the game at /ritz-affair/ and the handbook at /learn/ (publish.mjs, pushed to alephb-site by
+// .github/workflows/publish-alephb.yml); mystery.alephb.uk serves only the bridge (publish.mjs bridge).
+const SKIPPED = new Set(["robots.txt", "ads.txt", ".gitkeep", ".DS_Store"]);
+test("publish: alephb-site gets every file of site/, every local URL and import resolves across both folders, one versioned URL per module", () => {
+  const files = publishFiles("site");
+  const want = fs.readdirSync("site", { recursive: true }).filter((f) => !fs.statSync("site/" + f).isDirectory() && !SKIPPED.has(path.basename(f)))
+    .map((f) => (f.startsWith("learn/") ? f : "ritz-affair/" + f)).sort();
+  assert.deepEqual(Object.keys(files).sort(), want, "every page and asset, the season files the deploy built included");
+  for (const f of Object.keys(files)) assert.ok(f.startsWith("ritz-affair/") || f.startsWith("learn/"), f + ": only ritz-affair/ and learn/");
+  if (fs.existsSync("site/season-1.sqlite")) assert.ok(files["ritz-affair/season-1.sqlite"] && files["ritz-affair/season-1.json"]);
+  const v = "abc1234", out = Object.fromEntries(Object.entries(files).map(([f, t]) => [f, typeof t === "string" ? versionText(f, t, v) : t]));
+  const has = (f) => Object.hasOwn(out, f);
+  const modules = new Map();   // module path -> the URLs it is reached by
+  for (const [f, t] of Object.entries(out)) {
     if (typeof t !== "string") continue;
+    if (f !== "ritz-affair/privacy.html") assert.doesNotMatch(t, /mystery\.alephb\.uk/, f + " names the new home");   // privacy tells of the bridge
     const dir = path.posix.dirname(f);
     if (f.endsWith(".html")) {
-      assert.doesNotMatch(t, /(src|href)="\.\.\//, f + " keeps no ../");
-      assert.doesNotMatch(t, /mystery\.alephb\.uk\/learn\//, f + " names the handbook at its new address");
       assert.equal(t.split(ADSENSE_META).length, 2, f + " carries the AdSense account tag once");
-      for (const [, u] of t.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
+      for (const [, a, u] of t.matchAll(/\b(src|href)="([^"]+)"/g)) {
         const p = u.split(/[?#]/)[0];
-        if (!p || /^([a-z]+:|\/\/)/i.test(u)) continue;
-        assert.ok(has(dir + "/" + (p.endsWith("/") ? p + "index.html" : p)), f + " links a missing file: " + u);
+        if (!p || /^([a-z]+:|\/\/|#)/i.test(u)) continue;
+        const to = path.posix.normalize(dir + "/" + p + (p.endsWith("/") ? "index.html" : ""));
+        assert.ok(has(to), f + " links a missing file: " + u);
+        if (/\.(js|css)$/.test(p)) assert.ok(u.endsWith("?v=" + v), f + " versions " + u);
+        if (p.endsWith(".js") && a === "src") modules.set(to, new Set([...(modules.get(to) || []), u.split("?")[1]]));
       }
     }
     if (f.endsWith(".js"))
-      for (const [, u] of t.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)"(\.\.?\/[^"?#]+)"/g))
-        assert.ok(has(dir + "/" + u), f + " imports a missing module: " + u);
+      for (const [, u] of t.matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)"(\.\.?\/[^"]+)"/g)) {
+        const [p, q] = u.split("?"), to = path.posix.normalize(dir + "/" + p);
+        assert.ok(has(to), f + " imports a missing module: " + u);
+        assert.equal(q, "v=" + v, f + " versions " + u);
+        modules.set(to, new Set([...(modules.get(to) || []), q]));
+      }
   }
-  assert.match(files["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);
-  assert.equal([...files["learn/sitemap.xml"].matchAll(/<loc>https:\/\/alephb\.uk\/learn\//g)].length, learnPages.length, "the /learn/ sitemap lists every page");
-  for (const f of learnPages) assert.doesNotMatch(fs.readFileSync("site/learn/" + f, "utf8"), /mystery\.alephb\.uk\/learn\//, f + ": the source names alephb.uk/learn/ (exportText's rewrite is a guard)");
+  for (const [m, qs] of modules) assert.equal(qs.size, 1, m + " has one URL");
+  assert.ok(modules.has("ritz-affair/stats.js"), "learn/handbook.js and app.js share the game's stats.js");
+  assert.match(out["learn/exercises.js"], /from "\.\.\/ritz-affair\/terminal\.js\?v=abc1234"/);
+  assert.match(out["ritz-affair/index.html"], /href="\.\.\/learn\/exercises\.html#the-cheap-shelf"/);
+  assert.match(out["ritz-affair/admin.html"], /src="\.\.\/learn\/theme\.js\?v=abc1234"/);
+  assert.match(out["ritz-affair/index.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/ritz-affair\/">/);
+  assert.match(out["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);
+  assert.equal([...out["learn/sitemap.xml"].matchAll(/<loc>https:\/\/alephb\.uk\/learn\//g)].length, learnPages.length, "the /learn/ sitemap lists every page");
+  assert.doesNotMatch(out["ritz-affair/sitemap.xml"], /\/learn\//, "the game's sitemap lists its own pages only");
+  assert.equal(GAME, "https://alephb.uk/ritz-affair/");
+  assert.equal(HOME, "https://alephb.uk/learn/");
 });
 
-test("handbook move: each game copy redirects to its alephb.uk page, the game's sitemap drops them, its links go there", () => {
-  assert.match(stubHtml("like.html"), /location\.replace\("https:\/\/alephb\.uk\/learn\/like\.html" \+ location\.search \+ location\.hash\)/);
-  assert.match(stubHtml("index.html"), /rel="canonical" href="https:\/\/alephb\.uk\/learn\/"/);
-  const xml = fs.readFileSync("site/sitemap.xml", "utf8");
-  assert.equal(pruneSitemap(xml), xml, "the game's sitemap lists no learn page");
-  assert.doesNotMatch(xml, /\/learn\//);
-  assert.match(xml, /<loc>https:\/\/mystery\.alephb\.uk\/<\/loc>/);
-  assert.doesNotMatch(gameLinks(fs.readFileSync("site/index.html", "utf8")), /href="learn\//);
+test("publish: mystery.alephb.uk is named only by the bridge, the docs and test fixtures", () => {
+  const named = execFileSync("git", ["grep", "-l", "mystery\\.alephb\\.uk"], { encoding: "utf8" }).split("\n").filter(Boolean);
+  const allowed = (f) => f === "publish.mjs" || f === "site/privacy.html" || f === "CLAUDE.md" || f === "README.md" || f.startsWith("docs/") || /^test_\w+\.(mjs|py)$/.test(f) || f.startsWith(".github/workflows/");
+  assert.deepEqual(named.filter((f) => !allowed(f)), [], "the site and the scripts name alephb.uk");
+});
+
+test("bridge: index.html carries the ritz.* keys in the fragment only, the query kept; every other page redirects to its new URL", () => {
+  assert.equal(bridgeTarget("", []), GAME);
+  assert.equal(bridgeTarget("?season=s3&board=https%3A%2F%2Fx", [["other", "1"]]), GAME + "?season=s3&board=https%3A%2F%2Fx", "nothing of ours saved: a plain redirect");
+  const saved = [["ritz.learn", JSON.stringify({ solved: [1, 2], badges: ["Tourist"], notes: "été" })], ["ritz.theme", "night"],
+    ["ritz.exercises", "[\"the-cheap-shelf\"]"], ["ritz.admin.board", "https://script.google.com/macros/s/x/exec"], ["_ga", "no"]];
+  const to = bridgeTarget("?season=s3", saved);
+  const u = new URL(to);
+  assert.equal(u.origin + u.pathname, GAME);
+  assert.equal(u.search, "?season=s3", "the query stays a query");
+  assert.match(u.hash, /^#import=[A-Za-z0-9_-]+$/, "the keys travel in the fragment, base64url");
+  assert.deepEqual(readImport(u.hash), Object.fromEntries(saved.filter(([k]) => k.startsWith("ritz."))), "every ritz.* key, nothing else, UTF-8 intact");
+  // the page runs that same function on this origin's localStorage, with no GA or ad tag
+  const html = bridgeHtml(), js = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+  assert.doesNotMatch(html, /googletagmanager|adsbygoogle|gtag|\.js/);
+  let went = "";
+  const store = new Map(saved);
+  const ls = { get length() { return store.size; }, key: (i) => [...store.keys()][i], getItem: (k) => store.get(k) ?? null };
+  new Function("localStorage", "location", js)(ls, { search: "?season=s3", replace: (x) => { went = x; } });
+  assert.equal(went, to);
+  new Function("localStorage", "location", js)({ get length() { throw new Error("blocked"); } }, { search: "?a=1", replace: (x) => { went = x; } });
+  assert.equal(went, GAME + "?a=1", "blocked storage: a plain redirect");
+  const bridge = bridgeFiles("site");
+  const pages = fs.readdirSync("site", { recursive: true }).filter((f) => f.endsWith(".html")).sort();
+  assert.deepEqual(Object.keys(bridge).filter((f) => f.endsWith(".html")).sort(), pages, "every old page is served");
+  for (const f of pages) {
+    if (f === "index.html") continue;
+    const want = f === "learn/index.html" ? HOME : f.startsWith("learn/") ? HOME + f.slice(6) : GAME + f;
+    assert.ok(bridge[f].includes(`location.replace(${JSON.stringify(want)} + location.search + location.hash)`), f + " -> " + want);
+    assert.ok(bridge[f].includes(`<link rel="canonical" href="${want}">`), f + " canonical");
+  }
+  assert.equal(bridge["robots.txt"], "User-agent: *\nAllow: /\n", "crawlers follow the redirects");
+  assert.ok(Object.keys(bridge).every((f) => /\.(html|txt)$/.test(f)), "no script, data or ad file on the bridge");
+  assert.ok(OLD.startsWith("https://mystery."));
+});
+
+test("bridge import: a key the new origin lacks is written; a held key is kept unless it is a save the import is ahead of", () => {
+  const save = (solved, totalQueries) => JSON.stringify({ solved, totalQueries });
+  const have = (o) => (k) => (k in o ? o[k] : null);
+  const imp = { "ritz.learn": save([1, 2, 3], 40), "ritz.compete": save([1], 5), "ritz.theme": "night", "ritz.consent": "yes",
+    "ritz.exercises": "[]", "evil": "x", "ritz.n": 5 };
+  assert.deepEqual(importWrites(imp, have({})), { "ritz.learn": imp["ritz.learn"], "ritz.compete": imp["ritz.compete"], "ritz.theme": "night", "ritz.consent": "yes", "ritz.exercises": "[]" },
+    "an empty origin takes every ritz.* string, nothing else");
+  assert.deepEqual(importWrites(imp, have({ "ritz.learn": save([1], 99), "ritz.compete": save([1, 2], 0), "ritz.theme": "day", "ritz.consent": "no", "ritz.exercises": "[\"a\"]" })),
+    { "ritz.learn": imp["ritz.learn"] }, "more chapters solved wins; theme, consent and exercises already here stay");
+  assert.deepEqual(importWrites({ "ritz.learn": save([1, 2], 9) }, have({ "ritz.learn": save([1, 2, 3], 1) })), {}, "fewer chapters: kept");
+  assert.deepEqual(importWrites({ "ritz.learn": save([1], 9) }, have({ "ritz.learn": save([1], 3) })), { "ritz.learn": save([1], 9) }, "same chapters, more queries");
+  assert.deepEqual(importWrites({ "ritz.learn": save([1], 3) }, have({ "ritz.learn": save([1], 3) })), {}, "a tie keeps what is here");
+  assert.deepEqual(importWrites({ "ritz.learn": save([1], 3) }, have({ "ritz.learn": "{broken" })), { "ritz.learn": save([1], 3) }, "an unreadable save here loses");
+  for (const h of ["", "#", "#import=", "#import=!!", "#the-cheap-shelf", "#import=" + Buffer.from("[1]").toString("base64url"), "#import=" + Buffer.from("nope").toString("base64url")])
+    assert.equal(readImport(h), null, h + " is no import");
+  // app.js imports before anything reads storage, then drops the fragment
+  const app = fs.readFileSync("site/app.js", "utf8");
+  assert.match(app, /async function boot\(\) \{\n  importSaves\(\);/);
+  assert.match(app, /history\.replaceState\(null, "", location\.pathname \+ location\.search\)/);
+});
+
+test("privacy: the notice lives with the game on alephb.uk and says the game and the handbook share their keys", () => {
+  const h = fs.readFileSync("site/privacy.html", "utf8");
+  assert.match(h, /<link rel="canonical" href="https:\/\/alephb\.uk\/ritz-affair\/privacy\.html">/);
+  assert.match(h, /One answer, kept in <code>ritz\.consent<\/code>, covers\s+the game and the handbook/);
+  assert.match(h, /the handbook, the Clerk's Desk and the leaderboard read and write the same day\/night choice/);
 });

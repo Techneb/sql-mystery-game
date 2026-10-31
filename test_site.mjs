@@ -1041,7 +1041,7 @@ test("share line: rank and count only, X and LinkedIn links carry the site", () 
   assert.equal(t, "I solved The Ritz Affair, a free SQL detective game, as Ganimard himself in 140 queries.");
   const l = shareLinks(t);
   assert.ok(l.x.startsWith("https://x.com/intent/post?text=") && l.x.includes(encodeURIComponent(t)) && l.x.endsWith(encodeURIComponent(SHARE_URL)));
-  assert.equal(l.linkedin, "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent("https://mystery.alephb.uk/"));
+  assert.equal(l.linkedin, "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent("https://alephb.uk/ritz-affair/"));
   const h = shareHtml(t);
   for (const n of ["x", "linkedin", "copy", "native"]) assert.ok(h.includes('data-net="' + n + '"'), n);
   assert.ok(h.includes('aria-label="Share on X"') && h.includes('aria-label="Share on LinkedIn"') && (h.match(/<svg class="logo"/g) || []).length === 2, "X and LinkedIn as named logos");

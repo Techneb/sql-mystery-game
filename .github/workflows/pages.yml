@@ -1,6 +1,6 @@
 name: Deploy GitHub Pages
 
-# Publishes site/ (the static Ritz Affair game) to GitHub Pages on every push to main.
+# Deploys mystery.alephb.uk on every push to main: the bridge to alephb.uk once BRIDGE is on, the old game until then.
 # Classic "deploy from a branch" only serves / or /docs, not an arbitrary subfolder like
 # site/, so this uses the Actions build type instead of restructuring the repo.
 
@@ -34,19 +34,26 @@ jobs:
         # After the season build (the season-file test is skipped without it), before anything is versioned or
         # uploaded: a failing test stops the deploy.
         run: node --test test_site.mjs test_desk.mjs test_handbook.mjs test_backend.mjs
-      - name: Redirect the handbook to alephb.uk
-        # The Clerk's Handbook is served at https://alephb.uk/learn/ (move_handbook.mjs export, pushed to alephb-site):
-        # after the tests, each site/learn/ page becomes a redirect, the sitemap drops them, the game links there.
-        run: node move_handbook.mjs stubs site
-      - name: Tie the pages to this deploy's scripts and stylesheets
-        # Browsers keep scripts and stylesheets for 10 minutes; versioned URLs stop a fresh page from running a stale
-        # cached script (app.js passes the same ?v= to the data files it fetches). One rule, no list: every local
-        # script/stylesheet of every page and every relative import gets ?v=<commit> (test_site.mjs checks the output).
-        run: node version_site.mjs "${GITHUB_SHA::7}"
+      - name: Build what mystery.alephb.uk serves
+        # The game lives at https://alephb.uk/ritz-affair/ and the handbook at https://alephb.uk/learn/ (publish-alephb.yml).
+        # With the repository variable BRIDGE set to "on" (go-live runbook, docs/superpowers/plans/2026-10-31-move-game-to-alephb.md),
+        # this host serves only the bridge (publish.mjs bridge): / carries the browser's ritz.* keys to the new game in
+        # the URL fragment, every other old page redirects. Until then, the whole game as before, its learn/ pages
+        # redirecting to alephb.uk/learn/, every local script and stylesheet versioned with ?v=<commit> (browsers keep
+        # them 10 minutes; test_site.mjs checks the rule).
+        # Human rule, not enforced here: never push to main during a timed compete session.
+        run: |
+          if [ "${{ vars.BRIDGE }}" = "on" ]; then
+            node publish.mjs bridge out
+          else
+            node publish.mjs stubs site
+            node version_site.mjs "${GITHUB_SHA::7}"
+            mv site out
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: out
 
   deploy:
     # A separate job (GitHub's own Pages starter layout): rerunning a failed deploy reruns only this job, so it

@@ -77,7 +77,7 @@ function confirm_(email) {
     if (cache.get(key)) return;
     var subject = "We received your feedback on The Ritz Affair";
     var body = "Hello,\n\nThank you for your feedback on The Ritz Affair. It has reached us and is under review. If it " +
-      "needs an answer, we will reply to this address.\n\nAlephB\nhttps://mystery.alephb.uk\n";
+      "needs an answer, we will reply to this address.\n\nAlephB\nhttps://alephb.uk/ritz-affair/\n";
     try {
       // email passed the form's check (no spaces, so no header injection); subject and body are fixed ASCII
       var mime = "From: " + CONFIRM_FROM + "\r\nTo: " + email + "\r\nSubject: " + subject +
@@ -127,7 +127,8 @@ var DESK_PAGES = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monito
 
 // A readable subject for the owner's copy and (with "Re: ") the reply draft: where the message came from.
 function subject_(page, ctx) {
-  page = String(page || ""); ctx = ctx || {};
+  // The game and the desk moved under /ritz-affair/ on alephb.uk (2026-10-31); the old root paths still read the same.
+  page = String(page || "").replace(/^\/ritz-affair(?=\/)/, ""); ctx = ctx || {};
   var base = "The Ritz Affair feedback", where = "", m;
   if (page === "/" || page === "/index.html") {
     var n = Math.floor(Number(ctx.chapter));
@@ -144,7 +145,7 @@ function notify_(page, message, email, ctxText, ctx) {
   try {
     var mail = { to: PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAIL") || NOTIFY_DEFAULT,
       subject: subject_(page, ctx),
-      body: message + "\n\nPage: https://mystery.alephb.uk" + page + "\nEmail: " + (email || "(none)") +
+      body: message + "\n\nPage: https://alephb.uk" + page + "\nEmail: " + (email || "(none)") +
         "\nReceived: " + new Date().toISOString() + (ctxText ? "\n\n" + ctxText : "") };
     if (email) mail.replyTo = email;
     MailApp.sendEmail(mail);
@@ -406,8 +407,8 @@ var CHAPTER_NOTES = [
 ];
 
 var SYSTEM_PROMPT = [
-  "You write email replies for AlephB, the author of The Ritz Affair, a free browser game to learn SQL (https://mystery.alephb.uk), and of The Clerk's Handbook, its free SQL lessons and exercises (https://alephb.uk/learn/). The game is a 1912 detective story in twelve chapters: Part I (I to VIII) and Part II (IX to XII). Each chapter asks for one answer found with SQL queries in a browser terminal that follows PostgreSQL's rules. It has a learn mode (the story) and a compete mode (timed seasons a teacher runs, with their own puzzles). The owner reviews every draft before it is sent.",
-  "Write the body of the reply only: no subject line, no placeholders. Start with a short greeting, answer what the sender asked or said, and end with this signature on its own lines:\nAlephB\nThe Ritz Affair, https://mystery.alephb.uk",
+  "You write email replies for AlephB, the author of The Ritz Affair, a free browser game to learn SQL (https://alephb.uk/ritz-affair/), and of The Clerk's Handbook, its free SQL lessons and exercises (https://alephb.uk/learn/). The game is a 1912 detective story in twelve chapters: Part I (I to VIII) and Part II (IX to XII). Each chapter asks for one answer found with SQL queries in a browser terminal that follows PostgreSQL's rules. It has a learn mode (the story) and a compete mode (timed seasons a teacher runs, with their own puzzles). The owner reviews every draft before it is sent.",
+  "Write the body of the reply only: no subject line, no placeholders. Start with a short greeting, answer what the sender asked or said, and end with this signature on its own lines:\nAlephB\nThe Ritz Affair, https://alephb.uk/ritz-affair/",
   "Tone: warm, plain and short. Write in English, unless the sender wrote in another language: then reply in that language. Thank the sender once at most. If the message reports a bug, say it will be looked at; never promise a fix or a date. Do not invent features, facts or numbers; if unsure, say the author will look into it.",
   "Writing rules: no em dashes or en dashes (use commas, colons or full stops); no 'not X but Y' contrasts; no one-line dramatic closing sentence; never write 'I hope this helps', 'Let me know', 'Feel free', 'Great question' or the like; no bullet lists, except when you ask the sender several questions; plain words, never crucial, delve, robust, showcase, seamless, leverage, elevate, journey, testament or vibrant.",
   "Format: the reply is written in a small Markdown subset and sent as a formatted email. Use only these marks: paragraphs separated by one blank line (never break a line inside a paragraph, except in the signature); **bold** sparingly, for the one key action or table name that matters, at most two or three per reply; `inline code` for table and column names and short SQL fragments; a fenced block (```sql on its own line, the SQL, then ``` on its own line) only when a short snippet of syntax genuinely helps, such as the shape of a clause; \"- \" at the start of a line for list items. No headings, links in brackets, tables, italics or any other mark. Code and bold never carry an answer, a planted value or a full solution query: the hint rules below apply to them as to the rest.",

@@ -61,3 +61,32 @@ export function visibleTables(chapters, state) {
   for (const ch of chapters) if (ch.n <= cur) ch.tables.forEach(t => seen.add(t));
   return seen;
 }
+
+// The move from the old subdomain (publish.mjs OLD) to alephb.uk/ritz-affair/ (2026-10-31): the old origin's bridge page carries its
+// ritz.* localStorage keys in the fragment, #import=<base64url of a JSON {key: value}> (publish.mjs bridgeTarget), and
+// boot writes them once. readImport(hash) -> that object, or null when the hash is not a well-formed import.
+export function readImport(hash) {
+  const m = /^#import=([A-Za-z0-9_-]+)$/.exec(hash || "");
+  if (!m) return null;
+  try {
+    const bin = atob(m[1].replace(/-/g, "+").replace(/_/g, "/"));
+    const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+    return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+  } catch { return null; }
+}
+// A saved game's progress: chapters solved, then queries run (an unreadable save has none).
+function progress(raw) {
+  try { const s = JSON.parse(raw) || {}; return [(s.solved || []).length, s.totalQueries || 0]; } catch { return [-1, 0]; }
+}
+const ahead = (a, b) => { const x = progress(a), y = progress(b); return x[0] > y[0] || (x[0] === y[0] && x[1] > y[1]); };
+// The writes an import makes, as {key: value}: only ritz.* keys with a string value; a key this origin already holds
+// is kept, except a saved game (ritz.learn, ritz.compete) the imported one is ahead of. have(key): this origin's value.
+export function importWrites(imported, have) {
+  const out = {};
+  for (const [k, v] of Object.entries(imported || {})) {
+    if (!/^ritz\./.test(k) || typeof v !== "string") continue;
+    const cur = have(k);
+    if (cur == null || ((k === "ritz.learn" || k === "ritz.compete") && ahead(v, cur))) out[k] = v;
+  }
+  return out;
+}

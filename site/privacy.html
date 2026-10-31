@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Ritz Affair -- Privacy</title>
-<link rel="canonical" href="https://mystery.alephb.uk/privacy.html">
+<link rel="canonical" href="https://alephb.uk/ritz-affair/privacy.html">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -29,8 +29,9 @@
   <p class="dateline muted">Privacy notice &mdash; last updated 31 October 2026</p>
 
   <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
-  included, runs in your browser. Its handbook, The Clerk's Handbook, is served from
-  <a href="https://alephb.uk/learn/">alephb.uk/learn/</a>; this notice covers it there too. The page shows advertising from Google AdSense in one box under the schema
+  included, runs in your browser. It is served from <a href="https://alephb.uk/ritz-affair/">alephb.uk/ritz-affair/</a>
+  and its handbook, The Clerk's Handbook, from <a href="https://alephb.uk/learn/">alephb.uk/learn/</a>; this notice
+  covers both. The page shows advertising from Google AdSense in one box under the schema
   beside the game, never inside a chapter, and in the same box under the schema of the handbook's
   exercises page. In the European Economic Area, the United Kingdom and
   Switzerland, Google's consent message asks on your first visit whether Google and its partners may use
@@ -41,17 +42,20 @@
   <h2>Investigate (learning mode)</h2>
   <p>Your progress, notes, queries, badges and day/night choice are saved in your browser's local storage
   (<code>ritz.learn</code>, <code>ritz.compete</code>, <code>ritz.theme</code>) so you can pick up where you
-  left off; the Clerk's Desk and the leaderboard read and write the same day/night choice
+  left off; the handbook, the Clerk's Desk and the leaderboard read and write the same day/night choice
   (<code>ritz.theme</code>). Only you can see them; clearing this site's data in your browser erases them. None of it is sent
   anywhere.</p>
+  <p>Until 31 October 2026 the game lived at mystery.alephb.uk. That address now only forwards you here. On the
+  way, its page reads what your browser kept for it (the keys starting with <code>ritz.</code> listed in this
+  notice) and hands them to the game in the part of the address after <code>#</code>, which your browser never
+  sends to any server. The game then copies each one into this site's storage, unless this site already holds
+  that key (a saved game is replaced only by one further along), and removes it from the address.</p>
   <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
   questions you have solved and its own query history are kept in its local storage (<code>ritz.exercises</code>,
   <code>ritz.exercises.history</code>, separate from the game's), never sent. It carries the same advertising
   box as the game (see Advertising). Every handbook page asks the game's question about usage statistics and
-  loads them under the same rules (see Usage statistics). Because the handbook is served from alephb.uk, your
-  browser keeps its keys (<code>ritz.theme</code>, <code>ritz.consent</code>, <code>ritz.exercises</code>,
-  <code>ritz.exercises.history</code>, <code>ritz.exercises.tour</code>) for alephb.uk, separately from the game's:
-  its day/night choice and its answer about usage statistics are its own, and clearing alephb.uk's data erases them.</p>
+  loads them under the same rules (see Usage statistics). One answer, kept in <code>ritz.consent</code>, covers
+  the game and the handbook.</p>
 
   <h2>Your consent</h2>
   <p>The page tells Google's tags a default for each purpose (Google Consent Mode: ad storage, ad user

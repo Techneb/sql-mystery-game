@@ -236,11 +236,11 @@ test("board: eight-cell strip, three states, every pseudo escaped", () => {
 
 test("admin and board pages: not in the sitemap, admin kept out of robots, pure ASCII", () => {
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html|monitor\.html|explore\.html/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/monitor\.html$/m);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/monitor\.html$/m);
   assert.match(fs.readFileSync("site/monitor.html", "utf8"), /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/explore\.html$/m);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/explore\.html$/m);
   assert.match(fs.readFileSync("site/explore.html", "utf8"), /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/admin\.html$/m);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/admin\.html$/m);
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/figures.js", "site/world.json", "site/topojson/world_110m.json", "site/monitor-game.html", "site/monitor-handbook.html", "site/inbox.html", "site/inbox.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
@@ -249,7 +249,7 @@ const inbox = await import("./site/inbox.js");
 test("inbox: the Feedback page, kept out of search, every backend value escaped, filters by status", async () => {
   const h = fs.readFileSync("site/inbox.html", "utf8");
   assert.match(h, /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/inbox\.html$/m);
+  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/inbox\.html$/m);
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /inbox/);
   assert.ok((await import("./site/monitor.js")).DESK_PATHS.includes("/inbox.html"));
   assert.match(h, /<dialog id="ask"[^]*class="ask-msg"/, "Send asks in a native dialog");
@@ -705,11 +705,12 @@ test("monitor views: every panel request is one ?report= accepts, the exercises 
   const robots = fs.readFileSync("site/robots.txt", "utf8");
   for (const f of ["monitor-game.html", "monitor-handbook.html"]) {
     const h = fs.readFileSync("site/" + f, "utf8");
-    assert.match(robots, new RegExp("^Disallow: /" + f.replace(".", "\\.") + "$", "m"));
+    assert.match(robots, new RegExp("^Disallow: /ritz-affair/" + f.replace(".", "\\.") + "$", "m"));
     assert.match(h, /<meta name="robots" content="noindex">/);
     assert.doesNotMatch(h, /[^\n -~]/, f + " is pure ASCII");
-    assert.ok(monitor.DESK_PATHS.includes("/" + f));
+    assert.ok(monitor.DESK_PATHS.includes("/" + f) && monitor.DESK_PATHS.includes("/ritz-affair/" + f), f + ": before and after the move");
   }
+  assert.ok(["/", "/index.html", "/ritz-affair/", "/ritz-affair/index.html"].every(p => monitor.GAME_PATHS.includes(p)));
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /monitor-/);
 });
 
@@ -840,7 +841,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(!("topPagesHtml" in monitor) && !("topPages" in monitor.PANELS.global), "the top pages table is gone");
   // the views' users per day are scoped to their pages
   assert.deepEqual(monitor.breakdownRequest(7, "pageTitle", "visitors", monitor.SCOPES.handbook).filters, { pagePath: { beginsWith: ["/learn/"] } });
-  assert.deepEqual(monitor.breakdownRequest(7, "deviceCategory", "solved", monitor.SCOPES.game).filters, { eventName: ["chapter_solve"], pagePath: ["/", "/index.html"] });
+  assert.deepEqual(monitor.breakdownRequest(7, "deviceCategory", "solved", monitor.SCOPES.game).filters, { eventName: ["chapter_solve"], pagePath: ["/", "/ritz-affair/", "/index.html", "/ritz-affair/index.html"] });
   for (const v of ["game", "handbook"]) for (const k of monitor.VIEW_COUNTS[v]) assert.ok(monitor.metricOf(k).label, v + " " + k);
   assert.ok(monitor.panel("X", { error: "<q>" }, () => "").includes("&#60;q&#62;") && monitor.panel("X", null, () => "").includes("Reading..."));
   // the compared groups print GA's total over each group when the reply has one

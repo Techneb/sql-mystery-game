@@ -279,8 +279,11 @@ const donutsRow = (P, m, pages = pagesSection) => '<div class="donuts three"><di
 // no rows draws the chart's empty frame (zeros on a per-chapter or per-exercise grid).
 
 // Page sections as pagePath filters (apps_script.gs report_: a list is exact paths, an object adds prefixes and not).
-export const GAME_PATHS = ["/", "/index.html"];
-export const DESK_PATHS = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"];
+// The game and the desk moved from the old subdomain's root to alephb.uk/ritz-affair/ (2026-10-31): both paths count, so the
+// history from before the move stays in every chart. The handbook is /learn/ on both hosts.
+const MOVED = (paths) => paths.flatMap(p => [p, "/ritz-affair" + p]);
+export const GAME_PATHS = MOVED(["/", "/index.html"]);
+export const DESK_PATHS = MOVED(["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"]);
 export const LEARN = { beginsWith: ["/learn/"] };
 export const SECTIONS = [["Game", GAME_PATHS], ["Handbook", LEARN], ["Desk", DESK_PATHS],
   ["Other", { exact: [...GAME_PATHS, ...DESK_PATHS], beginsWith: ["/learn/"], not: true }]];

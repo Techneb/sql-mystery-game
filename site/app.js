@@ -5,7 +5,7 @@
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./state.js";
+import { freshState, migrateSave, readImport, importWrites, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./state.js";
 import { highlightSql, wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
@@ -868,7 +868,17 @@ function enterGame() {
   showClosed();   // the season closed while the page was shut
 }
 
+// The saves the old subdomain's bridge (publish.mjs) carried over (state.js readImport), written before anything reads storage;
+// then the fragment goes, so a reload or a copied link never imports again.
+function importSaves() {
+  const imp = readImport(location.hash);
+  if (!imp) return;
+  try { for (const [k, v] of Object.entries(importWrites(imp, k => localStorage.getItem(k)))) localStorage.setItem(k, v); } catch {}
+  history.replaceState(null, "", location.pathname + location.search);
+}
+
 async function boot() {
+  importSaves();
   // The query box; it completes only the tables the schema shows (learn or compete): never one the evidence has not reached.
   syncSql = wireEditor($("sql"), $("sql-hl"), { run: () => db && state && runQuery(), cols: visibleColumns, minHeight: 160 });
   $("btn-theme").onclick = toggleTheme;

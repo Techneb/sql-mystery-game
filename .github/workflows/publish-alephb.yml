@@ -1,0 +1,59 @@
+name: Publish the game and the handbook to alephb.uk
+
+# The Ritz Affair is served from https://alephb.uk/ritz-affair/ and The Clerk's Handbook from https://alephb.uk/learn/,
+# both by the alephb-site repo (GitHub Pages, branch main). They are written and tested here (site/, site/learn/).
+# After every push to main: build the five compete databases, run the same tests as pages.yml (a failing test
+# publishes nothing), then write ritz-affair/ and learn/ into alephb-site (publish.mjs, versioned with this commit)
+# and push those two folders only; every other alephb-site file is the owner's.
+# Human rule, not enforced here: never push to main during a timed compete session. Every push rebuilds the season
+# databases a running season plays.
+# Needs the secret ALEPHB_SITE_DEPLOY_KEY: the private half of a write deploy key on Techneb/alephb-site.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-alephb
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the compete databases
+        run: python3 generate_db.py --seasons
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test the site and the backend
+        run: node --test test_site.mjs test_desk.mjs test_handbook.mjs test_backend.mjs
+      - name: Check the deploy key
+        env:
+          KEY: ${{ secrets.ALEPHB_SITE_DEPLOY_KEY }}
+        run: test -n "$KEY" || { echo "::error::ALEPHB_SITE_DEPLOY_KEY is not set"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          repository: Techneb/alephb-site
+          ssh-key: ${{ secrets.ALEPHB_SITE_DEPLOY_KEY }}
+          path: alephb-site
+      - name: Publish
+        run: node publish.mjs "${GITHUB_SHA::7}" alephb-site
+      - name: Push ritz-affair/ and learn/ if they changed
+        working-directory: alephb-site
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          git add -A ritz-affair learn
+          if git diff --cached --quiet; then echo "alephb.uk already current."; exit 0; fi
+          git commit -m "Game and handbook from game ${GITHUB_SHA::7}"
+          git pull --rebase
+          git push

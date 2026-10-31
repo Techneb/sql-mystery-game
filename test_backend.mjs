@@ -471,6 +471,10 @@ test("feedback subject: where the message came from, ASCII, capped; the draft's 
   assert.equal(s("/monitor-game.html", {}), "The Ritz Affair feedback: Clerk's Desk");
   assert.equal(s("/inbox.html", {}), "The Ritz Affair feedback: Clerk's Desk");
   assert.equal(s("/privacy.html", {}), "The Ritz Affair feedback");
+  // alephb.uk since 2026-10-31: the game and the desk under /ritz-affair/, read like the old root paths
+  assert.equal(s("/ritz-affair/", { chapter: "8", mode: "learn" }), "The Ritz Affair feedback: chapter VIII");
+  assert.equal(s("/ritz-affair/index.html", {}), "The Ritz Affair feedback: landing page");
+  assert.equal(s("/ritz-affair/inbox.html", {}), "The Ritz Affair feedback: Clerk's Desk");
   assert.equal(s("/learn/" + "x".repeat(150) + ".html", {}).length, 100, "capped");
   // every handbook page has its name, the page's own <h1>
   const pages = JSON.parse(JSON.stringify(b.ctx.LEARN_PAGES));
@@ -551,7 +555,7 @@ test("feedback drafts: the prompt carries the rules and chapter notes, never an 
   for (const name of ["ashcombe", "grimaud", "blakeney", "grey", "cagliostro", "martyrs", "clicquot", "75-2"]) assert.ok(!all.includes(name), "no " + name);
   assert.match(system, /untrusted/);
   assert.match(system, /Chapter XII, Follow the Money \(WITH RECURSIVE/);
-  assert.match(system, /AlephB\nThe Ritz Affair, https:\/\/mystery\.alephb\.uk/);
+  assert.match(system, /AlephB\nThe Ritz Affair, https:\/\/alephb\.uk\/ritz-affair\//);
   assert.ok(!/[–—]/.test(system), "no dashes in the rules themselves");
 });
 
@@ -630,7 +634,7 @@ test("feedback desk: Draft now on a row with no draft; setup adds the columns an
 // The draft's Markdown: feedback_script.gs mdHtml_ renders the email, site/inbox.js mdHtml the desk's preview.
 const MD_SAMPLES = [
   "",
-  "Hello,\n\nRead **the valet's interview** again, then filter `cab_ride` on `currency`.\n\nAlephB\nThe Ritz Affair, https://mystery.alephb.uk",
+  "Hello,\n\nRead **the valet's interview** again, then filter `cab_ride` on `currency`.\n\nAlephB\nThe Ritz Affair, https://alephb.uk/ritz-affair/",
   "Two questions:\n- which chapter?\n- learn or **compete**?\n\nThanks",
   "Try this shape:\n\n```sql\nSELECT plate, COUNT(*)\nFROM cab_ride\nWHERE date < '1912-05-18' AND x > 1\nGROUP BY plate;\n```\n\nThen look again.",
   "<script>alert(1)</script> & \"quotes\" 'too'\r\n\r\n`<b>` **<i>x</i>** ``` not a fence",
@@ -642,7 +646,7 @@ test("feedback drafts: one Markdown renderer, the same HTML in the script and on
   for (const md of MD_SAMPLES) assert.equal(b.ctx.mdHtml_(md), mdHtml(md), JSON.stringify(md));
   const h = mdHtml(MD_SAMPLES[1]);
   assert.match(h, /^<p style="[^"]*">Hello,<\/p>\n<p [^>]*>Read <strong>the valet&#39;s interview<\/strong> again, then filter <code style="font-family:Menlo[^"]*">cab_ride<\/code>/);
-  assert.match(h, /<p [^>]*>AlephB<br>The Ritz Affair, https:\/\/mystery\.alephb\.uk<\/p>$/, "the signature's lines kept");
+  assert.match(h, /<p [^>]*>AlephB<br>The Ritz Affair, https:\/\/alephb\.uk\/ritz-affair\/<\/p>$/, "the signature's lines kept");
   assert.match(mdHtml(MD_SAMPLES[2]), /<p [^>]*>Two questions:<\/p>\n<ul [^>]*><li>which chapter\?<\/li><li>learn or <strong>compete<\/strong>\?<\/li><\/ul>/);
   const pre = mdHtml(MD_SAMPLES[3]);
   assert.match(pre, /<pre style="[^"]*white-space:pre-wrap[^"]*">SELECT plate, COUNT\(\*\)\nFROM cab_ride\nWHERE date &#60; &#39;1912-05-18&#39; AND x &#62; 1\nGROUP BY plate;<\/pre>/);
