@@ -4,8 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges } from "./site/state.js";
-import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml } from "./site/app.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./site/state.js";
+import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml } from "./site/app.js";
 import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
 import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
@@ -272,6 +272,7 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   assert.ok(ev("answer", { norm: "4100", decoy: 4100 }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
+  assert.ok(ev("answer", { norm: "17 may 1912", stepDecoys: ["17 may 1912"] }).includes("Filed Under the 17th"), "the eve typed at step 1");
 });
 
 test("story markup: bold and italic only, everything else escaped", () => {
@@ -1127,4 +1128,32 @@ test("unseenBadges: badges earned since the panel was opened; an older save star
   assert.equal(unseenBadges({ ...s, badgesSeen: 3 }), 0);
   assert.equal(unseenBadges(migrateSave({ badges: ["A", "B"], solved: [1] })), 0);
   assert.equal(unseenBadges(freshState()), 0);
+});
+
+test("chapter I in two steps: the date (any usual spelling, never the 17th), then the report", async () => {
+  const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8")), ch1 = data.chapters[0], st = ch1.step1;
+  assert.ok(st && data.chapters.slice(1).every(c => !c.step1), "only chapter I has a step");
+  for (const t of ["1912-05-18", "19120518", "18/05/1912", "18.05.1912", "05/18/1912", "18 May 1912", "May 18, 1912", "18th May",
+                   "Saturday 18 May 1912", "Saturday, the 18th of May 1912", "samedi 18 mai 1912", "18 mai"])
+    assert.ok(st.answer_sha256.includes(await sha256(normalise(t))), "step 1 accepts " + t);
+  for (const t of ["1912-05-17", "17 May 1912", "Friday the 17th of May 1912", "19120519", "2127", "18"])
+    assert.ok(!st.answer_sha256.includes(await sha256(normalise(t))), "step 1 refuses " + t);
+  assert.ok(st.decoys.includes(normalise("17 May 1912")) && st.decoys.includes(normalise("1912-05-17")));
+  assert.ok(!/18|saturday|samedi/i.test(st.objective + st.answer_form + st.where + ch1.story + ch1.objective), "nothing hands the date out");
+  const fresh = freshState();
+  assert.equal(stepOn(fresh, ch1), st);
+  assert.equal(stepOn(migrateSave({ solved: [], queries: { 1: 4 }, totalQueries: 4 }), ch1), st, "an old save mid-chapter I starts at step 1");
+  assert.equal(stepOn(migrateSave({ solved: [1], answers: { 1: "2127" } }), ch1), null, "chapter I solved: no step");
+  assert.equal(stepOn({ ...fresh, step1: "18 May 1912" }, ch1), null);
+  assert.equal(stepOn(fresh, data.chapters[1]), null);
+  const s1 = currentObjectiveHtml(ch1, fresh), s2 = currentObjectiveHtml(ch1, { ...fresh, step1: "18 May 1912" });
+  assert.ok(s1.includes(st.objective) && s1.includes(st.answer_form) && !s1.includes("Date of the theft:"));
+  assert.ok(s2.includes(ch1.objective) && s2.includes("<b>Date of the theft:</b> 18 May 1912") && s2.indexOf("Date of the theft") < s2.indexOf("Hint"));
+  assert.equal(boardCardsHtml(fresh, data.chapters), "");
+  const mid = boardCardsHtml({ ...fresh, step1: "18 May 1912" }, data.chapters);
+  assert.ok(mid.includes("Date of the theft") && mid.includes("18 May 1912") && !mid.includes("data-n"), "the date on its own card, not a review link");
+  const done = boardCardsHtml({ ...fresh, step1: "18 May 1912", solved: [1], answers: { 1: "2127" } }, data.chapters);
+  assert.equal((done.match(/class="card"/g) || []).length, 1);
+  assert.ok(done.includes('data-n="1"') && done.includes("Police report") && done.includes('<span class="card-step">Date of the theft: 18 May 1912</span>'));
+  for (const n of [1, 2, 3, 4, 5]) if (fs.existsSync("site/season-" + n + ".json")) assert.ok(!JSON.parse(fs.readFileSync("site/season-" + n + ".json", "utf8")).chapters[0].step1, "compete keeps one step");
 });

@@ -6,7 +6,7 @@ export function freshState() {
            solved: [], part2: false, queries: {}, wrong: {}, wrongStreak: 0, errorStreak: 0,
            badges: [], history: [], notes: "", names: "", lastQueryLines: 0, totalQueries: 0, answers: {},
            film: [], opened: {}, milestones: {}, fails: {}, hints: [], hintsWhere: [], suspects: [], suspectsSeen: 0, badgesSeen: 0, introduced: null, runs: {}, cracked: {}, howto: {},
-           extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0, onboarding: "prologue" };
+           extraSeen: false, extraSeen2: false, closedSeen: false, token: "", stoppedAt: 0, onboarding: "prologue", step1: "" };
 }
 // queries/wrong are keyed by chapter number: { "1": 3, "2": 7 }; runs[n] tracks the open chapter's successful runs
 // (scanRun) and cracked[n] keeps the query shown on its case-board card once solved (winningQuery);
@@ -17,6 +17,7 @@ export function freshState() {
 // never loses a row; over is set once the backend says the session is closed, and stoppedAt freezes the clock then;
 // closedSeen once the #closed pop-up has been shown for it. introduced: the suspects the pop-up has shown, null until
 // the first look seeds it with those met so far (a game saved before the pop-up, or a debug jump, shows none).
+// step1 (learn only): chapter I's first answer, the date the theft is filed under, as typed ("" until found).
 // onboarding (learn only): "prologue" (the clerk's first morning to come), "tour" (chapter I's callouts), "done".
 
 // A saved game read back: every field of freshState, so nothing downstream needs a fallback. The one migration point:
@@ -33,6 +34,10 @@ export function migrateSave(saved) {
 
 // Badges earned since the player last opened the Badges panel (the count on its button).
 export const unseenBadges = state => Math.max(0, state.badges.length - (state.badgesSeen || 0));
+
+// Chapter I's step 1 (chapters.json `step1`, learn only) while it is the question asked: a save from before the
+// split (no step1 field) mid-chapter I starts there, a solved chapter I never does (owner, 2026-10-31).
+export const stepOn = (state, ch) => ch && ch.step1 && !state.step1 && !state.solved.includes(ch.n) ? ch.step1 : null;
 
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;

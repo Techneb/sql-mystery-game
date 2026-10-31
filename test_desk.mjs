@@ -785,6 +785,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(ob.includes('<td>Pressed Investigate</td><td class="num">20</td><td class="num">100%</td>') && ob.includes('<td>Prologue skipped</td><td class="num">4</td><td class="num">20%</td>'));
   assert.ok(ob.includes('<td>Prologue finished</td><td class="num">0</td>') && ob.includes('<td>Ran a first query in chapter I</td><td class="num">15</td><td class="num">75%</td>') && ob.includes('<td>Solved chapter I</td><td class="num">0</td>'));
   assert.ok(ob.indexOf("Prologue finished") < ob.indexOf("Tour skipped") && ob.includes("start 2026-10-25") && !bad.test(visible(ob)));
+  const obd = monitor.onboardingHtml({ begin: { rows: [[20]] }, features: { rows: [] }, ran: { totals: [15] }, date: { totals: [9] }, solved: { totals: [7] } }, 390);
+  assert.ok(obd.includes('<td>Found the date (step 1)</td><td class="num">9</td><td class="num">45%</td>') &&
+    obd.indexOf("Ran a first query") < obd.indexOf("Found the date") && obd.indexOf("Found the date") < obd.indexOf("Solved chapter I"), "date found between the first query and the solve");
+  assert.deepEqual(monitor.PANELS.game.onboarding.requests(monitor.context("game")).date.filters, { eventName: ["step_solve"], "customEvent:chapter": ["1"], "customEvent:mode": ["learn"] });
   assert.ok(g.includes("CHAPTER I ONBOARDING") && g.indexOf("CHAPTER I ONBOARDING") < g.indexOf("CHAPTER FUNNEL"), "onboarding on the game page, empty frame");
   // by device: desktop, mobile, tablet in that order whatever GA's order, a missing device reads 0, the share per device
   const od = monitor.onboardingDevicesHtml({ begin: { rows: [["mobile", 10], ["desktop", 30]], totals: [39] }, byDevice: { rows: [["prologue_skip", "mobile", 6], ["prologue_skip", "desktop", 3]] },

@@ -410,7 +410,7 @@ TEXT = {
   telegram_compete="MY DEAR GANIMARD STOP NOT ME THIS TIME STOP I HAVE A FRIEND WITH THE SAME TASTE IN ROOMS STOP A L",
   story="*Four in the morning, the Prefecture.* **Ganimard** comes back from the Ritz with his collar undone and his temper worse. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is ours**, clerk. **Marcel Duroc**, the night porter, was in the lobby all night. He never sleeps and never forgets.'*",
   story_compete="*June, four in the morning, the Prefecture.* The Ritz file is still open on **Ganimard**'s desk, and now the *Hotel Meurice* has been burgled. He drops a stack of police reports on your desk: *every theft, fraud and lost umbrella in Paris this spring.*\n\n*'**One of these is the Meurice**, clerk. **Hippolyte Morand**, the night manager, found the damage himself. His clocks and ours have never agreed, so he will swear to the night only to within a day. And mind what he says it was not.'*",
-  objective="Mr. Duroc knows which night.",
+  objective="Which report is ours, filed under that date?",
   answer_form="the report id",
   telegram="MY DEAR GANIMARD STOP YOU FOUND THE REPORT STOP THE BALCONY WAS DELIGHTFUL STOP I LEFT MY CARD ON THE PILLOW STOP A L"),
  2: dict(
@@ -497,3 +497,22 @@ TEXT = {
 }
 for _ch in CHAPTERS:
     _ch.update(TEXT[_ch["n"]])
+
+# Chapter I in two steps (owner, 2026-10-31; learn only, compete keeps one): step 1 asks the date the theft is filed
+# under (Duroc's interview: the lift went past midnight, so the 18th, not the 17th of the title), step 2 the report.
+# The step shares the chapter's numeral, story and Hint; generate_db checks it like a chapter (solution, traps,
+# discovery) and refuses every spelling of the 17th (`wrong`). Its traps are chapter I's report searches reading the
+# date instead of the id: each matches a Ritz report of the 17th or the 19th too, so only Duroc settles the night.
+CHAPTERS[0]["step1"] = dict(
+  n=1, board="Date of the theft", answer_key="theft_date", answer_form="the date",
+  objective="Mr. Duroc knows which night. Under which date is the theft filed?",
+  where="Read what the night porter told the police in `interview`. He says when he heard the lift. Which date does that hour fall on?",
+  discovery=CHAPTERS[0]["discovery"],
+  solution="SELECT date FROM interview WHERE person_name = 'Marcel Duroc'",
+  naive="SELECT date FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft'", naive_rows=None,
+  traps=[t.replace("SELECT id", "SELECT date").replace("SELECT pr.id", "SELECT pr.date") for t in CHAPTERS[0]["traps"]] +
+        ["SELECT date FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND date BETWEEN 19120516 AND 19120519",
+         "SELECT date FROM police_report WHERE place = 'Hotel Ritz' ORDER BY date DESC LIMIT 1"],
+  wrong=["19120517", "1912-05-17", "17/05/1912", "17 May 1912", "Friday 17 May 1912", "the night of the 17th", "17th of May"])
+WHERE[1] = "You have the date. Now search `police_report`: the place, the type of crime and that date leave one report."
+CHAPTERS[0]["where"] = WHERE[1]

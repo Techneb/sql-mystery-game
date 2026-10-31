@@ -5,7 +5,7 @@
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges } from "./state.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./state.js";
 import { highlightSql, wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
@@ -103,7 +103,7 @@ function backToInvestigation() {
 const tableLink = t => '<button type="button" class="table-link" data-table="' + esc(t) + '"><code>' + esc(t) + "</code></button>";
 // "Where to look" (learn only, chapters.json `where`): escaped first, then each `name` becomes a table link.
 export const whereHtml = s => esc(s).replace(/`([a-z_]+)`/g, (_, t) => tableLink(t));
-export const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" +
+export const objectiveHtml = (text, label, value, ch, found = "") => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" + found +
   // the chapter's SQL tool and new tables sit under a closed Hint toggle (a native <details>), so the
   // student tries first and opens it when stuck; a nested closed "Where to look" holds the chapter's line
   (ch && (ch.construct || (ch.tables || []).length || ch.where) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
@@ -111,6 +111,15 @@ export const objectiveHtml = (text, label, value, ch) => esc(text) + '<div class
     ((ch.tables || []).length ? "<div><b>New evidence:</b> " + ch.tables.map(tableLink).join(", ") + "</div>" : "") +
     (ch.where ? '<details class="hint-where"><summary>Where to look</summary><div>' + whereHtml(ch.where) + "</div></details>" : "") +
     "</details>" : "");
+
+// Chapter I's step 1 once answered: its label and the date as typed, under the answer line (step 2 and the review).
+export const stepDoneHtml = (ch, state) => ch.step1 && state.step1 ? '<div class="answer-form"><b>' + esc(ch.step1.board) + ":</b> " + esc(state.step1) + "</div>" : "";
+// The objective of the question asked now: step 1 (its own objective and Where to look) or the chapter's.
+export function currentObjectiveHtml(ch, state) {
+  const step = stepOn(state, ch);
+  return step ? objectiveHtml(step.objective, "Answer:", step.answer_form, { ...ch, where: step.where })
+    : objectiveHtml(ch.objective, "Answer:", ch.answer_form, ch, stepDoneHtml(ch, state));
+}
 
 // Scroll the page to the schema box, then the box to table t, and flash its outline for a moment.
 function showTable(t) {
@@ -137,7 +146,7 @@ function renderChapter() {
     $("chapter-icon").src = iconSrc(ch.n);
     $("chapter-title").textContent = ch.title;
     $("story").innerHTML = richText(ch.story);
-    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch) + crackedHtml(state.cracked[ch.n]);
+    $("objective").innerHTML = objectiveHtml(ch.objective, "Your answer:", state.answers[ch.n], ch, stepDoneHtml(ch, state)) + crackedHtml(state.cracked[ch.n]);
     $("howto-now").innerHTML = howtoHtml(state.howto[ch.n]);   // under the answer row, just solved or reviewed
     showTelegram(ch.telegram);
     return;
@@ -148,7 +157,7 @@ function renderChapter() {
   $("chapter-icon").src = iconSrc(ch.n);
   $("chapter-title").textContent = ch.title;
   $("story").innerHTML = richText(ch.story);
-  $("objective").innerHTML = objectiveHtml(ch.objective, "Answer:", ch.answer_form, ch);
+  $("objective").innerHTML = currentObjectiveHtml(ch, state);
   const last = data.chapters.find(c => c.n === state.solved[state.solved.length - 1]);   // the bridge to this chapter stays in view
   if (last) showTelegram(last.telegram);
   if (awaitingCode(state)) {
@@ -307,17 +316,27 @@ function ctx(extra) {
            cols: 0, allTables: Object.keys(tableSizes), revealed: visibleTables(data.chapters, state),
            norm: "", text: "", lines: state.lastQueryLines, hour: new Date().getHours(),
            elapsed: Date.now() - (state.opened[currentChapter(state, data.chapters).n] || Date.now()),
-           decoy: data.decoys ? data.decoys[currentChapter(state, data.chapters).n] : undefined, ...extra };
+           decoy: data.decoys ? data.decoys[currentChapter(state, data.chapters).n] : undefined,
+           stepDecoys: (stepOn(state, currentChapter(state, data.chapters)) || {}).decoys || [], ...extra };
 }
 
 function renderBoard() {
-  const label = n => (data.chapters.find(c => c.n === n) || {}).board || "";
-  $("board").innerHTML = state.solved.map(n => { const p = cardPicture(n, state.answers[n]);
-    return '<div class="card" data-n="' + n + '"><img class="card-pic' + (p.face ? " face" : "") + '" src="' + p.src + '" alt=""><b>' + ROMAN[n] + '</b> <span class="card-label">' +
-      esc(label(n)) + "</span>" + (state.answers[n] ? "<br>" + esc(state.answers[n]) : "") + "</div>"; }).join("") +   // older saves have no answers: no "NULL" card
+  $("board").innerHTML = boardCardsHtml(state, data.chapters) +
     '<div id="board-suspects" class="board-suspects" hidden></div>';
-  $("board").querySelectorAll(".card").forEach(el => btnLike(el, () => { useFeature("card_review", { chapter: Number(el.dataset.n) }); reviewChapter(Number(el.dataset.n)); }));
+  $("board").querySelectorAll(".card[data-n]").forEach(el => btnLike(el, () => { useFeature("card_review", { chapter: Number(el.dataset.n) }); reviewChapter(Number(el.dataset.n)); }));
   renderStrip();
+}
+// The case board's cards: one per solved chapter (ROMAN label answer), chapter I's date under its report; the date
+// alone on a card of its own (not a review link: the chapter is still open) between chapter I's two answers.
+export function boardCardsHtml(state, chapters) {
+  const label = n => (chapters.find(c => c.n === n) || {}).board || "";
+  const step1 = (chapters.find(c => c.n === 1) || {}).step1;
+  const dated = step1 && state.step1 ? esc(step1.board) + ": " + esc(state.step1) : "";
+  const card = (n, attr, lab, answer, extra) => { const p = cardPicture(n, answer);
+    return '<div class="card"' + attr + '><img class="card-pic' + (p.face ? " face" : "") + '" src="' + p.src + '" alt=""><b>' + ROMAN[n] + '</b> <span class="card-label">' +
+      esc(lab) + "</span>" + (answer ? "<br>" + esc(answer) : "") + extra + "</div>"; };   // older saves have no answers: no "NULL" card
+  return (dated && !state.solved.includes(1) ? card(1, "", step1.board, state.step1, "") : "") +
+    state.solved.map(n => card(n, ' data-n="' + n + '"', label(n), state.answers[n], n === 1 && dated ? '<br><span class="card-step">' + dated + "</span>" : "")).join("");
 }
 function renderStrip() {
   const el = $("board-suspects");
@@ -412,6 +431,18 @@ async function submitAnswer() {
     if (data.part2_code_sha256.includes(hash)) { state.part2 = true; applyMood(); $("reply").textContent = "The code is accepted. Ganimard has gone home. You have not."; afterSolve(null, "code"); }
     else { $("reply").textContent = "That is not the code. Four words, the first of them STOP, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
+  }
+  const step = stepOn(state, ch);
+  if (step && step.answer_sha256.includes(hash)) {   // chapter I's step 1, the date: the report is asked next
+    state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
+    track("step_solve", { chapter: ch.n, step: 1, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
+                          queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
+    $("reply").textContent = "Correct. Ganimard writes the date on the folder. Now find its report.";
+    $("answer").value = ""; save(state); renderBoard(); renderChapter(); return;
+  }
+  if (step && ch.answer_sha256.includes(hash)) {   // the report before the date: not wrong, not yet
+    $("reply").textContent = "That is the report, clerk, and a good one. First the date it is filed under.";
+    $("answer").value = ""; return;
   }
   if (ch.answer_sha256.includes(hash)) {   // compete too: the season file carries its hashes
     await scanning;   // the last run's scan is in

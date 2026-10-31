@@ -1202,14 +1202,14 @@ def plot_queries():
     out = []
     for seed in [1912] + list(range(1, SEASONS + 1)):
         V = plant_values(seed)
-        for ch in plot.CHAPTERS:
+        for ch in plot.CHAPTERS + [{**c["step1"], "n": "1step"} for c in plot.CHAPTERS if "step1" in c]:
             for k in ["solution", "naive", "solution_compete", "naive_compete"]:
                 if k in ch:
-                    out.append(["%d ch%d %s" % (seed, ch["n"], k), ch[k].format(**V)])
+                    out.append(["%d ch%s %s" % (seed, ch["n"], k), ch[k].format(**V)])
             for k in ["traps", "traps_compete"]:
-                out += [["%d ch%d %s" % (seed, ch["n"], k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
+                out += [["%d ch%s %s" % (seed, ch["n"], k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
             for k in ["discovery", "discovery_compete"]:
-                out += [["%d ch%d %s" % (seed, ch["n"], k), d["query"].format(**V)] for d in ch.get(k, [])]
+                out += [["%d ch%s %s" % (seed, ch["n"], k), d["query"].format(**V)] for d in ch.get(k, [])]
     conn = sqlite3.connect("site/mystery.sqlite")   # the schema the browser reads (link_tables' columns too); the seasons share it
     schema = {t: [[c[1], c[2], c[5]] for c in conn.execute("PRAGMA table_info(%s)" % t)]
               for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
@@ -1287,6 +1287,29 @@ def howto_open(box, form, i):
     return json.loads(_stream(ck, ct))
 
 
+WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+
+def date_forms(d):
+    """The normalised spellings a date answer accepts (chapter I's step 1): 1912-05-18, 18/05/1912, 05/18/1912,
+    18 May 1912, May 18th, Saturday the 18th of May 1912, samedi 18 mai..., with or without the weekday or the year."""
+    y, m, day = d // 10000, d // 100 % 100, d % 100
+    wd = datetime.date(y, m, day).weekday()
+    month = ["january", "february", "march", "april", "may", "june"][m - 1]
+    mois = ["janvier", "fevrier", "mars", "avril", "mai", "juin"][m - 1]
+    nth = "%d%s" % (day, "th" if 10 <= day <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th"))
+    forms = {"%d%02d%02d" % (y, m, day), "%d%d%d" % (y, m, day), "%02d%02d%d" % (day, m, y), "%d%d%d" % (day, m, y),
+             "%d%02d%d" % (m, day, y), "%02d%02d" % (day, m)}
+    for w in ["", WEEKDAYS[wd], JOURS[wd]]:
+        for dd in [str(day), nth]:
+            for mo in [month, mois]:
+                for shape in ["{d} {m}", "{d} of {m}", "{m} {d}"]:
+                    for yr in ["", " %d" % y]:
+                        forms.add(normalise(" ".join(x for x in [w, shape.format(d=dd, m=mo) + yr] if x)))
+    return sorted(forms)
+
+
 def answer_forms(answer, form):
     """The normalised spellings hashes() accepts, in the same order."""
     n = normalise(str(answer))
@@ -1314,6 +1337,11 @@ def chapters_json(V, mode="learn"):
         d["answer_sha256"] = hashes(V[ch["answer_key" + suf]], ch["answer_form" + suf])   # checked in the browser
         if mode == "learn":
             d["where"] = ch["where"]   # the Hint's "Where to look" line, learn only
+            if "step1" in ch:   # step 1 (the date): its own objective, board label and accepted spellings
+                st = ch["step1"]
+                d["step1"] = dict(objective=st["objective"], answer_form=st["answer_form"], board=st["board"], where=st["where"],
+                                  answer_sha256=[sha(f) for f in date_forms(V[st["answer_key"]])],
+                                  decoys=sorted(set(date_forms(V["eve_date"]) + [normalise(w) for w in st["wrong"]])))   # the eve, for the "Filed Under the 17th" badge
             d["howto"] = howto_box(howto_payload(V, ch), answer_forms(V[ch["answer_key"]], ch["answer_form"]), V["seed"], ch["n"])
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,
@@ -1390,6 +1418,8 @@ def solution_sql(V):
     # the answer key first, in the order a player needs it (the Part II code between chapters 8 and 9)
     key = ["-- Answers, in play order:"]
     for ch in plot.CHAPTERS:
+        if "step1" in ch:   # chapter I's first question
+            key.append("--       %-30s %s" % ("Step 1: " + ch["step1"]["board"].lower(), V[ch["step1"]["answer_key"]]))
         key.append("--   %2d. %-30s %s" % (ch["n"], ch["title"].format(**V), V[ch["answer_key"]]))
         if ch["n"] == 8:
             key.append("--       %-30s %s" % ("Part II code (telegram)", V["part2_code"]))
@@ -1401,6 +1431,10 @@ def solution_sql(V):
             if "note" in d:
                 lines.append("-- " + d["note"].format(**V))
             lines.append(format_sql(d["query"].format(**V) + ";"))
+        if "step1" in ch:
+            st = ch["step1"]
+            lines += ["-- Step 1, %s (any spelling of that day: 1912-05-18, 18 May 1912...):" % st["answer_form"],
+                      format_sql(st["solution"].format(**V) + ";"), "-- Step 1 answer: %s" % V[st["answer_key"]], "-- Step 2:"]
         if "explain" in ch:
             lines.append("-- " + ch["explain"].format(**V))
         lines.append("-- The answer:")
@@ -1443,6 +1477,12 @@ def self_check(conn, V, mode="learn"):
     """The plot's test: every solution yields its answer, every trap bites, everything is ASCII."""
     for ch in plot.CHAPTERS:
         check_chapter(conn, V, ch)
+        if "step1" in ch:   # chapter I's step 1 (learn): checked like a chapter, and no spelling of the eve accepted
+            st = ch["step1"]
+            check_chapter(conn, V, {**st, "story": ch["story"]})
+            ok = set(date_forms(V[st["answer_key"]]))
+            for w in st["wrong"] + date_forms(V["eve_date"]):
+                assert normalise(w) not in ok, "chapter 1 step 1 accepts %r" % w
     if mode == "compete":
         for ch in plot.CHAPTERS[:8]:
             check_chapter(conn, V, ch, compete=True)
