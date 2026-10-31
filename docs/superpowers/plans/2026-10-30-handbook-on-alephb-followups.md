@@ -64,7 +64,11 @@ A5'. Before A5, adapt to the 2026-10-31 move (the game now at alephb.uk/ritz-aff
     - privacy links on alephb.uk point at ritz-affair/privacy.html, and that page names the new addresses.
     **Check:** each bullet holds; any miss is fixed before A5.
 A5. AdSense: Sites > alephb.uk > confirm the issues are fixed > **Request review**, never remove and re-add the
-    site. Owner's call on timing: as soon as A3's day-1 pages read "URL is on Google" (a few days), or at once.
+    site. Timing (owner, 2026-10-31): the condition is indexing, not a date. Ready = A5' holds and URL Inspection
+    reads "URL is on Google" for `/ritz-affair/`, `/learn/`, `/learn/exercises.html`, `/learn/select-where.html`,
+    `/learn/joins.html`, `/about-the-ritz-affair.html` and `https://alephb.uk/`, with Pages > Indexed at about 15 or
+    more of the ~26 sitemap URLs. A daily session job (from 2026-11-01, about 10:13 Paris) checks this and tells the
+    owner "ready" the first day it holds; the owner presses Request review (Claude never does).
     Record the date in both CLAUDE.md files (D1).
     **Check:** AdSense > Sites shows alephb.uk "Getting ready" / "Under review" with today's request; `ads.txt`
     still answers: `curl -s https://alephb.uk/ads.txt` contains `pub-9765732642926043`.
