@@ -42,6 +42,7 @@ test("officialTime and chapterSummary: a negative interval (an old Date row) is 
   assert.deepEqual([s[0].solvers, s[0].minutes, s[7].minutes], [1, 2, 10]);
   const [h] = shared.officialTime([row("finish", "Hal", 8, -400, 0, 9, null)], { openedAt: T0 });
   assert.ok(h.flagged, "no elapsedMs: still flagged");
+  assert.equal(h.ms, -400 * 60000, "and the server interval stands, nothing to replace it with");
 });
 
 test("officialTime: unfinished players tie on the row that solved their highest chapter, retries harmless", () => {
@@ -52,6 +53,25 @@ test("officialTime: unfinished players tie on the row that solved their highest 
   assert.deepEqual(shared.officialTime(rows, { openedAt: T0 }).map(p => p.team), ["Carol", "Dan"]);
   // Nobody solved anything: the join row decides.
   assert.deepEqual(shared.officialTime([row("join", "Eve", "", 1), row("join", "Fay", "", 0)], { openedAt: T0 }).map(p => p.team), ["Fay", "Eve"]);
+});
+
+test("officialTime: order, names and totals do not depend on the rows' order; only progress 1-7 and finish 8 solve", () => {
+  const rows = [row("join", " Zed ", "", 0), row("join", "Yan", "", 1), row("join", "Xia", "", 2),
+    row("progress", "Zed", 1, 3, 1, 4), row("progress", "Xia", 1, 4), row("progress", "Xia", 2, 5, 2, 7), row("progress", "Yan", 1, 6), row("progress", "Yan", 2, 8),
+    row("progress", "Zed", 8, 9), row("finish", "Zed", 7, 9), row("progress", "Zed", 0, 9)].reverse();
+  const out = shared.officialTime(rows, { openedAt: T0 });
+  assert.deepEqual(out.map(p => [p.team, p.solved, p.finished]), [["Xia", 2, false], ["Yan", 2, false], ["Zed", 1, false]], "chapters, then first there");
+  assert.deepEqual([out[0].wrong, out[0].queries], [2, 7], "an unfinished player's totals come from the latest row");
+  // the server interval stands when the browser sent no elapsedMs; a gap of exactly a minute is not flagged
+  const fin = (el) => shared.officialTime([row("finish", "Ida", 8, 20, 2, 9, el)], { openedAt: T0, penalty: 30 })[0];
+  for (const el of [null, ""]) assert.deepEqual([fin(el).ms, fin(el).flagged], [20 * 60000 + 60000, false], "elapsedMs " + JSON.stringify(el));
+  assert.equal(fin(19 * 60000).flagged, false);
+  assert.equal(fin(19 * 60000 - 1).flagged, true);
+  assert.equal(fin(null).wrong, 2, "a finisher's wrong answers come from the finish row");
+  const late = shared.officialTime([row("finish", "Ida", 8, 20, 2, 9), row("progress", "Ida", 7, 21, 5, 12)], { openedAt: T0 })[0];
+  assert.deepEqual([late.wrong, late.queries], [2, 9], "a retried row after the finish changes nothing");
+  // a negative interval with no elapsedMs counts no minutes
+  assert.equal(shared.chapterSummary([row("progress", "Gus", 1, -480, 0, 3, null), row("progress", "Hal", 1, -480, 0, 3, "")], { openedAt: T0 })[0].minutes, null);
 });
 
 test("chapterSummary: solvers and medians per chapter, per-chapter queries and wrong from running totals", () => {
@@ -892,6 +912,8 @@ test("desk: ?board= is stored and leaves the address bar, links stay bare unless
   const a = { getAttribute: () => "monitor-game.html", href: "" };
   shared.deskLinks(board, true, [a]); assert.equal(a.href, "monitor-game.html");
   shared.deskLinks(board, false, [a]); assert.equal(a.href, "monitor-game.html?board=" + encodeURIComponent(board));
+  shared.deskLinks(board, undefined, [a]); assert.equal(a.href, "monitor-game.html", "stored by default");
+  assert.deepEqual([shared.gaText(null), shared.gaText(undefined), shared.gaText(""), shared.gaText(0)], ["(empty)", "(empty)", "(empty)", "0"]);
   // a stored passphrase that does not match the hash is dropped and the gate opens
   const ss = mem(); ss.setItem(shared.DESK_KEY, "not the passphrase");
   let shown = 0;
@@ -901,6 +923,20 @@ test("desk: ?board= is stored and leaves the address bar, links stay bare unless
   assert.equal(shown, 1); assert.equal(ss.getItem(shared.DESK_KEY), null);
   d.returnValue = "cancel"; d.onclose();
   assert.equal(await p, "");
+  // a wrong passphrase shakes the gate and asks again; nothing is stored
+  const input = { value: "" }, msg = { textContent: "" }, classes = [];
+  const d2 = { querySelector: (q) => (q === "input" ? input : msg), classList: { remove: (c) => classes.push("-" + c), add: (c) => classes.push("+" + c) }, showModal: () => { shown++; } };
+  shown = 0;
+  const p2 = shared.deskPassphrase(d2, ss);
+  for (const end = Date.now() + 3000; !shown && Date.now() < end;) await new Promise(r => setTimeout(r, 10));
+  input.value = "  not it  "; d2.returnValue = "ok"; d2.onclose();
+  for (const end = Date.now() + 3000; shown < 2 && Date.now() < end;) await new Promise(r => setTimeout(r, 10));
+  assert.equal(shown, 2, "asked again");
+  assert.deepEqual(classes, ["-shake", "+shake"]);
+  assert.match(msg.textContent, /Wrong passphrase/);
+  assert.deepEqual([input.value, d2.returnValue, ss.getItem(shared.DESK_KEY)], ["", "", null]);
+  d2.returnValue = "cancel"; d2.onclose();
+  assert.equal(await p2, "");
 });
 
 test("desk type: the five desk pages get Nunito through admin.css; the game, the handbook, the board and privacy keep the 1912 faces", () => {

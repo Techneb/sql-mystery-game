@@ -27,6 +27,8 @@ test("normalise matches the generator's fixture", () => {
 
 test("normalise: a lone letter glues to its digits, honorifics and labels go, a trailing STOP goes, leading zeros go", () => {
   for (const s of ["B-3", "B 3", "B3"]) assert.equal(normalise(s), "b3", s);
+  for (const [s, want] of [["B 12", "b12"], ["7 B X", "7 b x"], ["B 7a", "b 7a"], ["A7 12", "a7 12"], ["7a 12", "7a 12"], ["007", "7"], ["12 B 3", "12 b3"]])
+    assert.equal(normalise(s), want, s);   // only a lone letter before an all-digit token glues; only all-digit answers join
   assert.equal(normalise("room 305"), "305");
   assert.equal(normalise("0305"), "305");
   assert.equal(normalise("0"), "0");
@@ -149,6 +151,8 @@ test("rank thresholds", () => {
   assert.equal(rank(131), "Constable");
   const s = freshState(); s.queries = { 1: 5, 2: 7, 9: 100 };
   assert.deepEqual(partStats(s, 1, 8), { queries: 12 });
+  s.queries[8] = 3;
+  assert.deepEqual(partStats(s, 1, 8), { queries: 15 }, "the last chapter counts");
 });
 
 test("compete mode runs Part I only and never asks for the Part II code", () => {
@@ -273,6 +277,58 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
   assert.ok(ev("answer", { norm: "17 may 1912", stepEve: true }).includes("Filed Under the 17th"), "the eve typed at step 1");
+});
+
+test("badges: each earns on its own event at its threshold, never one step short nor on another event", () => {
+  const names = (extra) => detectBadges({ ...base(), rows: 3, ...extra }, []).map(b => b.name);
+  const st = (queries, more = {}) => ({ ...freshState(), queries, ...more });
+  const lines = (n) => Array(n).fill("x").join("\n");
+  // [badges earned, context, a context one step short]
+  const cases = [
+    [["Tourist"], { sql: "SELECT\n  * FROM police_report", cols: 7 }],
+    [["Needle"], { rows: 1 }],
+    [["Haystack"], { rows: ROW_CAP + 1 }, { rows: ROW_CAP }],
+    [["First JOIN", "Three's a Crowd"], { sql: "SELECT 1 FROM police_report JOIN police_report p ON 1 JOIN police_report q ON 1" }],
+    [["Early HAVING"], { sql: "SELECT 1 FROM t HAVING 1", chapter: 3 }, { sql: "SELECT 1 FROM t HAVING 1", chapter: 4 }],
+    [["Aliased"], { sql: "SELECT 1 AS x" }],
+    [["Novelist"], { sql: lines(16) }, { sql: lines(15) }],
+    [["Haiku"], { event: "solve", lines: 3, state: st({ 1: 2 }) }, { event: "solve", lines: 4, state: st({ 1: 2 }) }],
+    [["Typo"], { error: true, state: st({}, { errorStreak: 5 }) }, { error: true, state: st({}, { errorStreak: 4 }) }],
+    [["Persistent"], { state: st({ 1: 20 }) }, { state: st({ 1: 19 }) }],
+    [["Sniper"], { event: "solve", lines: 5, state: st({ 1: 1 }) }, { event: "solve", lines: 5, state: st({ 1: 2 }) }],
+    [["Insomniac"], { hour: 4 }, { hour: 5 }],
+    [["First JOIN", "Trespasser"], { sql: "SELECT 1 FROM police_report JOIN lift_log ON 1" }],
+    [["Archivist"], { sql: "SELECT name FROM sqlite_master" }],
+    [["Anagram"], { event: "answer", norm: "paul sernine" }, { event: "answer", norm: "paul" }],
+    [["Wrong Frenchman"], { event: "answer", norm: "horace velmont" }, { event: "answer", norm: "horace" }],
+    [["Gentleman"], { event: "answer", norm: "arsene lupin" }, { event: "answer", norm: "lupin" }],
+    [["Window Shopper"], { sql: "SELECT RANK() OVER(ORDER BY id) FROM t", chapter: 7 }, { sql: "SELECT RANK() OVER(ORDER BY id) FROM t", chapter: 8 }],
+    [["Aliased", "Recursive"], { sql: "WITH  RECURSIVE r(x) AS (VALUES (1)) SELECT x FROM r" }],
+    [["Egg Hunter"], { event: "code" }],
+    [["Bouncer"], { sql: "SELECT DISTINCT place FROM t" }],
+    [["Subpoena"], { sql: "SELECT 1 FROM t WHERE id IN ( SELECT id FROM u)" }],
+    [["Null and Void"], { sql: "SELECT 1 FROM t WHERE x IS  NULL" }],
+    [["Wildcard"], { sql: "SELECT 1 FROM t WHERE x LIKE  'D%'" }],
+    [["Commentator"], { sql: "SELECT 1 /* x */" }],
+    [["Top of the Class"], { sql: "SELECT id FROM t ORDER  BY id DESC, place  LIMIT  1" }, { sql: "SELECT id FROM t ORDER BY id DESC LIMIT 10" }],
+    [["Madeleine"], { text: "a madeleine missing" }],
+    [["Film Buff"], { state: st({}, { film: FILM_LINES.slice(0, 5) }) }, { state: st({}, { film: FILM_LINES.slice(0, 4) }) }],
+    [["Time Traveller"], { sql: "SELECT 1 FROM t WHERE date = 19500101" }],
+    [["Paparazzo"], { event: "suspects", faces: 1 }],
+    [["Speed Reader"], { event: "solve", lines: 5, elapsed: 119999, state: st({ 1: 2 }) }, { event: "solve", lines: 5, elapsed: 120000, state: st({ 1: 2 }) }],
+    [["Filed Under the 17th"], { event: "answer", norm: "4100", decoy: 4100 }, { event: "answer", norm: "4101", decoy: 4100 }],
+    [["Lamplighter"], { event: "theme" }],
+    [["Gare du Nord"], { event: "part1" }],
+    [["Ganimard"], { event: "part2" }],
+  ];
+  for (const [want, ctx, short] of cases) {
+    assert.deepEqual(names(ctx), want, JSON.stringify(ctx));
+    if (short) assert.deepEqual(names(short), [], "one step short: " + JSON.stringify(short));
+    if (!["theme", "part1"].includes(ctx.event))
+      assert.deepEqual(names({ ...ctx, event: ctx.event === "theme" ? "part1" : "theme", faces: 1, decoy: 4100, norm: "4100" }).filter(n => n !== "Lamplighter"), [], "another event: " + want);
+  }
+  assert.ok(eggText({ values: Array(EGG_ROWS).fill(["rosebud"]) }).includes("rosebud"), "ten rows still count");
+  for (const norm of ["paul sernine", "horace velmont", "arsene lupin"]) assert.deepEqual(names({ norm }), [], "a name typed in a query is no accusation");
 });
 
 test("story markup: bold and italic only, everything else escaped", () => {
@@ -857,6 +913,8 @@ test("askDialog resolves with the closing button's value, Escape's stale value c
   const d = { returnValue: "ok", querySelector: () => p, showModal() { assert.equal(this.returnValue, ""); this.returnValue = "ok"; this.onclose(); } };
   assert.equal(await shared.askDialog(d, "Sure?", () => assert.fail("no fallback")), "ok");
   assert.equal(p.textContent, "Sure?");
+  await shared.askDialog(d, undefined, () => assert.fail("no fallback"));
+  assert.equal(p.textContent, "Sure?", "no text: the dialog keeps its own");
   const esc = { returnValue: "ok", querySelector: () => null, showModal() { this.onclose(); } };
   assert.equal(await shared.askDialog(esc, "x", () => "no"), "");
   assert.equal(await shared.askDialog({ querySelector: () => null }, "x", () => "fallback"), "fallback");
@@ -882,6 +940,96 @@ test("SQLite's errors get one plain line from the player's words and the tables 
   assert.equal(h("out of memory", "SELECT 1").type, "other");
   assert.equal(errorHtml("no such table: a<b", null), '<div class="error">no such table: a&lt;b</div>');
   assert.match(errorHtml("e", { why: "<i>" }), /<p class="why">&lt;i&gt;/);
+});
+
+test("terminal edges: formatter, colouring, blanking, suggestions, results, comma joins, help lines, date notes", async () => {
+  const t = await import("./site/terminal.js");
+  // formatSql keeps comments, strings and quoted names whole, uppercases a call written with a space before its bracket,
+  // never lets a line comment swallow the next word, and indents a subquery inside a call by its subquery depth only
+  assert.equal(formatSql("SELECT a, -- c\n b FROM t"), "SELECT a, -- c\nb\nFROM t");
+  assert.equal(formatSql("select lower (x) from t"), "SELECT LOWER (x)\nFROM t");
+  assert.equal(formatSql("SELECT 1 /* keep  this */ FROM t"), "SELECT 1 /* keep  this */\nFROM t");
+  assert.equal(formatSql("SELECT 1 /* open  end"), "SELECT 1 /* open  end");
+  assert.equal(formatSql("SELECT 'it''s', \"x\"\"y\" FROM t"), "SELECT 'it''s', \"x\"\"y\"\nFROM t");
+  assert.equal(formatSql("SELECT COALESCE((SELECT a FROM t WHERE b = 1 AND c = 2), 0) FROM u"),
+    "SELECT COALESCE((\n  SELECT a\n  FROM t\n  WHERE b = 1\n    AND c = 2\n), 0)\nFROM u");
+  assert.equal(highlightSql("SELECT lower (x), 1.5, 'open"),
+    '<span class="sql-kw">SELECT</span> <span class="sql-fn">lower</span> (<span class="sql-id">x</span>), <span class="sql-num">1.5</span>, <span class="sql-str">\'open</span>\n');
+  assert.match(highlightSql('SELECT "open'), /<span class="sql-str">"open<\/span>/);
+  assert.equal(blankLiterals("x = 'ab' AND y = \"cd\""), "x =      AND y =     ");
+  assert.deepEqual(t.tablesIn("SELECT 1 FROM  person JOIN\tcab_ride ON 1"), ["person", "cab_ride"]);
+  assert.deepEqual(columns({ person: [["id", "INTEGER", 1]] }, ["nope", "person"]), { person: ["id"] });
+  // suggestions: aliases resolved to the right table, two spaces allowed, nothing mid-word, in a string or a comment
+  const T = { person: ["id", "name"], cab_ride: ["id", "plate"], lift_log: ["id", "floor"] };
+  const at = (q, c = q.length) => { const r = suggestSql(q, c, T); return r ? r.items.map(i => i.text) : null; };
+  assert.deepEqual(at("SELECT p. FROM person  p", 9), ["id", "name"]);
+  assert.deepEqual(at("SELECT p. FROM person AS  p", 9), ["id", "name"]);
+  assert.deepEqual(at("SELECT c. FROM person p JOIN cab_ride c", 9), ["id", "plate"]);
+  assert.deepEqual(at("SELECT 1 FROM  p"), ["person"], "after FROM, tables only");
+  assert.equal(at("SELECT na FROM person", 8), null, "mid-word");
+  assert.equal(at("SELECT pl FROM person", 9), null, "only the query's tables give columns");
+  assert.deepEqual(at("SELECT i FROM person JOIN cab_ride ON 1", 8).filter(x => x === "id"), ["id"], "a column two tables share, once");
+  assert.equal(at("SELECT * FROM person WHERE name = 'pe"), null);
+  assert.equal(at("-- pe"), null);
+  assert.equal(suggestSql("sel", 3, T).items[0].insert, "select");
+  // results, history, the run line
+  assert.doesNotMatch(renderResults({ columns: ["a"], values: Array(ROW_CAP).fill([1]) }), /more rows/);
+  assert.match(renderResults({ columns: ["a"], values: Array(ROW_CAP + 5).fill([1]) }), /<p class="muted">5 more rows not shown\.<\/p>$/);
+  assert.equal(renderResults({ columns: ["a<"], values: [] }), "<table><tr><th>a&lt;</th></tr></table>");
+  const st = { history: [] }; pushHistory(st, "a"); pushHistory(st, "a"); pushHistory(st, "b");
+  assert.deepEqual(st.history, ["b", "a"]);
+  assert.deepEqual([t.runInfo({ error: "x" }), t.runInfo({ res: { values: [1, 2] } }), t.runInfo({ res: null })], ["error", "2 rows", "0 rows"]);
+  for (const s of ["SELECT * FROM person  p ,  cab_ride", "SELECT * FROM person AS  p, cab_ride", "SELECT * FROM  person,cab_ride", "SELECT * FROM person p1, cab_ride"])
+    assert.ok(cartesian(s), s);
+  // help lines
+  const h = (m, q) => sqliteHelp(m, q, { ...T, suite: ["id"], address: ["id"] }).why;
+  assert.equal(h("no such table: liftlog", "SELECT * FROM liftlog"), "The table is called lift_log.");
+  assert.equal(h("no such table: suites", "SELECT * FROM suites"), "The table is called suite.");
+  assert.equal(h("no such table: addresses", "SELECT * FROM addresses"), "The table is called address.");
+  assert.match(h("no such table: suspects", "SELECT * FROM suspects s"), /^There is no table called suspects\./);
+  assert.equal(h("no such column: x", "SELECT x FROM nope JOIN person JOIN cab_ride ON 1"),
+    "x is not a column of person, cab_ride, whose columns are person: id, name; cab_ride: id, plate.");
+  assert.match(h('near "Ritz": syntax error', "SELECT * FROM person WHERE name = x AND Ritz"), /^SQL stopped reading at Ritz\./, "a keyword ends the value");
+  assert.match(h('near "x1": syntax error', "SELECT id, x1 x1"), /^SQL stopped reading at x1\./);
+  // date notes: spaces allowed, the YYYYMMDD sentence only for an INTEGER column of that name, never inside a decimal
+  const G = { police_report: [["id", "INTEGER", 1], ["date", "INTEGER", 0]], t2: [["day", "TEXT", 0]] };
+  assert.match(dateArithmeticNote("SELECT * FROM police_report WHERE date  =  1912 - 05 - 17", G), /as in date = 19120517\.$/);
+  assert.equal(dateArithmeticNote("SELECT * FROM t2 WHERE day = 1912-05-17", G), "1912-05-17 without quotes is arithmetic: 1912 minus 5 minus 17, which is 1890.");
+  assert.equal(dateArithmeticNote("SELECT * FROM t2 WHERE day = 1912-05-17.5", G), "");
+  // the terminal's settings on a database, and its schema reader (a stub db)
+  const calls = [], fns = {};
+  const db = { run: (s) => calls.push(s), create_function: (n, f) => { fns[n] = f; },
+    exec: (s) => s.startsWith("SELECT name") ? [{ values: [["a"]] }] : [{ values: [[0, "id", "INTEGER", 1, null, 1], [1, "x", "TEXT", 0, null, 0]] }] };
+  assert.equal(t.terminalDb(db), db);
+  assert.deepEqual(calls, ["PRAGMA query_only = 1", "PRAGMA case_sensitive_like = ON"]);
+  assert.equal(fns.regexp.length, -1, "any arity");
+  assert.equal(fns.regexp("^ab", "ABC"), ilike("^ab", "ABC"));
+  assert.deepEqual(t.readSchema(db), { a: [["id", "INTEGER", 1], ["x", "TEXT", 0]] });
+});
+
+test("strict edges: the scan behind a parse failure, every cast and LEFT/RIGHT rewrite, ILIKE escapes, ymd bounds", () => {
+  const S = { t: [["id", "INTEGER", 1], ["x", "TEXT", 0], ["n", "REAL", 0]] };
+  // EXPLAIN is beyond the parser: strictScan still refuses the unmistakable tokens, and debug mode says it could not parse
+  const scan = (q) => { const r = strictCheck("EXPLAIN " + q, S); return r && r.anchor; };
+  assert.equal(scan("SELECT ifnull(x, 1) FROM t"), "coalesce");
+  assert.equal(scan("SELECT printf('%d', id) FROM t"), "sqlite-only");
+  assert.equal(scan("SELECT `x` FROM t"), "double-quotes");
+  assert.equal(scan("SELECT x FROM t WHERE x == 1"), "double-equals");
+  assert.equal(strictCheck("EXPLAIN SELECT x FROM t WHERE x glob 'a'", S).why, "GLOB is not standard SQL: match patterns with LIKE or ILIKE.");
+  for (const q of ["SELECT t.ifnull(x) FROM t", "SELECT ifnull FROM t", "SELECT 'glob' FROM t", "SELECT 1"]) assert.equal(scan(q), null, q);
+  assert.throws(() => strictCheck("EXPLAIN SELECT 1", S, true), /could not parse: EXPLAIN SELECT 1/);
+  for (const [q, want] of [["x::double precision", "CAST(x AS REAL)"], ["x::double", "CAST(x AS DOUBLE)"], ["x::character varying", "CAST(x AS TEXT)"],
+    ["x::character", "CAST(x AS TEXT)"], ["n::numeric(5,2)", "CAST(n AS NUMERIC)"], ["x::varchar(20)", "CAST(x AS TEXT)"], ["t.x::int", "CAST(t.x AS INTEGER)"],
+    ["'1'::int", "CAST('1' AS INTEGER)"], ["(id + 1)::text", "CAST((id + 1) AS TEXT)"], ["max(id)::text", "CAST(max(id) AS TEXT)"],
+    ["CAST(id AS text)::int", "CAST(CAST(id AS text) AS INTEGER)"], ["exists(SELECT 1)::int", "CAST(exists(SELECT 1) AS INTEGER)"],
+    ["rank() OVER (ORDER BY id)::text", "CAST(rank() OVER (ORDER BY id) AS TEXT)"], ["count(*) FILTER (WHERE id > 1)::text", "CAST(count(*) FILTER (WHERE id > 1) AS TEXT)"],
+    ["LEFT(LEFT(x, 3), 1)", "substr(substr(x, 1, 3), 1, 1)"], ["left (x, 2)", "substr(x, 1, 2)"], ["RIGHT(x, 2)", "substr(x, -(2), 2)"],
+    ["left(x, 1, 2)", "left(x, 1, 2)"], ["t.left(x, 2)", "t.left(x, 2)"], ["x::(int)", "x::(int)"], ["'ilike'", "'ilike'"]])
+    assert.equal(toSqlite("SELECT " + q + " FROM t"), "SELECT " + want + " FROM t", q);
+  assert.deepEqual([ilike("a%", null), ilike(null, "a"), ilike("a!%", "a%", "!"), ilike("a!%", "ab", "!"), ilike("a.c", "abc"), ilike("a/b", "A/B")], [null, null, 1, 0, 0, 1]);
+  for (const [v, want] of [["1912-12-31", "19121231"], ["1912-1-1", "19120101"], ["31/12/1912", "19121231"], ["12/13/1912", "19121213"], ["12/12/1912", "19121212"],
+    ["x1912-05-18", ""], ["1912-05-18x", ""], ["x18/05/1912", ""], ["18/05/1912x", ""], ["1912-00-10", ""], ["1912-05-00", ""], ["1912-05-32", ""], ["1912-13-01", ""]])
+    assert.equal(ymd(v), want, v);
 });
 
 test("date mistakes: a quoted date names the YYYYMMDD number, an unquoted one is arithmetic", () => {
@@ -952,6 +1100,10 @@ test("migrateSave: an old save gets every field and its onboarding step; a fresh
   assert.equal(migrateSave({ solved: [3] }).introduced, null, "no introduced yet: the first look seeds it");
   assert.deepEqual(migrateSave({ solved: [3] }).cracked, {}, "every field of freshState");
   assert.equal(migrateSave({ onboarding: "tour", prologue: "done" }).onboarding, "tour", "a new save keeps its step");
+  assert.equal(migrateSave({ onboarding: "tour", solved: [] }).onboarding, "tour", "a saved step is never recomputed");
+  assert.equal(migrateSave({ badges: ["a", "b", "c"], badgesSeen: 1 }).badgesSeen, 1, "a save's own badgesSeen is kept");
+  const f = freshState();
+  assert.ok(!f.extraSeen && !f.extraSeen2 && !f.closedSeen && !f.part2 && !f.over, "a fresh game has seen no ending and no close");
 });
 
 test("GA feature names are literals the monitor lists", async () => {
