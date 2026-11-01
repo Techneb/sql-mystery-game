@@ -16,4 +16,4 @@ About 4,400 people opened the game in October, most of them after Software with 
 The game: https://alephb.uk/ritz-affair/
 The handbook: https://alephb.uk/learn/
 
-Teachers and learners: how do you build that sense of what the data means, now that AI writes the syntax? I'd love to hear.
+To my students, past and present: now that AI writes the syntax for you, how do you check what the data actually means? I'd love to hear.
