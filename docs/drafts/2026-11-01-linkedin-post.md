@@ -6,7 +6,7 @@ generative AI, understanding what data means and its business context matters mo
 
 ---
 
-I taught SQL in Paris. Today my students can ask ChatGPT or Claude for a working query and get one in seconds. What still takes them time is knowing whether the rows answer the question, and what those rows mean for the business behind them.
+I taught SQL to MSc students in Paris. Today my students can ask ChatGPT or Claude for a working query and get one in seconds. What still takes them time is knowing whether the rows answer the question, and what those rows mean for the business behind them.
 
 I wanted something that trains that judgement, so I made [The Ritz Affair](https://alephb.uk/ritz-affair/), a free detective game you play in SQL. Paris, May 1912: someone at the Ritz is missing a great blue stone, and all you have is the police archive. Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data ought to show, so you notice when a result looks right and isn't.
 
