@@ -5,7 +5,7 @@ generative AI, understanding what data means and its business context matters mo
 
 ---
 
-I teach SQL in Paris. With AI assistants, my students now get a working query in seconds. What still takes them time is knowing whether the rows it returns answer the question, and what those rows mean for the business behind them.
+I taught SQL in Paris. With AI assistants, students now get a working query in seconds. What still takes them time is knowing whether the rows it returns answer the question, and what those rows mean for the business behind them.
 
 That judgement is the skill I want to train, so I made The Ritz Affair, a free detective game you play in SQL. Paris, May 1912: someone at the Ritz is missing a great blue stone, and all you have is the police archive. Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. The real work is reading the story, deciding what the data should show, and catching the result that looks right and is wrong.
 
