@@ -77,6 +77,9 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
 - 2026-11-01: 5 indexed, 2 crawled not indexed (Pages); of the seven, on Google: /learn/, /learn/exercises.html,
   /learn/select-where.html, /learn/joins.html, https://alephb.uk/; not yet: /ritz-affair/ (discovered, not indexed),
   /about-the-ritz-affair.html. Request indexing hit the quota at 09:18 (rolling 24 h); retry 14:17.
+- 2026-11-01 14:20: Pages still 5, but URL Inspection reads on Google for 11: the five above plus /ritz-affair/,
+  /learn/subqueries.html, set-operations.html, grammar.html, /articles.html, /article-fair-meeting.html. Quota still
+  exceeded; retry 2 Nov 09:17 for the about page, database, window-functions, ctes, schema, two articles, privacy.
 
 ## B. alephb-site (one approval for the batch)
 
