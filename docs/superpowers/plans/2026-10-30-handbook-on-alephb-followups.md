@@ -74,6 +74,9 @@ A5. AdSense: Sites > alephb.uk > confirm the issues are fixed > **Request review
     still answers: `curl -s https://alephb.uk/ads.txt` contains `pub-9765732642926043`.
 
 Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days.
+- 2026-11-01: 5 indexed, 2 crawled not indexed (Pages); of the seven, on Google: /learn/, /learn/exercises.html,
+  /learn/select-where.html, /learn/joins.html, https://alephb.uk/; not yet: /ritz-affair/ (discovered, not indexed),
+  /about-the-ritz-affair.html. Request indexing hit the quota at 09:18 (rolling 24 h); retry 14:17.
 
 ## B. alephb-site (one approval for the batch)
 
