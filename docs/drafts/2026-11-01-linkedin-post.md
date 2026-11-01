@@ -14,6 +14,6 @@ Each of the twelve chapters needs one construct, from a first WHERE to a recursi
 
 [The Clerk's Handbook](https://alephb.uk/learn/) goes with it: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
 
-In two weeks more than 5,000 people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His video passed 1.2 million views on [Instagram](https://www.instagram.com/p/DevB79KCKqt/), [TikTok](https://www.tiktok.com/@softwarewithnick/video/7698898589518400782), [YouTube](https://www.youtube.com/shorts/_WqJYXyifhA) and [Facebook](https://www.facebook.com/reel/1839523360397980/). Thank you, Nick!
+In two weeks more than 5,000 people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His videos passed 1.2M views on [his socials](https://www.instagram.com/p/DevB79KCKqt/). Thank you, Nick!
 
 To my students, past and present: now that AI writes the syntax for you, how do you check what the data means? I'd love to hear.
