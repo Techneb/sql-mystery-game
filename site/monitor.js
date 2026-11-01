@@ -281,9 +281,9 @@ const donutsRow = (P, m, pages = pagesSection) => '<div class="donuts three"><di
 // Page sections as pagePath filters (apps_script.gs report_: a list is exact paths, an object adds prefixes and not).
 // The game and the desk moved from the old subdomain's root to alephb.uk/ritz-affair/ (2026-10-31): both paths count, so the
 // history from before the move stays in every chart. The handbook is /learn/ on both hosts.
-const MOVED = (paths) => paths.flatMap(p => [p, "/ritz-affair" + p]);
-export const GAME_PATHS = MOVED(["/", "/index.html"]);
-export const DESK_PATHS = MOVED(["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"]);
+const bothHosts = (paths) => paths.flatMap(p => [p, "/ritz-affair" + p]);
+export const GAME_PATHS = bothHosts(["/", "/index.html"]);
+export const DESK_PATHS = bothHosts(["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"]);
 export const LEARN = { beginsWith: ["/learn/"] };
 export const SECTIONS = [["Game", GAME_PATHS], ["Handbook", LEARN], ["Desk", DESK_PATHS],
   ["Other", { exact: [...GAME_PATHS, ...DESK_PATHS], beginsWith: ["/learn/"], not: true }]];
@@ -345,20 +345,23 @@ const typeRequest = (d, pagePath) => ev(d, ["customEvent:type"], ["eventCount", 
 const adRequest = (days, pagePath) => ev(days, [], ["publisherAdClicks", "publisherAdImpressions"], { pagePath });
 // Chapter I onboarding (2026-10-25), learn mode, each stage its own GA count of users: Investigate pressed, the
 // prologue and the tour (done / skipped, one [feature] reply), a first query in chapter I, its date found (step_solve,
-// chapter I's step 1, since 2026-10-31), chapter I solved.
-export const ONBOARDING_STEPS = [["begin", "Pressed Investigate"], ["prologue_done", "Prologue finished"], ["prologue_skip", "Prologue skipped"],
-  ["tour_done", "Tour finished"], ["tour_skip", "Tour skipped"], ["ran", "Ran a first query in chapter I"], ["date", "Found the date (step 1)"], ["solved", "Solved chapter I"]];
+// chapter I's step 1, since 2026-10-31), chapter I solved. One list drives the requests and both charts: [key, label,
+// the event's filter], a step without a filter being a feature_use feature. A new step is one entry here.
+export const ONBOARDING_STEPS = [["begin", "Pressed Investigate", { eventName: ["landing_begin"] }],
+  ["prologue_done", "Prologue finished"], ["prologue_skip", "Prologue skipped"], ["tour_done", "Tour finished"], ["tour_skip", "Tour skipped"],
+  ["ran", "Ran a first query in chapter I", { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"] }],
+  ["date", "Found the date (step 1)", { eventName: ["step_solve"], "customEvent:chapter": ["1"] }],
+  ["solved", "Solved chapter I", { eventName: ["chapter_solve"], "customEvent:chapter": ["1"] }]];
+const EVENT_STEPS = ONBOARDING_STEPS.filter(s => s[2]).map(s => s[0]);
 const LEARN_MODE = { "customEvent:mode": ["learn"] };
 // Split by device (2026-10-26): begin, ran and solved carry deviceCategory (their totals stay GA's all-device count);
 // the features need a second reply by device, since GA's rows by feature alone are the all-device bars.
 export const DEVICES = { desktop: "Desktop", mobile: "Mobile", tablet: "Tablet" };
-const OB_FEATURES = { eventName: ["feature_use"], "customEvent:feature": ["prologue_done", "prologue_skip", "tour_done", "tour_skip"], pagePath: GAME_PATHS };
-export const onboardingRequests = d => ({ begin: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["landing_begin"], ...LEARN_MODE }),
+const OB_FEATURES = { eventName: ["feature_use"], "customEvent:feature": ONBOARDING_STEPS.filter(s => !s[2]).map(s => s[0]), pagePath: GAME_PATHS };
+export const onboardingRequests = d => ({
+  ...Object.fromEntries(ONBOARDING_STEPS.filter(s => s[2]).map(([k, , f]) => [k, ev(d, ["deviceCategory"], ["totalUsers"], { ...f, ...LEARN_MODE })])),
   features: ev(d, ["customEvent:feature"], ["totalUsers"], OB_FEATURES),
-  byDevice: ev(d, ["customEvent:feature", "deviceCategory"], ["totalUsers"], OB_FEATURES),
-  ran: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["chapter_queries"], "customEvent:chapter": ["1"], "customEvent:count": ["1"], ...LEARN_MODE }),
-  date: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["step_solve"], "customEvent:chapter": ["1"], ...LEARN_MODE }),
-  solved: ev(d, ["deviceCategory"], ["totalUsers"], { eventName: ["chapter_solve"], "customEvent:chapter": ["1"], ...LEARN_MODE }) });
+  byDevice: ev(d, ["customEvent:feature", "deviceCategory"], ["totalUsers"], OB_FEATURES) });
 
 // --- panels: everything a view draws from ?report= is a panel, PANELS[view][id] = {deps, requests} or {deps, load}.
 // c is the page's context: {days, gen (one per period load), m (the Count), dim (the breakdown), stack (Stack by), top
@@ -511,22 +514,22 @@ function featuresRow(P, w, names, prefix = "") {
 }
 // onboardingRequests' replies: one bar per stage, each GA's own users (never a difference), the share of the
 // Investigate pressers only in the tooltip and raw data.
-export function onboardingHtml({ begin, features, byDevice, ran, date, solved }, w) {
-  const f = byFirst(features), v = { begin: gaTotal(begin), ran: gaTotal(ran), date: gaTotal(date), solved: gaTotal(solved) };
+export function onboardingHtml(res, w) {
+  const f = byFirst(res.features), v = Object.fromEntries(EVENT_STEPS.map(k => [k, gaTotal(res[k])]));
   const rows = ONBOARDING_STEPS.map(([k, label]) => ({ key: k, label, values: [k in v ? v[k] : (f.get(k) || [0])[0]] }));
   const begun = rows[0].values[0];
   return hbar(rows.map(r => ({ ...r, tip: [[pct(r.values[0], begun), "of those who pressed Investigate"]] })), [["users", "c1"]], w, compact, "Chapter I onboarding") +
     '<p class="muted">Learn mode, users at each step, each GA&#39;s own count (a person can skip the prologue and finish the tour, and someone who began before the period still counts later). The prologue and tour events start 2026-10-25, the date found 2026-10-31.</p>' +
     raw("onboarding", tableHtml(["Step", "Users", "Share of Investigate"], rows.map(r => [r.label, r.values[0], pct(r.values[0], begun)]))) +
-    onboardingDevicesHtml({ begin, byDevice, ran, date, solved }, w);
+    onboardingDevicesHtml(res, w);
 }
 // The same steps per device (DEVICES' order, then any other name GA gives; zeros listed): one bar per device, each
 // GA's own users for that step and device; the share of that device's Investigate pressers in the tooltip and raw data.
-export function onboardingDevicesHtml({ begin, byDevice, ran, date, solved }, w) {
-  const one = res => new Map(((res && res.rows) || []).map(r => [String(r[0]), Number(r.at(-1)) || 0]));
-  const fr = (byDevice && byDevice.rows) || [], f = new Map(fr.map(r => [r[0] + "|" + r[1], Number(r[2]) || 0]));
-  const v = { begin: one(begin), ran: one(ran), date: one(date), solved: one(solved) };
-  const seen = [...v.begin.keys(), ...v.ran.keys(), ...v.date.keys(), ...v.solved.keys(), ...fr.map(r => String(r[1]))];
+export function onboardingDevicesHtml(res, w) {
+  const one = r1 => new Map(((r1 && r1.rows) || []).map(r => [String(r[0]), Number(r.at(-1)) || 0]));
+  const fr = (res.byDevice && res.byDevice.rows) || [], f = new Map(fr.map(r => [r[0] + "|" + r[1], Number(r[2]) || 0]));
+  const v = Object.fromEntries(EVENT_STEPS.map(k => [k, one(res[k])]));
+  const seen = [...EVENT_STEPS.flatMap(k => [...v[k].keys()]), ...fr.map(r => String(r[1]))];
   const devs = [...Object.keys(DEVICES), ...new Set(seen.filter(k => !(k in DEVICES)))];
   const at = (k, d) => (k in v ? v[k].get(d) : f.get(k + "|" + d)) || 0, begun = devs.map(d => at("begin", d));
   const series = devs.map((d, j) => [DEVICES[d] || gaText(d), "c" + (j + 1)]);

@@ -8,7 +8,8 @@ import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPag
 import { execFileSync } from "node:child_process";
 import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
 import path from "node:path";
-import { publishFiles, bridgeFiles, bridgeTarget, bridgeHtml, ADSENSE_META, OLD, GAME, HOME } from "./publish.mjs";
+import { publishFiles, bridgeFiles, bridgeTarget, bridgeHtml, ADSENSE_META } from "./publish.mjs";
+import { GAME_URL, HANDBOOK, OLD_ORIGIN } from "./site/shared.js";
 import { versionText } from "./version_site.mjs";
 import { readImport, importWrites } from "./site/state.js";
 
@@ -407,8 +408,8 @@ test("publish: alephb-site gets every file of site/, every local URL and import 
   assert.match(out["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);
   assert.equal([...out["learn/sitemap.xml"].matchAll(/<loc>https:\/\/alephb\.uk\/learn\//g)].length, learnPages.length, "the /learn/ sitemap lists every page");
   assert.doesNotMatch(out["ritz-affair/sitemap.xml"], /\/learn\//, "the game's sitemap lists its own pages only");
-  assert.equal(GAME, "https://alephb.uk/ritz-affair/");
-  assert.equal(HOME, "https://alephb.uk/learn/");
+  assert.equal(GAME_URL, "https://alephb.uk/ritz-affair/");
+  assert.equal(HANDBOOK, "https://alephb.uk/learn/");
 });
 
 test("publish: mystery.alephb.uk is named only by the bridge, the docs and test fixtures", () => {
@@ -418,13 +419,13 @@ test("publish: mystery.alephb.uk is named only by the bridge, the docs and test 
 });
 
 test("bridge: index.html carries the ritz.* keys in the fragment only, the query kept; every other page redirects to its new URL", () => {
-  assert.equal(bridgeTarget("", []), GAME);
-  assert.equal(bridgeTarget("?season=s3&board=https%3A%2F%2Fx", [["other", "1"]]), GAME + "?season=s3&board=https%3A%2F%2Fx", "nothing of ours saved: a plain redirect");
+  assert.equal(bridgeTarget("", []), GAME_URL);
+  assert.equal(bridgeTarget("?season=s3&board=https%3A%2F%2Fx", [["other", "1"]]), GAME_URL + "?season=s3&board=https%3A%2F%2Fx", "nothing of ours saved: a plain redirect");
   const saved = [["ritz.learn", JSON.stringify({ solved: [1, 2], badges: ["Tourist"], notes: "été" })], ["ritz.theme", "night"],
     ["ritz.exercises", "[\"the-cheap-shelf\"]"], ["ritz.admin.board", "https://script.google.com/macros/s/x/exec"], ["_ga", "no"]];
   const to = bridgeTarget("?season=s3", saved);
   const u = new URL(to);
-  assert.equal(u.origin + u.pathname, GAME);
+  assert.equal(u.origin + u.pathname, GAME_URL);
   assert.equal(u.search, "?season=s3", "the query stays a query");
   assert.match(u.hash, /^#import=[A-Za-z0-9_-]+$/, "the keys travel in the fragment, base64url");
   assert.deepEqual(readImport(u.hash), Object.fromEntries(saved.filter(([k]) => k.startsWith("ritz."))), "every ritz.* key, nothing else, UTF-8 intact");
@@ -437,19 +438,19 @@ test("bridge: index.html carries the ritz.* keys in the fragment only, the query
   new Function("localStorage", "location", js)(ls, { search: "?season=s3", replace: (x) => { went = x; } });
   assert.equal(went, to);
   new Function("localStorage", "location", js)({ get length() { throw new Error("blocked"); } }, { search: "?a=1", replace: (x) => { went = x; } });
-  assert.equal(went, GAME + "?a=1", "blocked storage: a plain redirect");
+  assert.equal(went, GAME_URL + "?a=1", "blocked storage: a plain redirect");
   const bridge = bridgeFiles("site");
   const pages = fs.readdirSync("site", { recursive: true }).filter((f) => f.endsWith(".html")).sort();
   assert.deepEqual(Object.keys(bridge).filter((f) => f.endsWith(".html")).sort(), pages, "every old page is served");
   for (const f of pages) {
     if (f === "index.html") continue;
-    const want = f === "learn/index.html" ? HOME : f.startsWith("learn/") ? HOME + f.slice(6) : GAME + f;
+    const want = f === "learn/index.html" ? HANDBOOK : f.startsWith("learn/") ? HANDBOOK + f.slice(6) : GAME_URL + f;
     assert.ok(bridge[f].includes(`location.replace(${JSON.stringify(want)} + location.search + location.hash)`), f + " -> " + want);
     assert.ok(bridge[f].includes(`<link rel="canonical" href="${want}">`), f + " canonical");
   }
   assert.equal(bridge["robots.txt"], "User-agent: *\nAllow: /\n", "crawlers follow the redirects");
   assert.ok(Object.keys(bridge).every((f) => /\.(html|txt)$/.test(f)), "no script, data or ad file on the bridge");
-  assert.ok(OLD.startsWith("https://mystery."));
+  assert.ok(OLD_ORIGIN.startsWith("https://mystery."));
 });
 
 test("bridge import: a key the new origin lacks is written; a held key is kept unless it is a save the import is ahead of", () => {
@@ -488,9 +489,9 @@ test("privacy: the notice lives with the game on alephb.uk and says the game and
   assert.match(h, /the handbook, the Clerk's Desk and the leaderboard read and write the same day\/night choice/);
 });
 
-// --- Review of 2026-10-31 (the move to alephb.uk): findings 1, 2, 3, 9, 10, 11, 12, 13 -------------------------------
+// --- The move to alephb.uk: the import rules, the bridge, publish.mjs's guards and the deploys -----------------------
 
-test("review 1: an imported compete save never replaces this origin's save of another season", async () => {
+test("bridge import: an imported compete save never replaces this origin's save of another season", async () => {
   const { importWrites } = await import("./site/state.js");
   const c = (season, solved, q) => JSON.stringify({ mode: "compete", season, solved, totalQueries: q });
   const have = (o) => (k) => (k in o ? o[k] : null);
@@ -499,18 +500,18 @@ test("review 1: an imported compete save never replaces this origin's save of an
   assert.deepEqual(importWrites({ "ritz.compete": c("s1", [1], 1) }, have({})), { "ritz.compete": c("s1", [1], 1) }, "none here: filled");
 });
 
-test("review 2: the bridge carries the keys once, then redirects plainly; list keys merge as a union", async () => {
-  const { bridgeTarget, bridgeHtml, MOVED, GAME } = await import("./publish.mjs");
+test("bridge: it carries the keys once, then redirects plainly; list keys merge as a union", async () => {
+  const { bridgeTarget, bridgeHtml, MOVED } = await import("./publish.mjs");
   const { importWrites } = await import("./site/state.js");
   const saved = [["ritz.theme", "night"]];
   assert.match(bridgeTarget("", saved), /#import=/);
-  assert.equal(bridgeTarget("?a=1", [...saved, [MOVED, "2026-10-31T00:00:00Z"]]), GAME + "?a=1", "moved already: plain");
+  assert.equal(bridgeTarget("?a=1", [...saved, [MOVED, "2026-10-31T00:00:00Z"]]), GAME_URL + "?a=1", "moved already: plain");
   const js = bridgeHtml().match(/<script>([\s\S]*?)<\/script>/)[1];
   const store = new Map(saved), went = [];
   const ls = { get length() { return store.size; }, key: (i) => [...store.keys()][i], getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) };
   for (let i = 0; i < 2; i++) new Function("localStorage", "location", js)(ls, { search: "", replace: (x) => went.push(x) });
   assert.match(went[0], /#import=/);
-  assert.equal(went[1], GAME, "the second visit redirects without the keys");
+  assert.equal(went[1], GAME_URL, "the second visit redirects without the keys");
   assert.match(store.get(MOVED), /^\d{4}-\d\d-\d\dT/);
   assert.equal(store.get("ritz.theme"), "night", "the old keys stay as a backup");
   const have = (o) => (k) => (k in o ? o[k] : null);
@@ -520,9 +521,10 @@ test("review 2: the bridge carries the keys once, then redirects plainly; list k
   assert.equal(JSON.parse(importWrites({ "ritz.exercises.history": h(15, "old") }, have({ "ritz.exercises.history": h(10, "new") }))["ritz.exercises.history"]).length, 20, "a history keeps 20");
 });
 
-test("review 3: an import is taken only from the bridge's origin, and never the desk's board URL", async () => {
+test("bridge import: taken only from the bridge's origin, and never the desk's board URL", async () => {
   const { bridgeImport } = await import("./site/state.js");
-  const { bridgeTarget, bridgeHtml, OLD } = await import("./publish.mjs");
+  const { bridgeTarget, bridgeHtml } = await import("./publish.mjs");
+  const OLD = OLD_ORIGIN + "/";
   const hash = new URL(bridgeTarget("", [["ritz.theme", "night"], ["ritz.consent", "yes"], ["ritz.admin.board", "https://script.google.com/x/exec"]])).hash;
   assert.deepEqual(bridgeImport(hash, OLD), { "ritz.theme": "night", "ritz.consent": "yes" }, "consent kept, the board dropped");
   for (const ref of ["", "https://evil.example/", "https://alephb.uk/ritz-affair/", "https://mystery.alephb.uk.evil.example/", "not a url"])
@@ -532,17 +534,17 @@ test("review 3: an import is taken only from the bridge's origin, and never the 
   assert.match(fs.readFileSync("site/app.js", "utf8"), /bridgeImport\(location\.hash, document\.referrer\)/);
 });
 
-test("review 9: publish.mjs runs as a CLI from a path with spaces", async () => {
+test("publish: publish.mjs runs as a CLI from a path with spaces", async () => {
   const os = (await import("node:os")).default;
   const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), "pub lish "));
   try {
     fs.mkdirSync(path.join(dir, "site"));
-    for (const f of ["publish.mjs", "version_site.mjs", "site/shared.js"]) fs.copyFileSync(f, path.join(dir, f));
+    for (const f of ["publish.mjs", "version_site.mjs", "site/shared.js", "site/state.js"]) fs.copyFileSync(f, path.join(dir, f));
     assert.throws(() => execFileSync("node", [path.join(dir, "publish.mjs")], { stdio: "pipe" }), /usage: node publish\.mjs/, "no arguments: the usage error, so the guard ran");
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test("review 10: publish.mjs refuses a target that is, holds or sits inside the source site/", async () => {
+test("publish: publish.mjs refuses a target that is, holds or sits inside the source site/", async () => {
   const { overlaps } = await import("./publish.mjs");
   for (const t of ["site", "./site/", "site/learn", ".", ".."]) assert.ok(overlaps(t, "site"), t);
   for (const t of ["out", "../alephb-site", "sites"]) assert.ok(!overlaps(t, "site"), t);
@@ -552,7 +554,7 @@ test("review 10: publish.mjs refuses a target that is, holds or sits inside the 
   assert.equal(fs.readdirSync("site").length, before, "nothing removed");
 });
 
-test("review 11: with BRIDGE on, pages.yml skips the season build and the tests (publish-alephb.yml keeps them)", () => {
+test("deploy: with BRIDGE on, pages.yml skips the season build and the tests (publish-alephb.yml keeps them)", () => {
   const y = fs.readFileSync(".github/workflows/pages.yml", "utf8");
   for (const step of ["Build the compete databases", "Test the site and the backend"])
     assert.match(y, new RegExp("- name: " + step + "\\n(?:\\s+#.*\\n)*\\s+if: vars\\.BRIDGE != 'on'\\n"), step);
@@ -561,15 +563,16 @@ test("review 11: with BRIDGE on, pages.yml skips the season build and the tests 
   assert.match(p, /node --test test_site\.mjs test_desk\.mjs test_handbook\.mjs test_backend\.mjs/);
 });
 
-test("review 12: a stubs deploy (rollback) serves a robots.txt and sitemap for mystery.alephb.uk's root", async () => {
+test("stubs: a stubs deploy (rollback) serves a robots.txt and sitemap for mystery.alephb.uk's root", async () => {
   const os = (await import("node:os")).default;
-  const { stubsRobots, stubsSitemap, OLD, GAME } = await import("./publish.mjs");
+  const { stubsRobots, stubsSitemap } = await import("./publish.mjs");
+  const OLD = OLD_ORIGIN + "/";
   const r = stubsRobots(fs.readFileSync("site/robots.txt", "utf8"));
   for (const p of ["admin", "monitor", "monitor-game", "monitor-handbook", "explore", "inbox"]) assert.match(r, new RegExp("^Disallow: /" + p + "\\.html$", "m"), p);
   assert.doesNotMatch(r, /ritz-affair|https:\/\/alephb/);
   assert.match(r, new RegExp("^Sitemap: " + OLD + "sitemap\\.xml$", "m"));
   const s = stubsSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));
-  assert.ok(!s.includes(GAME) && s.includes("<loc>" + OLD + "</loc>"));
+  assert.ok(!s.includes(GAME_URL) && s.includes("<loc>" + OLD + "</loc>"));
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stubs-"));
   try {
     fs.cpSync("site", dir, { recursive: true, filter: (f) => !/\.sqlite$|video/.test(f) });
@@ -578,12 +581,16 @@ test("review 12: a stubs deploy (rollback) serves a robots.txt and sitemap for m
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test("review 13: alephb.uk, the game and the handbook are defined once, in shared.js", async () => {
+test("addresses: alephb.uk, the game and the handbook are defined once, in shared.js", async () => {
   const shared = await import("./site/shared.js");
   const pub = await import("./publish.mjs"), cl = await import("./colour_learn.mjs"), end = await import("./site/endings.js");
   assert.equal(shared.GAME_URL, shared.SITE + "ritz-affair/");
   assert.equal(shared.HANDBOOK, shared.SITE + "learn/");
-  assert.deepEqual([pub.GAME, pub.HOME, pub.SITE, pub.OLD, cl.HOME, end.SHARE_URL], [shared.GAME_URL, shared.HANDBOOK, shared.SITE, shared.OLD_ORIGIN + "/", shared.HANDBOOK, shared.GAME_URL]);
+  assert.equal(end.SHARE_URL, shared.GAME_URL);
+  for (const [f, m] of [["publish.mjs", pub], ["colour_learn.mjs", cl]]) {
+    for (const k of ["SITE", "GAME", "HOME", "OLD", "GAME_URL", "HANDBOOK", "OLD_ORIGIN"]) assert.ok(!(k in m), f + " re-exports no address (" + k + ")");
+    assert.doesNotMatch(fs.readFileSync(f, "utf8"), /import \{[^}]*\bas\b[^}]*\} from "\.\/site\/shared\.js"/, f + " imports the addresses under their own names");
+  }
   const lit = /"https:\/\/(mystery\.)?alephb\.uk\/[^"]*"/;
   for (const f of ["publish.mjs", "colour_learn.mjs", "site/endings.js", "site/state.js", "site/app.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), lit, f + " names no alephb.uk URL literal");

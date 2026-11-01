@@ -13,10 +13,9 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { versionText } from "./version_site.mjs";
 
-import { SITE, GAME_URL as GAME, HANDBOOK as HOME, OLD_ORIGIN } from "./site/shared.js";
+import { GAME_URL, HANDBOOK, OLD_ORIGIN } from "./site/shared.js";
+import { importFragment } from "./site/state.js";
 
-export { SITE, GAME, HOME };
-export const OLD = OLD_ORIGIN + "/";
 // Every alephb.uk page carries the AdSense account tag (alephb-site's CLAUDE.md).
 export const ADSENSE_META = '<meta name="google-adsense-account" content="ca-pub-9765732642926043">';
 // alephb.uk serves its own robots.txt and ads.txt at its root (site/robots.txt holds the lines its robots.txt needs).
@@ -40,25 +39,23 @@ export function publishFiles(site) {
     const p = path.join(site, f), rel = f.split(path.sep).join("/");
     if (fs.statSync(p).isDirectory() || SKIP.has(path.basename(f))) continue;
     const to = rel.startsWith("learn/") ? rel : "ritz-affair/" + rel;
-    out[to] = /\.(html|js|css|xml|json|svg|txt)$/.test(f) && !/\.sqlite$/.test(f) ? publishText(to, fs.readFileSync(p, "utf8")) : fs.readFileSync(p);
+    out[to] = /\.(html|js|css|xml|json|svg|txt)$/.test(f) ? publishText(to, fs.readFileSync(p, "utf8")) : fs.readFileSync(p);
   }
   return out;
 }
 
 // The bridge's index.html runs this, its own source inlined (bridgeHtml): search = the old address's query, saved =
-// [[key, value]] of the old origin's localStorage. The keys travel in the fragment only (#import=, base64url JSON,
-// state.js readImport), which never reaches a server; with nothing saved, a plain redirect. Query kept either way.
+// [[key, value]] of the old origin's localStorage. The keys travel in the fragment only (state.js importFragment and
+// readImport), which never reaches a server; with nothing saved, a plain redirect. Query kept either way.
 // They travel once: the page then sets MOVED (the date) here, and with it a later visit redirects plainly, the old
-// keys staying in place as a backup. GAME is the module's import here and a var of the page there (bridgeHtml).
+// keys staying in place as a backup. Inlined, it may use no free name but GAME_URL, MOVED and importFragment: the
+// module's imports here, the page's own definitions there (bridgeHtml).
 export const MOVED = "ritz.moved";
 export function bridgeTarget(search, saved) {
-  const to = GAME + (search || "");
+  const to = GAME_URL + (search || "");
   const keep = saved.filter(([k, v]) => /^ritz\./.test(k) && typeof v === "string");
   if (!keep.length || saved.some(([k]) => k === MOVED)) return to;
-  const bytes = new TextEncoder().encode(JSON.stringify(Object.fromEntries(keep)));
-  let bin = "";
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return to + "#import=" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return to + importFragment(Object.fromEntries(keep));
 }
 
 // The bridge's landing page: no GA, no ads, nothing but the redirect (meta refresh without JavaScript).
@@ -66,9 +63,10 @@ export function bridgeHtml() {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>The Ritz Affair has moved</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="canonical" href="${GAME}">
+<link rel="canonical" href="${GAME_URL}">
 <script>
-var GAME = ${JSON.stringify(GAME)}, MOVED = ${JSON.stringify(MOVED)};
+var GAME_URL = ${JSON.stringify(GAME_URL)}, MOVED = ${JSON.stringify(MOVED)};
+${importFragment.toString()}
 ${bridgeTarget.toString()}
 var saved = [];
 try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); saved.push([k, localStorage.getItem(k)]); } } catch (e) {}
@@ -76,8 +74,8 @@ var to = bridgeTarget(location.search, saved);
 try { if (to.indexOf("#import=") > 0) localStorage.setItem(MOVED, new Date().toISOString()); } catch (e) {}
 location.replace(to);
 </script>
-<noscript><meta http-equiv="refresh" content="0; url=${GAME}"></noscript>
-</head><body><p>The Ritz Affair has moved to <a href="${GAME}">${GAME}</a>.</p></body></html>
+<noscript><meta http-equiv="refresh" content="0; url=${GAME_URL}"></noscript>
+</head><body><p>The Ritz Affair has moved to <a href="${GAME_URL}">${GAME_URL}</a>.</p></body></html>
 `;
 }
 
@@ -99,7 +97,7 @@ export function bridgeFiles(site) {
   for (const f of fs.readdirSync(site, { recursive: true })) {
     const rel = f.split(path.sep).join("/");
     if (!rel.endsWith(".html") || rel === "index.html") continue;
-    const to = rel.startsWith("learn/") ? HOME + (rel === "learn/index.html" ? "" : rel.slice(6)) : GAME + rel;
+    const to = rel.startsWith("learn/") ? HANDBOOK + (rel === "learn/index.html" ? "" : rel.slice(6)) : GAME_URL + rel;
     out[rel] = stubHtml(to);
   }
   return out;
@@ -107,8 +105,8 @@ export function bridgeFiles(site) {
 
 // Before a stubs deploy (BRIDGE off: the rollback, mystery.alephb.uk serving the game at its root again): site/robots.txt
 // and site/sitemap.xml are written for alephb.uk/ritz-affair/, so their paths and host move to this origin's root.
-export const stubsRobots = (robots) => robots.replace(/\/ritz-affair\//g, "/").replace(/^Sitemap: .*$/m, "Sitemap: " + OLD + "sitemap.xml");
-export const stubsSitemap = (xml) => xml.split(GAME).join(OLD);
+export const stubsRobots = (robots) => robots.replace(/\/ritz-affair\//g, "/").replace(/^Sitemap: .*$/m, "Sitemap: " + OLD_ORIGIN + "/sitemap.xml");
+export const stubsSitemap = (xml) => xml.split(GAME_URL).join(OLD_ORIGIN + "/");
 
 // True when a and b are the same directory or one holds the other: a target like that would rmSync the source.
 export function overlaps(a, b) {

@@ -1,6 +1,16 @@
 // site/shared.js -- code shared by app.js, admin.js, leaderboard.html and the node tests. No side effect at import:
 // no DOM, no storage, no fetch.
 
+// Where the site is served, defined once (publish.mjs, colour_learn.mjs and the share box import these): the game at
+// alephb.uk/ritz-affair/ since 2026-10-31, The Clerk's Handbook at alephb.uk/learn/ since 2026-10-30 (the game links it
+// there directly, terminal.js strictHtml), and the old subdomain, now only the bridge whose saves boot imports (state.js).
+export const SITE = "https://alephb.uk/";
+export const GAME_URL = SITE + "ritz-affair/";
+export const HANDBOOK = SITE + "learn/";
+export const OLD_ORIGIN = "https://mystery.alephb.uk";
+// A query History (the game's, the exercises page's) keeps this many, newest first (terminal.js pushHistory, state.js importWrites).
+export const HISTORY_MAX = 20;
+
 export const STOP_WORDS = new Set(["the", "a", "suite", "no", "trunk", "mr", "mrs", "esq", "lord", "senor",
   "senora", "comtesse", "de", "rue", "report", "telegram", "account", "plate",
   "m", "monsieur", "madame", "mme", "miss", "sir", "lady", "countess", "room", "id", "wire", "paris"]);
@@ -39,19 +49,8 @@ export function fmtTime(ms) {
   return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 }
 
-// Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
-// The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
-// The Clerk's Desk pages (admin.html, the monitor pages, explore.html): the board URL saved under this key, and the #passgate dialog
-// asked again until the passphrase matches; resolves the passphrase, or "" on Cancel. An accepted passphrase is kept for the
-// tab's session in sessionStorage DESK_KEY (never localStorage: it must die with the tab), so moving between desk pages asks once;
-// a stored one that no longer matches the hash (the passphrase changed) is dropped and the gate asks again.
-// Where the site is served, defined once (publish.mjs, colour_learn.mjs and the share box import these): the game at
-// alephb.uk/ritz-affair/ since 2026-10-31, The Clerk's Handbook at alephb.uk/learn/ since 2026-10-30 (the game links it
-// there directly, terminal.js strictHtml), and the old subdomain, now only the bridge whose saves boot imports (state.js).
-export const SITE = "https://alephb.uk/";
-export const GAME_URL = SITE + "ritz-affair/";
-export const HANDBOOK = SITE + "learn/";
-export const OLD_ORIGIN = "https://mystery.alephb.uk";
+// The Clerk's Desk pages (admin.html, the monitor pages, explore.html): the board URL saved under BOARD_KEY, the
+// accepted passphrase under DESK_KEY (deskPassphrase).
 export const BOARD_KEY = "ritz.admin.board";
 export const DESK_KEY = "ritz.desk.key";
 // The pages' own question boxes instead of confirm()/prompt(): opens the native <dialog> d (its .ask-msg reads text
@@ -65,6 +64,10 @@ export function askDialog(d, text, fallback) {
   return new Promise(resolve => { d.onclose = () => resolve(d.returnValue); d.showModal(); });
 }
 
+// The desk's #passgate dialog, asked again until the passphrase matches; resolves the passphrase, or "" on Cancel. An
+// accepted passphrase is kept for the tab's session in sessionStorage DESK_KEY (never localStorage: it must die with the
+// tab), so moving between desk pages asks once; a stored one that no longer matches the hash (the passphrase changed) is
+// dropped and the gate asks again.
 export async function deskPassphrase(d, store = globalThis.sessionStorage) {
   let kept = "";
   try { kept = store.getItem(DESK_KEY) || ""; } catch {}
@@ -107,9 +110,11 @@ export function deskLinks(board, stored = true, links = document.querySelectorAl
     a.href = a.getAttribute("href").split("?")[0] + (board && !stored ? "?board=" + encodeURIComponent(board) : "");
 }
 
+// The public board of one season (leaderboard.html), from the game's close dialog and finish screen and the admin page.
 export const resultsLink = (board, season) => "leaderboard.html?data=" + encodeURIComponent(board) + "&season=" + encodeURIComponent(season);
 // A GA value as text: a missing one (null, undefined, empty) reads "(empty)", never "null".
 export const gaText = v => (v == null || v === "" ? "(empty)" : String(v));
+// Backend values (pseudos are untrusted text) go through this before any innerHTML, attribute values included.
 export const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
 
 // CSV for the desk's three exports (seasons rows, raw data, pivot table): RFC 4180, a field with a comma, a quote or

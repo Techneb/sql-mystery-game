@@ -559,7 +559,7 @@ test("feedback drafts: the prompt carries the rules and chapter notes, never an 
   assert.ok(!/[–—]/.test(system), "no dashes in the rules themselves");
 });
 
-test("feedback drafts: chapter I's note says learn asks the date first, then the report (review 2026-10-31, finding 8)", () => {
+test("feedback drafts: chapter I's note says learn asks the date first, then the report", () => {
   const b = feedbackBackend();
   const one = b.ctx.SYSTEM_PROMPT.match(/^Chapter I, .*$/m)[0];
   assert.match(one, /First, the date the theft is filed under/);

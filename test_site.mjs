@@ -1328,15 +1328,15 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
   for (const n of [1, 2, 3, 4, 5]) if (fs.existsSync("site/season-" + n + ".json")) assert.ok(!JSON.parse(fs.readFileSync("site/season-" + n + ".json", "utf8")).chapters[0].step1, "compete keeps one step");
 });
 
-// --- Review of 2026-10-31: findings 4 and 7 ------------------------------------------------------------------------
+// --- The first query and chapter I's Where to look ------------------------------------------------------------------
 
-test("review 4: the landing About's first-query block is FIRST_QUERY, coloured as the terminal colours it", async () => {
+test("landing: the About's first-query block is FIRST_QUERY, coloured as the terminal colours it", async () => {
   const app = await import("./site/app.js"), term = await import("./site/terminal.js");
   const block = fs.readFileSync("site/index.html", "utf8").match(/<pre class="landing-sql">([\s\S]*?)<\/pre>/)[1];
   assert.equal(block, term.highlightSql(app.FIRST_QUERY + ";").trimEnd());
 });
 
-test("review 7: chapter I's two steps count their Where to look apart (hint_where carries the step)", async () => {
+test("chapter I: its two steps count their Where to look apart (hint_where carries the step)", async () => {
   const { freshState } = await import("./site/state.js");
   const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
   const ch1 = data.chapters.find(c => c.n === 1), ch2 = data.chapters.find(c => c.n === 2), s = freshState();
