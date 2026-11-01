@@ -10,7 +10,7 @@ I taught SQL to MSc students in Paris. Today they can ask ChatGPT or Claude for 
 
 I wanted to train that judgement, so I made [The Ritz Affair](https://alephb.uk/ritz-affair/), a free detective game you play in SQL. Paris, May 1912: a sapphire has vanished from a guest's suite at the Ritz, and the card left on her pillow is signed A. L. You play Inspector Ganimard's new clerk, searching the police archive for Arsène Lupin, the gentleman thief.
 
-Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data should show, which is how you spot a result that looks right and is wrong. [The Clerk's Handbook](https://alephb.uk/learn/) goes with the game: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
+Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data should show, which is how you spot a result that looks right and is wrong. [The Clerk's Handbook](https://alephb.uk/learn/) is the learning content that goes with it: fourteen short lessons and twenty graded exercises.
 
 In two weeks more than 5k people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His videos passed 1.2M views on [his socials](https://www.instagram.com/p/DevB79KCKqt/). Thank you, Nick!
 
