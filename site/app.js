@@ -5,13 +5,14 @@
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
-import { freshState, migrateSave, bridgeImport, importWrites, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./state.js";
-import { highlightSql, wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
+import { freshState, migrateSave, bridgeImport, importWrites, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, answerVerdict } from "./state.js";
+import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
 import { showExtra, showExtra2, part2Ending, certificateHtml } from "./endings.js";
 import { prologueOn, tourOn, showPrologue, CALLOUTS } from "./onboarding.js";
 import { openHowto, howtoHtml } from "./howto.js";
+import { ROMAN, mastheadChapterHtml, crackedHtml, objectiveHtml, stepDoneHtml, currentObjectiveHtml, whereOpened, boardCardsHtml } from "./board.js";
 import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText } from "./ui.js";
 
 const NAMES_ASK = "Names for the certificate (both of you):";   // #names' label, and prompt()'s where <dialog> cannot open
@@ -64,8 +65,6 @@ export function watchOn(state, board) {
 // Empty locally and under node.
 const VERSION = new URL(import.meta.url).search;
 
-const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-
 const $ = id => document.getElementById(id);
 
 let db, data, state, tableSizes = {}, schema = {}, sqlModule = null;
@@ -99,35 +98,6 @@ function backToInvestigation() {
   reviewing = null; nextPending = 0; clearTerminal(); renderChapter();
   if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
 }
-// A table name in the Hint: a button that scrolls to the schema and flashes that table (showTable).
-const tableLink = t => '<button type="button" class="table-link" data-table="' + esc(t) + '"><code>' + esc(t) + "</code></button>";
-// "Where to look" (learn only, chapters.json `where`): escaped first, then each `name` becomes a table link.
-export const whereHtml = s => esc(s).replace(/`([a-z_]+)`/g, (_, t) => tableLink(t));
-export const objectiveHtml = (text, label, value, ch, found = "") => esc(text) + '<div class="answer-form"><b>' + label + "</b> " + esc(value) + "</div>" + found +
-  // the chapter's SQL tool and new tables sit under a closed Hint toggle (a native <details>), so the
-  // student tries first and opens it when stuck; a nested closed "Where to look" holds the chapter's line
-  (ch && (ch.construct || (ch.tables || []).length || ch.where) ? '<details class="muted chapter-tools"><summary>Hint</summary>' +
-    (ch.construct ? "<div><b>This chapter's tool:</b> " + esc(ch.construct) + "</div>" : "") +
-    ((ch.tables || []).length ? "<div><b>New evidence:</b> " + ch.tables.map(tableLink).join(", ") + "</div>" : "") +
-    (ch.where ? '<details class="hint-where"><summary>Where to look</summary><div>' + whereHtml(ch.where) + "</div></details>" : "") +
-    "</details>" : "");
-
-// Chapter I's step 1 once answered: its label and the date as typed, under the answer line (step 2 and the review).
-export const stepDoneHtml = (ch, state) => ch.step1 && state.step1 ? '<div class="answer-form"><b>' + esc(ch.step1.board) + ":</b> " + esc(state.step1) + "</div>" : "";
-// The objective of the question asked now: step 1 (its own objective and Where to look) or the chapter's.
-export function currentObjectiveHtml(ch, state) {
-  const step = stepOn(state, ch);
-  return step ? objectiveHtml(step.objective, "Answer:", step.answer_form, { ...ch, where: step.where })
-    : objectiveHtml(ch.objective, "Answer:", ch.answer_form, ch, stepDoneHtml(ch, state));
-}
-// The Where to look opened on chapter n, as [its key in state.hintsWhere, hint_where's params]: chapter I's two steps
-// count apart (keys 1 and "1b", param step 1 or 2), every other chapter by its number alone.
-export function whereOpened(state, ch, n) {
-  if (!ch || !ch.step1) return [n, { chapter: n, mode: state.mode }];
-  const step = stepOn(state, ch) ? 1 : 2;
-  return [step === 1 ? n : n + "b", { chapter: n, mode: state.mode, step }];
-}
-
 // Scroll the page to the schema box, then the box to table t, and flash its outline for a moment.
 function showTable(t) {
   const box = $("erd"), g = box.querySelector('g.table[data-table="' + CSS.escape(t) + '"]:not(.hidden)');
@@ -236,7 +206,6 @@ export async function scanRun(run, sql, res, hashes) {
 export const solveRoute = run => run && run.same ? "same_result" : run && run.hit ? "found" : "unseen";
 // The query on the solved chapter's card: the last that showed the answer, else the last that ran before it.
 export const winningQuery = run => run ? run.hit || run.last || "" : "";
-export const crackedHtml = sql => sql ? '<div class="cracked"><b>The query that cracked it:</b><pre class="sql-view">' + highlightSql(sql) + "</pre></div>" : "";
 let scanning = Promise.resolve();
 const curChapter = () => state && data ? currentChapter(state, data.chapters).n : 0;
 
@@ -336,18 +305,6 @@ function renderBoard() {
   $("board").querySelectorAll(".card[data-n]").forEach(el => btnLike(el, () => { useFeature("card_review", { chapter: Number(el.dataset.n) }); reviewChapter(Number(el.dataset.n)); }));
   renderStrip();
 }
-// The case board's cards: one per solved chapter (ROMAN label answer), chapter I's date under its report; the date
-// alone on a card of its own (not a review link: the chapter is still open) between chapter I's two answers.
-export function boardCardsHtml(state, chapters) {
-  const label = n => (chapters.find(c => c.n === n) || {}).board || "";
-  const step1 = (chapters.find(c => c.n === 1) || {}).step1;
-  const dated = step1 && state.step1 ? esc(step1.board) + ": " + esc(state.step1) : "";
-  const card = (n, attr, lab, answer, extra) => { const p = cardPicture(n, answer);
-    return '<div class="card"' + attr + '><img class="card-pic' + (p.face ? " face" : "") + '" src="' + p.src + '" alt=""><b>' + ROMAN[n] + '</b> <span class="card-label">' +
-      esc(lab) + "</span>" + (answer ? "<br>" + esc(answer) : "") + extra + "</div>"; };   // older saves have no answers: no "NULL" card
-  return (dated && !state.solved.includes(1) ? card(1, "", step1.board, state.step1, "") : "") +
-    state.solved.map(n => card(n, ' data-n="' + n + '"', label(n), state.answers[n], n === 1 && dated ? '<br><span class="card-step">' + dated + "</span>" : "")).join("");
-}
 function renderStrip() {
   const el = $("board-suspects");
   if (!el) return;
@@ -431,6 +388,9 @@ function markBadges() {
 }
 
 let visBefore = new Set();
+// step_solve's and chapter_solve's shared params: time since the chapter opened, its queries and wrong answers.
+const solveParams = ch => ({ chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
+                             queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
 async function submitAnswer() {
   const raw = $("answer").value; const norm = normalise(raw);
   if (!norm) return;
@@ -442,35 +402,34 @@ async function submitAnswer() {
     else { $("reply").textContent = "That is not the code. Four words, the first of them STOP, in a telegram nobody was meant to read."; }
     $("answer").value = ""; save(state); return;
   }
-  const step = stepOn(state, ch), eve = !!step && (step.eve_sha256 || []).includes(hash);
-  if (step && step.answer_sha256.includes(hash)) {   // chapter I's step 1, the date: the report is asked next
-    state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
-    track("step_solve", { chapter: ch.n, step: 1, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
-                          queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0 });
-    $("reply").textContent = "Correct. Ganimard writes the date on the folder. Now find its report.";
-    $("answer").value = ""; save(state); renderBoard(); renderChapter(); return;
-  }
-  if (step && ch.answer_sha256.includes(hash)) {   // the report before the date: not wrong, not yet
-    $("reply").textContent = "That is the report, clerk, and a good one. First the date it is filed under.";
-    $("answer").value = ""; return;
-  }
-  if (ch.answer_sha256.includes(hash)) {   // compete too: the season file carries its hashes
-    await scanning;   // the last run's scan is in
-    const run = state.runs[ch.n];
-    state.cracked[ch.n] = winningQuery(run); delete state.runs[ch.n];
-    if (ch.howto) state.howto[ch.n] = await openHowto(ch.howto, norm, ch.answer_sha256.indexOf(hash)).catch(() => null);   // learn only
-    state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
-    track("chapter_solve", { chapter: ch.n, mode: state.mode, seconds: Math.round((Date.now() - (state.opened[ch.n] || Date.now())) / 1000),
-                             queries: state.queries[ch.n] || 0, wrong: state.wrong[ch.n] || 0, route: solveRoute(run) });
-    $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
-    typeTelegram(ch.telegram);
-    afterSolve(ch, "solve");
-  } else {
-    state.wrong[ch.n] = (state.wrong[ch.n] || 0) + 1; state.wrongStreak++;
-    if ([1, 3].includes(state.wrong[ch.n])) track("answer_wrong", { chapter: ch.n, mode: state.mode, n: state.wrong[ch.n] });
-    $("reply").textContent = eve ? EVE_REPLY : judgeWrong(norm, data, state, metSuspects(data.cast, state, data.chapters).map(s => normalise(s.name)));
-    if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length], "taunt");
-    afterWrong(norm, eve);
+  const verdict = answerVerdict(hash, ch, state);
+  switch (verdict) {
+    case "step":   // chapter I's step 1, the date: the report is asked next
+      state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
+      track("step_solve", { ...solveParams(ch), step: 1 });
+      $("reply").textContent = "Correct. Ganimard writes the date on the folder. Now find its report.";
+      $("answer").value = ""; save(state); renderBoard(); renderChapter(); return;
+    case "early":
+      $("reply").textContent = "That is the report, clerk, and a good one. First the date it is filed under.";
+      $("answer").value = ""; return;
+    case "solve": {
+      await scanning;   // the last run's scan is in
+      const run = state.runs[ch.n];
+      state.cracked[ch.n] = winningQuery(run); delete state.runs[ch.n];
+      if (ch.howto) state.howto[ch.n] = await openHowto(ch.howto, norm, ch.answer_sha256.indexOf(hash)).catch(() => null);   // learn only
+      state.solved.push(ch.n); state.answers[ch.n] = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
+      track("chapter_solve", { ...solveParams(ch), route: solveRoute(run) });
+      $("reply").textContent = "Correct. Ganimard grunts, which is praise.";
+      typeTelegram(ch.telegram);
+      afterSolve(ch, "solve");
+      break;
+    }
+    default:   // "eve" or "wrong"
+      state.wrong[ch.n] = (state.wrong[ch.n] || 0) + 1; state.wrongStreak++;
+      if ([1, 3].includes(state.wrong[ch.n])) track("answer_wrong", { chapter: ch.n, mode: state.mode, n: state.wrong[ch.n] });
+      $("reply").textContent = verdict === "eve" ? EVE_REPLY : judgeWrong(norm, data, state, metSuspects(data.cast, state, data.chapters).map(s => normalise(s.name)));
+      if (state.wrongStreak % 3 === 0) typeTelegram(TAUNTS[(state.wrongStreak / 3 - 1) % TAUNTS.length], "taunt");
+      award(detectBadges(ctx({ event: "answer", norm, verdict }), state.badges));
   }
   $("answer").value = ""; save(state);
 }
@@ -581,9 +540,6 @@ function afterSolve(ch, event) {
   } else if (event === "code") {
     award(detectBadges(ctx({ event: "code" }), state.badges));
   }
-}
-function afterWrong(norm, stepEve) {
-  award(detectBadges(ctx({ event: "answer", norm, stepEve }), state.badges));
 }
 
 // --- compete mode: the clock and the outbox ----------------------------------------------------
@@ -798,10 +754,6 @@ function offerCompete() {
 // it follows the story. The masthead date always follows the story.
 const THEME_KEY = "ritz.theme";
 function chosenTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
-// Masthead "CHAPTER I OF VIII": the current chapter's numeral in bold, the rest plain.
-export function mastheadChapterHtml(n, total, reviewing) {
-  return (reviewing ? "Reviewing chapter <b>" : "Chapter <b>") + ROMAN[n] + "</b> of " + ROMAN[total];
-}
 const setErdButton = large => setIconButton($("btn-erd"), erdButtonHtml(large));
 function applyMood() {
   const mood = chosenTheme() || (state && state.part2 ? "night" : "day");

@@ -39,6 +39,15 @@ export const unseenBadges = state => Math.max(0, state.badges.length - (state.ba
 // Chapter I's step 1 (chapters.json `step1`, learn only) while it is the question asked: a save from before the
 // split (no step1 field) mid-chapter I starts there, a solved chapter I never does (owner, 2026-10-31).
 export const stepOn = (state, ch) => ch && ch.step1 && !state.step1 && !state.solved.includes(ch.n) ? ch.step1 : null;
+// What an answer's hash is for the question asked now (app.js submitAnswer): "step" chapter I's date, "early" its
+// report before the date (not wrong, not yet), "solve" the chapter's answer (compete too: the season file carries its
+// hashes), "eve" the 17th at step 1 (any spelling: still wrong, with its own reply and badge), else "wrong".
+export function answerVerdict(hash, ch, state) {
+  const step = stepOn(state, ch);
+  if (step && step.answer_sha256.includes(hash)) return "step";
+  if (ch.answer_sha256.includes(hash)) return step ? "early" : "solve";
+  return step && step.eve_sha256.includes(hash) ? "eve" : "wrong";
+}
 
 export function currentChapter(state, chapters) {
   const next = state.solved.length + 1;
