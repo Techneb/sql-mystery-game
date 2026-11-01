@@ -12,7 +12,7 @@ I wanted to train that judgement, so I made [The Ritz Affair](https://alephb.uk/
 
 Each of the twelve chapters teaches one SQL skill, from a first SELECT to a recursive CTE. Most of the time goes into reading the story and working out what the data should show, which is how you spot a result that looks right and is wrong. [The Clerk's Handbook](https://alephb.uk/learn/) is the learning content that goes with it: fourteen short lessons and twenty graded exercises.
 
-In two weeks more than 5k people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His videos passed 1.2M views on [his socials](https://www.instagram.com/p/DevB79KCKqt/). Thank you, Nick!
+In two weeks more than 5k people played, most of them after [Nick Amato](https://www.linkedin.com/in/nick-amato-767173133/) (Software with Nick) showed the game to his followers. His videos passed 1.2M views on [his socials](https://www.instagram.com/p/DevB79KCKqt/). Thank you, Nick!
 
 To my students, past and present: now that AI writes the syntax for you, how do you check what the data means? I'd love to hear.
 
