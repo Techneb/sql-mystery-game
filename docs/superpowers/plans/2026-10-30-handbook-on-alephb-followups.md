@@ -195,9 +195,11 @@ E2. One public post (LinkedIn, r/SQL or Show HN) presenting the game and the han
     owner to post, original wording, no clue (Shortcut check).
     **Check:** the draft names no answer, planted value, suspect detail or chapter-specific shortcut; every link in
     it returns 200; the owner has approved the text before anything is posted.
+    drafted 2026-11-01: docs/drafts/2026-11-01-linkedin-post.md, waiting for the owner's approval
 E3. One external article (dev.to) on teaching SQL with a mystery, linking two or three lessons; draft only.
     **Check:** as E2, plus no paragraph matches a sentence of alephb.uk's articles or the handbook (exact phrase
     search), so it is not duplicate content.
+    dropped by the owner 2026-11-01
 E4. If AdSense refuses a third time: Mediavine Journey (about 1,000 sessions a month since January 2026; check
     its current terms and whether it takes a static site), with the Global view's sessions for the last 30 days.
     **Check:** the terms are read on Mediavine's own site (not a blog), dated, and quoted to the owner with the
