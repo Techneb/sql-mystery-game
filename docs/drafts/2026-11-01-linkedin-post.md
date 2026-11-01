@@ -11,7 +11,7 @@ I wanted something that trains that judgement, so I made The Ritz Affair, a free
 
 The Clerk's Handbook goes with it: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
 
-About 4,400 people opened the game in October, most of them after Nick Amato (Software with Nick) showed it to his followers. Thank you, Nick! His video: Instagram https://www.instagram.com/p/DevB79KCKqt/ , TikTok https://www.tiktok.com/@softwarewithnick/video/7698898589518400782 , YouTube https://www.youtube.com/shorts/_WqJYXyifhA
+About 4,400 people opened the game in October, most of them after Nick Amato (Software with Nick) showed it to his followers. Thank you, Nick! His video: Instagram https://www.instagram.com/p/DevB79KCKqt/ , TikTok https://www.tiktok.com/@softwarewithnick/video/7698898589518400782 , YouTube https://www.youtube.com/shorts/_WqJYXyifhA , Facebook https://www.facebook.com/reel/1839523360397980/
 
 The game: https://alephb.uk/ritz-affair/
 The handbook: https://alephb.uk/learn/
