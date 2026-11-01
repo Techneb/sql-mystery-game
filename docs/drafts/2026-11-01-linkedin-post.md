@@ -12,6 +12,6 @@ I wanted something that trains that judgement, so I made [The Ritz Affair](https
 
 [The Clerk's Handbook](https://alephb.uk/learn/) goes with it: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
 
-In October more than 1,400 people played the game, most of them after Nick Amato (Software with Nick) showed it to his followers. His video passed 800,000 views on [Instagram](https://www.instagram.com/p/DevB79KCKqt/) alone, with more on [TikTok](https://www.tiktok.com/@softwarewithnick/video/7698898589518400782), [YouTube](https://www.youtube.com/shorts/_WqJYXyifhA) and [Facebook](https://www.facebook.com/reel/1839523360397980/). Thank you, Nick!
+In two weeks more than 5,000 people played the game, most of them after Nick Amato (Software with Nick) showed it to his followers. His video passed 1.2 million views on [Instagram](https://www.instagram.com/p/DevB79KCKqt/), [TikTok](https://www.tiktok.com/@softwarewithnick/video/7698898589518400782), [YouTube](https://www.youtube.com/shorts/_WqJYXyifhA) and [Facebook](https://www.facebook.com/reel/1839523360397980/). Thank you, Nick!
 
 To my students, past and present: now that AI writes the syntax for you, how do you check what the data actually means? I'd love to hear.
