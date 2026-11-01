@@ -1,0 +1,22 @@
+I taught SQL to MSc students in Paris. Today they can ask ChatGPT or Claude for a working query and get one in seconds. What still takes time is knowing whether the rows answer the question, and what they mean for the business behind them.
+
+I wanted to train that judgement, so I made The Ritz Affair, a free detective game you play in SQL. Paris, May 1912: a sapphire has vanished from a guest's suite at the Ritz, and Arsène Lupin, the gentleman thief, stole it. You play Inspector Ganimard's new clerk, searching the police archive for him.
+
+Each of the twelve chapters teaches one SQL skill, from a first SELECT to a recursive CTE. Most of the time goes into reading the story and working out what the data should show, which is how you spot a result that looks right and is wrong. The Clerk's Handbook is the learning content that goes with it: fourteen short lessons and twenty graded exercises.
+
+In two weeks more than 5k people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His videos passed 1.2M views on his socials. Thank you, Nick!
+
+To my students, past and present: now that AI writes the syntax for you, how do you check what the data means? I'd love to hear.
+
+#SQL #LearnSQL #DataAnalytics #DataLiteracy #GenerativeAI #Lupin
+
+----- First comment (links; a LinkedIn post keeps no hyperlinks) -----
+
+The game: https://alephb.uk/ritz-affair/
+The handbook: https://alephb.uk/learn/
+Nick's video: https://www.instagram.com/p/DevB79KCKqt/
+
+----- Before posting -----
+- Post only once AdSense has approved alephb.uk (owner, 2026-11-01).
+- Refresh the numbers first: players (GA, chapter_open users) and Nick's views (Instagram, TikTok, YouTube, Facebook).
+- After pasting, replace "Nick Amato" with the @Nick Amato mention picked from LinkedIn's list.
