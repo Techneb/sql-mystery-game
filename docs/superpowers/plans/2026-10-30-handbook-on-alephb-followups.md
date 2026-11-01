@@ -82,6 +82,9 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
   exceeded; retry 2 Nov 09:17 for the about page, database, window-functions, ctes, schema, two articles, privacy.
 - 2026-11-01 evening: all 26 sitemap URLs inspected: 18 on Google (also case-when, dates-times, group-by-having,
   like, nulls, order-by-limit, /privacy.html); 8 not yet, the about page the only one of the seven.
+- 2026-11-01 night: the about page read "Google does not know this URL, no referring sitemap": Google had read
+  /sitemap.xml on 10-31 before the article's rename (21:50 Paris). /sitemap.xml resubmitted, read 11-01 (7 URLs).
+  AdSense Sites unchanged (attention required, low-value content, last update 10-29).
 
 ## B. alephb-site (one approval for the batch)
 
