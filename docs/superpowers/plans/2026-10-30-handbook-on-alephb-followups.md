@@ -189,6 +189,8 @@ D2. Supermain memory (`~/.claude/projects/-Users-techneb-Projets/memory/`): the 
 E1. The course: point the course page, slides and the `../SQL` material at `https://alephb.uk/learn/`.
     **Check:** `grep -rln 'mystery.alephb.uk/learn' ../SQL` prints nothing (text files; slides are listed for the
     owner to fix by hand).
+    Done 2026-11-01: nothing in ../SQL (text, the slides' XML) links mystery.alephb.uk or alephb.uk; the course
+    material does not link the game publicly at all (only a local path in 0-SQL.md). Adding a link is the owner's call.
 E2. One public post (LinkedIn, r/SQL or Show HN) presenting the game and the handbook together; draft it for the
     owner to post, original wording, no clue (Shortcut check).
     **Check:** the draft names no answer, planted value, suspect detail or chapter-specific shortcut; every link in
