@@ -6,12 +6,14 @@ generative AI, understanding what data means and its business context matters mo
 
 ---
 
-I taught SQL to MSc students in Paris. Today my students can ask ChatGPT or Claude for a working query and get one in seconds. What still takes them time is knowing whether the rows answer the question, and what those rows mean for the business behind them.
+I taught SQL to MSc students in Paris. Today they can ask ChatGPT or Claude for a working query and get one in seconds. What still takes time is knowing whether the rows answer the question, and what they mean for the business behind them.
 
-I wanted something that trains that judgement, so I made [The Ritz Affair](https://alephb.uk/ritz-affair/), a free detective game you play in SQL. Paris, May 1912: a sapphire has vanished from a guest's suite at the Ritz, and the card left on her pillow is signed A. L. You play Inspector Ganimard's new clerk, and your job is to track down Arsène Lupin through the police archive. Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data ought to show, so you notice when a result looks right and isn't.
+I wanted to train that judgement, so I made [The Ritz Affair](https://alephb.uk/ritz-affair/), a free detective game you play in SQL. Paris, May 1912: a sapphire has vanished from a guest's suite at the Ritz, and the card left on her pillow is signed A. L. You play Inspector Ganimard's new clerk, and your job is to track down Arsène Lupin through the police archive.
+
+Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data should show, which is how you spot a result that looks right and is wrong.
 
 [The Clerk's Handbook](https://alephb.uk/learn/) goes with it: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
 
-In two weeks more than 5,000 people played the game, most of them after Nick Amato (Software with Nick) showed it to his followers. His video passed 1.2 million views on [Instagram](https://www.instagram.com/p/DevB79KCKqt/), [TikTok](https://www.tiktok.com/@softwarewithnick/video/7698898589518400782), [YouTube](https://www.youtube.com/shorts/_WqJYXyifhA) and [Facebook](https://www.facebook.com/reel/1839523360397980/). Thank you, Nick!
+In two weeks more than 5,000 people played, most of them after Nick Amato (Software with Nick) showed the game to his followers. His video passed 1.2 million views on [Instagram](https://www.instagram.com/p/DevB79KCKqt/), [TikTok](https://www.tiktok.com/@softwarewithnick/video/7698898589518400782), [YouTube](https://www.youtube.com/shorts/_WqJYXyifhA) and [Facebook](https://www.facebook.com/reel/1839523360397980/). Thank you, Nick!
 
-To my students, past and present: now that AI writes the syntax for you, how do you check what the data actually means? I'd love to hear.
+To my students, past and present: now that AI writes the syntax for you, how do you check what the data means? I'd love to hear.
