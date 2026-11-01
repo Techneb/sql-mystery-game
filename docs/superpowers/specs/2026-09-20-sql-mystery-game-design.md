@@ -359,20 +359,23 @@ device).
 
 ## 8. Backlog (not scheduled)
 
-- **The game moves to alephb.uk/ritz-affair/** (owner, 2026-10-31; live the same evening). The game and the
+- ~~The game moves to alephb.uk/ritz-affair/~~ Done 2026-10-31 (runbook finished 2026-11-01). (owner, 2026-10-31; live the same evening). The game and the
   desk at <https://alephb.uk/ritz-affair/>, next to the handbook at <https://alephb.uk/learn/>, both pushed to the
   alephb-site repo by `.github/workflows/publish-alephb.yml` (`publish.mjs`; tests first). mystery.alephb.uk becomes
   a bridge (`pages.yml` with the repository variable `BRIDGE` = `on`): its `/` carries the browser's `ritz.*` keys to
   the new game in the URL fragment (`#import=`), which writes a key only where alephb.uk has none (a saved game also
   when the import is further along); every other old page redirects, and a Cloudflare 301 covers everything but `/`.
-  Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. Left for alephb-site:
-  the robots.txt lines (the desk's Disallow lines and the game's sitemap), the home page and footers linking
-  `ritz-affair/` instead of mystery.alephb.uk, and its own ritz-affair.html beside the new `ritz-affair/` folder.
+  Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. alephb-site's robots.txt lines, home page
+  and footer links and the article's rename to about-the-ritz-affair.html are done (2026-10-31).
 - **Delete the move's rollback once the AdSense verdict is in** (owner, 2026-11-01; about 1-2 weeks after the
   review request). Until then `BRIDGE` = off and a push bring the old game back on mystery.alephb.uk (alephb-site
   publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
   `stubsRobots`/`stubsSitemap`, the `BRIDGE` conditions in `pages.yml` (it shrinks to the bridge deploy, without
   the season build and tests) and their test, and the matching CLAUDE.md lines.
+- **Mutation testing** (owner, 2026-10-31): first run done the same day (Stryker from a worktree, nothing added to
+  the repo; tests in 588307f): state.js 89->99%, shared.js 78->92%, badges.js 74->99%, terminal.js 80->94%, strict.js
+  lines 591-703 70->88%, Python normalisers and date_forms 23 survivors -> 0 real; no product bug found. Left, optional:
+  strict.js's tokenizer, parser and analyser (not mutated; a run of a few hours, sampled mutators).
 - ~~Chapter I in two questions~~ Done 2026-10-31 (owner's decisions: two steps inside chapter I, same numeral;
   step 1 the date the theft is filed under, the 18th, from Duroc's interview; the title's 17th is the decoy and is
   refused). As built: `plot.CHAPTERS[0]["step1"]` (objective "Mr. Duroc knows which night. Under which date is the

@@ -6,6 +6,12 @@ mystery.alephb.uk stays only as a bridge. What was built (CLAUDE.md, "Site addre
 `.github/workflows/publish-alephb.yml` (replaces export-handbook.yml), `pages.yml` switched by the repository
 variable `BRIDGE`, the save import in `app.js` (`state.js` `readImport` / `importWrites`).
 
+Status (2026-11-01): done. Steps 1-3 and 5-9, 11-12 on 2026-10-31; step 4 without its compete test season (owner,
+2026-11-01: not needed); step 10 on 2026-11-01 (feedback script @14; the test message from /ritz-affair/ arrived with
+page `/ritz-affair/` and a draft naming the new address; the row was then deleted at the owner's request, backup in
+the gitignored `backups/2026-10-31-feedback-tab-before-test-row-delete.csv`). The rollback below stays until the
+AdSense verdict (spec backlog).
+
 Run the steps in order. Each ends with a **Check:**; a failing check stops the runbook there and goes to the owner.
 Never during a timed compete session (no season `open` on the desk's Setup page): every push rebuilds the season
 databases, and the bridge moves players mid-game.
