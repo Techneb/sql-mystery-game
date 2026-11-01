@@ -5,15 +5,15 @@ generative AI, understanding what data means and its business context matters mo
 
 ---
 
-I taught SQL in Paris. With AI assistants, students now get a working query in seconds. What still takes them time is knowing whether the rows it returns answer the question, and what those rows mean for the business behind them.
+I taught SQL in Paris. With AI assistants, my students now get a working query in seconds. What still takes them time is knowing whether the rows answer the question, and what those rows mean for the business behind them.
 
-That judgement is the skill I want to train, so I made The Ritz Affair, a free detective game you play in SQL. Paris, May 1912: someone at the Ritz is missing a great blue stone, and all you have is the police archive. Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. The real work is reading the story, deciding what the data should show, and catching the result that looks right and is wrong.
+I wanted something that trains that judgement, so I made The Ritz Affair, a free detective game you play in SQL. Paris, May 1912: someone at the Ritz is missing a great blue stone, and all you have is the police archive. Each of the twelve chapters needs one construct, from a first WHERE to a recursive CTE. Most of the time goes into reading the story and working out what the data ought to show, so you notice when a result looks right and isn't.
 
-Beside it sits The Clerk's Handbook: fourteen short lessons on a small bakery database and twenty graded exercises with a terminal on the same page.
+The Clerk's Handbook goes with it: fourteen short lessons on a small bakery database, and twenty graded exercises with a terminal on the same page.
 
 About 4,400 people opened the game in October, most of them after Software with Nick showed it on YouTube. Thank you, Nick.
 
 The game: https://alephb.uk/ritz-affair/
 The handbook: https://alephb.uk/learn/
 
-Teachers and learners, I'd love to hear how you build that sense of what the data means, now that AI writes the syntax.
+Teachers and learners: how do you build that sense of what the data means, now that AI writes the syntax? I'd love to hear.
