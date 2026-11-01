@@ -80,6 +80,8 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
 - 2026-11-01 14:20: Pages still 5, but URL Inspection reads on Google for 11: the five above plus /ritz-affair/,
   /learn/subqueries.html, set-operations.html, grammar.html, /articles.html, /article-fair-meeting.html. Quota still
   exceeded; retry 2 Nov 09:17 for the about page, database, window-functions, ctes, schema, two articles, privacy.
+- 2026-11-01 evening: all 26 sitemap URLs inspected: 18 on Google (also case-when, dates-times, group-by-having,
+  like, nulls, order-by-limit, /privacy.html); 8 not yet, the about page the only one of the seven.
 
 ## B. alephb-site (one approval for the batch)
 
