@@ -1173,13 +1173,21 @@ def check_discovery(conn, V, ch, compete=False):
                 assert needle.lower() not in text.lower(), "chapter %s %s gives away %r" % (ch["n"], k, needle)
 
 
+def questions(ch):
+    """A chapter's questions in play order, as (step, question): chapter I's step 1 (learn only, the date; plot's
+    `step1` with the chapter's story) as step 1, then the chapter itself as step 0. Each checks like a chapter."""
+    if "step1" in ch:
+        yield 1, {**ch["step1"], "story": ch["story"]}
+    yield 0, ch
+
+
 def check_chapter(conn, V, ch, compete=False):
     """The solution returns exactly the answer; the naive query does not (wrong count, or a wrong value)."""
     check_discovery(conn, V, ch, compete)
     suf = "_compete" if compete else ""
     want = normalise(str(V[ch["answer_key" + suf]]))
-    # a date answer (chapter I's step 1, "distinct"): a result whose first column holds only the answer gives it away on any number of rows
-    gives = lambda rows: (len(rows) == 1 or ch.get("distinct", False)) and bool(rows) and {normalise(str(r[0])) for r in rows} == {want}
+    # a result whose first column holds only the answer gives it away on any number of rows (the student reads one value)
+    gives = lambda rows: bool(rows) and {normalise(str(r[0])) for r in rows} == {want}
     rows = conn.execute(sqlite_sql(ch["solution" + suf].format(**V))).fetchall()
     assert len(rows) == 1 and normalise(str(rows[0][0])) == want, \
         "chapter %d%s: solution returned %r" % (ch["n"], suf, rows[:3])
@@ -1204,14 +1212,15 @@ def plot_queries():
     out = []
     for seed in [1912] + list(range(1, SEASONS + 1)):
         V = plant_values(seed)
-        for ch in plot.CHAPTERS + [{**c["step1"], "n": "1step"} for c in plot.CHAPTERS if "step1" in c]:
+        for step, ch in [q for c in plot.CHAPTERS for q in questions(c)]:
+            n = "%dstep" % ch["n"] if step else ch["n"]
             for k in ["solution", "naive", "solution_compete", "naive_compete"]:
                 if k in ch:
-                    out.append(["%d ch%s %s" % (seed, ch["n"], k), ch[k].format(**V)])
+                    out.append(["%d ch%s %s" % (seed, n, k), ch[k].format(**V)])
             for k in ["traps", "traps_compete"]:
-                out += [["%d ch%s %s" % (seed, ch["n"], k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
+                out += [["%d ch%s %s" % (seed, n, k), v] for t in ch.get(k, []) for v in like_variants(t.format(**V))]
             for k in ["discovery", "discovery_compete"]:
-                out += [["%d ch%s %s" % (seed, ch["n"], k), d["query"].format(**V)] for d in ch.get(k, [])]
+                out += [["%d ch%s %s" % (seed, n, k), d["query"].format(**V)] for d in ch.get(k, [])]
     conn = sqlite3.connect("site/mystery.sqlite")   # the schema the browser reads (link_tables' columns too); the seasons share it
     schema = {t: [[c[1], c[2], c[5]] for c in conn.execute("PRAGMA table_info(%s)" % t)]
               for (t,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
@@ -1347,11 +1356,11 @@ def chapters_json(V, mode="learn"):
         d["answer_sha256"] = hashes(V[ch["answer_key" + suf]], ch["answer_form" + suf])   # checked in the browser
         if mode == "learn":
             d["where"] = ch["where"]   # the Hint's "Where to look" line, learn only
-            if "step1" in ch:   # step 1 (the date): its own objective, board label and accepted spellings
-                st = ch["step1"]
-                d["step1"] = dict(objective=st["objective"], answer_form=st["answer_form"], board=st["board"], where=st["where"],
-                                  answer_sha256=[sha(f) for f in date_forms(V[st["answer_key"]])],
-                                  eve_sha256=sorted(sha(f) for f in set(date_forms(V["eve_date"]) + [normalise(w) for w in st["wrong"]])))   # the eve's spellings, hashed: its own reply and the "Filed Under the 17th" badge
+            for step, st in questions(ch):
+                if step:   # step 1 (the date): its own objective, board label and accepted spellings
+                    d["step1"] = dict(objective=st["objective"], answer_form=st["answer_form"], board=st["board"], where=st["where"],
+                                      answer_sha256=[sha(f) for f in date_forms(V[st["answer_key"]])],
+                                      eve_sha256=sorted(sha(f) for f in set(date_forms(V["eve_date"]) + [normalise(w) for w in st["wrong"]])))   # the eve's spellings, hashed: its own reply and the "Filed Under the 17th" badge
             d["howto"] = howto_box(howto_payload(V, ch), answer_forms(V[ch["answer_key"]], ch["answer_form"]), V["seed"], ch["n"])
         chapters.append(d)
     out = dict(mode=mode, normalise_fixture=FIXTURE,
@@ -1428,9 +1437,9 @@ def solution_sql(V):
     # the answer key first, in the order a player needs it (the Part II code between chapters 8 and 9)
     key = ["-- Answers, in play order:"]
     for ch in plot.CHAPTERS:
-        if "step1" in ch:   # chapter I's first question
-            key.append("--       %-30s %s" % ("Step 1: " + ch["step1"]["board"].lower(), V[ch["step1"]["answer_key"]]))
-        key.append("--   %2d. %-30s %s" % (ch["n"], ch["title"].format(**V), V[ch["answer_key"]]))
+        for step, q in questions(ch):   # chapter I's first question, then each chapter's
+            key.append("--       %-30s %s" % ("Step 1: " + q["board"].lower(), V[q["answer_key"]]) if step else
+                       "--   %2d. %-30s %s" % (q["n"], q["title"].format(**V), V[q["answer_key"]]))
         if ch["n"] == 8:
             key.append("--       %-30s %s" % ("Part II code (telegram)", V["part2_code"]))
     out.append("\n".join(key))
@@ -1441,10 +1450,10 @@ def solution_sql(V):
             if "note" in d:
                 lines.append("-- " + d["note"].format(**V))
             lines.append(format_sql(d["query"].format(**V) + ";"))
-        if "step1" in ch:
-            st = ch["step1"]
-            lines += ["-- Step 1, %s (any spelling of that day: 1912-05-18, 18 May 1912...):" % st["answer_form"],
-                      format_sql(st["solution"].format(**V) + ";"), "-- Step 1 answer: %s" % V[st["answer_key"]], "-- Step 2:"]
+        for step, st in questions(ch):
+            if step:
+                lines += ["-- Step 1, %s (any spelling of that day: 1912-05-18, 18 May 1912...):" % st["answer_form"],
+                          format_sql(st["solution"].format(**V) + ";"), "-- Step 1 answer: %s" % V[st["answer_key"]], "-- Step 2:"]
         if "explain" in ch:
             lines.append("-- " + ch["explain"].format(**V))
         lines.append("-- The answer:")
@@ -1485,13 +1494,11 @@ def write_outputs(conn, V, site_dir="site", mode="learn"):
 
 def self_check(conn, V, mode="learn"):
     """The plot's test: every solution yields its answer, every trap bites, everything is ASCII."""
-    for ch in plot.CHAPTERS:
+    for step, ch in [q for c in plot.CHAPTERS for q in questions(c)]:
         check_chapter(conn, V, ch)
-        if "step1" in ch:   # chapter I's step 1 (learn): checked like a chapter, and no spelling of the eve accepted
-            st = ch["step1"]
-            check_chapter(conn, V, {**st, "story": ch["story"], "distinct": True})
-            ok = set(date_forms(V[st["answer_key"]]))
-            for w in st["wrong"] + date_forms(V["eve_date"]):
+        if step:   # chapter I's step 1 (learn): no spelling of the eve accepted
+            ok = set(date_forms(V[ch["answer_key"]]))
+            for w in ch["wrong"] + date_forms(V["eve_date"]):
                 assert normalise(w) not in ok, "chapter 1 step 1 accepts %r" % w
     if mode == "compete":
         for ch in plot.CHAPTERS[:8]:

@@ -38,7 +38,7 @@ export const BADGES = [
   ["Paparazzo", "Opened the Suspects gallery. Faces, at last.", c => c.event === "suspects" && c.faces > 0],   // an empty gallery shows no face
   ["Speed Reader", "A chapter solved within two minutes of opening it.", c => c.event === "solve" && c.elapsed < 120000 && (c.state.queries[c.chapter] || 0) > 0],
   ["Filed Under the 17th", "Filed the case under the wrong night. Duroc never sleeps, but he does count.",
-    c => c.event === "answer" && c.chapter === 1 && ((c.decoy != null && c.norm === String(c.decoy)) || c.stepEve === true)],
+    c => c.event === "answer" && c.chapter === 1 && ((c.decoy != null && c.norm === String(c.decoy)) || c.verdict === "eve")],
   ["Lamplighter", "Switched between the day and night editions. Paris has lit its lamps by hand since 1667.", c => c.event === "theme"],
   ["Gare du Nord", "Part I closed: Lupin has a name, if not a cell.", c => c.event === "part1"],
   ["Ganimard", "All twelve chapters. The inspector retires; you take his desk.", c => c.event === "part2"],

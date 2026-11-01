@@ -267,7 +267,7 @@ CHAPTERS = [
 # "Where to look": the Hint's second level, learn only (chapters_json ships it as `where`; season files never carry it).
 # Table names in `backticks` render as links to the schema (app.js whereHtml). Owner-approved texts, 2026-10-28.
 WHERE = {
- 1: "Before searching the reports, read what the night porter told the police in `interview`. He says when he heard the lift. Which date does that hour fall on?",
+ 1: "You have the date. Now search `police_report`: the place, the type of crime and that date leave one report.",   # step 2; step 1 has its own
  2: "Read the theft report from chapter I again: it describes the suite the thief came from. `hotel_register` says who slept in each suite, on which nights, and at what price.",
  3: "Read what the neighbour told Ganimard in `interview`: his valet saw part of the plate and how the man paid. `cab_ride` has a column for each, and one for the date.",
  4: "Take the plate from chapter III and list every ride it made that week. One drop-off address keeps coming back, so count the rides per address.",
@@ -510,9 +510,9 @@ CHAPTERS[0]["step1"] = dict(
   discovery=CHAPTERS[0]["discovery"],
   solution="SELECT date FROM interview WHERE person_name = 'Marcel Duroc'",
   naive="SELECT date FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft'", naive_rows=None,
-  traps=[t.replace("SELECT id", "SELECT date").replace("SELECT pr.id", "SELECT pr.date") for t in CHAPTERS[0]["traps"]] +
+  traps=[t.replace("SELECT id ", "SELECT date ").replace("SELECT pr.id ", "SELECT pr.date ") for t in CHAPTERS[0]["traps"]] +
         ["SELECT date FROM police_report WHERE place = 'Hotel Ritz' AND type = 'theft' AND date BETWEEN 19120516 AND 19120519",
          "SELECT date FROM police_report WHERE place = 'Hotel Ritz' ORDER BY date DESC LIMIT 1"],
   wrong=["19120517", "1912-05-17", "17/05/1912", "17 May 1912", "Friday 17 May 1912", "the night of the 17th", "17th of May"])
-WHERE[1] = "You have the date. Now search `police_report`: the place, the type of crime and that date leave one report."
-CHAPTERS[0]["where"] = WHERE[1]
+assert all(t.startswith(("SELECT date ", "SELECT pr.date ")) for t in CHAPTERS[0]["step1"]["traps"]), \
+    "a step 1 trap must read the date (a chapter I trap spelled otherwise stayed an id query)"

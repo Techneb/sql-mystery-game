@@ -4,8 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.js";
-import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn } from "./site/state.js";
-import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, mastheadChapterHtml, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml, EVE_REPLY } from "./site/app.js";
+import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn, answerVerdict } from "./site/state.js";
+import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, EVE_REPLY } from "./site/app.js";
+import { mastheadChapterHtml, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml, whereOpened } from "./site/board.js";
 import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
 import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
@@ -276,7 +277,7 @@ test("review badges: SQL skills, easter eggs, behaviour", () => {
   assert.ok(ev("answer", { norm: "4100", decoy: 4100 }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: undefined }).includes("Filed Under the 17th"));
   assert.ok(!ev("answer", { norm: "4100", decoy: 4100, chapter: 2 }).includes("Filed Under the 17th"));
-  assert.ok(ev("answer", { norm: "17 may 1912", stepEve: true }).includes("Filed Under the 17th"), "the eve typed at step 1");
+  assert.ok(ev("answer", { norm: "17 may 1912", verdict: "eve" }).includes("Filed Under the 17th"), "the eve typed at step 1");
 });
 
 test("badges: each earns on its own event at its threshold, never one step short nor on another event", () => {
@@ -1306,6 +1307,15 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
   assert.equal(stepOn(migrateSave({ solved: [1], answers: { 1: "2127" } }), ch1), null, "chapter I solved: no step");
   assert.equal(stepOn({ ...fresh, step1: "18 May 1912" }, ch1), null);
   assert.equal(stepOn(fresh, data.chapters[1]), null);
+  const dated = { ...fresh, step1: "18 May 1912" }, h = async t => sha256(normalise(t));
+  assert.equal(answerVerdict(await h("18 May 1912"), ch1, fresh), "step");
+  assert.equal(answerVerdict(ch1.answer_sha256[0], ch1, fresh), "early", "the report before the date");
+  assert.equal(answerVerdict(await h("17 May 1912"), ch1, fresh), "eve");
+  assert.equal(answerVerdict(await h("nobody"), ch1, fresh), "wrong");
+  assert.equal(answerVerdict(ch1.answer_sha256[0], ch1, dated), "solve");
+  assert.equal(answerVerdict(await h("17 May 1912"), ch1, dated), "wrong", "the 17th is only the eve at step 1");
+  assert.equal(answerVerdict(await h("18 May 1912"), ch1, dated), "wrong");
+  assert.equal(answerVerdict(data.chapters[1].answer_sha256[0], data.chapters[1], { ...dated, solved: [1] }), "solve");
   const s1 = currentObjectiveHtml(ch1, fresh), s2 = currentObjectiveHtml(ch1, { ...fresh, step1: "18 May 1912" });
   assert.ok(s1.includes(st.objective) && s1.includes(st.answer_form) && !s1.includes("Date of the theft:"));
   assert.ok(s2.includes(ch1.objective) && s2.includes("<b>Date of the theft:</b> 18 May 1912") && s2.indexOf("Date of the theft") < s2.indexOf("Hint"));
@@ -1318,16 +1328,15 @@ test("chapter I in two steps: the date (any usual spelling, never the 17th), the
   for (const n of [1, 2, 3, 4, 5]) if (fs.existsSync("site/season-" + n + ".json")) assert.ok(!JSON.parse(fs.readFileSync("site/season-" + n + ".json", "utf8")).chapters[0].step1, "compete keeps one step");
 });
 
-// --- Review of 2026-10-31: findings 4 and 7 ------------------------------------------------------------------------
+// --- The first query and chapter I's Where to look ------------------------------------------------------------------
 
-test("review 4: the landing About's first-query block is FIRST_QUERY, coloured as the terminal colours it", async () => {
+test("landing: the About's first-query block is FIRST_QUERY, coloured as the terminal colours it", async () => {
   const app = await import("./site/app.js"), term = await import("./site/terminal.js");
   const block = fs.readFileSync("site/index.html", "utf8").match(/<pre class="landing-sql">([\s\S]*?)<\/pre>/)[1];
   assert.equal(block, term.highlightSql(app.FIRST_QUERY + ";").trimEnd());
 });
 
-test("review 7: chapter I's two steps count their Where to look apart (hint_where carries the step)", async () => {
-  const { whereOpened } = await import("./site/app.js");
+test("chapter I: its two steps count their Where to look apart (hint_where carries the step)", async () => {
   const { freshState } = await import("./site/state.js");
   const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
   const ch1 = data.chapters.find(c => c.n === 1), ch2 = data.chapters.find(c => c.n === 2), s = freshState();
