@@ -713,7 +713,11 @@ device).
   Next wave (owner, 2026-10-23): 15 contact emails drafted for similar creators and newsletters, to send **only once
   real ads are live**. They are in `assets-source/outreach/` (gitignored, owner's Mac only; they hold creators'
   addresses: never commit them). Before sending, refresh the visitor figure and each creator's recent post. The owner
-  sends them.
+  sends them. Refreshed 2026-11-01 (owner: "no big corpo, only small video makers / newsletters like Nick"): 24 drafts
+  to solo YouTubers and one-person newsletters, links on alephb.uk/ritz-affair/ and /learn/, figure "about 4,400 people
+  in the four weeks to 31 October", signed AlephB; companies, magazines, course businesses and competing products
+  dropped (reasons in `creators.md`). Open owner calls: the three large solo channels (Mo Chen, Joey Blue, Arjay), two
+  agency addresses, whether to name the school again.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
