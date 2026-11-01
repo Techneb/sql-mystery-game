@@ -368,6 +368,11 @@ device).
   Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. Left for alephb-site:
   the robots.txt lines (the desk's Disallow lines and the game's sitemap), the home page and footers linking
   `ritz-affair/` instead of mystery.alephb.uk, and its own ritz-affair.html beside the new `ritz-affair/` folder.
+- **Delete the move's rollback once the AdSense verdict is in** (owner, 2026-11-01; about 1-2 weeks after the
+  review request). Until then `BRIDGE` = off and a push bring the old game back on mystery.alephb.uk (alephb-site
+  publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
+  `stubsRobots`/`stubsSitemap`, the `BRIDGE` conditions in `pages.yml` (it shrinks to the bridge deploy, without
+  the season build and tests) and their test, and the matching CLAUDE.md lines.
 - ~~Chapter I in two questions~~ Done 2026-10-31 (owner's decisions: two steps inside chapter I, same numeral;
   step 1 the date the theft is filed under, the 18th, from Duroc's interview; the title's 17th is the decoy and is
   refused). As built: `plot.CHAPTERS[0]["step1"]` (objective "Mr. Duroc knows which night. Under which date is the
