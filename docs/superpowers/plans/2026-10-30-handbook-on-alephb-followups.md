@@ -94,6 +94,8 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
   errors, ads.txt pub line, bridge without ad code, privacy links and page, AdSense Sites alephb.uk only (attention
   required, low value, 10-29), European message published for alephb.uk. Only the Indexed >= ~15 clause fails, on a
   frozen report; the owner decides whether to press Request review now.
+- 2026-11-02 ~11:20 London: A5 done. Owner: "I give you permission to do it"; Claude ticked "issues fixed" and pressed
+  Request review. Sites now reads alephb.uk "En preparation", "Examen demande". Daily readiness job stopped.
 
 ## B. alephb-site (one approval for the batch)
 
