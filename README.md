@@ -1,9 +1,35 @@
-# The Ritz Affair - SQL Mystery Game
+<p align="center"><img src="site/favicon.svg" width="96" alt="The Ritz Affair logo: the Blue Star sapphire"></p>
 
-A browser game for an SQL course: Paris, May 1912, the Comtesse de Cagliostro's
-sapphire vanishes from the Ritz, and the student, Inspector Ganimard's clerk, unmasks Arsene Lupin with
-SQL, one course construct per chapter (12 chapters, Part I strictly within the course material).
-The database is SQLite in the browser; nothing runs on a server.
+<h1 align="center">The Ritz Affair</h1>
+
+<p align="center"><b>A free detective game you play in SQL.</b><br>
+<a href="https://alephb.uk/ritz-affair/">Play in your browser</a> · <a href="https://alephb.uk/learn/">The Clerk's Handbook</a></p>
+
+![Lupin's calling card on the Comtesse's pillow](site/landing-pillow.jpg)
+
+Paris, May 1912. The Comtesse de Cagliostro's sapphire, the Blue Star, has vanished from her suite at the Ritz,
+and Arsène Lupin left his calling card on her pillow. You play Inspector Ganimard's new clerk, and the police
+archive is a database you search in SQL.
+
+- **Twelve chapters, one SQL skill each**, from a first `SELECT` to window functions and a recursive CTE.
+- **Most of the work is reading the data.** The archive is full of decoys, so a query that runs can still give
+  the wrong answer, and the story tells you what the right one should look like.
+- **Nothing to install.** No sign-up either: the database is SQLite running in the page.
+- **Standard SQL.** The terminal follows PostgreSQL's rules, explains every query it refuses and links the lesson
+  that covers it.
+- **The Clerk's Handbook** goes with it: fourteen short lessons and twenty graded exercises on a bakery database,
+  with a terminal on the exercises page.
+- Painted portraits and chapter icons, two closing films, 38 badges, and a day and a night edition.
+
+### For teachers
+
+Compete mode turns Part I into a class race. Create a season on the Clerk's Desk and share its link or QR code,
+then project the live leaderboard. Each season redraws the evidence and changes the questions, so last year's
+answers don't carry over.
+
+Made by [AlephB](https://alephb.uk/) for an MSc SQL course in Paris.
+
+---
 
 ## Regenerate
 
@@ -49,9 +75,8 @@ The page is fully static: no server, no environment variables.
 
 The penalty per wrong answer is set per season by the teacher; the rest is in the code.
 
-- `RANKS` in `site/app.js` sets the query thresholds for each rank (45 / 70 / 110, tuned 2026-10-19 from the class trial's GA4 query counts). The rank
-  counts queries only.
-- `BADGES` in `site/app.js` is the full badge list (name, text, predicate).
+- `RANKS` in `site/badges.js` sets the query thresholds for each rank (30 / 80 / 130). The rank counts queries only.
+- `BADGES` in `site/badges.js` is the full badge list (name, text, predicate).
 - `TAUNTS` in `site/app.js` are the three telegrams sent after three wrong answers in a row.
 
 ## Look
@@ -59,8 +84,7 @@ The penalty per wrong answer is set per season by the teacher; the rest is in th
 - Twelve painted chapter icons (`site/icons/chNN.png`, generated, no letters or numbers so none hands out
   a clue) sit next to the chapter title.
 - Part II is a night edition: the whole page switches once the Part II code is accepted
-  (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), the masthead moves
-  to 21 May, and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
+  (`data-mood="night"` on `<html>`, colour tokens overridden in `site/style.css`), and a reload keeps the mood. A **Day/Night edition** button (top right) lets any reader pick
   the palette instead; the choice is kept per browser.
 - Portraits: `site/portraits/*.jpg`, six suspects plus the Comtesse, painted in colour
   after Sir John Lavery. A **Suspects** button next to the case board opens the gallery; the landing card
