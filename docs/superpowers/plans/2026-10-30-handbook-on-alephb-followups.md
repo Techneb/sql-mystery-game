@@ -89,6 +89,11 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
   /ritz-affair/privacy.html), so all seven A5 pages hold and URL Inspection reads 24 of 26 on Google. Left:
   /article-teaching-sql.html and /article-guessing.html ("crawled, currently not indexed"); indexing requested for both
   (accepted, no quota error). Pages report still 5 indexed, last updated 10-23 (frozen, not counting).
+- 2026-11-02 10:45 London (daily check): Pages > Indexed 5 (report last updated 10-23); URL Inspection: all seven A5
+  pages on Google. A5' rechecked today: ads code and house ad on /ritz-affair/ and /learn/exercises.html, no console
+  errors, ads.txt pub line, bridge without ad code, privacy links and page, AdSense Sites alephb.uk only (attention
+  required, low value, 10-29), European message published for alephb.uk. Only the Indexed >= ~15 clause fails, on a
+  frozen report; the owner decides whether to press Request review now.
 
 ## B. alephb-site (one approval for the batch)
 
