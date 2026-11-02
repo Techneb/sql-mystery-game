@@ -85,6 +85,10 @@ Indexing tally (fill in): date / indexed /learn/ pages / impressions last 7 days
 - 2026-11-01 night: the about page read "Google does not know this URL, no referring sitemap": Google had read
   /sitemap.xml on 10-31 before the article's rename (21:50 Paris). /sitemap.xml resubmitted, read 11-01 (7 URLs).
   AdSense Sites unchanged (attention required, low-value content, last update 10-29).
+- 2026-11-02 09:20 London: 6 of the 8 now on Google (the about page, database, window-functions, ctes, schema,
+  /ritz-affair/privacy.html), so all seven A5 pages hold and URL Inspection reads 24 of 26 on Google. Left:
+  /article-teaching-sql.html and /article-guessing.html ("crawled, currently not indexed"); indexing requested for both
+  (accepted, no quota error). Pages report still 5 indexed, last updated 10-23 (frozen, not counting).
 
 ## B. alephb-site (one approval for the batch)
 
