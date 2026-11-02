@@ -133,3 +133,25 @@ Read-only. Sources: `ch1-ga.txt` (GA, 30 days to 2026-10-25), `plot.py` ch1, `si
 **Re-read GA a week after each push.** Compare open → 1 query (baseline ~55%) and 1 query → solved (~49%) with the 10-24/25 window, split by device.
 
 **Expect a ceiling:** influencer traffic is largely window-shopping, so a ch1 solve rate around 35-40% would already be a good result. Returning players already solve at 74%.
+
+## 5. Re-read, 2026-11-02
+
+GA exploration (chapter x event, active users), chapter I only. Users are counted over each window, not summed daily, so they are a little lower than the baseline's opener-days. "Ran" is `chapter_queries` (fires at the first query). Queries per solve = the `queries` parameter summed over `chapter_solve` events / those events.
+
+| Window | What was live | Opened | Ran | Solved | Ran / opened | Solved / opened | Solved / ran | Queries per solve |
+|---|---|---|---|---|---|---|---|---|
+| 10-24/25 (baseline above) | before the fixes | ~257 | <=146 | 71 | ~55% | ~28% | ~49% | 19 |
+| 27-30 Oct | B, A, prologue and tour (10-25) | 180 | 142 | 76 | 79% | 42% | 54% | 13 |
+| 31 Oct - 2 Nov (2 Nov partial) | + two steps, `FIRST_QUERY` on interview, the move to alephb.uk | 70 | 49 | 23 (step 1: 22) | 70% | 33% | 47% | 36 |
+
+By device (mobile segment against the rest):
+
+| Window | Mobile opened / ran / solved | Desktop + tablet opened / ran / solved |
+|---|---|---|
+| 27-30 Oct | 35 / 22 (63%) / 4 (11%) | 145 / 120 (83%) / 72 (50%) |
+| 31 Oct - 2 Nov | 25 / 12 (48%) / 3 (12%) | 45 / 37 (82%) / 20 (44%) |
+
+Reading:
+- The 10-25 fixes worked: the "never runs a query" leak fell from ~45% to ~20%, and the chapter I solve rate rose from ~28% to ~42%, above the 35-40% ceiling section 4 expected.
+- Phones are now the gap: about 1 in 9 phone openers solve chapter I, against about half on a computer.
+- The two-step chapter I (31 Oct) is too new to judge (70 openers over two and a half days). The solve rate dipped to 33% and queries per solve went from 13 to 36. Re-read around 2026-11-09 before changing anything.

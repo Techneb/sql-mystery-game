@@ -716,8 +716,9 @@ device).
   sends them. Refreshed 2026-11-01 (owner: "no big corpo, only small video makers / newsletters like Nick"): 24 drafts
   to solo YouTubers and one-person newsletters, links on alephb.uk/ritz-affair/ and /learn/, figure "about 4,400 people
   in the four weeks to 31 October", signed AlephB; companies, magazines, course businesses and competing products
-  dropped (reasons in `creators.md`). Open owner calls: the three large solo channels (Mo Chen, Joey Blue, Arjay), two
-  agency addresses, whether to name the school again.
+  dropped (reasons in `creators.md`). Open owner calls: the three large solo channels (Mo Chen, Joey Blue, Arjay), and
+  whether to write to the two creators reached only through an agency or partnerships address (Matt Mike,
+  Arjay). The school is not named (owner, 2026-11-02). Sent only once ads are active (owner, 2026-11-02).
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
