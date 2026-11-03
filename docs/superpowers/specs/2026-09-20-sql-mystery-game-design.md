@@ -361,7 +361,7 @@ end to end since the module split: a real compete season.
   publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
   `stubsRobots`/`stubsSitemap`, the `BRIDGE` conditions in `pages.yml` (it shrinks to the bridge deploy, without
   the season build and tests) and their test, and the matching CLAUDE.md lines.
-- **Mutation testing** (owner, 2026-10-31): first run done the same day (Stryker from a worktree, nothing added to
+- ~~Mutation testing~~ Done 2026-11-03 (owner, 2026-10-31): first run done the same day (Stryker from a worktree, nothing added to
   the repo; tests in 588307f): state.js 89->99%, shared.js 78->92%, badges.js 74->99%, terminal.js 80->94%, strict.js
   lines 591-703 70->88%, Python normalisers and date_forms 23 survivors -> 0 real; no product bug found. Second run
   2026-11-03 (tests in e1bf7a8): strict.js's tokenizer, parser and analyser (lines 34-590, 2,323 mutants, all mutators)
