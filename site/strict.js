@@ -231,14 +231,16 @@ function parseSql(src, toks) {
   function otherExpr() { const s = i; let l = addExpr(); while (eat("||")) l = mk(s, { k: "concat", l, r: addExpr() }); return l; }
   function addExpr() { const s = i; let l = mulExpr(); while (is("+") || is("-")) { const op = next().v; l = mk(s, { k: "arith", op, l, r: mulExpr() }); } return l; }
   function mulExpr() { const s = i; let l = unary(); while (is("*") || is("/") || is("%")) { const op = next().v; l = mk(s, { k: "arith", op, l, r: unary() }); } return l; }
-  function unary() { const s = i; if (eat("-") || eat("+")) return mk(s, { k: "neg", e: unary() }); return postfix(); }
+  function unary() { const s = i; if (is("-") || is("+")) { const op = next().v; return mk(s, { k: "neg", op, e: unary() }); } return postfix(); }
   function postfix() {
     const s = i;
     let e = primary();
     while (eat("collate")) {
       const c = ident(true);
       if (!c.q && ["nocase", "rtrim", "binary"].includes(c.name)) refuse('collation "' + c.name + '" for encoding "UTF8" does not exist',
-        "COLLATE " + c.raw + " is not standard SQL: to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE.", "like-ilike");
+        "COLLATE " + c.raw + " is not standard SQL: " + (c.name === "nocase" ? "to ignore case, compare lower(" + src.slice(e.from, e.to) + ") with a lower-case value, or use ILIKE." :
+          c.name === "rtrim" ? "to ignore trailing spaces, use rtrim(" + src.slice(e.from, e.to) + ") instead." :
+          "text already compares exactly as written, so drop COLLATE " + c.raw + "."), "like-ilike");
       e = mk(s, { k: "collate", e });
     }
     while (eat("::")) { const type = castType(toks, i, t => { i = t; }); if (!type) throw UNSUPPORTED; e = mk(s, { k: "cast", e, type }); }
@@ -362,22 +364,24 @@ function analyse(stmts, schema, src) {
       }
       case "neg": {
         const t = T(n.e, cx);
-        if (t === "text" || t === "bool") refuse("operator does not exist: - " + pgT(t), text(n.e) + " is " + pgT(t) + ", and only numbers take a minus sign.", "types");
+        if (t === "text" || t === "bool") refuse("operator does not exist: " + n.op + " " + pgT(t), text(n.e) + " is " + pgT(t) + ", and only numbers take a " + (n.op === "+" ? "plus" : "minus") + " sign.", "types");
         return t === "str" ? null : t;
       }
       case "arith": {
         const a = T(n.l, cx), b = T(n.r, cx);
         if (a === "text" || b === "text" || a === "bool" || b === "bool") {
           const [bad, t] = a === "text" || a === "bool" ? [n.l, a] : [n.r, b];
-          refuse("operator does not exist: " + pgT(a) + " " + n.op + " " + pgT(b), text(bad) + " is " + pgT(t) + ", and " + n.op +
-            " works on numbers only: compare text as text, or convert it with CAST(" + text(bad) + " AS INTEGER) when it holds digits.", "types");
+          refuse("operator does not exist: " + pgT(a) + " " + n.op + " " + pgT(b), text(bad) + " is " + pgT(t) + ", and " + n.op + " works on numbers only: " + (t === "bool" ?
+            "a boolean is not a number in standard SQL, so turn it into one with CASE WHEN " + text(bad) + " THEN 1 ELSE 0 END." :
+            "compare text as text, or convert it with CAST(" + text(bad) + " AS INTEGER) when it holds digits."), "types");
         }
         return a === "num" || b === "num" ? "num" : a === "int" || b === "int" ? "int" : null;
       }
       case "concat": {
         const a = T(n.l, cx), b = T(n.r, cx);
         if ((isNum(a) || a === "bool") && (isNum(b) || b === "bool")) refuse("operator does not exist: " + pgT(a) + " || " + pgT(b),
-          "|| joins text, and " + text(n.l) + " and " + text(n.r) + " are both numbers: add them with +, or make one of them text first, as in CAST(" + text(n.l) + " AS TEXT) || ...", "types");
+          "|| joins text, and " + (isNum(a) && isNum(b) ? text(n.l) + " and " + text(n.r) + " are both numbers: add them with +, or" :
+            text(n.l) + " is " + pgT(a) + " and " + text(n.r) + " is " + pgT(b) + ":") + " make one of them text first, as in CAST(" + text(n.l) + " AS TEXT) || ...", "types");
         return "text";
       }
       case "cmp": {
