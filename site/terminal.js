@@ -195,10 +195,12 @@ export function wireEditor(ta, hl, { run, cols, minHeight = 0 }) {
 }
 
 export const ROW_CAP = 200;
+// a cell longer than this (a name, a statement) wraps on phones (style.css .results td.long); ids, dates (10), times stay on one line
+export const LONG_CELL = 12;
 export function renderResults(res) {
   if (!res) return '<p class="muted">No rows.</p>';
   const head = "<tr>" + res.columns.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr>";
-  const body = res.values.slice(0, ROW_CAP).map(r => "<tr>" + r.map(v => "<td>" + esc(v) + "</td>").join("") + "</tr>").join("");
+  const body = res.values.slice(0, ROW_CAP).map(r => "<tr>" + r.map(v => (String(v).length > LONG_CELL ? '<td class="long">' : "<td>") + esc(v) + "</td>").join("") + "</tr>").join("");
   const more = res.values.length > ROW_CAP ? '<p class="muted">' + (res.values.length - ROW_CAP) + " more rows not shown.</p>" : "";
   return "<table>" + head + body + "</table>" + more;
 }

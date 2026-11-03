@@ -10,10 +10,10 @@ import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, r
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
 import { suspectsOn, metSuspects, foundSuspects, suspectCard, cardPicture, portraitSrc, iconSrc, boardSuspects } from "./suspects.js";
 import { showExtra, showExtra2, part2Ending, certificateHtml } from "./endings.js";
-import { prologueOn, tourOn, showPrologue, CALLOUTS } from "./onboarding.js";
+import { prologueOn, tourOn, showPrologue, tourSteps } from "./onboarding.js";
 import { openHowto, howtoHtml } from "./howto.js";
 import { ROMAN, mastheadChapterHtml, crackedHtml, objectiveHtml, stepDoneHtml, currentObjectiveHtml, whereOpened, boardCardsHtml } from "./board.js";
-import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText } from "./ui.js";
+import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText, NARROW, revealOnPhone } from "./ui.js";
 
 const NAMES_ASK = "Names for the certificate (both of you):";   // #names' label, and prompt()'s where <dialog> cannot open
 export function resetMessage(mode) {   // the New investigation question (#reset, or confirm() as the fallback)
@@ -227,6 +227,7 @@ function runQuery() {
   const ms = Math.round(performance.now() - t0);
   $("results").innerHTML = runHtml(r);
   $("run-info").textContent = runInfo(r) + (error ? "" : " - " + ms + " ms");
+  revealOnPhone($("results"));
   renderHistory();
   const text = eggText(res);
   st.film = seenFilms(text, st.film);
@@ -318,7 +319,7 @@ function renderStrip() {
 
 // The game's hooks for the endings (endings.js): save, the chapter GA reports, New investigation's question.
 const hooks = () => ({ save: () => save(state), chapter: curChapter, reset: askReset });
-const showTour = () => showCallouts(CALLOUTS, how => {
+const showTour = () => showCallouts(tourSteps(matchMedia(NARROW).matches), how => {
   state.onboarding = "done"; save(state);
   useFeature(how === "done" ? "tour_done" : "tour_skip", { chapter: 1 });
 });
@@ -408,7 +409,7 @@ async function submitAnswer() {
       state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
       track("step_solve", { ...solveParams(ch), step: 1 });
       $("reply").textContent = "Correct. Ganimard writes the date on the folder. Now find its report.";
-      $("answer").value = ""; save(state); renderBoard(); renderChapter(); return;
+      $("answer").value = ""; save(state); renderBoard(); renderChapter(); revealOnPhone($("objective")); return;
     case "early":
       $("reply").textContent = "That is the report, clerk, and a good one. First the date it is filed under.";
       $("answer").value = ""; return;

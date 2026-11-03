@@ -144,13 +144,13 @@
     </div>
     <div id="story" class="story"></div>
     <div class="box"><div class="label">OBJECTIVE</div><div id="objective"></div></div>
-    <div class="label-row"><span class="label">CASE BOARD</span><span><button id="btn-badges" class="quiet"><svg class="icon rosette" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="6" r="4"/><path d="M6 9.5L5 14.5L7 13.5M10 9.5L11 14.5L9 13.5"/></svg><span class="btn-text">Badges</span></button> <button id="btn-suspects" class="quiet"><svg class="icon person" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="5" r="2.75"/><path d="M2.5 14.5C2.5 11 5 9.5 8 9.5S13.5 11 13.5 14.5"/></svg><span class="btn-text">Suspects</span></button></span></div>
+    <div class="label-row board-row"><span class="label">CASE BOARD</span><span><button id="btn-badges" class="quiet"><svg class="icon rosette" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="6" r="4"/><path d="M6 9.5L5 14.5L7 13.5M10 9.5L11 14.5L9 13.5"/></svg><span class="btn-text">Badges</span></button> <button id="btn-suspects" class="quiet"><svg class="icon person" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="5" r="2.75"/><path d="M2.5 14.5C2.5 11 5 9.5 8 9.5S13.5 11 13.5 14.5"/></svg><span class="btn-text">Suspects</span></button></span></div>
     <div id="board" class="board"></div>
     <pre id="telegram" class="telegram" aria-label="Telegram"></pre>
     <pre id="taunt" class="telegram" aria-label="Telegram" aria-live="polite"></pre>
-    <div class="label">NOTEPAD</div>
+    <div class="notepad"><div class="label">NOTEPAD</div>
     <textarea id="notes" placeholder="Ganimard does not read your notes. Write anyway."></textarea>
-    <div class="row"><button id="btn-print" hidden>Print certificate</button></div>
+    <div class="row"><button id="btn-print" hidden>Print certificate</button></div></div>
   </aside>
 </main>
 
@@ -184,7 +184,7 @@
   <p>The head porter hands you the hotel's lost-property book while Ganimard finishes his coffee. Practise on it: nothing in it is evidence.</p>
   <p id="prologue-step" class="prologue-step" aria-live="polite"></p>
   <div class="editor"><pre class="sql-hl" aria-hidden="true"></pre><textarea id="prologue-sql" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="SQL query"></textarea></div>
-  <div class="row"><button type="button" id="prologue-run"><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="prologue-info" class="muted" aria-live="polite"></span></div>
+  <div class="row"><button type="button" id="prologue-run" autofocus><svg class="icon play" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L13 8L4.5 13.5Z"/></svg><span class="btn-text">Run</span></button><span id="prologue-info" class="muted" aria-live="polite"></span></div>
   <div id="prologue-results" class="results" aria-live="polite"></div>
   <div id="prologue-answer" class="row prologue-answer" hidden><span class="label">ANSWER</span><input id="prologue-input" autocomplete="off" aria-label="Answer"><button type="button" id="prologue-submit">Submit</button></div>
   <p id="prologue-reply" class="reply" aria-live="polite"></p>

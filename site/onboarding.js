@@ -74,7 +74,7 @@ export function showPrologue(SQL, done) {
   d.oncancel = e => { e.preventDefault(); close(step >= 3 ? "done" : "skip"); };   // Escape skips
   d.showModal();
   sync();   // measured once the dialog is open
-  ta.focus();
+  if (!matchMedia("(pointer: coarse)").matches) ta.focus();   // on a touch screen the keyboard (and iOS's zoom) waits for a tap; Run has autofocus
 }
 
 // Chapter I's callouts, shown once after the prologue or its skip (ui.js showCallouts). They point at the parts of
@@ -84,3 +84,5 @@ export const CALLOUTS = [
   ["#btn-run", "Write SQL in the box above and press Run (or Ctrl+Enter). The results appear underneath."],
   ["#objective", "The objective says what to find. Your answer goes in the box under the terminal."],
   ["#board", "Every answer you find is pinned to the case board."]];
+// On a phone the page reads objective, schema, terminal, case board (style.css): the tour starts at the top and ends on Run.
+export const tourSteps = narrow => narrow ? [2, 0, 3, 1].map(i => CALLOUTS[i]) : CALLOUTS;

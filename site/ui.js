@@ -37,6 +37,16 @@ export function setIconButton(btn, { html, label }) {
 
 // The callout's left edge under a target rect, kept inside a viewport of width vw.
 export const calloutLeft = (rect, w, vw) => Math.max(8, Math.min(rect.left, vw - w - 8));
+// Phones (style.css's 900 px breakpoint): bring what changed into view, but only when it is off screen (pure part
+// tested); never on desktop, smooth unless reduced motion is asked for.
+export const NARROW = "(max-width: 900px)";
+export const offScreen = (rect, h) => rect.top < 0 || rect.bottom > h;
+export function revealOnPhone(el) {
+  if (!el || !matchMedia(NARROW).matches) return;
+  if (!offScreen(el.getBoundingClientRect(), window.visualViewport ? visualViewport.height : innerHeight)) return;
+  el.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+
 // Callouts in turn under each step's target ([selector, text]); done("done") after Got it, done("skip") on Skip or
 // Escape. The game's chapter I tour (onboarding.js CALLOUTS) and the exercises page's (learn/exercises.js).
 export function showCallouts(steps, done) {

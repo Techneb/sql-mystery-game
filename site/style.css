@@ -332,8 +332,16 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .masthead .landing-nav { padding: 0 40px; }   /* clear of the 32 px corner buttons; wraps under the title */
   .masthead .landing-nav a, .mast-chapter { white-space: nowrap; }
   .columns { grid-template-columns: minmax(0, 1fr); padding: 16px; }
-  /* a phone reads the story first, then the terminal, the schema last (the markup order is schema first) */
-  .col-story { order: 1; } .col-terminal { order: 2; } .col-erd { order: 3; }
+  /* a phone reads the story and objective, then the schema right above the SQL box, then the terminal; the case
+     board with its telegrams, the notepad and the ad box after it, so the SQL box starts on the first screen
+     (2026-11-03, docs/research/2026-11-03-chapter-1-phones.md). The two asides are flattened (display: contents) so
+     their parts can be ordered; the row gap goes, each group keeps a 16 px top margin. */
+  .columns { row-gap: 0; }
+  .col-story, .col-erd { display: contents; }
+  .col-story > * { order: 1; } .col-erd > * { order: 2; } .col-terminal { order: 3; }
+  .col-story > .board-row, #board, #telegram, #taunt { order: 4; } .notepad { order: 5; } #press-box { order: 6; }
+  .col-erd > .label-row, .col-terminal, .board-row, .notepad { margin-top: 16px; }
+  .results td.long { white-space: normal; min-width: 8ch; }   /* Duroc's transcript wraps instead of running 1,700 px to the right */
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
   /* icon-only 32px squares in the top corners: the 24px title (~262px at 430px) clears both */
@@ -346,6 +354,10 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .landing-card { padding: 16px; }
   .landing-band { margin: -16px -16px 12px; }
   #landing { padding-top: 86px; }   /* the card starts under the Day/Night and Feedback squares, not behind them */
+}
+/* iOS zooms into a focused field under 16 px: the SQL boxes and their highlight layer grow together (same metrics) */
+@media (max-width: 900px), (pointer: coarse) {
+  #sql, #prologue-sql, .sql-hl { font-size: 16px; }
 }
 .landing-story b, .landing-kicker b { font-weight: 700; }
 /* Part II ending: Lupin's photograph of the Blue Star (site/blue-star.jpg), set below the text like a news photo */

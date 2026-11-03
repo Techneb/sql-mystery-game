@@ -7,11 +7,11 @@ import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.
 import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn, answerVerdict } from "./site/state.js";
 import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, EVE_REPLY } from "./site/app.js";
 import { mastheadChapterHtml, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml, whereOpened } from "./site/board.js";
-import { renderResults, ROW_CAP, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
+import { renderResults, ROW_CAP, LONG_CELL, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
 import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
 import { metSuspects, foundSuspects, suspectsOn, boardSuspects, cardPicture } from "./site/suspects.js";
-import { richText, themeButtonHtml, erdButtonHtml, calloutLeft, showCallouts } from "./site/ui.js";
+import { richText, themeButtonHtml, erdButtonHtml, calloutLeft, showCallouts, offScreen } from "./site/ui.js";
 import { track, GA_ID, consentDefaults, CONSENT_REGIONS, ADS_ON, ADS_CLIENT, AD_SLOT, adSlotHtml, adOutcome, AD_WAIT_MS, europeanZone, cmpLive, consentPath, googleStats, CMP_WAIT_MS, firstTime, trackOnce, useFeature, queryFail, QUERY_FAILS } from "./site/stats.js";
 import * as onb from "./site/onboarding.js";
 import { shareText, shareLinks, shareHtml, SHARE_URL } from "./site/endings.js";
@@ -1518,6 +1518,20 @@ test("callouts point at parts of the page, never at a table", () => {
   assert.equal(calloutLeft({ left: 300 }, 200, 390), 182, "kept inside the viewport");
   assert.equal(calloutLeft({ left: -20 }, 200, 390), 8);
   assert.equal(calloutLeft({ left: 50 }, 200, 1200), 50);
+  // phones: the tour follows the stacked page down and ends on Run; desktop keeps its order
+  assert.equal(onb.tourSteps(false), onb.CALLOUTS);
+  assert.deepEqual(onb.tourSteps(true).map(s => s[0]), ["#objective", "#erd", "#board", "#btn-run"]);
+});
+test("phones: scroll only to what is off screen; long cells wrap, short ones do not", () => {
+  assert.equal(offScreen({ top: 10, bottom: 300 }, 844), false);
+  assert.equal(offScreen({ top: -5, bottom: 300 }, 844), true);
+  assert.equal(offScreen({ top: 700, bottom: 900 }, 844), true);
+  const html = renderResults({ columns: ["id", "date", "text"], values: [[2127, "1912-05-18", "x".repeat(LONG_CELL + 1)]] });
+  assert.equal((html.match(/<td class="long">/g) || []).length, 1);
+  const css = fs.readFileSync("site/style.css", "utf8"), phone = css.slice(css.indexOf("@media (max-width: 900px) {\n  .masthead"));
+  assert.match(phone, /\.results td\.long \{ white-space: normal/);
+  assert.doesNotMatch(css.slice(0, css.indexOf("@media")), /td\.long/, "desktop cells stay on one line");
+  assert.match(css, /@media \(max-width: 900px\), \(pointer: coarse\) \{\n  #sql, #prologue-sql, \.sql-hl \{ font-size: 16px; \}/, "box and overlay grow together");
 });
 test("exercises tour: the game's callouts on the workbench, no solution, its GA features listed", async () => {
   const ex = await import("./site/learn/exercises.js"), monitor = await import("./site/monitor.js");
