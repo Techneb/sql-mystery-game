@@ -50,3 +50,7 @@ tap targets on the Hint, two-way scrolling inside the results box, badge toasts 
 - The landing loss (10% vs 19% press Investigate) is the largest in absolute numbers and was not studied here.
 - Phone visitors may simply be less committed (many came from Instagram videos): the gap will not close entirely.
 - After a fix, compare the same table for the following two weeks.
+
+## Shipped
+
+2026-11-03 (owner: all five, phones only): 9a1d182 and c84e0ae. Under 900 px the page reads story and objective, telegram, schema, terminal, case board, notepad; long result cells wrap; SQL boxes 16 px (also on coarse pointers); no prologue autofocus on touch; the tour ends on Run; results and the step 2 objective scroll into view when off screen. Not checked on a real iPhone. Compare GA from 2026-11-04.
