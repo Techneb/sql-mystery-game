@@ -79,6 +79,7 @@
 .learn .workbench[hidden] { display: none; }
 .learn .editor pre.sql-hl { margin: 0; padding: 8px 10px; background: none; border-radius: 0; overflow: hidden; }   /* not .learn pre: it sits exactly under the textarea */
 .learn .workbench #sql { min-height: 140px; }
+@media (max-width: 900px) { .learn .workbench #sql { min-height: 64px; } }
 .wb-question select { width: 100%; font: 15px "Special Elite", monospace; padding: 4px 6px; background: var(--card); color: var(--ink); border: 1px solid var(--ink); border-radius: var(--r-box); }
 .wb-question .exercise { margin: 10px 0 6px; }
 #ex-tables { font-size: 14px; margin: 4px 0; }

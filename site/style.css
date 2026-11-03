@@ -341,7 +341,10 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .col-story > * { order: 1; } .col-erd > * { order: 2; } .col-terminal { order: 3; }
   .col-story > .board-row, #board, #taunt { order: 4; } .notepad { order: 5; } #press-box { order: 6; }
   .col-erd > .label-row, .col-terminal, .board-row, .notepad { margin-top: 16px; }
-  .results td.long { white-space: normal; min-width: 8ch; }   /* Duroc's transcript wraps instead of running 1,700 px to the right */
+  .results td.long { white-space: normal; min-width: 8ch; }
+  #sql { min-height: 64px; }   /* about three lines; it grows as the query does (wireEditor) */
+  .keys { display: none; }   /* keyboard shortcuts mean nothing on a phone (2026-11-03, owner) */
+  .reply:empty { display: none; }   /* no empty reply slot under ANSWER until there is a reply */   /* Duroc's transcript wraps instead of running 1,700 px to the right */
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
   /* icon-only 32px squares in the top corners: the 24px title (~262px at 430px) clears both */

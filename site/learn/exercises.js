@@ -4,7 +4,7 @@
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
 import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, EMPTY_RUN } from "../terminal.js";
 import { toSqlite } from "../strict.js";
-import { btnLike, erdButtonHtml, setIconButton, showCallouts } from "../ui.js";
+import { btnLike, erdButtonHtml, setIconButton, showCallouts, NARROW } from "../ui.js";
 import { initAds, track, trackOnce, useFeature, queryFail } from "../stats.js";
 import { escapeHtml } from "../shared.js";
 
@@ -160,7 +160,7 @@ async function boot() {
   initAds();
 
   const ta = $("sql");
-  const sync = wireEditor(ta, $("sql-hl"), { run, cols: () => cols, minHeight: 140 });   // the whole bakery
+  const sync = wireEditor(ta, $("sql-hl"), { run, cols: () => cols, minHeight: matchMedia(NARROW).matches ? 64 : 140 });   // the whole bakery
   // History, as in the game: most recent first, 20 at most, a query that errors or is refused never kept; per browser.
   function renderHistory() {
     $("history").innerHTML = hist.history.map(q => "<li>" + escapeHtml(q) + "</li>").join("");
