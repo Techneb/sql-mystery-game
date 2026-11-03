@@ -339,7 +339,7 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .columns { row-gap: 0; }
   .col-story, .col-erd { display: contents; }
   .col-story > * { order: 1; } .col-erd > * { order: 2; } .col-terminal { order: 3; }
-  .col-story > .board-row, #board, #telegram, #taunt { order: 4; } .notepad { order: 5; } #press-box { order: 6; }
+  .col-story > .board-row, #board, #taunt { order: 4; } .notepad { order: 5; } #press-box { order: 6; }
   .col-erd > .label-row, .col-terminal, .board-row, .notepad { margin-top: 16px; }
   .results td.long { white-space: normal; min-width: 8ch; }   /* Duroc's transcript wraps instead of running 1,700 px to the right */
   .erd { max-height: 40vh; }
