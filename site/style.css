@@ -80,6 +80,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-chapters { border-collapse: collapse; margin: 12px auto 0; font-size: 15px; }
 .landing-chapters th, .landing-chapters td { text-align: left; padding: 2px 10px; border-bottom: 1px dotted var(--rule); }
 .landing-buttons { display: flex; gap: 12px; justify-content: center; margin: 16px 0 8px; }
+.landing-buttons + #status { margin: 0 0 8px; }   /* the status right under the buttons it speaks for (owner, 2026-11-03) */
 .compete-form { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 8px; }
 .compete-form[hidden] { display: none; }
 .compete-form .row { justify-content: center; }
