@@ -334,28 +334,17 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-10-26).** Everything is deployed (64e344c; compete backend @11, feedback script @8); the repo
-has only `main` (review branches deleted 2026-10-26, their reports in `docs/reviews/` and `docs/text-review-2026-10-25.md`).
-Added 2026-10-26: the onboarding panel split by device; CTR on GOOGLE ADS and a daily average line on USERS PER DAY;
-the "The Ritz Affair . The Clerk's Handbook" header on the game page with the current section in red (game and
-handbook); feedback emails (the owner notified, the sender confirmed) carrying the browser's context (device, system,
-browser, sizes, language, time zone, local time, theme, the game's chapter/mode/part), one Sheet column per field with a `status` column for the owner, the sender's confirmation from contact@alephb.uk; the game
-masthead without its date line, "Chapter I of VIII" in red beside The Ritz Affair; the SQL Noir and chapter I notes saved in
-`docs/research/`. The desk's monitoring charts are drawn with Plotly 3.5.1 (289795a: `site/figures.js` builds the figures,
-the map outline self-hosted; known quirks: the modebar always shown on phones and able to cover the funnel's 100% tick,
-close "0" labels on the by-device chart); since 551aaf1 a legend entry hides or shows its series. Deployed head: see `git log -1`.
-Done today: the Strix fixes (new passphrase, keyed reads), the chapter I onboarding (prologue, callout tour, first
-query, plain error lines, `query_fail.type`, `RANKS` 30/80/130), Tab completion, the case board pictures and cracked
-queries, the end-of-game share line, season rename and delete, the thermo-nuclear review's 20 findings (app.js split
-into modules, one terminal, `version_site.mjs`, generated handbook chrome, named monitor panels), the handbook index
-and Grammar redesign, SHARES BY NETWORK (GA dimensions `type`, `route` and `network` registered by the owner) and the
-Send feedback form (rows in the Sheet's Feedback tab). Waiting on Google: the AdSense re-review (requested
-2026-10-19), which gates the consent-message items, the outreach emails and real ad revenue. Waiting on the owner:
-a look at the new monitoring panels and the Plotly charts once GA has data (which quirks to fix) (the old personal-account backend was archived and the desk
-checked on a phone by the owner on 2026-10-25). Not verified end to end since the module split: a real compete season (the owner
-declined a test run on 2026-10-25). Checked headless on 2026-10-26 (a local copy with a test passphrase): all twelve
-answers and the Part II code, both extra editions and films, the certificate print, the gated `?chapter`/`?admin` dialogs. Next: re-read GA about 2026-11-01 (onboarding funnel, solve route, error types, split by
-device).
+**Open right now (2026-11-03).** Everything is deployed (head 6ce1056; feedback script @14); the repo has only
+`main`. Since 2026-10-26: the game moved to <https://alephb.uk/ritz-affair/> beside the handbook (2026-10-31,
+mystery.alephb.uk a bridge; runbook `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`, its rollback kept until
+the AdSense verdict); chapter I in two steps (2026-10-31); the README's logo and pitch (2026-11-02); the chapter I GA
+re-read (2026-11-02, `docs/research/2026-10-25-chapter-1-diagnosis.md` section 5: the 10-25 fixes lifted the solve rate
+28% -> 42%, phones lag at about 11%); the second mutation run on strict.js and its four refusal sentences fixed
+(2026-11-03). Waiting on Google: the AdSense review (requested 2026-11-02; the verdict comes by email and the owner
+reports it), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`) and
+the 24 outreach emails, all sent by the owner at once. Waiting on the owner: a look at the desk charts with real data.
+Next: re-read GA for the two-step chapter I about 2026-11-09; the phone gap is the next onboarding issue. Not verified
+end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
@@ -376,7 +365,7 @@ device).
   the repo; tests in 588307f): state.js 89->99%, shared.js 78->92%, badges.js 74->99%, terminal.js 80->94%, strict.js
   lines 591-703 70->88%, Python normalisers and date_forms 23 survivors -> 0 real; no product bug found. Second run
   2026-11-03 (tests in e1bf7a8): strict.js's tokenizer, parser and analyser (lines 34-590, 2,323 mutants, all mutators)
-  59->95%, the 117 survivors all equivalent; no logic bug. Four wording slips found, pinned by anchor only, not fixed:
+  59->95%, the 117 survivors all equivalent; no logic bug. Four refusal sentences read wrong, fixed the same day (6ce1056, owner):
   `SELECT +x` refused as unary minus, `TRUE || 1` says "both numbers", COLLATE RTRIM/BINARY say "to ignore case",
   booleans in arithmetic get the text advice. Notes: `docs/research/2026-11-03-mutation-strict.md`.
 - ~~Chapter I in two questions~~ Done 2026-10-31 (owner's decisions: two steps inside chapter I, same numeral;
