@@ -891,6 +891,7 @@ async function boot() {
   }
   $("status").textContent = badBoard ? "The archives are open. The leaderboard link in this address is broken, so nothing is recorded."
     : resuming && metaUnreachable ? UNREACHABLE : "The archives are open.";
+  $("status").classList.toggle("idle", $("status").textContent === "The archives are open.");   // nothing to say: phones hide it
 
   $("btn-investigate").disabled = false;
   $("btn-investigate").onclick = () => { track("landing_begin", { mode: state.mode }); enterGame(); };

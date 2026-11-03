@@ -356,7 +356,18 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
   .landing-band { margin: -16px -16px 12px; }
-  #landing { padding-top: 86px; }   /* the card starts under the Day/Night and Feedback squares, not behind them */
+  /* the landing on a phone (2026-11-03, owner): Investigate on the first screen. The two corner squares sit side by
+     side above the card, the photograph is cropped shorter, the text is ragged-right, and what a lone visitor cannot
+     use (Compete without a season link, the idle status line) is hidden */
+  #landing { padding-top: 48px; }
+  body:has(#landing:not([hidden])) .corners { flex-direction: row; }
+  .landing-card h1 { font-size: 22px; }
+  .landing-photo { margin: 10px 0 12px; }
+  .landing-photo img { height: 130px; object-fit: cover; object-position: 50% 55%; }
+  .landing-photo figcaption { font-size: 13px; }
+  .landing-story { font-size: 17px; line-height: 1.45; }
+  .landing-story, .landing-about p { text-align: left; }
+  #btn-compete:disabled, #status.idle { display: none; }
 }
 /* iOS zooms into a focused field under 16 px: the SQL boxes and their highlight layer grow together (same metrics) */
 @media (max-width: 900px), (pointer: coarse) {

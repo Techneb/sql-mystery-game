@@ -117,7 +117,7 @@ test("landing and privacy: the handbook's header nav under the masthead, its foo
   assert.deepEqual(navItems(gameNavs[0]), nav);
   assert.deepEqual(navCurrent(gameNavs[0]), ["The Ritz Affair"], "the game's section in colour");
   const landingFoot = one(page, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "landing footer");
-  assert.match(landingFoot, /<span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
+  assert.match(landingFoot, /<span id="stats-link" hidden>(?: |&nbsp;)&middot; <a href="#" id="btn-stats">Statistics<\/a><\/span>/, "the consent link app.js shows and relabels");
   assert.deepEqual(labels(landingFoot), foot, "the handbook's footer, Statistics included");
   // privacy.html runs no consent code: the same header, the footer without Statistics or a link to itself
   const privacy = fs.readFileSync("site/privacy.html", "utf8");
