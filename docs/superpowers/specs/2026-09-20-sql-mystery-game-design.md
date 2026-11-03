@@ -374,8 +374,11 @@ device).
   the season build and tests) and their test, and the matching CLAUDE.md lines.
 - **Mutation testing** (owner, 2026-10-31): first run done the same day (Stryker from a worktree, nothing added to
   the repo; tests in 588307f): state.js 89->99%, shared.js 78->92%, badges.js 74->99%, terminal.js 80->94%, strict.js
-  lines 591-703 70->88%, Python normalisers and date_forms 23 survivors -> 0 real; no product bug found. Left, optional:
-  strict.js's tokenizer, parser and analyser (not mutated; a run of a few hours, sampled mutators).
+  lines 591-703 70->88%, Python normalisers and date_forms 23 survivors -> 0 real; no product bug found. Second run
+  2026-11-03 (tests in e1bf7a8): strict.js's tokenizer, parser and analyser (lines 34-590, 2,323 mutants, all mutators)
+  59->95%, the 117 survivors all equivalent; no logic bug. Four wording slips found, pinned by anchor only, not fixed:
+  `SELECT +x` refused as unary minus, `TRUE || 1` says "both numbers", COLLATE RTRIM/BINARY say "to ignore case",
+  booleans in arithmetic get the text advice. Notes: `docs/research/2026-11-03-mutation-strict.md`.
 - ~~Chapter I in two questions~~ Done 2026-10-31 (owner's decisions: two steps inside chapter I, same numeral;
   step 1 the date the theft is filed under, the 18th, from Duroc's interview; the title's 17th is the decoy and is
   refused). As built: `plot.CHAPTERS[0]["step1"]` (objective "Mr. Duroc knows which night. Under which date is the
