@@ -375,6 +375,7 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .landing-story { font-size: 17px; line-height: 1.45; }
   .landing-story, .landing-about p { text-align: left; }
   #status.idle { display: none; }
+  .landing-warmup strong { display: block; }   /* "New to SQL?" on its own line, the link under it (owner, 2026-11-03) */
 }
 /* iOS zooms into a focused field under 16 px: the SQL boxes and their highlight layer grow together (same metrics) */
 @media (max-width: 900px), (pointer: coarse) {
