@@ -80,6 +80,12 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .landing-chapters { border-collapse: collapse; margin: 12px auto 0; font-size: 15px; }
 .landing-chapters th, .landing-chapters td { text-align: left; padding: 2px 10px; border-bottom: 1px dotted var(--rule); }
 .landing-buttons { display: flex; gap: 12px; justify-content: center; margin: 16px 0 8px; }
+/* Investigate, the landing's one call to action: the band's red, bigger (owner, 2026-11-03); Compete shows only
+   when a season link is live (enabled), on every width */
+.landing-buttons button { font-size: 20px; padding: 10px 32px; }
+#btn-investigate { background: var(--red); border-color: var(--red); color: #fffdf5; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+#btn-investigate:not(:disabled):hover { filter: brightness(1.12); }
+#btn-compete:disabled { display: none; }
 .landing-buttons + #status { margin: 0 0 8px; }   /* the status right under the buttons it speaks for (owner, 2026-11-03) */
 .compete-form { border-top: 1px solid var(--rule); margin-top: 12px; padding-top: 8px; }
 .compete-form[hidden] { display: none; }
@@ -368,7 +374,7 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .landing-photo figcaption { font-size: 13px; }
   .landing-story { font-size: 17px; line-height: 1.45; }
   .landing-story, .landing-about p { text-align: left; }
-  #btn-compete:disabled, #status.idle { display: none; }
+  #status.idle { display: none; }
 }
 /* iOS zooms into a focused field under 16 px: the SQL boxes and their highlight layer grow together (same metrics) */
 @media (max-width: 900px), (pointer: coarse) {
