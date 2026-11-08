@@ -106,7 +106,7 @@ export function deskBoard(loc = globalThis.location, store = globalThis.localSto
 // The board URL sealed under the passphrase, so the passphrase alone opens the desk on any device (the URL itself is never
 // committed in plain text). base64url of JSON {s: salt, i: iv, c: ciphertext}, each base64url; "" until the owner sends
 // the code from the Setup page's "Save for every device". PBKDF2-SHA256 (200000 iterations) -> AES-GCM 256.
-export const BOARD_SEALED = "";
+export const BOARD_SEALED = "eyJzIjoiaHVYeTdwUnhZRW90TDRKc3FrMHJZQSIsImkiOiJJTE9rU0hJME82TXpkblRSIiwiYyI6InZZNHNlWmM0OWNycG1DR3RWVnNqcTJib0VfNjhNUjBpZVNkem9RVTk4TUdhZnUwSWFiSDh2cW9Salp4SVlObGpwMHMwcjZNNjR2N3ZzYzZHSFZHOGp2bkk5VjZOYWhFOWlzMzZTbFZfdHI2S0VJTzJxWHNfd01rVmVhc0xhenlfNVZVdEtfdjBPTnM5endDSDNlZzRYLWlpSXFwRXhWcXp0bE5CR3MyNVBFbyJ9";
 const b64u = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
 async function sealKey(pass, salt) {
