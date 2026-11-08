@@ -103,6 +103,39 @@ export function deskBoard(loc = globalThis.location, store = globalThis.localSto
   if (fromLink && stored) { u.searchParams.delete("board"); hist.replaceState(hist.state, "", u.pathname + u.search + u.hash); }
   return { board, stored };
 }
+// The board URL sealed under the passphrase, so the passphrase alone opens the desk on any device (the URL itself is never
+// committed in plain text). base64url of JSON {s: salt, i: iv, c: ciphertext}, each base64url; "" until the owner sends
+// the code from the Setup page's "Save for every device". PBKDF2-SHA256 (200000 iterations) -> AES-GCM 256.
+export const BOARD_SEALED = "";
+const b64u = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+async function sealKey(pass, salt) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 200000 }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+export async function sealBoard(url, pass) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await sealKey(pass, salt), new TextEncoder().encode(url)));
+  return b64u(new TextEncoder().encode(JSON.stringify({ s: b64u(salt), i: b64u(iv), c: b64u(c) })));
+}
+// "" on an empty seal or any failure (a wrong passphrase fails AES-GCM's tag).
+export async function openBoard(sealed, pass) {
+  if (!sealed || !pass) return "";
+  try {
+    const { s, i, c } = JSON.parse(new TextDecoder().decode(unb64u(sealed)));
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(i) }, await sealKey(pass, unb64u(s)), unb64u(c)));
+  } catch { return ""; }
+}
+// After the gate: a board from ?board= or storage wins; else the sealed one, saved under BOARD_KEY like a typed one, and
+// the menu links follow. Every desk page calls it once the passphrase is known.
+export async function deskBoardOpened(found, pass, sealed = BOARD_SEALED, store = globalThis.localStorage, links) {
+  let { board, stored } = found;
+  if (!board && (board = await openBoard(sealed, pass))) {
+    try { store.setItem(BOARD_KEY, board); stored = true; } catch { stored = false; }
+  }
+  if (links !== null) deskLinks(board, stored, links);
+  return { board, stored };
+}
 // The desk's menu row (admin.html, monitor.html, monitor-game.html, monitor-handbook.html, explore.html): bare links, or
 // ?board= on each when the board could not be stored.
 export function deskLinks(board, stored = true, links = document.querySelectorAll(".learn-menu a")) {

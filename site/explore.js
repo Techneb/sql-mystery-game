@@ -3,7 +3,7 @@
 // Pure parts are exported for test_site.mjs; the page wiring runs only in a browser. Board URL and passphrase as on
 // monitor.html.
 import { wireFeedback } from "./feedback.js";
-import { DIMENSIONS, csvText, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+import { DIMENSIONS, csvText, deskBoard, deskBoardOpened, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 
 // The dimensions whitelist (DIMENSIONS) lives in shared.js, shared with monitor.js's breakdown.
 export { DIMENSIONS, reportUrl };
@@ -110,12 +110,13 @@ const $ = id => document.getElementById(id);
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
 async function main() {
-  let { board, stored } = deskBoard();
-  try { new URL(board); } catch { board = ""; }
-  deskLinks(board, stored);
-  if (!board) { $("nob").hidden = false; return; }
+  const found = deskBoard();
+  deskLinks(found.board, found.stored);
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
+  let { board } = await deskBoardOpened(found, key);
+  try { new URL(board); } catch { board = ""; }
+  if (!board) { $("nob").hidden = false; return; }
   $("explore").hidden = false;
   const s = { period: "7", start: "", end: "", dims: ["date"], metrics: ["activeUsers", "sessions"], filters: {} };
   let res = null, sort = null, gen = 0;

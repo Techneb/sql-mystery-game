@@ -1,10 +1,10 @@
 // site/admin.js -- the teacher's page (admin.html): create, open and close compete seasons, share their link and QR
 // code, watch who joined, export the rows. Pure helpers are exported for test_site.mjs; the page wiring runs only in a
-// browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, never from this repo; the
+// browser. The Apps Script /exec URL comes from ?board= or localStorage ritz.admin.board, else from BOARD_SEALED (shared.js, sealed under the passphrase), never in plain text in this repo; the
 // passphrase stays in sessionStorage for the tab (shared.js deskPassphrase) and goes to the backend as `key` (apps_script.gs
 // compares it with ADMIN_KEY).
 import { wireFeedback } from "./feedback.js";
-import { BOARD_KEY, csvText as csv, downloadText, deskBoard, deskLinks, deskPassphrase, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
+import { BOARD_KEY, csvText as csv, downloadText, BOARD_SEALED, deskBoard, deskBoardOpened, deskLinks, deskPassphrase, openBoard, sealBoard, askDialog, officialTime, chapterSummary, fmtTime, escapeHtml as esc, resultsLink } from "./shared.js";
 import { qrSvg } from "./qr.js";
 import { ICON_ATTRS } from "./ui.js";
 
@@ -219,6 +219,9 @@ function setBoard(value) {
   deskLinks(board, stored);
 }
 
+// "Save for every device" shows only when the board and passphrase are known and the site's seal does not already hold that board.
+async function sealOffer() { $("btn-seal").hidden = !(board && key) || (await openBoard(BOARD_SEALED, key)) === board; }
+
 async function main() {
   setBoard(deskBoard().board);
   $("board-url").value = board;
@@ -228,7 +231,14 @@ async function main() {
   async function start() {
     if (!(key = await deskPassphrase($("passgate")))) { $("locked").hidden = false; return; }
     $("locked").hidden = true; $("desk").hidden = false;
-    $("board-form").onsubmit = e => { e.preventDefault(); setBoard($("board-url").value); if (board) say("Board URL saved."); selected = ""; $("detail").innerHTML = ""; loadSeasons(); };
+    if (!board) { setBoard((await deskBoardOpened({ board: "", stored: true }, key, BOARD_SEALED, localStorage, null)).board); $("board-url").value = board; }
+    sealOffer();
+    $("board-form").onsubmit = e => { e.preventDefault(); setBoard($("board-url").value); if (board) say("Board URL saved."); sealOffer(); selected = ""; $("detail").innerHTML = ""; loadSeasons(); };
+    $("btn-seal").onclick = async () => {
+      $("seal-code").value = await sealBoard(board, key);
+      $("seal-copy").onclick = async () => { try { await navigator.clipboard.writeText($("seal-code").value); say("Code copied."); } catch { $("seal-code").select(); } };
+      $("seal").showModal ? $("seal").showModal() : say("Send this code to Claude: " + $("seal-code").value);
+    };
     $("create").onsubmit = create;
     $("btn-refresh").onclick = loadSeasons;
     $("seasons").onclick = e => {

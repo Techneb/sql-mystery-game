@@ -6,9 +6,9 @@
 // Try it), read from the Apps Script's ?stats=<days>&key= and ?report= (apps_script.gs stats_, report_), so nobody
 // opens GA. This module is the GA model (the Count metrics, the request builders, PANELS) and the views; the charts
 // themselves are figures.js (Plotly figures, drawn by drawPlots below). Pure parts are exported for test_desk.mjs; the page wiring runs only in a browser.
-// The board URL comes from ?board= or localStorage ritz.admin.board, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
+// The board URL comes from ?board=, localStorage ritz.admin.board or, after the gate, BOARD_SEALED, as on admin.html; the passphrase stays in sessionStorage for the tab (shared.js deskPassphrase).
 import { wireFeedback } from "./feedback.js";
-import { DIMENSIONS, deskBoard, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
+import { DIMENSIONS, deskBoard, deskBoardOpened, deskLinks, deskPassphrase, downloadText, escapeHtml as esc, gaText, reportUrl } from "./shared.js";
 import { ROMAN, STAGES, barTable, chapterBarsFig, chapterLineFig, compact, donutHtml, fold, funnelFig, groupFig, hbarFig, legend, legendKeys, legendOf,
   lineFig, mapHtml, multiLineFig, pct, pctOf, plotHtml, r1, raw, retention, roman, shown, solveRateFig, tableCsv, tableHtml, themed } from "./figures.js";
 const hbar = (...a) => plotHtml(hbarFig(...a));
@@ -699,12 +699,13 @@ const restyle = () => document.querySelectorAll(".plot").forEach(el => plot(el, 
 const say = (msg, bad = false) => { const s = $("status"); s.textContent = msg; s.classList.toggle("bad", bad); };
 
 async function main() {
-  let { board, stored } = deskBoard();
-  try { new URL(board); } catch { board = ""; }
-  deskLinks(board, stored);
-  if (!board) { $("nob").hidden = false; return; }
+  const found = deskBoard();
+  deskLinks(found.board, found.stored);
   const key = await deskPassphrase($("passgate"));
   if (!key) { say("The desk is locked: reload the page to try again.", true); return; }
+  let { board } = await deskBoardOpened(found, key);
+  try { new URL(board); } catch { board = ""; }
+  if (!board) { $("nob").hidden = false; return; }
   $("monitor").hidden = false;
   wireCsv($("stats"));
   wireKeys($("stats"));

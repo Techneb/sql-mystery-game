@@ -958,3 +958,38 @@ test("desk type: the five desk pages get Nunito through admin.css; the game, the
   }
   for (const f of ["site/style.css", "site/learn/learn.css"]) assert.doesNotMatch(fs.readFileSync(f, "utf8"), /Nunito/, f + " stays 1912");
 });
+
+test("desk: the board URL sealed under the passphrase opens only with it; a stored or linked board wins", async () => {
+  const url = "https://x.invalid/macros/s/ID/exec", pass = "five random words here ok";
+  const sealed = await shared.sealBoard(url, pass);
+  assert.match(sealed, /^[A-Za-z0-9_-]+$/, "base64url");
+  assert.equal(await shared.openBoard(sealed, pass), url);
+  assert.equal(await shared.openBoard(sealed, "wrong"), "");
+  assert.equal(await shared.openBoard("", pass), "");
+  assert.equal(await shared.openBoard("garbage", pass), "");
+  assert.notEqual(await shared.sealBoard(url, pass), sealed, "a fresh salt and iv each time");
+  if (shared.BOARD_SEALED) {
+    const o = JSON.parse(Buffer.from(shared.BOARD_SEALED, "base64url").toString());
+    assert.deepEqual(Object.keys(o).sort(), ["c", "i", "s"]);
+    assert.equal(Buffer.from(o.s, "base64url").length, 16); assert.equal(Buffer.from(o.i, "base64url").length, 12);
+  } else assert.equal(shared.BOARD_SEALED, "");
+  const mem = () => { const m = {}; return { m, getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = String(v); } }; };
+  const s = mem();
+  assert.deepEqual(await shared.deskBoardOpened({ board: "", stored: true }, pass, sealed, s, null), { board: url, stored: true });
+  assert.equal(s.m[shared.BOARD_KEY], url, "saved like a typed one");
+  const t = mem(), other = "https://other.invalid/exec";
+  assert.deepEqual(await shared.deskBoardOpened({ board: other, stored: true }, pass, sealed, t, null), { board: other, stored: true });
+  assert.equal(t.m[shared.BOARD_KEY], undefined, "the found board wins, nothing rewritten");
+  assert.deepEqual(await shared.deskBoardOpened({ board: "", stored: true }, "wrong", sealed, mem(), null), { board: "", stored: true });
+  const blocked = { setItem() { throw new Error("blocked"); } };
+  assert.deepEqual(await shared.deskBoardOpened({ board: "", stored: true }, pass, sealed, blocked, null), { board: url, stored: false });
+  for (const f of ["admin.js", "monitor.js", "explore.js", "inbox.js"])
+    assert.match(fs.readFileSync("site/" + f, "utf8"), /deskBoardOpened\(/, f + " opens the sealed board after the gate");
+});
+
+test("repo: no tracked file holds an Apps Script /exec URL in plain text (the feedback script's excepted)", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const hits = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(f => f && f !== "site/feedback.js" && fs.existsSync(f))
+    .filter(f => /script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}/.test(fs.readFileSync(f, "latin1")));
+  assert.deepEqual(hits, []);
+});

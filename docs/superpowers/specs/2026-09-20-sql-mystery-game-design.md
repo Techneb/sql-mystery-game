@@ -348,6 +348,8 @@ end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
+- Desk on any device (owner, 2026-11-08, built): the board URL ships sealed under the passphrase (`BOARD_SEALED` in `shared.js`), so the passphrase alone opens the desk; left: the owner sends the Setup page's Save for every device code and Claude pastes it.
+
 - ~~The game moves to alephb.uk/ritz-affair/~~ Done 2026-10-31 (runbook finished 2026-11-01). (owner, 2026-10-31; live the same evening). The game and the
   desk at <https://alephb.uk/ritz-affair/>, next to the handbook at <https://alephb.uk/learn/>, both pushed to the
   alephb-site repo by `.github/workflows/publish-alephb.yml` (`publish.mjs`; tests first). mystery.alephb.uk becomes
