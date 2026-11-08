@@ -155,3 +155,25 @@ Reading:
 - The 10-25 fixes worked: the "never runs a query" leak fell from ~45% to ~20%, and the chapter I solve rate rose from ~28% to ~42%, above the 35-40% ceiling section 4 expected.
 - Phones are now the gap: about 1 in 9 phone openers solve chapter I, against about half on a computer.
 - The two-step chapter I (31 Oct) is too new to judge (70 openers over two and a half days). The solve rate dipped to 33% and queries per solve went from 13 to 36. Re-read around 2026-11-09 before changing anything.
+
+## 6. Re-read, 2026-11-08
+
+Same exploration (chapter x event x device category, active users), chapter I. "Step 1" is `step_solve` (the date found). The 31 Oct - 2 Nov row is re-read now that those days are complete. The phone fixes went live on 3 Nov, so 3 Nov is left out.
+
+| Window | Opened | Ran | Step 1 | Solved | Ran / opened | Step 1 / opened | Solved / opened | Solved / step 1 | Queries per solve |
+|---|---|---|---|---|---|---|---|---|---|
+| 31 Oct - 2 Nov (complete) | 85 | 57 | 26 | 25 | 67% | 31% | 29% | 96% | 34 |
+| 4-7 Nov (after the phone fixes) | 250 | 171 | 113 | 92 | 68% | 45% | 37% | 81% | 19 |
+
+By device:
+
+| Window | Desktop opened / ran / step 1 / solved | Mobile opened / ran / step 1 / solved |
+|---|---|---|
+| 31 Oct - 2 Nov | 55 / 43 (78%) / 19 / 21 (38%) | 30 / 14 (47%) / 7 / 4 (13%) |
+| 4-7 Nov | 184 / 147 (80%) / 99 (54%) / 81 (44%), 18.5 queries per solve | 65 / 23 (35%) / 13 (20%) / 10 (15%) |
+
+Reading:
+- The two-step chapter I has settled. Queries per solve fell from 34 to 19, against 13 for the one-step chapter, and the solve rate is 37%. That is between the one-step 42% and the first days' 29%. On desktop 44% solve, against 50% before the split.
+- Step 1 (the date) is the hurdle now. 45% of openers find the date, and 81% of those then finish the chapter.
+- On phones the 3 Nov fixes did not close the gap. Phones solve 15% (12% before), but only 35% of phone openers ever run a query (48% before), against 80% on desktop. The phone leak happens before the first query, so the next phone look is the prologue and the first screen. The desk's Game view, CHAPTER I ONBOARDING BY DEVICE, shows the prologue and tour steps per device.
+- Small numbers on phones (65 openers): re-read again around 2026-11-15.
