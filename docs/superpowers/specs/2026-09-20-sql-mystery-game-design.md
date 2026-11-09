@@ -334,21 +334,25 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-11-03).** Everything is deployed (head 6ce1056; feedback script @14); the repo has only
+**Open right now (2026-11-09).** Everything is deployed (head 3264a7c; feedback script @14); the repo has only
 `main`. Since 2026-10-26: the game moved to <https://alephb.uk/ritz-affair/> beside the handbook (2026-10-31,
 mystery.alephb.uk a bridge; runbook `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`, its rollback kept until
-the AdSense verdict); chapter I in two steps (2026-10-31); the README's logo and pitch (2026-11-02); the chapter I GA
-re-read (2026-11-02, `docs/research/2026-10-25-chapter-1-diagnosis.md` section 5: the 10-25 fixes lifted the solve rate
-28% -> 42%, phones lag at about 11%); the second mutation run on strict.js and its four refusal sentences fixed
-(2026-11-03). Waiting on Google: the AdSense review (requested 2026-11-02; the verdict comes by email and the owner
-reports it), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`) and
-the 24 outreach emails, all sent by the owner at once. Waiting on the owner: a look at the desk charts with real data.
-Next: re-read GA for the two-step chapter I about 2026-11-09; the phone gap is the next onboarding issue. Not verified
-end to end since the module split: a real compete season.
+the AdSense verdict); chapter I in two steps (2026-10-31); the second mutation run on strict.js (2026-11-03); the phone
+fixes for chapter I and the landing (2026-11-03, `docs/research/2026-11-03-chapter-1-phones.md`); the desk opened by the
+passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of 2026-11-08
+(`docs/research/2026-10-25-chapter-1-diagnosis.md` section 6): the two-step chapter has settled (37% solve, 19 queries
+per solve); step 1 (the date) is the hurdle; phones solve 15% and only 35% of phone openers run a query, so the phone
+leak is before the first query (prologue, first screen). Search Console's "not indexed" emails of 2026-11-08 are the
+move's side effects (checked 2026-11-09). Waiting on Google: the AdSense review (requested 2026-11-02, still "getting
+ready" on 2026-11-09; the verdict comes by email), which gates the consent-message items, the LinkedIn post
+(`docs/drafts/2026-11-01-linkedin-post.md`), the 24 outreach emails (all sent by the owner at once), the rollback's
+removal and the desk's robots lines (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
+the phone leak before the first query; re-read GA about 2026-11-15. Not verified end to end since the module split: a
+real compete season.
 
 ## 8. Backlog (not scheduled)
 
-- Desk on any device (owner, 2026-11-08, built): the board URL ships sealed under the passphrase (`BOARD_SEALED` in `shared.js`), so the passphrase alone opens the desk; left: the owner sends the Setup page's Save for every device code and Claude pastes it.
+- ~~Desk on any device~~ Done 2026-11-08 (3264a7c, live): the board URL ships sealed under the passphrase (`BOARD_SEALED` in `shared.js`), so the passphrase alone opens the desk; a new URL or passphrase means a new Save for every device code from Setup.
 
 - ~~The game moves to alephb.uk/ritz-affair/~~ Done 2026-10-31 (runbook finished 2026-11-01). (owner, 2026-10-31; live the same evening). The game and the
   desk at <https://alephb.uk/ritz-affair/>, next to the handbook at <https://alephb.uk/learn/>, both pushed to the
