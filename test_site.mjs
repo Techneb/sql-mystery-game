@@ -7,7 +7,7 @@ import { normalise, sha256, teamKey, fmtTime, resultsLink } from "./site/shared.
 import { freshState, migrateSave, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, stepOn, answerVerdict } from "./site/state.js";
 import { competeStats, eventPayload, clockStart, clockMs, watchOn, judgeWrong, TAUNTS, legendEntries, PENALTY, duration, recordQuery, queryMilestone, chapterLeave, resetMessage, FIRST_QUERY, starterSql, scanRun, solveRoute, winningQuery, EVE_REPLY } from "./site/app.js";
 import { mastheadChapterHtml, crackedHtml, objectiveHtml, currentObjectiveHtml, boardCardsHtml, whereOpened } from "./site/board.js";
-import { renderResults, ROW_CAP, LONG_CELL, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals } from "./site/terminal.js";
+import { renderResults, ROW_CAP, LONG_CELL, pushHistory, highlightSql, formatSql, cartesian, SQL_KEYWORDS, strictHtml, sqliteHelp, errorHtml, dateArithmeticNote, suggestSql, SUGGEST_FUNCS, SUGGEST_KEYWORDS, SUGGEST_MAX, runSql, runHtml, columns, blankLiterals, straightQuotes } from "./site/terminal.js";
 import { strictCheck, SQLITE_FUNCS, toSqlite, ilike, ymd } from "./site/strict.js";
 import { detectBadges, BADGES, rank, FILM_LINES, seenFilms, eggText, EGG_ROWS } from "./site/badges.js";
 import { metSuspects, foundSuspects, suspectsOn, boardSuspects, cardPicture } from "./site/suspects.js";
@@ -1484,7 +1484,7 @@ test("prologue: learn mode's first visit only, and its three steps work on the i
   assert.equal(onb.tourOn({ ...s, onboarding: "tour" }), true);
   assert.equal(onb.tourOn({ ...s, onboarding: "done" }), false);
   assert.equal(onb.tourOn({ ...s, onboarding: "tour", mode: "compete" }), false);
-  const where = onb.PROLOGUE_QUERY + " WHERE found_in = 'Garden'";
+  const where = onb.PROLOGUE_QUERY + " " + onb.PROLOGUE_WHERE;   // what phones' Type it for me writes
   assert.equal(strictCheck(onb.PROLOGUE_QUERY, onb.PROLOGUE_SCHEMA), null);
   assert.equal(strictCheck(where, onb.PROLOGUE_SCHEMA), null);
   assert.ok(onb.PROLOGUE_STEPS[1].includes("WHERE found_in = 'Garden'"), "step 2 says what to filter");
@@ -1501,7 +1501,7 @@ test("prologue: learn mode's first visit only, and its three steps work on the i
   const words = onb.PROLOGUE_ROWS.flat().join(" ").toLowerCase() + " " + onb.PROLOGUE_STEPS.join(" ").toLowerCase();
   for (const n of names) assert.ok(!words.includes(n), "no cast name in the prologue: " + n);
   const html = fs.readFileSync("site/index.html", "utf8");
-  for (const id of ["prologue", "prologue-sql", "prologue-run", "prologue-results", "prologue-answer", "prologue-input", "prologue-submit", "prologue-done", "prologue-skip", "prologue-step"])
+  for (const id of ["prologue", "prologue-sql", "prologue-run", "prologue-results", "prologue-answer", "prologue-input", "prologue-submit", "prologue-done", "prologue-skip", "prologue-step", "prologue-type"])
     assert.ok(html.includes('id="' + id + '"'), id);
   assert.ok(html.includes("Skip, I know SQL"));
 });
@@ -1521,6 +1521,14 @@ test("callouts point at parts of the page, never at a table", () => {
   // phones: the tour follows the stacked page down and ends on Run; desktop keeps its order
   assert.equal(onb.tourSteps(false), onb.CALLOUTS);
   assert.deepEqual(onb.tourSteps(true).map(s => s[0]), ["#objective", "#erd", "#board", "#btn-run"]);
+  assert.ok(onb.tourSteps(true).every(s => !s[1].includes("Ctrl")), "no keyboard shortcut on a phone");
+  assert.ok(onb.CALLOUTS.some(s => s[1].includes("Ctrl+Enter")), "desktop keeps it");
+});
+test("phones: curly quotes from a phone keyboard become straight, one character for one", () => {
+  const typed = "SELECT * FROM interview WHERE person_name = ‘Duroc’ OR x = “y”";
+  assert.equal(straightQuotes(typed), "SELECT * FROM interview WHERE person_name = 'Duroc' OR x = \"y\"");
+  assert.equal(straightQuotes(typed).length, typed.length, "the caret stays");
+  assert.match(fs.readFileSync("site/terminal.js", "utf8"), /CURLY\.test\(ta\.value\) && globalThis\.matchMedia\?\.\(PHONE\)/, "phones only");
 });
 test("phones: scroll only to what is off screen; long cells wrap, short ones do not", () => {
   assert.equal(offScreen({ top: 10, bottom: 300 }, 844), false);

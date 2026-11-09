@@ -40,6 +40,8 @@ export const calloutLeft = (rect, w, vw) => Math.max(8, Math.min(rect.left, vw -
 // Phones (style.css's 900 px breakpoint): bring what changed into view, but only when it is off screen (pure part
 // tested); never on desktop, smooth unless reduced motion is asked for.
 export const NARROW = "(max-width: 900px)";
+// a phone: narrow, or a touch screen of any width (the 16 px SQL boxes in style.css use the same query)
+export const PHONE = NARROW + ", (pointer: coarse)";
 export const offScreen = (rect, h) => rect.top < 0 || rect.bottom > h;
 export function revealOnPhone(el) {
   if (!el || !matchMedia(NARROW).matches) return;

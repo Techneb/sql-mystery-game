@@ -3,7 +3,7 @@
 // colouring, Tab completion, Ctrl+Enter, Ctrl+F, Tab, Enter auto-indent), the results table and the database settings.
 // Side-effect free at import; the DOM is touched only inside wireEditor.
 import { strictCheck, toSqlite, ilike, ymd, STRICT_SECTIONS } from "./strict.js";
-import { esc } from "./ui.js";
+import { esc, PHONE } from "./ui.js";
 import { HANDBOOK, HISTORY_MAX } from "./shared.js";
 
 // SQL colouring for the terminal: a <pre> under a transparent textarea (index.html .editor).
@@ -166,6 +166,10 @@ function suggester(ta, hl, tables, sync) {
   };
   return { key, refresh };
 }
+// Phone keyboards type curly quotes (iOS smart punctuation), which SQL refuses: on phones every one becomes straight as
+// it is typed (2026-11-09; the data is ASCII, so a curly quote never matched anything). One character for one,
+// so the caret stays. Desktop keeps them, and sqliteHelp's curly_quote line.
+export const straightQuotes = sql => sql.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
 // The query box: a transparent textarea `ta` over the <pre> `hl` that colours it, growing instead of scrolling
 // (never under minHeight px). run() on Ctrl+Enter; Ctrl+F formats (Cmd+F stays the browser's find); Tab completes
 // while the list shows, else indents (Shift+Tab leaves the box); Enter keeps the line's indent. cols() gives the
@@ -177,7 +181,12 @@ export function wireEditor(ta, hl, { run, cols, minHeight = 0 }) {
   };
   const put = (text, s, en, caret) => { ta.value = ta.value.slice(0, s) + text + ta.value.slice(en); ta.selectionStart = ta.selectionEnd = caret; sync(); };
   const list = suggester(ta, hl, cols, sync);
-  ta.addEventListener("input", () => { sync(); list.refresh(); });
+  ta.addEventListener("input", e => {
+    if (!e.isComposing && CURLY.test(ta.value) && globalThis.matchMedia?.(PHONE).matches) {   // a phone keyboard's smart quotes, straightened as typed
+      const s = ta.selectionStart, en = ta.selectionEnd; ta.value = straightQuotes(ta.value); ta.setSelectionRange(s, en);
+    }
+    sync(); list.refresh();
+  });
   ta.addEventListener("keydown", e => {
     if (list.key(e)) return;
     const s = ta.selectionStart, en = ta.selectionEnd;

@@ -3,18 +3,19 @@
 // -> "done"; only New investigation (freshState) offers them again. Side-effect free at import.
 import { normalise } from "./shared.js";
 import { runSql, runHtml, runInfo, wireEditor, terminalDb, columns, EMPTY_RUN } from "./terminal.js";
-import { esc } from "./ui.js";
+import { esc, PHONE } from "./ui.js";
 
 const $ = id => document.getElementById(id);
 
 // The book: never in mystery.sqlite, no cast, no planted value. Three steps: run the query, add a WHERE, answer.
 export const PROLOGUE_QUERY = "SELECT * FROM lost_property";
+export const PROLOGUE_WHERE = "WHERE found_in = 'Garden'";
 export const PROLOGUE_ROWS = [[1, "umbrella", "Lobby", "Monday"], [2, "opera glasses", "Bar", "Monday"], [3, "left glove", "Dining room", "Tuesday"],
   [4, "walking stick", "Lobby", "Wednesday"], [5, "birdcage", "Garden", "Wednesday"], [6, "pocket watch", "Bar", "Thursday"]];
 export const PROLOGUE_SCHEMA = { lost_property: [["id", "INTEGER", 1], ["item", "TEXT", 0], ["found_in", "TEXT", 0], ["day", "TEXT", 0]] };
 export const PROLOGUE_STEPS = [
   "The query below asks for every row of the book. Press Run. Each row is one thing a guest left behind.",
-  "Well read. Now keep only what was found in the garden: add WHERE found_in = 'Garden' at the end of the query and press Run again.",
+  "Well read. Now keep only what was found in the garden: add " + PROLOGUE_WHERE + " at the end of the query and press Run again.",
   "One row is left. What did the guest leave in the garden? Type it in the answer box and press Submit.",
   "Correct. That is the job: query, read, answer. The inspector's archives are bigger, and their answers are not on the first page."];
 export const prologueOn = state => state.mode !== "compete" && state.onboarding === "prologue" && !state.solved.length && !state.totalQueries;
@@ -44,6 +45,7 @@ export function showPrologue(SQL, done) {
     el.innerHTML = '<span class="step-no">' + (step < 3 ? "Step " + (step + 1) + " of 3" : "Done") + "</span> " + esc(PROLOGUE_STEPS[step]);
     el.classList.remove("fresh"); void el.offsetWidth; el.classList.add("fresh");
     if (step) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    $("prologue-type").hidden = step !== 1 || !matchMedia(PHONE).matches;   // phones: no keyboard for step 2 (2026-11-09)
     $("prologue-answer").hidden = step !== 2;
     $("prologue-done").hidden = step < 3;
     $("prologue-skip").hidden = step >= 3;
@@ -63,6 +65,7 @@ export function showPrologue(SQL, done) {
   ta.value = PROLOGUE_QUERY; show();
   const sync = wireEditor(ta, d.querySelector(".sql-hl"), { run, cols: () => cols });
   $("prologue-run").onclick = run;
+  $("prologue-type").onclick = () => { ta.value = PROLOGUE_QUERY + " " + PROLOGUE_WHERE; sync(); };   // then Run, as the step says
   const answer = () => {
     if (prologueAnswer($("prologue-input").value)) { step = 3; $("prologue-reply").textContent = ""; show(); }
     else $("prologue-reply").textContent = "Not quite. Look at the item column of the row you found.";
@@ -84,5 +87,6 @@ export const CALLOUTS = [
   ["#btn-run", "Write SQL in the box above and press Run (or Ctrl+Enter). The results appear underneath."],
   ["#objective", "The objective says what to find. Your answer goes in the box under the terminal."],
   ["#board", "Every answer you find is pinned to the case board."]];
-// On a phone the page reads objective, schema, terminal, case board (style.css): the tour starts at the top and ends on Run.
-export const tourSteps = narrow => narrow ? [2, 0, 3, 1].map(i => CALLOUTS[i]) : CALLOUTS;
+// On a phone the page reads objective, schema, terminal, case board (style.css): the tour starts at the top and ends on
+// Run, without the keyboard shortcut a phone has no key for.
+export const tourSteps = narrow => narrow ? [2, 0, 3, 1].map(i => [CALLOUTS[i][0], CALLOUTS[i][1].replace(" (or Ctrl+Enter)", "")]) : CALLOUTS;
