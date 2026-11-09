@@ -346,7 +346,7 @@ leak is before the first query (prologue, first screen). Phone fixes for it live
 move's side effects (checked 2026-11-09). Waiting on Google: the AdSense review (requested 2026-11-02, still "getting
 ready" on 2026-11-09; the verdict comes by email), which gates the consent-message items, the LinkedIn post
 (`docs/drafts/2026-11-01-linkedin-post.md`), the 24 outreach emails (all sent by the owner at once), the rollback's
-removal and the desk's robots lines (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
+removal, the desk's robots lines and three more phone changes (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
 the phone leak before the first query; re-read GA about 2026-11-15. Not verified end to end since the module split: a
 real compete season.
 
@@ -367,6 +367,11 @@ real compete season.
   its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
   asserts in `test_desk.mjs`), keep the noindex tags, then tell the Supermain. Not before the verdict: nothing that could
   touch the review.
+- **After the AdSense verdict: three more phone changes** (owner, 2026-11-09, from
+  `docs/research/2026-11-09-phone-first-query.md`; kept until the verdict so nothing touches the review). (1) A Run it
+  button in the phone tour's last box (changes what `tour_done` counts in GA); (2) on phones a shorter prologue title
+  and no intro paragraph; (3) a smaller cookie banner on phones, or one shown later (it covers the bottom 200 px).
+  Re-read GA (about 2026-11-15) first to see what the 2026-11-09 fixes did.
 - **Delete the move's rollback once the AdSense verdict is in** (owner, 2026-11-01; about 1-2 weeks after the
   review request). Until then `BRIDGE` = off and a push bring the old game back on mystery.alephb.uk (alephb-site
   publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
