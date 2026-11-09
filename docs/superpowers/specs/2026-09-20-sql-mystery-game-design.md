@@ -358,6 +358,11 @@ end to end since the module split: a real compete season.
   when the import is further along); every other old page redirects, and a Cloudflare 301 covers everything but `/`.
   Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. alephb-site's robots.txt lines, home page
   and footer links and the article's rename to about-the-ritz-affair.html are done (2026-10-31).
+- **After the AdSense verdict: let Google see the desk's noindex** (owner, 2026-11-09). Search Console lists
+  alephb.uk/ritz-affair/admin.html as "Indexed, though blocked by robots.txt": the Disallow lines stop Google reading
+  its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
+  asserts in `test_desk.mjs`), keep the noindex tags, then tell the Supermain. Not before the verdict: nothing that could
+  touch the review.
 - **Delete the move's rollback once the AdSense verdict is in** (owner, 2026-11-01; about 1-2 weeks after the
   review request). Until then `BRIDGE` = off and a push bring the old game back on mystery.alephb.uk (alephb-site
   publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
