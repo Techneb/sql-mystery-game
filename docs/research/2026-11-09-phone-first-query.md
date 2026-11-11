@@ -50,3 +50,14 @@ from its masthead nav, so it is no dead end; it may be where phone players prefe
 particular whether iOS still types curly quotes with `autocorrect="off"`. GA's `query_fail` type `curly_quote` by
 device answers that. After a push, compare this table for the following two weeks: prologue "neither" on mobile (32%)
 and ran / opened (35%).
+
+## Early re-read, 2026-11-11
+
+The same GA exploration, event x device category, active users, on 10-11 Nov (the 9 Nov fixes went live that evening; the 11th is still partial). The numbers count every chapter, but chapter I dominates opens and first queries.
+
+| Window | Mobile opened / ran / step 1 | Ran / opened | Desktop opened / ran / step 1 | Ran / opened |
+|---|---|---|---|---|
+| 4-7 Nov (before) | 68 / 24 / 13 | 35% | 215 / 171 / 99 | 80% |
+| 10-11 Nov (after) | 22 / 13 / 5 | 59% | 49 / 34 / 17 | 69% |
+
+On phones, prologue done / skipped went from 20 / 25 to 8 / 8. Reading: the share of phone openers who run a query rose from 35% to 59%, the change the fixes aimed at, but it rests on 22 people over a day and a half. Desktop fell at the same time, which suggests noise. `try_here` (live 11 Nov evening) has no data yet. Read again with a full week, about 2026-11-15.
