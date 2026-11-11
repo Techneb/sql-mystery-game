@@ -783,7 +783,8 @@ real compete season.
   the-price-rise, the-staff-room, money-back, shutters-down, which asks for Hillcrest so the Fridays alone are
   wrong). The same day: a Day/Night edition button on the handbook, desk and board (`learn/theme.js`, sharing
   `ritz.theme`), the landing card in the handbook's split header and footer, and the engraved house ad's line
-  repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`).
+  repainted to "Twenty graded exercises" in both prints (9f4e671; sources in `assets-source/ad/`), then on 2026-11-11 to
+  "Twenty-three graded exercises" (same Times face and size, letter spacing 2 px tighter; sources `*-23.jpg`).
 - ~~`bakery.py` scaffolding~~ Done 2026-10-20: v1's schema, `LIVE` and `check(1)` dropped, the generator emits
   v2 only (its first-week rows renamed `FIRST_WEEK`); the script, every pasted result and the schemas unchanged.
 - ~~Handbook layout and reading pass~~ Done 2026-10-25 (owner): the exercises workbench spans the whole window
