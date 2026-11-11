@@ -116,9 +116,12 @@ function setConsent(v) {
 }
 function openBanner() { $("consent").hidden = false; $("consent-yes").focus(); }
 // The game's own question (#consent): the only one with ads off, the fallback with ads on.
-function ownConsent(id) {
+function wireBanner() {
   $("consent-yes").onclick = () => setConsent("yes");
   $("consent-no").onclick = () => setConsent("no");
+}
+function ownConsent(id) {
+  wireBanner();
   const c = consent();
   if (c === "yes" || (!c && !europeanZone(timeZone()))) gaLoad(id);   // Europe waits for the Yes
   if (!c) $("consent").hidden = false;   // shown everywhere: the region is unknown client side
@@ -162,6 +165,7 @@ export function googleStats({ modeStatus, tc }) {
   return "unknown";
 }
 let cmpPath = "";         // ads on: "" until decided, then "google" or "own"; ads off: stays ""
+let googleAnswered = false;   // Google's message has given a statistics answer (granted or denied)
 let cmpDone = () => {};   // initAds reports the ads script's load or error here
 // Sources: https://developers.google.com/funding-choices/fc-api-docs (googlefc: CONSENT_API_READY,
 // CONSENT_MODE_DATA_READY, getGoogleConsentModeValues, showRevocationMessage), https://support.google.com/adsense/answer/16088460
@@ -175,8 +179,10 @@ function initGoogleConsent(id) {
   $("btn-stats").textContent = "Privacy and cookie settings";
   $("btn-stats").onclick = e => {
     e.preventDefault();
-    if (cmpPath === "google") window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage());
-    else openBanner();
+    // Google's message governs statistics only once it has answered on them (Europe). Elsewhere (a US state message
+    // is about ads only) our own banner asks, or a visitor could never refuse statistics (feedback, 2026-11-11).
+    if (cmpPath === "google" && googleAnswered) window.googlefc.callbackQueue.push(() => window.googlefc.showRevocationMessage());
+    else { wireBanner(); openBanner(); }
   };
   $("stats-link").hidden = false;
   if (!id) return;
@@ -190,6 +196,7 @@ function initGoogleConsent(id) {
   };
   const apply = (stats) => {
     if (cmpPath !== "google" || stats === "unknown") return;
+    googleAnswered = true;
     statsRefused = stats === "denied";
     window["ga-disable-" + id] = statsRefused;
     if (statsRefused) { window.gtag("consent", "update", { analytics_storage: "denied" }); dropGaCookies(); }
