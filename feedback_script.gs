@@ -119,7 +119,7 @@ function context_(c) {
 // The handbook's pages by slug, named by their <h1> (a test keeps it in step with site/learn).
 var LEARN_PAGES = { "case-when": "CASE WHEN", "ctes": "CTEs and WITH RECURSIVE", "database": "The bakery database",
   "dates-times": "Dates and times stored as text or numbers", "exercises": "SQL exercises with solutions",
-  "grammar": "The Grammar of SQL", "group-by-having": "GROUP BY, aggregates and HAVING", "joins": "JOIN, LEFT JOIN and self-joins",
+  "glossary": "SQL glossary", "grammar": "The Grammar of SQL", "group-by-having": "GROUP BY, aggregates and HAVING", "joins": "JOIN, LEFT JOIN and self-joins",
   "like": "LIKE and text patterns", "nulls": "NULL and missing values", "order-by-limit": "ORDER BY and LIMIT",
   "schema": "Tables, keys and the schema", "select-where": "SELECT and WHERE", "set-operations": "UNION, INTERSECT and EXCEPT",
   "subqueries": "Subqueries", "window-functions": "Window functions: RANK and LAG" };

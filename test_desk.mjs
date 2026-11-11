@@ -761,7 +761,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.equal(emptyRings(g), 3, "the failure kind and both mode donuts: empty rings");
   assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
   const h = monitor.handbookHtml(390, emptyPanels("handbook", { m: "ran" }), { m: "ran" });
-  assert.ok(!bad.test(visible(h)) && heads(h, "20. Word of mouth") === 2 && h.includes("<td>1. The cheap shelf</td>"), "every exercise at zero");
+  assert.ok(!bad.test(visible(h)) && heads(h, "23. Word of mouth") === 2 && h.includes("<td>1. Meet the staff</td>"), "every exercise at zero");
   assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && figsOf(h)[0].layout.yaxis.title.text === "Readers who ran an exercise", "the handbook's breakdowns and Count");
   assert.equal(emptyRings(h), 5, "pages, devices, channels, level and outcome donuts: empty rings");
   // Global's layout on /learn/: the countries map, then PAGES, devices and channels on one row, all following the Count
@@ -838,8 +838,8 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.equal(monitor.gaTotal({ rows: [[20]] }), 20);
   assert.equal(monitor.gaTotal({ rows: [["a", 1], ["b", 2]] }), 0, "no total without GA's");
   const ex = monitor.exercisesHtml({ ran: { rows: [["busy-hours", 10]] }, outcomes: { rows: [["busy-hours", "ok", 4], ["busy-hours", "refused", 7]] }, solved: { rows: [["busy-hours", 4, 3.333]] } }, 390);
-  assert.ok(ex.includes('<td>9. Busy hours</td><td class="num">10</td><td class="num">4</td><td class="num">40%</td><td class="num">3.3</td><td class="num">4</td><td class="num">0</td><td class="num">7</td>'));
-  assert.ok(ex.indexOf("1. The cheap shelf") < ex.indexOf("9. Busy hours") && ex.indexOf("9. Busy hours") < ex.indexOf("20. Word of mouth"), "the page's order");
+  assert.ok(ex.includes('<td>12. Busy hours</td><td class="num">10</td><td class="num">4</td><td class="num">40%</td><td class="num">3.3</td><td class="num">4</td><td class="num">0</td><td class="num">7</td>'));
+  assert.ok(ex.indexOf("1. Meet the staff") < ex.indexOf("12. Busy hours") && ex.indexOf("12. Busy hours") < ex.indexOf("23. Word of mouth"), "the page's order");
   // handbook pages: a donut by title, the suffix dropped, top 5 + Other named as a sum in raw data, GA's total in the centre
   const titles = ["<i>LIKE -- The Ritz Affair", "B", "C", "D", "E", "F", "G"].map((t, i) => [t, 10 - i]);
   const pages = monitor.handbookPagesHtml({ rows: titles, totals: [30] }, "visitors");

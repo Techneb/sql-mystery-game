@@ -17,7 +17,7 @@ archive is a database you search in SQL.
 - **Nothing to install.** No sign-up either: the database is SQLite running in the page.
 - **Standard SQL.** The terminal follows PostgreSQL's rules, explains every query it refuses and links the lesson
   that covers it.
-- **The Clerk's Handbook** goes with it: fourteen short lessons and twenty graded exercises on a bakery database,
+- **The Clerk's Handbook** goes with it: fourteen short lessons and twenty-three graded exercises on a bakery database, and a glossary,
   with a terminal on the exercises page.
 - Painted portraits and chapter icons, two closing films, 38 badges, and a day and a night edition.
 

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL glossary: keywords and functions in plain English -- The Ritz Affair</title>
+<meta name="description" content="A plain-English SQL glossary for beginners: every keyword, clause, operator and function the handbook teaches, from SELECT, WHERE and ORDER BY to JOIN, GROUP BY, CASE, subqueries, window functions and CTEs, each with a one-line definition, a short example and a link to its lesson.">
+<link rel="canonical" href="https://alephb.uk/learn/glossary.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Ritz Affair">
+<meta property="og:title" content="SQL glossary: keywords and functions in plain English -- The Ritz Affair">
+<meta property="og:description" content="A plain-English SQL glossary for beginners: every keyword, clause, operator and function the handbook teaches, from SELECT, WHERE and ORDER BY to JOIN, GROUP BY, CASE, subqueries, window functions and CTEs, each with a one-line definition, a short example and a link to its lesson.">
+<meta property="og:url" content="https://alephb.uk/learn/glossary.html">
+<meta property="og:image" content="https://alephb.uk/ritz-affair/landing-pillow.jpg">
+<meta property="og:image:width" content="960">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="A calling card signed A. L., lying on a white damask pillow with gold tassels">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"SQL glossary","description":"A plain-English SQL glossary for beginners: every keyword, clause, operator and function the handbook teaches, from SELECT, WHERE and ORDER BY to JOIN, GROUP BY, CASE, subqueries, window functions and CTEs, each with a one-line definition, a short example and a link to its lesson.","url":"https://alephb.uk/learn/glossary.html","image":"https://alephb.uk/ritz-affair/landing-pillow.jpg","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"Reference","educationalLevel":"Beginner","teaches":"SQL","author":{"@type":"Organization","name":"AlephB","url":"https://alephb.uk/"},"isPartOf":{"@type":"WebSite","name":"AlephB","url":"https://alephb.uk/"}}</script>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<div class="corners">
+<button id="btn-feedback" class="quiet feedback-corner" title="Send feedback" aria-label="Send feedback"><svg class="icon mail" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M2 4.5L8 9L14 4.5"/></svg><span class="btn-text">Feedback</span></button>
+<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition"><svg class="icon moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg><span class="btn-text">Night edition</span></button>
+</div>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav muted"><a href="../" title="The game">The Ritz Affair</a> &middot; <span class="current" aria-current="page" title="Training content: SQL lessons and exercises">The Clerk's Handbook</span></nav>
+</header>
+<!-- menu: colour_learn.mjs -->
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary>Learning chapters</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+    <li><a href="like.html">5. LIKE</a></li>
+    <li><a href="dates-times.html">6. Dates</a></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <a href="grammar.html">Grammar</a> &middot;
+  <span class="current" aria-current="page">Glossary</span></nav>
+<!-- /menu -->
+<main class="learn">
+<h1>SQL glossary</h1>
+<p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
+<p class="lede">Every SQL word the handbook uses, each in a line or two, most with a short example. Each word links to the lesson that explains it.</p>
+<p>The examples use the <a href="database.html">bakery database</a>. When a word is new to you, read its line here, then follow the link for the full lesson.</p>
+<div class="rule-groups">
+<section><h3>The words of a database</h3>
+<ul class="rules">
+<li><a href="database.html">database</a><span>A collection of tables kept together, such as the bakery's six tables.</span></li>
+<li><a href="schema.html#tables-rows-and-columns">table</a><span>A grid of data about one kind of thing: <code>product</code> holds the products.</span></li>
+<li><a href="schema.html#tables-rows-and-columns">row</a><span>One line of a table: one product, one order.</span></li>
+<li><a href="schema.html#tables-rows-and-columns">column</a><span>One named field that every row of a table has, such as <code>price</code>.</span></li>
+<li><a href="select-where.html#types">type</a><span>What a column holds: <code>TEXT</code>, <code>INTEGER</code> (whole numbers) or <code>REAL</code> (numbers with decimals).</span></li>
+<li><a href="schema.html#primary-keys">primary key</a><span>The column that tells the rows apart, usually <code>id</code>: no two rows share a value.</span></li>
+<li><a href="schema.html#foreign-keys-and-relationships">foreign key</a><span>A column that holds another table's primary key, such as <code>orders.customer_id</code>. It links the two tables.</span></li>
+<li><a href="schema.html#exploring-an-unknown-database">schema</a><span>The list of tables, their columns and the keys between them. The diagram on the exercises page is one.</span></li>
+<li><a href="nulls.html#what-null-means">NULL</a><span>The mark of a missing value. It is neither 0 nor empty text, and it equals nothing, not even another NULL.</span></li>
+</ul></section>
+<section><h3>Writing a query</h3>
+<ul class="rules">
+<li><a href="select-where.html#reading-a-table">query</a><span>A question written in SQL. It reads the tables and answers with a result, which is itself a small table.</span></li>
+<li><a href="select-where.html#reading-a-table">keyword</a><span>A word SQL reserves for itself, such as <code>SELECT</code> or <code>WHERE</code>. Capitals are a habit; SQL reads <code>select</code> just as well.</span></li>
+<li><a href="grammar.html#order-of-execution">clause</a><span>One part of a query, starting with its keyword: the <code>FROM</code> clause, the <code>WHERE</code> clause.</span></li>
+<li><a href="grammar.html#order-of-execution">order of execution</a><span>The order in which the clauses are worked out: <code>FROM</code>, <code>WHERE</code>, <code>GROUP BY</code>, <code>HAVING</code>, <code>SELECT</code>, <code>ORDER BY</code>, <code>LIMIT</code>.</span></li>
+<li><a href="select-where.html#double-quotes">'text' and "name"</a><span>Single quotes hold a value: <code>'cake'</code>. Double quotes hold a name, and you will rarely need them.</span></li>
+<li><a href="select-where.html#reading-a-table"><code>;</code></a><span>Ends a query. A terminal that runs one query at a time does not need it.</span></li>
+</ul></section>
+<section><h3>Reading rows</h3>
+<ul class="rules">
+<li><a href="select-where.html#reading-a-table"><code>SELECT</code></a><span>Names the columns to show. <code>SELECT name, price FROM product</code></span></li>
+<li><a href="select-where.html#reading-a-table"><code>*</code></a><span>After <code>SELECT</code>, every column of the table. <code>SELECT * FROM staff</code></span></li>
+<li><a href="select-where.html#reading-a-table"><code>FROM</code></a><span>Names the table to read.</span></li>
+<li><a href="select-where.html#keeping-only-some-rows-where"><code>AS</code> (alias)</a><span>Gives a column of the result a name: <code>price * 2 AS two_of_them</code>. In <code>FROM orders o</code>, the table gets a short name, <code>o</code>.</span></li>
+<li><a href="order-by-limit.html#distinct-order"><code>DISTINCT</code></a><span>Removes the rows of the result that repeat. <code>SELECT DISTINCT category FROM product</code></span></li>
+<li><a href="select-where.html#keeping-only-some-rows-where"><code>+ - * /</code></a><span>Arithmetic on numbers. <code>quantity * unit_price</code></span></li>
+</ul></section>
+<section><h3>Filtering rows</h3>
+<ul class="rules">
+<li><a href="select-where.html#keeping-only-some-rows-where"><code>WHERE</code></a><span>Keeps only the rows for which a condition is true. <code>WHERE price &lt; 2</code></span></li>
+<li><a href="select-where.html#boolean">condition</a><span>Something that is true or false for each row, such as <code>category = 'cake'</code>.</span></li>
+<li><a href="select-where.html#keeping-only-some-rows-where"><code>= &lt;&gt; &lt; &lt;= &gt; &gt;=</code></a><span>Equal, not equal, less than, at most, more than, at least. SQL compares with one equals sign.</span></li>
+<li><a href="select-where.html#combining-conditions"><code>AND</code>, <code>OR</code>, <code>NOT</code></a><span>Combine conditions: both true, at least one true, the opposite. Add brackets when you mix <code>AND</code> and <code>OR</code>.</span></li>
+<li><a href="select-where.html#combining-conditions"><code>IN</code></a><span>True when the value is in a list. <code>town IN ('Hillcrest', 'Old Town')</code></span></li>
+<li><a href="dates-times.html#comparing-and-filtering-ranges"><code>BETWEEN</code></a><span>True inside a range, both ends included. <code>price BETWEEN 2 AND 3</code></span></li>
+<li><a href="like.html#two-wildcards"><code>LIKE</code></a><span>Matches text against a pattern, capitals counting. <code>name LIKE '%tart'</code></span></li>
+<li><a href="like.html#two-wildcards"><code>%</code> and <code>_</code></a><span>The wildcards of a pattern: <code>%</code> stands for any run of characters, even none, <code>_</code> for exactly one.</span></li>
+<li><a href="like.html#case-like-and-ilike"><code>ILIKE</code></a><span><code>LIKE</code> with capitals ignored. <code>name ILIKE '%croissant%'</code></span></li>
+<li><a href="nulls.html#asking-about-null-is-null-and-is-not-null"><code>IS NULL</code>, <code>IS NOT NULL</code></a><span>The only way to test for a missing value. <code>email = NULL</code> is never true.</span></li>
+</ul></section>
+<section><h3>Sorting and keeping some rows</h3>
+<ul class="rules">
+<li><a href="order-by-limit.html#why-rows-need-sorting"><code>ORDER BY</code></a><span>Sorts the result. Without it, the rows come in no promised order.</span></li>
+<li><a href="order-by-limit.html#several-sort-keys"><code>ASC</code>, <code>DESC</code></a><span>Smallest first (the default) or largest first. <code>ORDER BY price DESC</code></span></li>
+<li><a href="order-by-limit.html#keeping-the-first-rows-limit"><code>LIMIT</code></a><span>Keeps the first rows of the result. <code>ORDER BY price DESC LIMIT 3</code> gives the three dearest.</span></li>
+<li><a href="order-by-limit.html#limit-offset"><code>OFFSET</code></a><span>Skips rows before <code>LIMIT</code> starts counting. <code>LIMIT 3 OFFSET 3</code> gives rows 4 to 6.</span></li>
+</ul></section>
+<section><h3>Counting and summing</h3>
+<ul class="rules">
+<li><a href="group-by-having.html#aggregate-functions">aggregate function</a><span>A function that turns many rows into one value: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>.</span></li>
+<li><a href="group-by-having.html#aggregate-functions"><code>COUNT</code></a><span><code>COUNT(*)</code> counts rows; <code>COUNT(email)</code> counts the rows where <code>email</code> is not NULL; <code>COUNT(DISTINCT town)</code> counts different values.</span></li>
+<li><a href="group-by-having.html#aggregate-functions"><code>SUM</code></a><span>Adds up a column. <code>SUM(quantity)</code></span></li>
+<li><a href="group-by-having.html#aggregate-functions"><code>AVG</code></a><span>The average of a column. <code>AVG(price)</code></span></li>
+<li><a href="group-by-having.html#aggregate-functions"><code>MIN</code>, <code>MAX</code></a><span>The smallest and the largest value of a column.</span></li>
+<li><a href="group-by-having.html#aggregate-functions"><code>ROUND</code></a><span>Rounds a number. <code>ROUND(AVG(price), 2)</code> keeps two decimals.</span></li>
+<li><a href="group-by-having.html#one-row-per-group-group-by"><code>GROUP BY</code></a><span>Makes one group per value, and the aggregates then work per group. <code>SELECT category, COUNT(*) FROM product GROUP BY category</code></span></li>
+<li><a href="group-by-having.html#filtering-groups-having"><code>HAVING</code></a><span>Keeps only the groups for which a condition is true. <code>HAVING COUNT(*) &gt;= 5</code></span></li>
+<li><a href="group-by-having.html#group-concat"><code>string_agg</code></a><span>Joins the texts of a group into one. <code>string_agg(name, ', ')</code></span></li>
+</ul></section>
+<section><h3>Text, numbers and dates</h3>
+<ul class="rules">
+<li><a href="select-where.html#types"><code>||</code></a><span>Joins two texts into one. <code>name || ' (' || town || ')'</code></span></li>
+<li><a href="like.html#case-like-and-ilike"><code>lower</code></a><span>Writes a text in small letters. <code>lower(email)</code></span></li>
+<li><a href="like.html#combining-a-pattern-with-other-conditions"><code>trim</code></a><span>Removes the spaces at both ends of a text. <code>trim(email)</code></span></li>
+<li><a href="dates-times.html#taking-apart"><code>substr</code></a><span>Takes part of a text: <code>substr(day, 6, 2)</code> starts at character 6 and takes 2, the month of <code>'2026-03-14'</code>.</span></li>
+<li><a href="dates-times.html#date-functions"><code>LEFT</code>, <code>RIGHT</code></a><span>The first or the last characters of a text. <code>LEFT(time, 2)</code> is the hour.</span></li>
+<li><a href="dates-times.html#from-text-to-number-cast"><code>CAST</code></a><span>Turns a value into another type. <code>CAST('07' AS INTEGER)</code> is the number 7.</span></li>
+<li><a href="dates-times.html#why-text-order-is-calendar-order">ISO date</a><span>A date written year, month, day: <code>'2026-03-14'</code>. As text, it sorts in calendar order.</span></li>
+</ul></section>
+<section><h3>Missing values</h3>
+<ul class="rules">
+<li><a href="nulls.html#replacing-null-coalesce"><code>COALESCE</code></a><span>Gives the first value that is not NULL. <code>COALESCE(email, 'none')</code></span></li>
+<li><a href="nulls.html#replacing-null-coalesce"><code>NULLIF</code></a><span>Gives NULL when two values are equal, often to avoid dividing by zero. <code>NULLIF(n, 0)</code></span></li>
+<li><a href="nulls.html#three-answers-not-two-true-false-and-unknown">three-valued logic</a><span>A comparison with NULL is neither true nor false: it is unknown, and <code>WHERE</code> drops the rows where it is unknown.</span></li>
+</ul></section>
+<section><h3>Choosing a value</h3>
+<ul class="rules">
+<li><a href="case-when.html#the-shape-of-a-case-expression"><code>CASE WHEN</code></a><span>Picks a value by condition, like an if. <code>CASE WHEN price &lt; 2 THEN 'cheap' ELSE 'dear' END</code></span></li>
+<li><a href="case-when.html#the-shape-of-a-case-expression"><code>THEN</code>, <code>ELSE</code>, <code>END</code></a><span>The value for a true condition, the value when none is true (NULL if left out), and the end of the <code>CASE</code>.</span></li>
+</ul></section>
+<section><h3>Combining tables</h3>
+<ul class="rules">
+<li><a href="joins.html#the-inner-join"><code>JOIN</code></a><span>Pairs the rows of two tables that match, and keeps only those pairs. Also written <code>INNER JOIN</code>.</span></li>
+<li><a href="joins.html#the-inner-join"><code>ON</code></a><span>Says which rows match. <code>JOIN customer c ON o.customer_id = c.id</code></span></li>
+<li><a href="joins.html#left-join"><code>LEFT JOIN</code></a><span>Like <code>JOIN</code>, but keeps every row of the first table, with NULLs where nothing matched.</span></li>
+<li><a href="joins.html#a-table-joined-to-itself">self-join</a><span>A table joined to itself under two short names, for example each member of staff beside their manager.</span></li>
+</ul></section>
+<section><h3>Queries inside queries</h3>
+<ul class="rules">
+<li><a href="subqueries.html#a-query-in-brackets">subquery</a><span>A query in brackets inside another query.</span></li>
+<li><a href="subqueries.html#one-value-the-scalar-subquery">scalar subquery</a><span>A subquery that returns one value. <code>WHERE price &gt; (SELECT AVG(price) FROM product)</code></span></li>
+<li><a href="subqueries.html#a-list-in"><code>IN</code> (subquery)</a><span>True when the value is among the subquery's results. <code>id IN (SELECT customer_id FROM orders)</code></span></li>
+<li><a href="subqueries.html#is-there-one-exists-and-not-exists"><code>EXISTS</code>, <code>NOT EXISTS</code></a><span>True when the subquery finds at least one row, or none.</span></li>
+<li><a href="subqueries.html#correlated-subqueries">correlated subquery</a><span>A subquery that uses a column of the outer query, so it runs again for each outer row.</span></li>
+<li><a href="subqueries.html#a-table-subqueries-in-from">derived table</a><span>A subquery in <code>FROM</code>, read like a table. It needs a name: <code>FROM (SELECT ...) AS t</code>.</span></li>
+</ul></section>
+<section><h3>Stacking results</h3>
+<ul class="rules">
+<li><a href="set-operations.html#union-one-list-from-two-queries"><code>UNION</code></a><span>Puts the rows of two queries in one list and removes repeats. Both queries need the same number of columns.</span></li>
+<li><a href="set-operations.html#union-all-keeping-every-row"><code>UNION ALL</code></a><span>Like <code>UNION</code>, but keeps every row, repeats included.</span></li>
+<li><a href="set-operations.html#intersect-the-rows-both-results-share"><code>INTERSECT</code></a><span>The rows both queries return.</span></li>
+<li><a href="set-operations.html#except-the-rows-of-one-but-not-the-other"><code>EXCEPT</code></a><span>The rows of the first query that the second does not return.</span></li>
+</ul></section>
+<section><h3>Window functions</h3>
+<ul class="rules">
+<li><a href="window-functions.html#the-idea-of-a-window">window function</a><span>Computes a value for each row from a set of related rows. Every row stays, where <code>GROUP BY</code> would fold them into one.</span></li>
+<li><a href="window-functions.html#the-idea-of-a-window"><code>OVER</code></a><span>Follows a window function and says which rows it looks at, in which order. <code>RANK() OVER (ORDER BY price DESC)</code></span></li>
+<li><a href="window-functions.html#partitions-matter"><code>PARTITION BY</code></a><span>Inside <code>OVER</code>, starts the window again for each value. <code>OVER (PARTITION BY category ORDER BY price)</code></span></li>
+<li><a href="window-functions.html#numbering-and-ranking"><code>ROW_NUMBER</code></a><span>Numbers the rows 1, 2, 3 and so on, ties or not.</span></li>
+<li><a href="window-functions.html#numbering-and-ranking"><code>RANK</code>, <code>DENSE_RANK</code></a><span>Ranks the rows and gives ties the same rank. After two firsts, <code>RANK</code> goes on at 3 and <code>DENSE_RANK</code> at 2.</span></li>
+<li><a href="window-functions.html#looking-at-the-previous-row-lag"><code>LAG</code>, <code>LEAD</code></a><span>The value of a column in the previous row, or in the next one. <code>LAG(day) OVER (ORDER BY day)</code></span></li>
+</ul></section>
+<section><h3>Named steps</h3>
+<ul class="rules">
+<li><a href="ctes.html#with-naming-a-result"><code>WITH</code> (CTE)</a><span>Names a query so the next step can read it like a table. <code>WITH cheap AS (SELECT * FROM product WHERE price &lt; 2) SELECT name FROM cheap</code></span></li>
+<li><a href="ctes.html#with-recursive-following-a-chain"><code>WITH RECURSIVE</code></a><span>A CTE that reads its own rows to add more: it follows a chain, such as who referred whom, or builds a list of days.</span></li>
+</ul></section>
+</div>
+
+<!-- pager: colour_learn.mjs -->
+<nav class="learn-pager"><a class="prev" href="grammar.html">Previous: The Grammar of SQL</a></nav>
+<!-- /pager -->
+</main>
+<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
+  <span>Help improve the course: allow anonymous usage statistics?</span>
+  <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="../privacy.html">Privacy notice</a></span>
+</div>
+<script type="module" src="handbook.js"></script>
+</body>
+</html>

@@ -19,15 +19,15 @@ const data = JSON.parse(fs.readFileSync("site/chapters.json", "utf8"));
 const LEARN = "site/learn/";
 const learnPages = fs.readdirSync(LEARN).filter((f) => f.endsWith(".html")).sort();
 const learnHtml = Object.fromEntries(learnPages.map((f) => [f, fs.readFileSync(LEARN + f, "utf8")]));
-// the index lists its pages in three groups (chapters, exercises, grammar), in reading order
-// Reading order (the pagers): the chapters list, then the exercises card, then grammar; checked against colour_learn.mjs READING.
+// the index lists its pages in groups (chapters, then the exercises, grammar and glossary cards), in reading order
+// Reading order (the pagers): the chapters list, then the exercises card, then grammar, then the glossary; checked against colour_learn.mjs READING.
 const tocGroups = learnHtml["index.html"].match(/<div class="toc-groups">([\s\S]*?)<\/div><!-- \/toc-groups -->/)[1];
 const tocLinks = (html) => [...html.matchAll(/<a (?:class="toc-card" )?href="([^"]+)"/g)].map((m) => m[1]);
 const chapterLinks = tocLinks(tocGroups.match(/<ol class="toc">([\s\S]*?)<\/ol>/)[1]);
 const readingOrder = ["index.html", ...chapterLinks, ...tocLinks(tocGroups).filter((h) => !chapterLinks.includes(h))];
 
 test("handbook: the generated blocks are fresh (node colour_learn.mjs changes nothing) and follow CHAPTERS", () => {
-  assert.deepEqual(readingOrder, READING, "the index's table of contents is CHAPTERS, then exercises and grammar");
+  assert.deepEqual(readingOrder, READING, "the index's table of contents is CHAPTERS, then exercises, grammar and glossary");
   assert.deepEqual(chapterLinks, CHAPTERS.map((c) => c[0]));
   const built = buildPages(learnHtml);
   for (const f of learnPages) assert.equal(built[f], learnHtml[f], f + ": run node colour_learn.mjs");
@@ -76,7 +76,7 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   // each monitor page names its view for monitor.js; each carries the Count select beside the period buttons
   assert.deepEqual(desk.slice(1, 4).map(([, h]) => [h.match(/<body data-view="(\w+)">/)[1], /<span id="days"[^]*<label class="pick">Count <select id="count"><\/select><\/label>/.test(h)]), [["global", true], ["game", true], ["handbook", true]]);
   assert.equal((admin.match(/monitor-link/g) || []).length, 1, "the old SEASONS-row link is gone");
-  const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html"].includes(f));
+  const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html", "glossary.html"].includes(f));
   const linked = (f) => {
     const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
     const cur = [...menu.matchAll(/<span class="current" aria-current="page">([^<]*)<\/span>/g)];
@@ -88,9 +88,9 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   const ref = linked("index.html");
   assert.match(ref, /<details class="learn-chapters"><summary>Learning chapters<\/summary><ol>/, "a native disclosure, no script needed");
   const items = [...ref.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)];
-  assert.deepEqual(items.map((m) => m[1]), ["index.html", ...chapters, "exercises.html", "grammar.html"], "menu in table of contents order");
-  assert.deepEqual(items.map((m) => m[2]).filter((t) => !/^\d/.test(t)), ["Index", "Exercises", "Grammar"]);
-  items.slice(1, -2).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "chapters numbered from 1: " + m[2]));
+  assert.deepEqual(items.map((m) => m[1]), ["index.html", ...chapters, "exercises.html", "grammar.html", "glossary.html"], "menu in table of contents order");
+  assert.deepEqual(items.map((m) => m[2]).filter((t) => !/^\d/.test(t)), ["Index", "Exercises", "Grammar", "Glossary"]);
+  items.slice(1, -3).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "chapters numbered from 1: " + m[2]));
   // the game's consent banner and Statistics link, asked by handbook.js (one ritz.consent answer site-wide)
   assert.ok(foot.includes('<a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span>'), "the consent link in the footer");
   const banner = one(fs.readFileSync("site/index.html", "utf8"), /(<div id="consent"[\s\S]*?<\/div>)\n/, "the game's banner").replace('href="privacy.html"', 'href="../privacy.html"');
@@ -290,7 +290,7 @@ for q in json.load(sys.stdin):
 print(json.dumps(out))`], { input: JSON.stringify(exercises.map((e) => e.sql)), encoding: "utf8" }));
 
 test("exercises: each solution's result marks its own question solved, and no other one", () => {
-  assert.equal(exercises.length, 20);
+  assert.equal(exercises.length, 23);
   exercises.forEach((e, i) => {
     const res = exRun[i];
     assert.equal(res.values.length, e.rows, e.slug + ": the expected row count");
@@ -323,7 +323,7 @@ test("exercises: every Try it link names a question; the page keeps its static c
   for (const f of learnPages)
     for (const [, slug] of learnHtml[f].matchAll(/exercises\.html#([\w-]+)/g)) assert.ok(ids.includes(slug), f + " links " + slug);
   const page = learnHtml["exercises.html"];
-  assert.equal((page.match(/<details class="solution">/g) || []).length, 20);
+  assert.equal((page.match(/<details class="solution">/g) || []).length, 23);
   assert.match(page, /<section id="workbench" class="workbench" hidden/, "the interactive part shows only once the script runs");
   assert.match(page, /<script type="module" src="exercises\.js"><\/script>/);
   assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
@@ -402,7 +402,7 @@ test("publish: alephb-site gets every file of site/, every local URL and import 
   for (const [m, qs] of modules) assert.equal(qs.size, 1, m + " has one URL");
   assert.ok(modules.has("ritz-affair/stats.js"), "learn/handbook.js and app.js share the game's stats.js");
   assert.match(out["learn/exercises.js"], /from "\.\.\/ritz-affair\/terminal\.js\?v=abc1234"/);
-  assert.match(out["ritz-affair/index.html"], /href="\.\.\/learn\/exercises\.html#the-cheap-shelf"/);
+  assert.match(out["ritz-affair/index.html"], /href="\.\.\/learn\/exercises\.html#meet-the-staff"/);
   assert.match(out["ritz-affair/admin.html"], /src="\.\.\/learn\/theme\.js\?v=abc1234"/);
   assert.match(out["ritz-affair/index.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/ritz-affair\/">/);
   assert.match(out["learn/like.html"], /<link rel="canonical" href="https:\/\/alephb\.uk\/learn\/like\.html">/);

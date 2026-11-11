@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Twenty SQL exercises with solutions -- The Ritz Affair</title>
-<meta name="description" content="Twenty graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.">
+<title>Twenty-three SQL exercises with solutions -- The Ritz Affair</title>
+<meta name="description" content="Twenty-three graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.">
 <link rel="canonical" href="https://alephb.uk/learn/exercises.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Ritz Affair">
-<meta property="og:title" content="Twenty SQL exercises with solutions -- The Ritz Affair">
-<meta property="og:description" content="Twenty graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.">
+<meta property="og:title" content="Twenty-three SQL exercises with solutions -- The Ritz Affair">
+<meta property="og:description" content="Twenty-three graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.">
 <meta property="og:url" content="https://alephb.uk/learn/exercises.html">
 <meta property="og:image" content="https://alephb.uk/ritz-affair/landing-pillow.jpg">
 <meta property="og:image:width" content="960">
 <meta property="og:image:height" content="640">
 <meta property="og:image:alt" content="A calling card signed A. L., lying on a white damask pillow with gold tassels">
 <meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"SQL exercises with solutions","description":"Twenty graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.","url":"https://alephb.uk/learn/exercises.html","image":"https://alephb.uk/ritz-affair/landing-pillow.jpg","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"Practice exercise","educationalLevel":"Beginner","teaches":"SQL","author":{"@type":"Organization","name":"AlephB","url":"https://alephb.uk/"},"isPartOf":{"@type":"WebSite","name":"AlephB","url":"https://alephb.uk/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"SQL exercises with solutions","description":"Twenty-three graded SQL exercises on one small bakery database, from SELECT and WHERE to joins, subqueries, set operations, window functions and recursive CTEs, each with a hidden worked solution and its real result.","url":"https://alephb.uk/learn/exercises.html","image":"https://alephb.uk/ritz-affair/landing-pillow.jpg","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"Practice exercise","educationalLevel":"Beginner","teaches":"SQL","author":{"@type":"Organization","name":"AlephB","url":"https://alephb.uk/"},"isPartOf":{"@type":"WebSite","name":"AlephB","url":"https://alephb.uk/"}}</script>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -54,7 +54,8 @@
     <li><a href="ctes.html">14. CTEs</a></li>
   </ol></details> &middot;
   <span class="current" aria-current="page">Exercises</span> &middot;
-  <a href="grammar.html">Grammar</a></nav>
+  <a href="grammar.html">Grammar</a> &middot;
+  <a href="glossary.html">Glossary</a></nav>
 <!-- /menu -->
 <main class="learn">
 <h1>SQL exercises with solutions</h1>
@@ -209,7 +210,62 @@
 
 <div id="ex-static">
 <h2>Warm-up</h2>
-<p class="exercise" id="the-cheap-shelf" data-ordered><b>1. The cheap shelf.</b> List the name and price of every product that costs less than 2, cheapest first. (<a href="select-where.html">SELECT and WHERE</a>, <a href="order-by-limit.html">ORDER BY</a>) &middot; Expected: 5 rows.</p>
+<p class="exercise" id="meet-the-staff"><b>1. Meet the staff.</b> Show everything the bakery keeps about its staff: every column of the <code>staff</code> table. (<a href="select-where.html#reading-a-table">SELECT</a>) &middot; Expected: 6 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> *
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>id</th><th>name</th><th>role</th><th>manager_id</th></tr>
+<tr><td>1</td><td>Margaret Hale</td><td>owner</td><td>NULL</td></tr>
+<tr><td>2</td><td>Tom Becker</td><td>head baker</td><td>1</td></tr>
+<tr><td>3</td><td>Nina Patel</td><td>counter</td><td>2</td></tr>
+<tr><td>4</td><td>Omar Reyes</td><td>counter</td><td>2</td></tr>
+<tr><td>5</td><td>Lucy Brandt</td><td>counter</td><td>2</td></tr>
+<tr><td>6</td><td>Sam Ito</td><td>baker</td><td>2</td></tr>
+</table>
+<p>The star means every column, in the table's own order. The question asks for no order, so the page accepts the rows in any order; the <code>ORDER BY id</code> only keeps them in the same order each time you run it.</p>
+</details>
+
+<p class="exercise" id="the-refunds"><b>2. The refunds.</b> List the day and the amount of every refund, and no other column. (<a href="select-where.html#reading-a-table">SELECT</a>) &middot; Expected: 8 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-id">amount</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">refund</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>day</th><th>amount</th></tr>
+<tr><td>2026-03-12</td><td>3.2</td></tr>
+<tr><td>2026-03-16</td><td>2.2</td></tr>
+<tr><td>2026-03-17</td><td>1.2</td></tr>
+<tr><td>2026-03-18</td><td>3.6</td></tr>
+<tr><td>2026-03-19</td><td>3.9</td></tr>
+<tr><td>2026-03-21</td><td>1.9</td></tr>
+<tr><td>2026-03-24</td><td>3.9</td></tr>
+<tr><td>2026-03-25</td><td>1.2</td></tr>
+</table>
+<p>Name the columns you want after <code>SELECT</code>, separated by commas. They come out in the order you write them.</p>
+</details>
+
+<p class="exercise" id="the-cakes"><b>3. The cakes.</b> Which products are in the cake category? Show their name and price. (<a href="select-where.html#keeping-only-some-rows-where">WHERE</a>) &middot; Expected: 7 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Chocolate eclair</td><td>2.8</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
+<tr><td>Coffee eclair</td><td>2.8</td></tr>
+<tr><td>Pistachio financier</td><td>2.4</td></tr>
+</table>
+<p><code>WHERE</code> keeps only the rows for which its condition is true. <code>'cake'</code> is text, so it goes in single quotes, and it has to match the stored value exactly, small letters included.</p>
+</details>
+
+<p class="exercise" id="the-cheap-shelf" data-ordered><b>4. The cheap shelf.</b> List the name and price of every product that costs less than 2, cheapest first. (<a href="select-where.html">SELECT and WHERE</a>, <a href="order-by-limit.html">ORDER BY</a>) &middot; Expected: 5 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -226,7 +282,7 @@
 <p>The <code>id</code> after <code>price</code> breaks ties. There are none here, but a second key costs nothing and keeps the order fixed if a new product ever shares a price.</p>
 </details>
 
-<p class="exercise" id="early-customers" data-ordered data-need="0,1"><b>2. Early customers.</b> Which customers joined before June 2024, and from which town? Show the most recent first. (<a href="dates-times.html">Dates and times</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="early-customers" data-ordered data-need="0,1"><b>5. Early customers.</b> Which customers joined before June 2024, and from which town? Show the most recent first. (<a href="dates-times.html">Dates and times</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>, <span class="sql-id">joined</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -244,7 +300,7 @@
 <p>"Before June" means before the first of June, so the comparison is a strict <code>&lt;</code> against <code>'2024-06-01'</code>, written in the column's own ISO shape. <code>joined &lt;= '2024-05-31'</code> gives the same rows here.</p>
 </details>
 
-<p class="exercise" id="every-croissant" data-need="1"><b>3. Every croissant.</b> Find the products whose name contains the letters croissant anywhere, on their own or inside a longer word, whatever their case. (<a href="like.html">LIKE</a>) &middot; Expected: 2 rows.</p>
+<p class="exercise" id="every-croissant" data-need="1"><b>6. Every croissant.</b> Find the products whose name contains the letters croissant anywhere, on their own or inside a longer word, whatever their case. (<a href="like.html">LIKE</a>) &middot; Expected: 2 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -258,7 +314,7 @@
 <p><code>LIKE '%croissant%'</code> would miss the plain Croissant, whose capital C does not match a small c: <code>LIKE</code> is case-sensitive (see <a href="like.html#like-ilike">LIKE and ILIKE</a>). The wildcard at the front is what finds the almond one.</p>
 </details>
 
-<p class="exercise" id="untidy-emails"><b>4. Untidy emails.</b> Some emails were typed with capital letters, or with a stray space at the start or the end. List the name and the email, exactly as stored, of every customer whose email is not written all in small letters with no space at either end. Customers with no email are left out. (<a href="like.html">LIKE</a>, <a href="nulls.html">NULL</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="untidy-emails"><b>7. Untidy emails.</b> Some emails were typed with capital letters, or with a stray space at the start or the end. List the name and the email, exactly as stored, of every customer whose email is not written all in small letters with no space at either end. Customers with no email are left out. (<a href="like.html">LIKE</a>, <a href="nulls.html">NULL</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">email</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -276,7 +332,7 @@
 <p><code>trim</code> removes the spaces at both ends and <code>lower</code> the capitals, so a tidy email equals its own cleaned copy and an untidy one does not. A customer with no email has a NULL, and a comparison with NULL is never true, so those rows drop out without being asked: <code>WHERE email IS NOT NULL</code> would change nothing. Three <code>LIKE</code> tests (<code>email &lt;&gt; lower(email) OR email LIKE ' %' OR email LIKE '% '</code>) find the same six.</p>
 </details>
 
-<p class="exercise" id="the-counter-by-category"><b>5. The counter by category.</b> For each category, show how many products it has and the price of the dearest one. (<a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 3 rows.</p>
+<p class="exercise" id="the-counter-by-category"><b>8. The counter by category.</b> For each category, show how many products it has and the price of the dearest one. (<a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">dearest</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -288,11 +344,11 @@
 <tr><td>cake</td><td>7</td><td>4.1</td></tr>
 <tr><td>pastry</td><td>7</td><td>2.6</td></tr>
 </table>
-<p>Asking for the <i>name</i> of the dearest product is a different and harder question: <code>name</code> is neither grouped nor aggregated, so it cannot simply be added to this <code>SELECT</code>. Exercise 17 shows the pattern, with a window function.</p>
+<p>Asking for the <i>name</i> of the dearest product is a different and harder question: <code>name</code> is neither grouped nor aggregated, so it cannot simply be added to this <code>SELECT</code>. Exercise 20 shows the pattern, with a window function.</p>
 </details>
 
 <h2>Practice</h2>
-<p class="exercise" id="orders-by-town" data-ordered><b>6. Orders by town.</b> How many orders did the customers of each town place? List only the towns with at least one order, busiest town first. (<a href="joins.html">JOIN</a>, <a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 3 rows.</p>
+<p class="exercise" id="orders-by-town" data-ordered><b>9. Orders by town.</b> How many orders did the customers of each town place? List only the towns with at least one order, busiest town first. (<a href="joins.html">JOIN</a>, <a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">town</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
@@ -308,7 +364,7 @@
 <p>The town lives in <code>customer</code> and the orders in <code>orders</code>, so the join comes first and the grouping after it. Each row of the join is one order, which is why <code>COUNT(*)</code> counts orders.</p>
 </details>
 
-<p class="exercise" id="takings-per-day"><b>7. Takings per day.</b> For each day from Monday 23 to Sunday 29 March that had orders, how much did that day's order lines come to (each line's quantity times the price paid on it, refunds aside)? Round each day's total to two decimal places. (<a href="joins.html">JOIN</a>, <a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="takings-per-day"><b>10. Takings per day.</b> For each day from Monday 23 to Sunday 29 March that had orders, how much did that day's order lines come to (each line's quantity times the price paid on it, refunds aside)? Round each day's total to two decimal places. (<a href="joins.html">JOIN</a>, <a href="group-by-having.html">GROUP BY</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">takings</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span>
@@ -325,10 +381,10 @@
 <tr><td>2026-03-28</td><td>138.2</td></tr>
 <tr><td>2026-03-29</td><td>159.0</td></tr>
 </table>
-<p>The money of a line is its quantity times <code>unit_price</code>, the price paid on that line, so <code>product</code> is not needed. Friday 27 March is missing because the bakery is closed on Fridays and nobody ordered: a group needs rows. The <a href="ctes.html">CTE page</a> builds a calendar that shows such a day with zero, and exercise 19 uses one.</p>
+<p>The money of a line is its quantity times <code>unit_price</code>, the price paid on that line, so <code>product</code> is not needed. Friday 27 March is missing because the bakery is closed on Fridays and nobody ordered: a group needs rows. The <a href="ctes.html">CTE page</a> builds a calendar that shows such a day with zero, and exercise 22 uses one.</p>
 </details>
 
-<p class="exercise" id="the-price-rise"><b>8. The price rise.</b> On some order lines, the price paid differs from the product's current price in the catalogue. Which products, and for each, the price paid on those lines and the current price? Give one row per product and price paid. (<a href="joins.html">JOIN</a>, <a href="select-where.html">SELECT and WHERE</a>) &middot; Expected: 3 rows.</p>
+<p class="exercise" id="the-price-rise"><b>11. The price rise.</b> On some order lines, the price paid differs from the product's current price in the catalogue. Which products, and for each, the price paid on those lines and the current price? Give one row per product and price paid. (<a href="joins.html">JOIN</a>, <a href="select-where.html">SELECT and WHERE</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">DISTINCT</span> <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span> <span class="sql-kw">AS</span> <span class="sql-id">paid</span>, <span class="sql-id">p</span>.<span class="sql-id">price</span> <span class="sql-kw">AS</span> <span class="sql-id">current_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span> <span class="sql-kw">AS</span> <span class="sql-id">oi</span>
@@ -344,7 +400,7 @@
 <p>Three products went up on Monday 16 March. <code>product.price</code> holds only today's price; the line keeps what the customer really paid, which is why takings are computed from <code>unit_price</code>: the catalogue price would overstate the first two weeks. <code>DISTINCT</code> folds the many lines sold at the old price into one row per product.</p>
 </details>
 
-<p class="exercise" id="busy-hours" data-ordered><b>9. Busy hours.</b> Take an order's hour as the first two characters of its time ('07' for 07:20). Which hours had at least 25 orders over the four weeks? Busiest first, and hours with the same count in clock order. (<a href="dates-times.html">Dates and times</a>, <a href="group-by-having.html">HAVING</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="busy-hours" data-ordered><b>12. Busy hours.</b> Take an order's hour as the first two characters of its time ('07' for 07:20). Which hours had at least 25 orders over the four weeks? Busiest first, and hours with the same count in clock order. (<a href="dates-times.html">Dates and times</a>, <a href="group-by-having.html">HAVING</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">substr</span>(<span class="sql-id">time</span>, <span class="sql-num">1</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">hour</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
@@ -363,7 +419,7 @@
 <p>The hour is the first two characters of the time. Keeping it as text is fine for grouping and sorting, because every hour has two digits; a <code>CAST</code> would only be needed for arithmetic. Two hours share a count, which is why the question says how to order them, and why <code>hour</code> follows <code>orders DESC</code> in the <code>ORDER BY</code>.</p>
 </details>
 
-<p class="exercise" id="referred-from-afar"><b>10. Referred from afar.</b> Among the customers who joined in 2026, list those who were referred by someone living in a different town, with both towns. (<a href="joins.html">Self-joins</a>) &middot; Expected: 4 rows.</p>
+<p class="exercise" id="referred-from-afar"><b>13. Referred from afar.</b> Among the customers who joined in 2026, list those who were referred by someone living in a different town, with both towns. (<a href="joins.html">Self-joins</a>) &middot; Expected: 4 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">newcomer</span>.<span class="sql-id">name</span>, <span class="sql-id">newcomer</span>.<span class="sql-id">town</span>, <span class="sql-id">referrer</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer</span>, <span class="sql-id">referrer</span>.<span class="sql-id">town</span> <span class="sql-kw">AS</span> <span class="sql-id">referrer_town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">newcomer</span>
@@ -381,7 +437,7 @@
 <p>The same table plays two parts under two aliases. The inner join leaves out the customers who were not referred at all, which is right here: they have no referrer whose town could differ.</p>
 </details>
 
-<p class="exercise" id="the-staff-room"><b>11. The staff room.</b> List every member of staff with the name of their manager (left empty, NULL, for the owner, who has none) and the number of orders they served, 0 for anyone who served none. (<a href="joins.html#left-join">LEFT JOIN</a>, <a href="joins.html">Self-joins</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="the-staff-room"><b>14. The staff room.</b> List every member of staff with the name of their manager (left empty, NULL, for the owner, who has none) and the number of orders they served, 0 for anyone who served none. (<a href="joins.html#left-join">LEFT JOIN</a>, <a href="joins.html">Self-joins</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">s</span>.<span class="sql-id">name</span>, <span class="sql-id">m</span>.<span class="sql-id">name</span> <span class="sql-kw">AS</span> <span class="sql-id">manager</span>, <span class="sql-fn">COUNT</span>(<span class="sql-id">o</span>.<span class="sql-id">id</span>) <span class="sql-kw">AS</span> <span class="sql-id">served</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">staff</span> <span class="sql-kw">AS</span> <span class="sql-id">s</span>
@@ -401,7 +457,7 @@
 <p>Both joins have to be <code>LEFT</code>: an inner join to the manager would drop the owner, and an inner join to the orders would drop the baker who never serves. <code>COUNT(o.id)</code> counts only the rows where an order was found, so the baker's row counts 0, where <code>COUNT(*)</code> would say 1.</p>
 </details>
 
-<p class="exercise" id="morning-people"><b>12. Morning people.</b> For each town, show the number of orders its customers placed before nine o'clock and the number placed at nine o'clock or later, side by side. (<a href="case-when.html">CASE WHEN</a>) &middot; Expected: 3 rows.</p>
+<p class="exercise" id="morning-people"><b>15. Morning people.</b> For each town, show the number of orders its customers placed before nine o'clock and the number placed at nine o'clock or later, side by side. (<a href="case-when.html">CASE WHEN</a>) &middot; Expected: 3 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">town</span>,
        <span class="sql-fn">SUM</span>(<span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">o</span>.<span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span> <span class="sql-kw">THEN</span> <span class="sql-num">1</span> <span class="sql-kw">ELSE</span> <span class="sql-num">0</span> <span class="sql-kw">END</span>) <span class="sql-kw">AS</span> <span class="sql-id">before_nine</span>,
@@ -419,7 +475,7 @@
 <p>Each <code>CASE</code> turns an order into a 1 or a 0, and the <code>SUM</code> counts the ones. Writing the second condition as <code>&gt;= '09:00'</code> rather than <code>&gt; '09:00'</code> matters: three orders were placed at exactly nine, and they belong in the later column, each counted once.</p>
 </details>
 
-<p class="exercise" id="above-their-category" data-need="0,3" data-tolerance="0.01"><b>13. Above their category.</b> Which products cost at least 0.50 more than the average price of their own category? Show that average too. (<a href="subqueries.html">Subqueries</a>, <a href="ctes.html">CTEs</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="above-their-category" data-need="0,3" data-tolerance="0.01"><b>16. Above their category.</b> Which products cost at least 0.50 more than the average price of their own category? Show that average too. (<a href="subqueries.html">Subqueries</a>, <a href="ctes.html">CTEs</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">category_average</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">AVG</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">average</span>
@@ -443,7 +499,7 @@
 <p>A correlated subquery in <code>WHERE</code> finds the same products, but showing the average as well would mean writing it twice. A CTE computes each category's average once and joins it like a table.</p>
 </details>
 
-<p class="exercise" id="not-on-the-weekend-menu"><b>14. Not on the weekend menu.</b> Which products were never bought on the weekend of Saturday 21 and Sunday 22 March? Include the products nobody bought at all. Answer with a set operation. (<a href="set-operations.html">EXCEPT</a>) &middot; Expected: 2 rows.</p>
+<p class="exercise" id="not-on-the-weekend-menu"><b>17. Not on the weekend menu.</b> Which products were never bought on the weekend of Saturday 21 and Sunday 22 March? Include the products nobody bought at all. Answer with a set operation. (<a href="set-operations.html">EXCEPT</a>) &middot; Expected: 2 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -459,11 +515,11 @@
 <tr><td>Coffee eclair</td></tr>
 <tr><td>Pistachio financier</td></tr>
 </table>
-<p>Every product, minus the ones sold that weekend. The first half reads <code>product</code> alone, so the pistachio financier, which nobody bought all month, is in the answer too; a join on its own could never show it. Both days are named: <code>o.day &gt;= '2026-03-21'</code> would also take in the last weekend, and the coffee eclair, sold then, would drop out. Comparing names works because no two products share one; with a column that can repeat, compare the ids. Exercise 15 asks the same kind of question with <code>NOT EXISTS</code>.</p>
+<p>Every product, minus the ones sold that weekend. The first half reads <code>product</code> alone, so the pistachio financier, which nobody bought all month, is in the answer too; a join on its own could never show it. Both days are named: <code>o.day &gt;= '2026-03-21'</code> would also take in the last weekend, and the coffee eclair, sold then, would drop out. Comparing names works because no two products share one; with a column that can repeat, compare the ids. Exercise 18 asks the same kind of question with <code>NOT EXISTS</code>.</p>
 </details>
 
 <h2>Challenge</h2>
-<p class="exercise" id="no-bread-thank-you"><b>15. No bread, thank you.</b> Which customers have never bought any bread? Include anyone who has never bought anything. (<a href="subqueries.html">Subqueries</a>) &middot; Expected: 5 rows.</p>
+<p class="exercise" id="no-bread-thank-you"><b>18. No bread, thank you.</b> Which customers have never bought any bread? Include anyone who has never bought anything. (<a href="subqueries.html">Subqueries</a>) &middot; Expected: 5 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
@@ -485,7 +541,7 @@
 <p>The tempting answer joins everything and filters <code>WHERE p.category &lt;&gt; 'bread'</code>, but that lists the customers who bought something that is not bread, which includes bread buyers who also took a croissant, and drops Hugo Silva and the others who bought nothing. The question is about the absence of a row, which is what <code>NOT EXISTS</code> asks.</p>
 </details>
 
-<p class="exercise" id="money-back"><b>16. Money back.</b> For each day from Monday 16 to Sunday 22 March that had orders, show what that day's order lines came to (at the price paid), the refunds paid out that day (a refund counts on its own day, whatever the day of its order; 0 when there were none) and what was left. Round every amount to two decimal places. (<a href="ctes.html">CTEs</a>, <a href="nulls.html#coalesce">COALESCE</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="money-back"><b>19. Money back.</b> For each day from Monday 16 to Sunday 22 March that had orders, show what that day's order lines came to (at the price paid), the refunds paid out that day (a refund counts on its own day, whatever the day of its order; 0 when there were none) and what was left. Round every amount to two decimal places. (<a href="ctes.html">CTEs</a>, <a href="nulls.html#coalesce">COALESCE</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">sold</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">o</span>.<span class="sql-id">day</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span> * <span class="sql-id">oi</span>.<span class="sql-id">unit_price</span>) <span class="sql-kw">AS</span> <span class="sql-id">sold</span>
@@ -518,7 +574,7 @@
 <p>Joining the lines and the refunds in one query multiplies them: every refund of a day is repeated on every line of that day, and its sum comes out many times too big. Adding up each table on its own first, one row per day in each CTE, and only then joining the two keeps both totals right. The join is a <code>LEFT JOIN</code> because Sunday 22 March had no refund, and <code>COALESCE</code> turns its missing total into 0, so the subtraction does not give NULL.</p>
 </details>
 
-<p class="exercise" id="best-seller-of-each-category" data-need="1"><b>17. Best seller of each category.</b> For each category, which of the products that sold at least once sold the most pieces over the four weeks? Keep ties, if there are any. (<a href="window-functions.html">Window functions</a>) &middot; Expected: 4 rows.</p>
+<p class="exercise" id="best-seller-of-each-category" data-need="1"><b>20. Best seller of each category.</b> For each category, which of the products that sold at least once sold the most pieces over the four weeks? Keep ties, if there are any. (<a href="window-functions.html">Window functions</a>) &middot; Expected: 4 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">sold</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">p</span>.<span class="sql-id">category</span>, <span class="sql-id">p</span>.<span class="sql-id">name</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">oi</span>.<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>
@@ -545,7 +601,7 @@
 <p>Three steps: add up the pieces per product, rank the products within each category, keep the first. <code>RANK</code> gives tied products the same rank 1, so the two pastries that sold the same number both show; <code>ROW_NUMBER</code> would keep just one, chosen arbitrarily. The filter has to sit outside the CTE, because a window function cannot appear in <code>WHERE</code>.</p>
 </details>
 
-<p class="exercise" id="back-again" data-need="0,2"><b>18. Back again.</b> Put each customer's orders in sequence by day, then time. For every order placed on Wednesday 4 March that is not its customer's first order, show the order's id and the day of that customer's previous order in the sequence. (<a href="window-functions.html">Window functions</a>, <a href="nulls.html">NULL</a>) &middot; Expected: 7 rows.</p>
+<p class="exercise" id="back-again" data-need="0,2"><b>21. Back again.</b> Put each customer's orders in sequence by day, then time. For every order placed on Wednesday 4 March that is not its customer's first order, show the order's id and the day of that customer's previous order in the sequence. (<a href="window-functions.html">Window functions</a>, <a href="nulls.html">NULL</a>) &middot; Expected: 7 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">visits</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>,
@@ -570,7 +626,7 @@
 <p>A customer's first order has no previous row, so <code>LAG</code> returns NULL for it, and <code>IS NOT NULL</code> drops exactly those orders. The day is chosen outside the CTE, after <code>LAG</code> has seen every order: filtered inside it, the window would see only that Wednesday, and an order whose previous visit was on the Monday would look like a first. Ordering the window by <code>day, time</code> rather than <code>day</code> alone keeps two orders on the same day in their real order.</p>
 </details>
 
-<p class="exercise" id="shutters-down"><b>19. Shutters down.</b> On which days from Monday 2 to Sunday 29 March 2026 did no customer from Hillcrest place an order? The dates you list cannot come from <code>orders</code>, so build them. (<a href="ctes.html">WITH RECURSIVE</a>, <a href="subqueries.html">Subqueries</a>) &middot; Expected: 6 rows.</p>
+<p class="exercise" id="shutters-down"><b>22. Shutters down.</b> On which days from Monday 2 to Sunday 29 March 2026 did no customer from Hillcrest place an order? The dates you list cannot come from <code>orders</code>, so build them. (<a href="ctes.html">WITH RECURSIVE</a>, <a href="subqueries.html">Subqueries</a>) &middot; Expected: 6 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">calendar</span>(<span class="sql-id">n</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-num">2</span>, <span class="sql-str">'2026-03-02'</span>
@@ -600,7 +656,7 @@
 <p>A missing day has no row anywhere, so no query on <code>orders</code> alone can list it. The recursive CTE writes out every date of the period, one row per round, and <code>NOT IN</code> keeps those that no Hillcrest order carries: the four Fridays, when the shop is closed, and two more days, Tuesday 3 and Saturday 7 March, that only the calendar reveals. <code>NOT IN</code> is safe here because <code>orders.day</code> is never NULL; a <code>LEFT JOIN</code> with <code>WHERE o.id IS NULL</code> gives the same rows.</p>
 </details>
 
-<p class="exercise" id="word-of-mouth"><b>20. Word of mouth.</b> Customers who walked in on their own (no referrer) brought others, who brought others in turn. How many customers does each walk-in account for, directly or down the chain, not counting the walk-in themself? A walk-in who brought nobody counts 0. (<a href="ctes.html">WITH RECURSIVE</a>) &middot; Expected: 7 rows.</p>
+<p class="exercise" id="word-of-mouth"><b>23. Word of mouth.</b> Customers who walked in on their own (no referrer) brought others, who brought others in turn. How many customers does each walk-in account for, directly or down the chain, not counting the walk-in themself? A walk-in who brought nobody counts 0. (<a href="ctes.html">WITH RECURSIVE</a>) &middot; Expected: 7 rows.</p>
 <details class="solution"><summary>Solution</summary>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-kw">RECURSIVE</span> <span class="sql-fn">chain</span>(<span class="sql-id">root_id</span>, <span class="sql-id">id</span>) <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">id</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>

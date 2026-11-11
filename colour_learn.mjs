@@ -35,7 +35,7 @@ export const colourPage = (html, schema) => html
 
 // The handbook's table of contents, the one list its navigation is built from: the fourteen learning chapters in
 // reading order, each [page, menu label, the index's one-line blurb]. Pages read: index, the chapters, exercises,
-// grammar. Adding or reordering a chapter = one edit here (the new page copied from a sibling, for its markers), then
+// grammar, glossary. Adding or reordering a chapter = one edit here (the new page copied from a sibling, for its markers), then
 // node colour_learn.mjs. Pager and index labels are each target page's own <h1>.
 export const CHAPTERS = [
   ["database.html", "Database", "the example data, with a script to recreate it."],
@@ -53,7 +53,7 @@ export const CHAPTERS = [
   ["window-functions.html", "Windows", "ranking rows and comparing with the previous one."],
   ["ctes.html", "CTEs", "named steps and following chains."],
 ];
-export const READING = ["index.html", ...CHAPTERS.map((c) => c[0]), "exercises.html", "grammar.html"];
+export const READING = ["index.html", ...CHAPTERS.map((c) => c[0]), "exercises.html", "grammar.html", "glossary.html"];
 const isChapter = (f) => CHAPTERS.some((c) => c[0] === f);
 
 // Each generated block sits between a <!-- name: colour_learn.mjs --> line and a <!-- /name --> line.
@@ -66,13 +66,13 @@ const h1 = (html, f) => { const m = html.match(/<h1>([^<]*)<\/h1>/); if (!m) thr
 const item = (f, href, label) => (f === href ? `<span class="current" aria-current="page">${label}</span>` : `<a href="${href}">${label}</a>`);
 
 // The menu row: Index, the Learning chapters dropdown (its summary current, naming the page, on a chapter page),
-// Exercises, Grammar.
+// Exercises, Grammar, Glossary.
 export function menuHtml(f) {
   const i = CHAPTERS.findIndex((c) => c[0] === f);
   const summary = i < 0 ? "<summary>Learning chapters</summary>" : `<summary class="current">Learning chapters: ${i + 1}. ${CHAPTERS[i][1]}</summary>`;
   return `<nav class="learn-menu">${item(f, "index.html", "Index")} &middot;\n  <details class="learn-chapters">${summary}<ol>\n` +
     CHAPTERS.map(([href, label], j) => `    <li>${item(f, href, `${j + 1}. ${label}`)}</li>\n`).join("") +
-    `  </ol></details> &middot;\n  ${item(f, "exercises.html", "Exercises")} &middot;\n  ${item(f, "grammar.html", "Grammar")}</nav>\n`;
+    `  </ol></details> &middot;\n  ${item(f, "exercises.html", "Exercises")} &middot;\n  ${item(f, "grammar.html", "Grammar")} &middot;\n  ${item(f, "glossary.html", "Glossary")}</nav>\n`;
 }
 // The previous/next pager in reading order, each label naming the target's <h1> (the index keeps an empty prev slot).
 export function pagerHtml(f, pages) {
