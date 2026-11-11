@@ -135,6 +135,27 @@
 </table>
 <p>Seven rows for eight customers: Hugo Silva (id 8) never ordered, so he has no row to number.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Rank the products in the <code>cake</code> category by price, dearest first: show the name, the price and the rank that <code>RANK()</code> gives. Two cakes cost the same, so they share a rank. &middot; Expected: 7 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>,
+       <span class="sql-fn">RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">price_rank</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price_rank</span>, <span class="sql-id">name</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th><th>price_rank</th></tr>
+<tr><td>Raspberry tart</td><td>4.1</td><td>1</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td><td>2</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td><td>3</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td><td>4</td></tr>
+<tr><td>Chocolate eclair</td><td>2.8</td><td>5</td></tr>
+<tr><td>Coffee eclair</td><td>2.8</td><td>5</td></tr>
+<tr><td>Pistachio financier</td><td>2.4</td><td>7</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="looking-at-the-previous-row-lag">Looking at the previous row: LAG</h2>
 <p><code>LAG(column)</code> returns the value of that column in the previous row of the window; <code>LEAD(column)</code> returns the next one. Put them side by side with the current value and you can measure the change between consecutive rows: the gap between two visits, the growth from one month to the next. The first row of each partition has no previous row, so <code>LAG</code> returns NULL there. An optional second argument looks further back, and a third gives a default instead of NULL.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">customer_id</span>, <span class="sql-id">day</span>, <span class="sql-id">time</span>,

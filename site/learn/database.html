@@ -228,6 +228,26 @@
 <tr><td>1</td><td>4</td><td>1</td><td>1.4</td></tr>
 <tr><td>2</td><td>7</td><td>1</td><td>3.9</td></tr>
 </table>
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Show every column of the <code>refund</code> table. &middot; Expected: 8 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> *
+<span class="sql-kw">FROM</span> <span class="sql-id">refund</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>id</th><th>order_id</th><th>day</th><th>amount</th><th>reason</th></tr>
+<tr><td>1</td><td>102</td><td>2026-03-12</td><td>3.2</td><td>stale</td></tr>
+<tr><td>2</td><td>138</td><td>2026-03-16</td><td>2.2</td><td>wrong item</td></tr>
+<tr><td>3</td><td>173</td><td>2026-03-17</td><td>1.2</td><td>overcharged</td></tr>
+<tr><td>4</td><td>160</td><td>2026-03-18</td><td>3.6</td><td>dropped</td></tr>
+<tr><td>5</td><td>173</td><td>2026-03-19</td><td>3.9</td><td>NULL</td></tr>
+<tr><td>6</td><td>179</td><td>2026-03-21</td><td>1.9</td><td>stale</td></tr>
+<tr><td>7</td><td>229</td><td>2026-03-24</td><td>3.9</td><td>wrong item</td></tr>
+<tr><td>8</td><td>237</td><td>2026-03-25</td><td>1.2</td><td>stale</td></tr>
+</table>
+</details>
+</div>
+
 <p><!-- bakery counts: bakery.py -->The full database is forty customers, twenty products, six staff, 303 orders, 680 order lines and eight refunds.<!-- /bakery counts --> To run the examples yourself, paste this script (a list of SQL commands that build the tables and fill them) into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below. SQLite is the small database program the examples run on; the game's terminal runs it inside your browser. The examples follow the rules of this site's terminal, and plain SQLite differs from it in one place that matters for them: there <code>LIKE</code> ignores case and <code>ILIKE</code> does not exist, so write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>.</p>
 <details class="script"><summary>The bakery database as a SQLite script</summary>
 <!-- bakery script: bakery.py -->

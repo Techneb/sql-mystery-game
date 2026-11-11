@@ -2,56 +2,16 @@
 // browser with sql.js, the game's terminal (terminal.js: the same run pipeline and editor as the game), and a check
 // of the last result against the chosen question's solution, run on the same database. It never loads the game.
 // The page itself stays complete without this script: every question, row count and solution is in the HTML.
-import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, EMPTY_RUN } from "../terminal.js";
+import { wireEditor, runSql, runHtml, runInfo, pushHistory, EMPTY_RUN } from "../terminal.js";
 import { toSqlite } from "../strict.js";
+import { openBakery, sameResult, checkOptions } from "./bakery.js";
 import { btnLike, erdButtonHtml, setIconButton, showCallouts, NARROW } from "../ui.js";
 import { initAds, track, trackOnce, useFeature, queryFail } from "../stats.js";
 import { escapeHtml } from "../shared.js";
 
-const VERSION = new URL(import.meta.url).search;
 const STORE = "ritz.exercises";                  // the questions solved
 const HISTORY_STORE = "ritz.exercises.history";   // the queries run (the game keeps its own in ritz.learn)
 
-// How a question is checked, from its <p class="exercise"> data attributes: data-ordered when the question asks for
-// an order ("cheapest first"), data-need the solution's columns a result must show (indices, default all: the
-// others are the solution's extras, such as an id), data-tolerance for numbers the question does not ask to round.
-export function checkOptions(dataset) {
-  return {
-    ordered: dataset.ordered !== undefined,
-    need: dataset.need ? dataset.need.split(",").map(Number) : null,
-    tol: dataset.tolerance ? Number(dataset.tolerance) : 1e-6,
-  };
-}
-
-const asNumber = v => typeof v === "number" ? v : typeof v === "string" && /^\s*-?\d+(\.\d+)?\s*$/.test(v) ? Number(v) : null;
-export function sameValue(a, b, tol = 1e-6) {
-  if (a === null || a === undefined || b === null || b === undefined) return (a ?? null) === (b ?? null);
-  const x = asNumber(a), y = asNumber(b);   // 7 and '07', 4.5 and 4.50 are the same answer
-  if (x !== null && y !== null) return Math.abs(x - y) <= tol + 1e-9;
-  return String(a) === String(b);
-}
-// ponytail: greedy row matching; two rows equal only within the tolerance could pair badly (never on this data).
-function sameRows(U, S, ordered, tol) {
-  if (ordered) return U.every((r, i) => r.every((v, j) => sameValue(v, S[i][j], tol)));
-  const left = S.slice();
-  return U.every(r => {
-    const k = left.findIndex(s => s.every((v, j) => sameValue(r[j], v, tol)));
-    return k >= 0 && left.splice(k, 1);
-  });
-}
-// user, sol: sql.js results ({columns, values}, or null for no rows). Column names never count and the columns may
-// come in any order; the result may carry more columns than the solution needs, never fewer, and exactly its rows.
-export function sameResult(user, sol, { ordered = false, need = null, tol = 1e-6 } = {}) {
-  const U = user ? user.values : [], S = sol ? sol.values : [];
-  if (U.length !== S.length) return false;
-  if (!S.length) return true;
-  const cols = need || S[0].map((_, i) => i), width = U[0].length;
-  const want = S.map(r => cols.map(i => r[i]));
-  const cand = cols.map((_, k) => [...Array(width).keys()].filter(j => sameRows(U.map(r => [r[j]]), want.map(r => [r[k]]), false, tol)));
-  const pick = used => used.length === cols.length ? sameRows(U.map(r => used.map(j => r[j])), want, ordered, tol)
-    : cand[used.length].some(j => !used.includes(j) && pick([...used, j]));
-  return pick([]);
-}
 // The bakery tables a solution reads (shown with the question).
 export function tablesNamed(sql, names) { return names.filter(t => new RegExp("\\b" + t + "\\b", "i").test(sql)); }
 
@@ -197,13 +157,8 @@ async function boot() {
   }
 
   try {
-    const html = await (await fetch("database.html" + VERSION)).text();
-    const script = new DOMParser().parseFromString(html, "text/html").querySelector("details.script code").textContent;
-    const SQL = await openSqlJs();
-    db = new SQL.Database();
-    db.run(script);
-    terminalDb(db);
-    schema = readSchema(db); names = Object.keys(schema); cols = columns(schema);
+    ({ db, schema, cols } = await openBakery());
+    names = Object.keys(schema);
     for (const e of items) { const all = db.exec(toSqlite(e.sql)); solutions[e.slug] = all[all.length - 1] || null; }
     $("ex-info").textContent = "Bakery database ready.";
     show(cur);

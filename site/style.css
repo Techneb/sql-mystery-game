@@ -111,11 +111,11 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 
 /* terminal */
 .editor { position: relative; background: var(--term); border: 1px solid #6b5a33; border-radius: var(--r-panel); overflow: hidden; }
-#sql, #prologue-sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
+#sql, #prologue-sql, .task-sql, .sql-hl { display: block; width: 100%; margin: 0; border: 0; padding: 8px 10px; font: 14px/1.4 "Special Elite", monospace;
   tab-size: 4; white-space: pre-wrap; overflow-wrap: anywhere; letter-spacing: normal; }
-#sql, #prologue-sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
+#sql, #prologue-sql, .task-sql { position: relative; min-height: 160px; background: transparent; color: transparent; caret-color: var(--term-text); resize: none; overflow: hidden; }
 #sql::placeholder { color: var(--term-text); opacity: .45; }
-#sql::selection, #prologue-sql::selection { background: rgba(201,163,90,.35); color: transparent; }
+#sql::selection, #prologue-sql::selection, .task-sql::selection { background: rgba(201,163,90,.35); color: transparent; }
 .sql-hl { position: absolute; inset: 0; color: var(--term-text); pointer-events: none; overflow: hidden; }
 .sql-kw { color: var(--sql-kw); } .sql-fn { color: var(--sql-fn); } .sql-str { color: var(--sql-str); }
 .sql-num { color: var(--sql-num); } .sql-com { color: var(--sql-com); font-style: italic; }
@@ -379,7 +379,7 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 }
 /* iOS zooms into a focused field under 16 px: the SQL boxes and their highlight layer grow together (same metrics) */
 @media (max-width: 900px), (pointer: coarse) {
-  #sql, #prologue-sql, .sql-hl { font-size: 16px; }
+  #sql, #prologue-sql, .task-sql, .sql-hl { font-size: 16px; }
 }
 .landing-story b, .landing-kicker b { font-weight: 700; }
 /* Part II ending: Lupin's photograph of the Blue Star (site/blue-star.jpg), set below the text like a news photo */

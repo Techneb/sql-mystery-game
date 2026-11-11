@@ -104,6 +104,25 @@
 </table>
 <p>Both the plain croissant and the almond croissant match, even though the word sits at the start of one name and at the end of the other, and even though one is written with a capital letter: that is what the I of <code>ILIKE</code> is for. The next section explains.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Which products have a name that starts with a capital C? Show the name. &middot; Expected: 6 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'C%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Croissant</td></tr>
+<tr><td>Chocolate eclair</td></tr>
+<tr><td>Carrot cake slice</td></tr>
+<tr><td>Cinnamon roll</td></tr>
+<tr><td>Cheesecake slice</td></tr>
+<tr><td>Coffee eclair</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="case-like-and-ilike">Case: LIKE and ILIKE</h2>
 <p>The game's terminal follows PostgreSQL: <code>LIKE</code> is <b>case-sensitive</b>, like <code>=</code>, which means that a capital letter and its small form count as different letters, so <code>'%croissant%'</code> finds "Almond croissant" but not "Croissant", and <code>ILIKE</code> is the same pattern match with case ignored. Use <code>LIKE</code> when you know how the text is written, <code>ILIKE</code> when you do not. In plain SQLite, which has no <code>ILIKE</code>, write <code>lower(name) LIKE '%croissant%'</code> instead.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>

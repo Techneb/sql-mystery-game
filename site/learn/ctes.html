@@ -113,6 +113,28 @@
 </table>
 <p>The line's price, not today's. Three products cost more from Monday 16 March, and <code>product.price</code> holds only the current price, so a step that joined <code>product</code> and multiplied by <code>p.price</code> would value the earlier lines at a price nobody paid: order 10 would read 22.10 instead of 21.90, and order 12, which came to 19.60, would join the list at 20.00.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Put the products of the <code>cake</code> category in a CTE named <code>cakes</code>, then list the name and price of the cakes that cost more than 3. &middot; Expected: 4 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">cakes</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+  <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+)
+<span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">cakes</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="several-steps-and-joining-a-cte">Several steps, and joining a CTE</h2>
 <p>Separate several CTEs with commas, under a single <code>WITH</code>. Each step can use the ones defined before it, and the final query can join them like ordinary tables. This is how a question with several parts becomes manageable: compute one fact per step, check each step on its own by selecting from it, then combine. What did each customer who had a refund pay over the four weeks, get back, and keep?</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">paid</span> <span class="sql-kw">AS</span> (

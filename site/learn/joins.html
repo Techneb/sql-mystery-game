@@ -109,6 +109,27 @@
 </table>
 <p>A plain <code>JOIN</code> is an <b>inner join</b>: it keeps only the pairs that match. An order whose customer is missing would vanish from the result, and so would a customer who never ordered.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> For each refund, show the amount given back and the day its order was placed. The order's day is in <code>orders</code>, and <code>refund.order_id</code> points to it. &middot; Expected: 8 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">r</span>.<span class="sql-id">amount</span>, <span class="sql-id">o</span>.<span class="sql-id">day</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">refund</span> <span class="sql-id">r</span>
+<span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">id</span> = <span class="sql-id">r</span>.<span class="sql-id">order_id</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">r</span>.<span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>amount</th><th>day</th></tr>
+<tr><td>3.2</td><td>2026-03-11</td></tr>
+<tr><td>2.2</td><td>2026-03-15</td></tr>
+<tr><td>1.2</td><td>2026-03-17</td></tr>
+<tr><td>3.6</td><td>2026-03-16</td></tr>
+<tr><td>3.9</td><td>2026-03-17</td></tr>
+<tr><td>1.9</td><td>2026-03-18</td></tr>
+<tr><td>3.9</td><td>2026-03-23</td></tr>
+<tr><td>1.2</td><td>2026-03-23</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="several-joins-in-a-row">Several joins in a row</h2>
 <p>Joins chain. Each new <code>JOIN</code> adds one table and one condition linking it to a table already in the query. To know how much money each customer of Hillcrest spent, go from the customer to their orders, from the orders to their lines, and from the lines to the products: three joins, then a <a href="group-by-having.html">GROUP BY</a> with <code>SUM</code> to add up each customer's lines; <code>HAVING</code>, the filter on groups, keeps the customers who spent more than 40. What they paid is each line's <code>unit_price</code>, the price on the day; the last column prices the same pieces at today's <code>product.price</code> instead, and comes out higher for most of them, because three products rose on Monday 16 March.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">name</span>,

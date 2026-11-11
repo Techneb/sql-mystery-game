@@ -123,6 +123,27 @@
 <tr><td>Sourdough loaf</td><td>4.5</td><td>large</td></tr>
 </table>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> For each product in the <code>cake</code> category, show its name and a label: <code>'dear'</code> when it costs 3 or more, <code>'cheap'</code> otherwise. &middot; Expected: 7 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
+       <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &gt;= <span class="sql-num">3</span> <span class="sql-kw">THEN</span> <span class="sql-str">'dear'</span> <span class="sql-kw">ELSE</span> <span class="sql-str">'cheap'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">label</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>label</th></tr>
+<tr><td>Lemon tart</td><td>dear</td></tr>
+<tr><td>Chocolate eclair</td><td>cheap</td></tr>
+<tr><td>Carrot cake slice</td><td>dear</td></tr>
+<tr><td>Cheesecake slice</td><td>dear</td></tr>
+<tr><td>Raspberry tart</td><td>dear</td></tr>
+<tr><td>Coffee eclair</td><td>cheap</td></tr>
+<tr><td>Pistachio financier</td><td>cheap</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="buckets-and-group-by">Buckets and GROUP BY</h2>
 <p><code>CASE</code> becomes most useful when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per <b>bucket</b>, as such a band of values is called. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CASE</span>

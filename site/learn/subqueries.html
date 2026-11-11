@@ -121,6 +121,28 @@
 </table>
 <p>The same subquery appears twice, once to filter and once to display the difference; both work out to the same 2.87. A <b>scalar</b> subquery (scalar means a single value) must return at most one row and one column. With no row it gives NULL. With several rows PostgreSQL stops with an error ("more than one row returned by a subquery used as an expression"), while SQLite quietly takes the first row and carries on, which is worse: the query runs and the answer is wrong. If a subquery could ever return more than one row, it does not belong after <code>=</code> or <code>&gt;</code>.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Which products cost more than the average price of all the products? Show their name and price. &middot; Expected: 9 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; (<span class="sql-kw">SELECT</span> <span class="sql-fn">AVG</span>(<span class="sql-id">price</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>)
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Carrot cake slice</td><td>3.2</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>Focaccia</td><td>3.6</td></tr>
+<tr><td>Cheesecake slice</td><td>3.8</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td></tr>
+<tr><td>Raspberry tart</td><td>4.1</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="a-list-in">A list: IN</h2>
 <p><code>x IN (subquery)</code> is true when <code>x</code> equals one of the values the subquery returns. Which customers bought a Hot cross bun, the pastry added to the shelves on Monday 16 March? The subquery walks from the order lines to the orders and collects the customer ids; the outer query lists those customers.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>

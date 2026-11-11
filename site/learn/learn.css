@@ -191,3 +191,11 @@
   .toc-groups ol.toc, .toc-pair { grid-template-columns: minmax(0, 1fr); }
   .learn .rule-groups { columns: 1; }
 }
+/* the lesson pages' small tasks (div.task; tasks.js opens a terminal under the question): a gold edge like Try it,
+   the solution closed under it; all off the tokens, so the night palette follows */
+.learn .task { margin: 20px 0; padding: 8px 12px; border-left: 4px solid var(--gold); border-radius: var(--r-box); background: var(--card); }
+.learn .task .task-q { margin: 0 0 8px; }
+.learn .task details.solution { margin: 8px 0 0; }
+.learn .task .task-bench { margin: 8px 0; }
+.learn .task .task-sql { min-height: 64px; }
+.learn .task .results { max-height: 50vh; }

@@ -148,6 +148,29 @@
 <tr><td>Zoe Garcia</td><td>Riverside</td></tr>
 </table>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Which customers left no email? Show their name. &middot; Expected: 10 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">email</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>David Chen</td></tr>
+<tr><td>Hugo Silva</td></tr>
+<tr><td>Kofi Tanaka</td></tr>
+<tr><td>Quentin Schmidt</td></tr>
+<tr><td>Wen Petrov</td></tr>
+<tr><td>Iris Costa</td></tr>
+<tr><td>Vera Bianchi</td></tr>
+<tr><td>Felix Bianchi</td></tr>
+<tr><td>Iris Olsen</td></tr>
+<tr><td>Vera Tanaka</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="aggregates-skip-null">Aggregates skip NULL</h2>
 <p>An <b>aggregate</b> is a function that turns many rows into one figure (see <a href="group-by-having.html">GROUP BY</a>). <code>COUNT(*)</code> counts rows. <code>COUNT(column)</code> counts the rows where that column is not NULL. <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code> also ignore NULLs: an average is taken over the known values only, not over all rows with the unknown ones treated as zero. One query shows the difference.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>,

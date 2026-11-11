@@ -1429,8 +1429,8 @@ test("runSql: one outcome model for every terminal (comma join, refusal, SQLite 
   assert.equal(blankLiterals("a 'b' \"c\" -- d\ne /* f */"), "a             \ne        ", "strings, names and comments blanked in place");
 });
 
-test("the three terminals share one run pipeline and one editor", () => {
-  for (const f of ["site/app.js", "site/onboarding.js", "site/learn/exercises.js"]) {
+test("the four terminals share one run pipeline and one editor", () => {
+  for (const f of ["site/app.js", "site/onboarding.js", "site/learn/exercises.js", "site/learn/tasks.js"]) {
     const src = fs.readFileSync(f, "utf8");
     assert.match(src, /\brunSql\(/, f + " runs through runSql");
     assert.match(src, /\bwireEditor\(/, f + " wires its box with wireEditor");
@@ -1539,7 +1539,7 @@ test("phones: scroll only to what is off screen; long cells wrap, short ones do 
   const css = fs.readFileSync("site/style.css", "utf8"), phone = css.slice(css.indexOf("@media (max-width: 900px) {\n  .masthead"));
   assert.match(phone, /\.results td\.long \{ white-space: normal/);
   assert.doesNotMatch(css.slice(0, css.indexOf("@media")), /td\.long/, "desktop cells stay on one line");
-  assert.match(css, /@media \(max-width: 900px\), \(pointer: coarse\) \{\n  #sql, #prologue-sql, \.sql-hl \{ font-size: 16px; \}/, "box and overlay grow together");
+  assert.match(css, /@media \(max-width: 900px\), \(pointer: coarse\) \{\n  #sql, #prologue-sql, \.task-sql, \.sql-hl \{ font-size: 16px; \}/, "box and overlay grow together");
 });
 test("exercises tour: the game's callouts on the workbench, no solution, its GA features listed", async () => {
   const ex = await import("./site/learn/exercises.js"), monitor = await import("./site/monitor.js");

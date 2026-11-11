@@ -147,6 +147,24 @@
 </table>
 <p>Gluing the two columns into one stamp, <code>day || ' ' || time &gt;= '2026-03-05 12:00'</code>, gives the same rows and reads well, but the database can no longer use an index on <code>day</code> (the sorted lookup list it keeps to find rows fast), which matters on large tables. When the column itself is a full stamp such as <code>'2026-03-05 17:45'</code>, prefer a <b>half-open range</b>, one that includes its start and stops just short of its end: <code>stamp &gt;= '2026-03-05' AND stamp &lt; '2026-03-06'</code>. <code>BETWEEN '2026-03-05' AND '2026-03-05'</code> would miss every stamp of that day, because even <code>'2026-03-05 00:00'</code> sorts after <code>'2026-03-05'</code>.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> List the id, day and amount of every refund given from Monday 16 to Sunday 22 March 2026, both days included. &middot; Expected: 5 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">day</span>, <span class="sql-id">amount</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">refund</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> <span class="sql-kw">BETWEEN</span> <span class="sql-str">'2026-03-16'</span> <span class="sql-kw">AND</span> <span class="sql-str">'2026-03-22'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>id</th><th>day</th><th>amount</th></tr>
+<tr><td>2</td><td>2026-03-16</td><td>2.2</td></tr>
+<tr><td>3</td><td>2026-03-17</td><td>1.2</td></tr>
+<tr><td>4</td><td>2026-03-18</td><td>3.6</td></tr>
+<tr><td>5</td><td>2026-03-19</td><td>3.9</td></tr>
+<tr><td>6</td><td>2026-03-21</td><td>1.9</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="taking-apart">Taking a date apart: substr</h2>
 <p>A fixed format means each part sits at a fixed position, so the <b>function</b> <code>substr(text, start, length)</code> cuts it out (positions count from 1). A function is a named operation that takes values between parentheses and gives one back; <code>substr</code> gives a piece of a text. In an ISO date the year is characters 1 to 4, the year and month 1 to 7, the day 9 and 10; in a time the hour is 1 and 2, the minutes 4 and 5. Here the first seven characters give the month each customer joined.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">joined</span>, <span class="sql-fn">substr</span>(<span class="sql-id">joined</span>, <span class="sql-num">1</span>, <span class="sql-num">7</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>

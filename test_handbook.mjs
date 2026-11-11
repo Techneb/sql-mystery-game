@@ -6,7 +6,8 @@ import { strictHtml } from "./site/terminal.js";
 import { themeButtonHtml, erdButtonHtml, feedbackButtonHtml } from "./site/ui.js";
 import { colourBlock, colourPage, bakerySchema, plainSql, sideMenuPage, buildPages, sitemapXml, READING, CHAPTERS } from "./colour_learn.mjs";
 import { execFileSync } from "node:child_process";
-import { sameResult, sameValue, checkOptions, tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
+import { tablesNamed, startLevel, levelPick } from "./site/learn/exercises.js";
+import { sameResult, sameValue, checkOptions, SQL_JS, SQL_JS_SRI } from "./site/learn/bakery.js";
 import path from "node:path";
 import { publishFiles, bridgeFiles, bridgeTarget, bridgeHtml, ADSENSE_META } from "./publish.mjs";
 import { GAME_URL, HANDBOOK, OLD_ORIGIN } from "./site/shared.js";
@@ -329,6 +330,47 @@ test("exercises: every Try it link names a question; the page keeps its static c
   assert.match(page, /class="dialect" href="grammar\.html"/, "the terminal's link to the grammar");
   assert.match(strictHtml(strictCheck("SELECT name FROM product WHERE price == 2", bakerySchema(learnHtml["database.html"])), ""), /href="select-where\.html#double-equals"/);
   assert.doesNotMatch(page + fs.readFileSync("site/learn/exercises.js", "utf8"), /[^\n -~]/, "pure ASCII");
+});
+
+// --- The lesson pages' small tasks (div.task; handbook.js adds Try it here, tasks.js the terminal) -------------
+const TASK_RE = /<div class="task"([^>]*)>\n<p class="task-q"><b>Your turn\.<\/b> [\s\S]*? &middot; Expected: (\d+) rows?\.<\/p>\n<details class="solution"><summary>Solution<\/summary>\n<pre><code>([\s\S]*?)<\/code><\/pre>\n<table class="result">([\s\S]*?)<\/table>\n<\/details>\n<\/div>/g;
+const tasks = CHAPTERS.flatMap(([f]) => [...learnHtml[f].matchAll(TASK_RE)].map(([, attrs, rows, code, table]) => {
+  const dataset = Object.fromEntries([...attrs.matchAll(/data-(\w+)(?:="([^"]*)")?/g)].map(([, k, v]) => [k, v ?? ""]));
+  const cells = (tag, tr) => [...tr.matchAll(new RegExp(`<${tag}>([^<]*)</${tag}>`, "g"))].map((m) => unentity(m[1]));
+  const trs = [...table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map((m) => m[1]);
+  return { f, opts: checkOptions(dataset), rows: Number(rows), sql: plainSql(code),
+    page: { columns: cells("th", trs[0]), values: trs.slice(1).map((tr) => cells("td", tr).map((v) => (v === "NULL" ? null : v))) } };
+}));
+const taskRun = JSON.parse(execFileSync("python3", ["-c", `
+import sys, json, erd, generate_db as g
+conn = g.strict_conn(erd.bakery_conn(open("site/learn/database.html").read()))
+out = []
+for q in json.load(sys.stdin):
+    cur = conn.execute(g.sqlite_sql(q))
+    out.append({"columns": [d[0] for d in cur.description], "values": [list(r) for r in cur.fetchall()]})
+print(json.dumps(out))`], { input: JSON.stringify(tasks.map((t) => t.sql)), encoding: "utf8" }));
+
+test("tasks: every learning chapter has one or two, static and complete; each solution runs, passes the strict terminal and marks itself solved", () => {
+  const bakery = bakerySchema(learnHtml["database.html"]);
+  for (const [f] of CHAPTERS) {
+    const n = (learnHtml[f].match(/<div class="task"/g) || []).length;
+    assert.ok(n >= 1 && n <= 2, f + ": one or two tasks");
+    assert.equal([...learnHtml[f].matchAll(TASK_RE)].length, n, f + ": every task in the static shape (question, row count, closed solution)");
+  }
+  assert.equal(tasks.length, 15);
+  tasks.forEach((t, i) => {
+    const res = taskRun[i];
+    assert.equal(strictCheck(t.sql, bakery), null, t.f + ": " + t.sql);
+    assert.equal(res.values.length, t.rows, t.f + ": the expected row count");
+    assert.ok(sameResult(t.page, res, t.opts), t.f + ": the printed result is the real one");
+    assert.ok(sameResult(res, res, t.opts), t.f + ": the solution marks itself solved");
+    assert.equal(sameResult({ ...res, values: res.values.slice(1) }, res, t.opts), false, t.f + ": a missing row");
+  });
+  const hb = fs.readFileSync("site/learn/handbook.js", "utf8");
+  assert.match(hb, /import\("\.\/tasks\.js"\)/, "tasks.js (and sql.js) load only on the first click");
+  assert.doesNotMatch(hb, /^import .*tasks\.js/m);
+  assert.ok(learnHtml["exercises.html"].includes(`<script src="${SQL_JS}" integrity="${SQL_JS_SRI}" crossorigin="anonymous">`), "the lesson pages load the exercises page's sql.js");
+  assert.doesNotMatch(fs.readFileSync("site/learn/tasks.js", "utf8") + fs.readFileSync("site/learn/bakery.js", "utf8"), /[^\n -~]/, "pure ASCII");
 });
 
 test("exercises: the level shown first and the question each level button selects", () => {

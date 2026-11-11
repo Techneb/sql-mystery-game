@@ -119,6 +119,22 @@
 </table>
 <p>The rule to remember: every column in <code>SELECT</code> should either appear in <code>GROUP BY</code> or sit inside an aggregate. Here <code>category</code> is the grouping column and the other two are aggregates. If you add <code>name</code> to the list, the question no longer makes sense (which name, out of six breads?), and the query is refused: the next section shows how.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> How many customers live in each town? Show one row per town: the town and its number of customers. &middot; Expected: 3 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">town</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">customers</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">town</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">town</span>;</code></pre>
+<table class="result">
+<tr><th>town</th><th>customers</th></tr>
+<tr><td>Hillcrest</td><td>12</td></tr>
+<tr><td>Old Town</td><td>15</td></tr>
+<tr><td>Riverside</td><td>13</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="group-by" class="rule">Grammar: grouped or aggregated</h2>
 <p>A column in <code>SELECT</code> that is neither grouped nor inside an aggregate has several values inside one group, and no single one of them to show, so the query is refused.</p>
 <p>A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own, and the query after it is the correct version.</p>

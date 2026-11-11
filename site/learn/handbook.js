@@ -26,6 +26,21 @@ if (typeof document !== "undefined") {
   }, true);
 }
 
+// The lesson pages' small tasks (<div class="task">): a Try it here button under each question opens a terminal
+// there (tasks.js, imported on the first click only, so sql.js loads only for a reader who practises).
+if (typeof document !== "undefined") {
+  document.querySelectorAll("div.task").forEach((task, n) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "task-try"; b.textContent = "Try it here";
+    task.querySelector(".task-q").after(b);
+    b.onclick = () => {
+      useFeature("try_here");
+      b.disabled = true;
+      import("./tasks.js").then(m => m.openTask(task, n), () => { b.disabled = false; b.textContent = "Could not load: try again"; });
+    };
+  });
+}
+
 // A learning chapter's side menu (colour_learn.mjs writes it): the section being read gets aria-current. The section
 // read is the last whose heading has passed the line 30% down the window, or the last one once the page end shows.
 if (typeof document !== "undefined" && typeof IntersectionObserver !== "undefined") {

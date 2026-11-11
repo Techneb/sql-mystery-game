@@ -110,6 +110,24 @@
 </table>
 <p>The order of the columns in the result is the order you wrote them, not the order in the table.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Show the name and role of every member of staff, and no other column. &middot; Expected: 6 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">role</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>role</th></tr>
+<tr><td>Margaret Hale</td><td>owner</td></tr>
+<tr><td>Tom Becker</td><td>head baker</td></tr>
+<tr><td>Nina Patel</td><td>counter</td></tr>
+<tr><td>Omar Reyes</td><td>counter</td></tr>
+<tr><td>Lucy Brandt</td><td>counter</td></tr>
+<tr><td>Sam Ito</td><td>baker</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="keeping-only-some-rows-where">Keeping only some rows: WHERE</h2>
 <p>Most of the time you do not want the whole table. The <code>WHERE</code> <b>clause</b> sets a condition, and the database keeps only the rows for which the condition is true. (A clause is one part of a statement, named after the keyword that starts it: the <code>SELECT</code> clause, the <code>FROM</code> clause, the <code>WHERE</code> clause.) A <b>condition</b> compares a column with a value or with another column, using <code>=</code>, <code>&lt;&gt;</code> (not equal; <code>!=</code> also works), <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code>. Text values go between single quotes; numbers do not.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">two_of_them</span>
@@ -127,6 +145,25 @@
 <tr><td>Hot cross bun</td><td>1.5</td><td>3.0</td></tr>
 </table>
 <p>Notice that the database reads <code>FROM</code> first, then <code>WHERE</code>, and only then <code>SELECT</code>. That is why the condition can use any column of the table, even one you do not display. The example also computes a new column from an <b>expression</b>, <code>price * 2</code> (an expression is a small calculation that gives one value per row), and names it with <code>AS</code>: the name is an <b>alias</b>, which labels the column in the result and changes nothing in the table.</p>
+
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Which products are in the <code>bread</code> category? Show their name and price. &middot; Expected: 6 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'bread'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Baguette</td><td>1.2</td></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td></tr>
+<tr><td>Focaccia</td><td>3.6</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td></tr>
+</table>
+</details>
+</div>
 
 <h2 id="combining-conditions">Combining conditions</h2>
 <p>Conditions combine with <code>AND</code> (both must be true) and <code>OR</code> (at least one must be true), and <code>NOT</code> turns a condition around. When both appear, the database works out <code>AND</code> before <code>OR</code>, as multiplication comes before addition in arithmetic, so when you mix them, add parentheses to say what you mean. Two shortcuts save typing: <code>IN (...)</code> tests against a list of values, and <code>BETWEEN a AND b</code> tests a range that includes both ends.</p>

@@ -150,6 +150,19 @@
 </table>
 <p>Seven customers came in without a referrer and ten left no email. Five minutes spent this way save an hour later. Knowing that a column can be NULL tells you to use <code>IS NULL</code>; knowing that times are text with a leading zero tells you that you can compare them as text; knowing how many rows a table holds tells you whether a result of fifty rows is a lot or a little.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Count the products, and the categories they belong to, in one row of two numbers. <code>COUNT(DISTINCT category)</code> counts each category once. &middot; Expected: 1 row.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>,
+       <span class="sql-fn">COUNT</span>(<span class="sql-kw">DISTINCT</span> <span class="sql-id">category</span>) <span class="sql-kw">AS</span> <span class="sql-id">categories</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
+<table class="result">
+<tr><th>products</th><th>categories</th></tr>
+<tr><td>20</td><td>3</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="null-is-not-a-value">NULL is not a value</h2>
 <p>A missing value is stored as <b>NULL</b>. It is not zero and not the empty string: it means "unknown". Any comparison with NULL is itself unknown, so <code>WHERE referred_by = 3</code> silently skips the rows where <code>referred_by</code> is NULL, and so does <code>WHERE referred_by &lt;&gt; 3</code>. <b>Aggregates</b>, the functions that turn many rows into one figure (<code>COUNT</code>, <code>SUM</code>, <code>AVG</code>), ignore NULLs, except <code>COUNT(*)</code>, which counts rows. Keep this in mind whenever a count looks too small. The <a href="nulls.html">NULL page</a> has the full rules.</p>
 

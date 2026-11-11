@@ -111,6 +111,31 @@
 </table>
 <p>Chloe Martin and Vera Bianchi were brought by Alice and also refunded, so both halves return them, and Chloe had two refunds on the same order, so the second half returns her twice; each still appears once. Alice Turner herself is on the list for a refund of her own. The single <code>ORDER BY</code> at the very end sorts the whole result, not the second half: a set operation takes no <code>ORDER BY</code> or <code>LIMIT</code> inside its halves, only one pair after the last of them.</p>
 
+<div class="task">
+<p class="task-q"><b>Your turn.</b> Use <code>UNION</code> to list, in one column, the names of the staff and the names of the products in the <code>bread</code> category. &middot; Expected: 12 rows.</p>
+<details class="solution"><summary>Solution</summary>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
+<span class="sql-kw">UNION</span>
+<span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'bread'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">name</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Baguette</td></tr>
+<tr><td>Focaccia</td></tr>
+<tr><td>Lucy Brandt</td></tr>
+<tr><td>Margaret Hale</td></tr>
+<tr><td>Nina Patel</td></tr>
+<tr><td>Omar Reyes</td></tr>
+<tr><td>Rye loaf</td></tr>
+<tr><td>Sam Ito</td></tr>
+<tr><td>Seeded rolls</td></tr>
+<tr><td>Sourdough loaf</td></tr>
+<tr><td>Tom Becker</td></tr>
+<tr><td>Walnut bread</td></tr>
+</table>
+</details>
+</div>
+
 <h2 id="union-all-keeping-every-row">UNION ALL: keeping every row</h2>
 <p><code>UNION ALL</code> stacks the two results as they are. Nothing is compared, so nothing is removed, and it is also the faster of the two, since removing duplicates means comparing every row with the others. Here is the same voucher list with <code>UNION ALL</code>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">WHERE</span> <span class="sql-id">referred_by</span> = <span class="sql-num">1</span>
