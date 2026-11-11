@@ -334,21 +334,21 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-11-09).** Everything is deployed (feedback script @14); the repo has only
+**Open right now (2026-11-11).** Everything is deployed (feedback script @16); the repo has only
 `main`. Since 2026-10-26: the game moved to <https://alephb.uk/ritz-affair/> beside the handbook (2026-10-31,
 mystery.alephb.uk a bridge; runbook `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`, its rollback kept until
 the AdSense verdict); chapter I in two steps (2026-10-31); the second mutation run on strict.js (2026-11-03); the phone
 fixes for chapter I and the landing (2026-11-03, `docs/research/2026-11-03-chapter-1-phones.md`); the desk opened by the
 passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of 2026-11-08
-(`docs/research/2026-10-25-chapter-1-diagnosis.md` section 6): the two-step chapter has settled (37% solve, 19 queries
-per solve); step 1 (the date) is the hurdle; phones solve 15% and only 35% of phone openers run a query, so the phone
-leak is before the first query (prologue, first screen). Phone fixes for it live 2026-11-09 (Type it for me in the prologue, straight quotes on phones, no Ctrl+Enter in the phone tour; `docs/research/2026-11-09-phone-first-query.md`). Search Console's "not indexed" emails of 2026-11-08 are the
-move's side effects (checked 2026-11-09). Waiting on Google: the AdSense review (requested 2026-11-02, still "getting
-ready" on 2026-11-09; the verdict comes by email), which gates the consent-message items, the LinkedIn post
-(`docs/drafts/2026-11-01-linkedin-post.md`), the 24 outreach emails (all sent by the owner at once), the rollback's
-removal and three more phone changes (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
-the phone leak before the first query; re-read GA about 2026-11-15. Not verified end to end since the module split: a
-real compete season.
+(`docs/research/2026-10-25-chapter-1-diagnosis.md` section 6): step 1 (the date) is the hurdle; phones solve 15% and only
+35% of phone openers run a query. Phone fixes for it live 2026-11-09 (`docs/research/2026-11-09-phone-first-query.md`).
+2026-11-11, from two readers' feedback (section 8): the consent fix outside Europe, the desk's robots lines dropped, and
+the handbook pass (plain words, glossary, three easier warm-ups, a Try it here task on every lesson). Waiting on Google:
+the AdSense review (requested 2026-11-02, still "getting ready" on 2026-11-11, ads.txt "Authorised"; the verdict comes
+by email), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`), the 24
+outreach emails (all sent by the owner at once), the rollback's removal and three more phone changes (section 8).
+Waiting on the owner: a look at the desk charts with real data; a check of the consent link from a US VPN. Next: re-read
+GA about 2026-11-15 (phone leak, `try_here` use). Not verified end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
@@ -362,6 +362,15 @@ real compete season.
   when the import is further along); every other old page redirects, and a Cloudflare 301 covers everything but `/`.
   Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. alephb-site's robots.txt lines, home page
   and footer links and the article's rename to about-the-ritz-affair.html are done (2026-10-31).
+- ~~Statistics could not be refused outside Europe~~ Done 2026-11-11 (92bbc59; a US reader's feedback). Google's US
+  message is live there but never answers on statistics, so the footer link reopened a message that could not refuse
+  GA. The link now uses Google's revocation only once Google has answered on statistics, else the game's own banner;
+  privacy.html says so. Not yet tried from a US address.
+- ~~Handbook for complete beginners~~ Done 2026-11-11 (a beginner's feedback of 2026-11-10; owner approved all of it):
+  every term defined at first use (d33a757), `learn/glossary.html` and three easier warm-ups, exercises now 23
+  (a2a9815), the house ad repainted to "Twenty-three graded exercises" (b23d751), fifteen Try it here tasks in the
+  lessons (67eda0d). Wording calls left for the owner: the keyword-capitals line on select-where, "the beginning of a
+  word" on like, "position" on case-when. The reader left no email.
 - ~~After the AdSense verdict: let Google see the desk's noindex~~ Done 2026-11-11 (owner asked for it before the verdict). (owner, 2026-11-09). Search Console lists
   alephb.uk/ritz-affair/admin.html as "Indexed, though blocked by robots.txt": the Disallow lines stop Google reading
   its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
