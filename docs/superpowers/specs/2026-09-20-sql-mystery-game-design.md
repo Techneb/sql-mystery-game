@@ -347,8 +347,8 @@ the handbook pass (plain words, glossary, three easier warm-ups, a Try it here t
 the AdSense review (requested 2026-11-02, still "getting ready" on 2026-11-11, ads.txt "Authorised"; the verdict comes
 by email), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`), the 24
 outreach emails (all sent by the owner at once), the rollback's removal and three more phone changes (section 8).
-Waiting on the owner: a look at the desk charts with real data; a check of the consent link from a US VPN. Next: re-read
-GA about 2026-11-15 (phone leak, `try_here` use). Not verified end to end since the module split: a real compete season.
+Waiting on the owner: a look at the desk charts with real data. Next: re-read
+GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is in `docs/research/2026-11-09-phone-first-query.md`). Not verified end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
@@ -365,7 +365,8 @@ GA about 2026-11-15 (phone leak, `try_here` use). Not verified end to end since 
 - ~~Statistics could not be refused outside Europe~~ Done 2026-11-11 (92bbc59; a US reader's feedback). Google's US
   message is live there but never answers on statistics, so the footer link reopened a message that could not refuse
   GA. The link now uses Google's revocation only once Google has answered on statistics, else the game's own banner;
-  privacy.html says so. Not yet tried from a US address.
+  privacy.html says so.
+  Checked the same day from a US address (owner's VPN, Chrome): the link opened the game's Yes/No banner.
 - ~~Handbook for complete beginners~~ Done 2026-11-11 (a beginner's feedback of 2026-11-10; owner approved all of it):
   every term defined at first use (d33a757), `learn/glossary.html` and three easier warm-ups, exercises now 23
   (a2a9815), the house ad repainted to "Twenty-three graded exercises" (b23d751), fifteen Try it here tasks in the
