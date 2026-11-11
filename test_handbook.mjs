@@ -568,7 +568,6 @@ test("stubs: a stubs deploy (rollback) serves a robots.txt and sitemap for myste
   const { stubsRobots, stubsSitemap } = await import("./publish.mjs");
   const OLD = OLD_ORIGIN + "/";
   const r = stubsRobots(fs.readFileSync("site/robots.txt", "utf8"));
-  for (const p of ["admin", "monitor", "monitor-game", "monitor-handbook", "explore", "inbox"]) assert.match(r, new RegExp("^Disallow: /" + p + "\\.html$", "m"), p);
   assert.doesNotMatch(r, /ritz-affair|https:\/\/alephb/);
   assert.match(r, new RegExp("^Sitemap: " + OLD + "sitemap\\.xml$", "m"));
   const s = stubsSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));

@@ -346,7 +346,7 @@ leak is before the first query (prologue, first screen). Phone fixes for it live
 move's side effects (checked 2026-11-09). Waiting on Google: the AdSense review (requested 2026-11-02, still "getting
 ready" on 2026-11-09; the verdict comes by email), which gates the consent-message items, the LinkedIn post
 (`docs/drafts/2026-11-01-linkedin-post.md`), the 24 outreach emails (all sent by the owner at once), the rollback's
-removal, the desk's robots lines and three more phone changes (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
+removal and three more phone changes (section 8). Waiting on the owner: a look at the desk charts with real data. Next:
 the phone leak before the first query; re-read GA about 2026-11-15. Not verified end to end since the module split: a
 real compete season.
 
@@ -362,7 +362,7 @@ real compete season.
   when the import is further along); every other old page redirects, and a Cloudflare 301 covers everything but `/`.
   Go-live steps, each with its check: `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`. alephb-site's robots.txt lines, home page
   and footer links and the article's rename to about-the-ritz-affair.html are done (2026-10-31).
-- **After the AdSense verdict: let Google see the desk's noindex** (owner, 2026-11-09). Search Console lists
+- ~~After the AdSense verdict: let Google see the desk's noindex~~ Done 2026-11-11 (owner asked for it before the verdict). (owner, 2026-11-09). Search Console lists
   alephb.uk/ritz-affair/admin.html as "Indexed, though blocked by robots.txt": the Disallow lines stop Google reading
   its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
   asserts in `test_desk.mjs`), keep the noindex tags, then tell the Supermain. Not before the verdict: nothing that could

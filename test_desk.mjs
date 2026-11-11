@@ -254,13 +254,12 @@ test("board: eight-cell strip, three states, every pseudo escaped", () => {
 
 });
 
-test("admin and board pages: not in the sitemap, admin kept out of robots, pure ASCII", () => {
+test("admin and board pages: not in the sitemap, noindex readable by robots, pure ASCII", () => {
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /admin\.html|leaderboard\.html|monitor\.html|explore\.html/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/monitor\.html$/m);
   assert.match(fs.readFileSync("site/monitor.html", "utf8"), /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/explore\.html$/m);
   assert.match(fs.readFileSync("site/explore.html", "utf8"), /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/admin\.html$/m);
+  // Not disallowed: a blocked page cannot have its noindex read, and Google indexed admin.html anyway (2026-11-09).
+  assert.doesNotMatch(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow/m);
   for (const f of ["site/admin.html", "site/admin.js", "site/admin.css", "site/leaderboard.html", "site/leaderboard.js", "site/monitor.html", "site/monitor.js", "site/explore.html", "site/explore.js", "site/figures.js", "site/world.json", "site/topojson/world_110m.json", "site/monitor-game.html", "site/monitor-handbook.html", "site/inbox.html", "site/inbox.js"])
     assert.doesNotMatch(fs.readFileSync(f, "utf8"), /[^\n -~]/, f + " is pure ASCII");
 });
@@ -269,7 +268,6 @@ const inbox = await import("./site/inbox.js");
 test("inbox: the Feedback page, kept out of search, every backend value escaped, filters by status", async () => {
   const h = fs.readFileSync("site/inbox.html", "utf8");
   assert.match(h, /<meta name="robots" content="noindex">/);
-  assert.match(fs.readFileSync("site/robots.txt", "utf8"), /^Disallow: \/ritz-affair\/inbox\.html$/m);
   assert.doesNotMatch(fs.readFileSync("site/sitemap.xml", "utf8"), /inbox/);
   assert.ok((await import("./site/monitor.js")).DESK_PATHS.includes("/inbox.html"));
   assert.match(h, /<dialog id="ask"[^]*class="ask-msg"/, "Send asks in a native dialog");
@@ -722,10 +720,8 @@ test("monitor views: every panel request is one ?report= accepts, the exercises 
   const found = [...page.matchAll(/<p class="exercise" id="([^"]+)"[^>]*><b>(\d+\. [^<]*?)\.?<\/b>/g)].map(m => [m[1], m[2]]);
   assert.deepEqual(monitor.EXERCISES, found, "slugs and titles in the page's order");
   assert.deepEqual(monitor.SECTIONS.map(s => s[0]), ["Game", "Handbook", "Desk", "Other"]);
-  const robots = fs.readFileSync("site/robots.txt", "utf8");
   for (const f of ["monitor-game.html", "monitor-handbook.html"]) {
     const h = fs.readFileSync("site/" + f, "utf8");
-    assert.match(robots, new RegExp("^Disallow: /ritz-affair/" + f.replace(".", "\\.") + "$", "m"));
     assert.match(h, /<meta name="robots" content="noindex">/);
     assert.doesNotMatch(h, /[^\n -~]/, f + " is pure ASCII");
     assert.ok(monitor.DESK_PATHS.includes("/" + f) && monitor.DESK_PATHS.includes("/ritz-affair/" + f), f + ": before and after the move");

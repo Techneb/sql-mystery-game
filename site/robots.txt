@@ -1,10 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /ritz-affair/admin.html
-Disallow: /ritz-affair/monitor.html
-Disallow: /ritz-affair/monitor-game.html
-Disallow: /ritz-affair/monitor-handbook.html
-Disallow: /ritz-affair/explore.html
-Disallow: /ritz-affair/inbox.html
 
 Sitemap: https://alephb.uk/ritz-affair/sitemap.xml
