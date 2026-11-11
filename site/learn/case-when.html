@@ -86,16 +86,16 @@
 <!-- /side menu -->
 <h1>CASE WHEN</h1>
 <p class="game-label">Game: chapter <a href="../">VII</a></p>
-<p class="lede">SQL's if-then-else. <code>CASE</code> computes a value row by row, and once you can compute a label, you can group by it.</p>
+<p class="lede">SQL's if-then-else. <code>CASE</code> looks at each row in turn and picks a value for it depending on a condition, and once you can give each row a label, you can group by it.</p>
 
 <h2 id="the-shape-of-a-case-expression">The shape of a CASE expression</h2>
-<p>A <code>CASE</code> expression lists conditions in order and returns the value of the first one that is true:</p>
+<p>A <code>CASE</code> <b>expression</b> (a piece of a query that works out one value per row) lists <b>conditions</b> (tests that are true or false for a row) in order and returns the value of the first one that is true:</p>
 <pre><code><span class="sql-kw">CASE</span>
   <span class="sql-kw">WHEN</span> <span class="sql-id">condition_1</span> <span class="sql-kw">THEN</span> <span class="sql-id">value_1</span>
   <span class="sql-kw">WHEN</span> <span class="sql-id">condition_2</span> <span class="sql-kw">THEN</span> <span class="sql-id">value_2</span>
   <span class="sql-kw">ELSE</span> <span class="sql-id">other_value</span>
 <span class="sql-kw">END</span></code></pre>
-<p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, not a statement: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an aggregate. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
+<p>The database tests the conditions from top to bottom and stops at the first true one, so the order matters when conditions overlap. If none is true, the result is the <code>ELSE</code> value, or NULL (the mark for a missing value) when there is no <code>ELSE</code>. A <code>CASE</code> is an expression, a part of a query: it goes wherever a value can go, in <code>SELECT</code>, <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, or inside an <b>aggregate</b> (a function such as <code>COUNT</code> or <code>SUM</code> that turns many rows into one figure). The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 
 <h2 id="labelling-rows">Labelling rows</h2>
 <p>The simplest use turns a number into a word. Here each of the ten products the bakery opened with (ids 1 to 10) receives a price band. Because the conditions are tested in order, the second one does not need to say "and at least 2": anything below 2 has already been caught by the first.</p>
@@ -123,7 +123,7 @@
 </table>
 
 <h2 id="buckets-and-group-by">Buckets and GROUP BY</h2>
-<p><code>CASE</code> becomes most useful when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per bucket. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
+<p><code>CASE</code> becomes most useful when you group by the label. Times of day are a classic case: the bakery wants to know how busy each part of the day is. No column says "morning" or "afternoon", but a <code>CASE</code> can compute it from <code>time</code>, and <code>GROUP BY</code> can then count the orders per <b>bucket</b>, as such a band of values is called. Because the times are written <code>HH:MM</code> with a leading zero, comparing them as text gives the right answer.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-kw">CASE</span>
          <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'09:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'early'</span>
          <span class="sql-kw">WHEN</span> <span class="sql-id">time</span> &lt; <span class="sql-str">'12:00'</span> <span class="sql-kw">THEN</span> <span class="sql-str">'morning'</span>
@@ -141,7 +141,7 @@
 <tr><td>morning</td><td>81</td></tr>
 <tr><td>evening</td><td>36</td></tr>
 </table>
-<p>SQLite and PostgreSQL both let you group by the alias, as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a subquery or a <a href="ctes.html">CTE</a> first and group in the outer query. The CTE version is often the clearest: one step labels, the next step counts.</p>
+<p>SQLite and PostgreSQL both let you group by the <b>alias</b> (the name given to the label with <code>AS</code>), as here, as long as the alias is used on its own. Some databases require you to repeat the whole <code>CASE</code> in the <code>GROUP BY</code>, or to compute the label in a first query and group in a second one that reads it: a <a href="subqueries.html">subquery</a> or a <a href="ctes.html">CTE</a>. The CTE version is often the clearest: one step labels, the next step counts.</p>
 <p>Watch the boundaries. With <code>&lt; '12:00'</code> an order at exactly noon belongs to the afternoon; with <code>&lt;= '12:00'</code> it belongs to the morning. Decide on purpose, and check whether any rows sit exactly on a boundary. Here five orders were placed at exactly 12:00, and the query above counts them in the afternoon; with <code>&lt;= '12:00'</code> they would move to the morning, and the two buckets would both read 86. Likewise the three orders at exactly 09:00 are in the morning, not the early bucket. A bucket that receives no rows does not appear in the result at all, which is easy to miss when you expect to see four lines and get three.</p>
 
 <h2 id="conditional-counts-and-sums">Conditional counts and sums</h2>
@@ -166,7 +166,7 @@
 <p>Monday's order at exactly 12:00 is counted after noon, because the two conditions split at <code>&lt; '12:00'</code> and <code>&gt;= '12:00'</code>: every order falls in exactly one column, and the two add up to <code>orders</code>. Friday 13 March has no row at all: the shop is closed on Fridays, and <code>GROUP BY</code> only makes groups for days that have orders. This is often called pivoting: values that were rows (before noon, after noon) become columns. It is a compact way to compare categories without running one query per category.</p>
 
 <h2 id="case-in-order-by">CASE in ORDER BY</h2>
-<p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a rank of your choosing.</p>
+<p>Sometimes the natural order of a column is not the order you want. Alphabetical order puts "bread" before "cake" before "pastry", but a shop counter shows pastries first. A <code>CASE</code> in <code>ORDER BY</code> gives each value a position of your choosing: 1 for pastry, 2 for bread, 3 for cake.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>

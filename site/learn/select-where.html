@@ -93,7 +93,7 @@
 <p class="lede">Every SQL query starts here: say which columns you want, from which table, and which rows to keep.</p>
 
 <h2 id="reading-a-table">Reading a table</h2>
-<p>A relational database stores its data in tables. A table has named columns, and each row is one record: one customer, one product, one order. To read a table you write a <code>SELECT</code> statement. The words after <code>SELECT</code> name the columns you want back, and the word <code>FROM</code> names the table they come from. The star, <code>*</code>, means every column, in the order the table defines them.</p>
+<p>A relational database stores its data in <b>tables</b>. A table has named <b>columns</b>, and each <b>row</b> is one record: one customer, one product, one order. To read a table you write a <code>SELECT</code> <b>statement</b>: one complete instruction to the database, ending in a semicolon. A statement that reads data is also called a <b>query</b>. The words after <code>SELECT</code> name the columns you want back, and the word <code>FROM</code> names the table they come from. The star, <code>*</code>, means every column, in the order the table defines them. Words such as <code>SELECT</code> and <code>FROM</code> are <b>keywords</b>: they belong to SQL itself, and this handbook writes them in capitals so they stand out, though the database accepts them in any case.</p>
 <p>The examples on this page, like every page of the handbook, run on the small bakery database described on the <a href="database.html">bakery database page</a>. Its <code>staff</code> table lists the six people who work there. Each example ends with <code>ORDER BY id</code>, which lists the rows in id order; without it the database may return them in any order, as the <a href="order-by-limit.html">ORDER BY page</a> explains.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">role</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">staff</span>
@@ -110,7 +110,7 @@
 <p>The order of the columns in the result is the order you wrote them, not the order in the table.</p>
 
 <h2 id="keeping-only-some-rows-where">Keeping only some rows: WHERE</h2>
-<p>Most of the time you do not want the whole table. The <code>WHERE</code> clause sets a condition, and the database keeps only the rows for which the condition is true. A <b>condition</b> compares a column with a value or with another column, using <code>=</code>, <code>&lt;&gt;</code> (not equal; <code>!=</code> also works), <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code>. Text values go between single quotes; numbers do not.</p>
+<p>Most of the time you do not want the whole table. The <code>WHERE</code> <b>clause</b> sets a condition, and the database keeps only the rows for which the condition is true. (A clause is one part of a statement, named after the keyword that starts it: the <code>SELECT</code> clause, the <code>FROM</code> clause, the <code>WHERE</code> clause.) A <b>condition</b> compares a column with a value or with another column, using <code>=</code>, <code>&lt;&gt;</code> (not equal; <code>!=</code> also works), <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code> and <code>&gt;=</code>. Text values go between single quotes; numbers do not.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">two_of_them</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'pastry'</span>
@@ -125,10 +125,10 @@
 <tr><td>Apple turnover</td><td>1.9</td><td>3.8</td></tr>
 <tr><td>Hot cross bun</td><td>1.5</td><td>3.0</td></tr>
 </table>
-<p>Notice that the database reads <code>FROM</code> first, then <code>WHERE</code>, and only then <code>SELECT</code>. That is why the condition can use any column of the table, even one you do not display. The example also computes a new column, <code>price * 2</code>, and names it with <code>AS</code>: the name is an <b>alias</b>, which labels the column in the result and changes nothing in the table.</p>
+<p>Notice that the database reads <code>FROM</code> first, then <code>WHERE</code>, and only then <code>SELECT</code>. That is why the condition can use any column of the table, even one you do not display. The example also computes a new column from an <b>expression</b>, <code>price * 2</code> (an expression is a small calculation that gives one value per row), and names it with <code>AS</code>: the name is an <b>alias</b>, which labels the column in the result and changes nothing in the table.</p>
 
 <h2 id="combining-conditions">Combining conditions</h2>
-<p>Conditions combine with <code>AND</code> (both must be true) and <code>OR</code> (at least one must be true), and <code>NOT</code> turns a condition around. <code>AND</code> binds more tightly than <code>OR</code>, exactly as multiplication binds more tightly than addition, so when you mix them, add parentheses to say what you mean. Two shortcuts save typing: <code>IN (...)</code> tests against a list of values, and <code>BETWEEN a AND b</code> tests a range that includes both ends.</p>
+<p>Conditions combine with <code>AND</code> (both must be true) and <code>OR</code> (at least one must be true), and <code>NOT</code> turns a condition around. When both appear, the database works out <code>AND</code> before <code>OR</code>, as multiplication comes before addition in arithmetic, so when you mix them, add parentheses to say what you mean. Two shortcuts save typing: <code>IN (...)</code> tests against a list of values, and <code>BETWEEN a AND b</code> tests a range that includes both ends.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">category</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> (<span class="sql-id">category</span> = <span class="sql-str">'bread'</span> <span class="sql-kw">OR</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>)
@@ -163,7 +163,7 @@
 </table>
 
 <h2 id="missing-values-is-null">Missing values: IS NULL</h2>
-<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown" rather than zero or an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>email = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who never gave an email has no <code>email</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
+<p>A column may hold no value at all. SQL writes that as <code>NULL</code>, which means "unknown": it is neither zero nor an empty string. Nothing is ever equal to <code>NULL</code>, not even another <code>NULL</code>, so <code>email = NULL</code> keeps no rows. To find missing values, write <code>IS NULL</code>; to exclude them, <code>IS NOT NULL</code>. In the bakery, a customer who never gave an email has no <code>email</code>. The <a href="nulls.html">NULL page</a> covers the rest of the rules.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">town</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">email</span> <span class="sql-kw">IS</span> <span class="sql-kw">NULL</span>
@@ -223,7 +223,7 @@
 <p>Not equal is <code>&lt;&gt;</code> or <code>!=</code>; both are accepted.</p>
 
 <h2 id="types" class="rule">Grammar: types</h2>
-<p>Every column has a type, written in the schema: whole numbers (<code>INTEGER</code>), decimals (<code>REAL</code>), text (<code>TEXT</code>). A number is compared with a number, text with text; a comparison of two different kinds is an error. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
+<p>Every column has a <b>type</b>, the kind of value it holds, written in the schema (the description of the tables): whole numbers (<code>INTEGER</code>), decimals (<code>REAL</code>), text (<code>TEXT</code>). A number is compared with a number, text with text; a comparison of two different kinds is an error. So a number is written without quotes, a text value with them, and <code>LIKE</code> only works on text. <code>SUM</code> and <code>AVG</code> need numbers too.</p>
 <p>The example below is this terminal's own rule, not PostgreSQL's: PostgreSQL would read the quoted <code>'1'</code> as the number 1 and run the query. The terminal refuses it on purpose, so that a number is always written as a number and its type shows in the query.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -242,7 +242,7 @@
 <p>The other way round, a text column against a number, such as <code>day = 20260302</code>, is just as wrong: <code>day</code> holds text, so write <code>day = '2026-03-02'</code>, in the column's own format. To use digits stored as text as a number, convert them first with <code>CAST(... AS INTEGER)</code>. And <code>||</code> joins text: on two numbers, as in <code>2 || 3</code>, it is refused; add them with <code>+</code>, or make one of them text first, <code>CAST(2 AS TEXT) || 3</code>.</p>
 
 <h2 id="aliases" class="rule">Grammar: aliases in WHERE and HAVING</h2>
-<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> are worked out before the result exists (see <a href="grammar.html#order-of-execution">Order of execution</a>), so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, not inside a larger expression (for <code>GROUP BY</code>, which runs before <code>SELECT</code>, this is a PostgreSQL extension to the order of execution).</p>
+<p>An alias given in <code>SELECT</code> (<code>AS double_price</code>) names a column of the result. <code>WHERE</code> and <code>HAVING</code> (the filter on groups, see <a href="group-by-having.html">GROUP BY</a>) are worked out before the result exists (see <a href="grammar.html#order-of-execution">Order of execution</a>), so they cannot use it: repeat the expression instead. <code>ORDER BY</code> and <code>GROUP BY</code> may use an alias, but only on its own, never inside a larger expression (for <code>GROUP BY</code>, which runs before <code>SELECT</code>, this is a PostgreSQL extension to the order of execution).</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> * <span class="sql-num">2</span> <span class="sql-kw">AS</span> <span class="sql-id">double_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">double_price</span> &gt; <span class="sql-num">7</span>;</code></pre>

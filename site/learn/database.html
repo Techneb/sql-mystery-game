@@ -76,7 +76,7 @@
 <!-- /side menu -->
 <h1>The bakery database</h1>
 <p class="lede">Every example in this handbook runs on this one small, invented database, so you only have to learn its tables once.</p>
-<p>The bakery sells twenty products and keeps six tables. They record four weeks of trade, from Monday 2 March to Sunday 29 March 2026; the shop is closed on Fridays.</p>
+<p>The bakery sells twenty products and keeps six tables. A <b>table</b> is a grid, like one sheet of a spreadsheet: each <b>row</b> is one thing (one customer, one order), and each <b>column</b> is one fact about it (a name, a price), with a name at the top. The tables record four weeks of trade, from Monday 2 March to Sunday 29 March 2026; the shop is closed on Fridays.</p>
 <table class="result">
 <tr><th>Table</th><th>Columns</th><th>One row is</th></tr>
 <tr><td>customer</td><td>id, name, town, joined, referred_by, email</td><td>a regular customer; <code>referred_by</code> is the id of the customer who recommended the shop, or NULL; <code>email</code> is as the customer wrote it (some in capitals or with a stray space), or NULL</td></tr>
@@ -86,7 +86,7 @@
 <tr><td>order_item</td><td>order_id, product_id, quantity, unit_price</td><td>one line of an order: how many of one product, at the price paid that day (three products cost more from Monday 16 March)</td></tr>
 <tr><td>refund</td><td>id, order_id, day, amount, reason</td><td>money given back on an order, in euros; <code>reason</code> may be NULL</td></tr>
 </table>
-<p>The ids link the tables: each order line points to its order and its product, each order to its customer and to the member of staff who served it, each refund to its order, a customer to the customer who referred them, and a member of staff to their manager. The schema draws those links: a gold key marks each primary key, a silver one each foreign key, and every line runs from a foreign key (N, many rows can share a value) to the key it points to (1). The loop beside <code>customer</code> is <code>referred_by</code>, and the one beside <code>staff</code> is <code>manager_id</code>: each points back into its own table.</p>
+<p>Each row has an <b>id</b>, a number that names that one row and no other. The ids link the tables: each order line points to its order and its product, each order to its customer and to the member of staff who served it, each refund to its order, a customer to the customer who referred them, and a member of staff to their manager. The drawing below is the <b>schema</b>, the map of the tables and their links. A gold key marks each <b>primary key</b>, the column whose value names a row (the <code>id</code>). A silver key marks each <b>foreign key</b>, a column that holds the id of a row in another table (<code>customer_id</code> in <code>orders</code>). Every line runs from a foreign key (N, many rows can share a value) to the key it points to (1). The loop beside <code>customer</code> is <code>referred_by</code>, and the one beside <code>staff</code> is <code>manager_id</code>: each points back into its own table. <a href="schema.html">The next page</a> explains how to read such a drawing.</p>
 <div class="erd bakery-erd" role="img" aria-label="Schema of the bakery database: customer, product, staff, orders, order_item and refund, their keys and the links between them">
 <!-- bakery schema: erd.py -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 402" width="480" height="402">
@@ -198,7 +198,7 @@
   <span><svg width="16" height="10" viewBox="0 0 16 10" class="key fk"><circle cx="4" cy="5" r="2.8"/><path d="M7 5H15M12 5V8M14.5 5V7.5"/></svg>foreign key</span>
   <span><svg width="46" height="16" viewBox="0 0 46 16"><path class="rel" d="M4 12H42"/><circle class="rel-dot" cx="4" cy="12" r="2.4"/><circle class="rel-dot" cx="42" cy="12" r="2.4"/><text class="rel-t" x="8" y="8">1</text><text class="rel-t" x="33" y="8">N</text></svg>one-to-many</span>
 </p>
-<p>A few rows of the four larger tables (<code>staff</code> and <code>refund</code> are short enough to read whole with <code>SELECT *</code>):</p>
+<p>A few rows of the four larger tables. Each query below reads one table: <code>SELECT *</code> asks for every column, <code>ORDER BY id</code> sorts the rows by id, and <code>LIMIT 3</code> keeps the first three (<code>staff</code> and <code>refund</code> are short enough to read whole with <code>SELECT *</code>). The <a href="select-where.html">SELECT</a> and <a href="order-by-limit.html">ORDER BY</a> pages explain each piece.</p>
 <pre><code><span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>;</code></pre>
 <table class="result">
 <tr><th>id</th><th>name</th><th>town</th><th>joined</th><th>referred_by</th><th>email</th></tr>
@@ -227,7 +227,7 @@
 <tr><td>1</td><td>4</td><td>1</td><td>1.4</td></tr>
 <tr><td>2</td><td>7</td><td>1</td><td>3.9</td></tr>
 </table>
-<p><!-- bakery counts: bakery.py -->The full database is forty customers, twenty products, six staff, 303 orders, 680 order lines and eight refunds.<!-- /bakery counts --> To run the examples yourself, paste this script into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below. The examples follow the rules of this site's terminal, and plain SQLite differs from it in one place that matters for them: there <code>LIKE</code> ignores case and <code>ILIKE</code> does not exist, so write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>.</p>
+<p><!-- bakery counts: bakery.py -->The full database is forty customers, twenty products, six staff, 303 orders, 680 order lines and eight refunds.<!-- /bakery counts --> To run the examples yourself, paste this script (a list of SQL commands that build the tables and fill them) into any SQLite tool (the <code>sqlite3</code> command line, DB Browser for SQLite, or an online SQLite playground), then try each query from the pages below. SQLite is the small database program the examples run on; the game's terminal runs it inside your browser. The examples follow the rules of this site's terminal, and plain SQLite differs from it in one place that matters for them: there <code>LIKE</code> ignores case and <code>ILIKE</code> does not exist, so write <code>lower(name) LIKE '%croissant%'</code> instead of <code>ILIKE</code>.</p>
 <details class="script"><summary>The bakery database as a SQLite script</summary>
 <!-- bakery script: bakery.py -->
 <pre class="script"><code>CREATE TABLE customer (id INTEGER PRIMARY KEY, name TEXT, town TEXT, joined TEXT, referred_by INTEGER REFERENCES customer(id), email TEXT);

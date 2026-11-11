@@ -90,10 +90,10 @@
 <!-- /side menu -->
 <h1>GROUP BY, aggregates and HAVING</h1>
 <p class="game-label">Game: chapters <a href="../">IV</a>, <a href="../">VI</a> and <a href="../">VII</a></p>
-<p class="lede">So far every query returned rows of the table. <b>Aggregates</b> return facts about many rows at once: how many, how much, the largest, the average.</p>
+<p class="lede">So far every query returned rows of the table. An <b>aggregate</b> is a function that takes many rows and gives back one figure about them: how many, how much, the largest, the average.</p>
 
 <h2 id="aggregate-functions">Aggregate functions</h2>
-<p>Five functions do most of the work: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and <code>MAX</code>. Used without grouping, each one collapses the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
+<p>Five functions do most of the work: <code>COUNT</code> (how many), <code>SUM</code> (the total), <code>AVG</code> (the average), <code>MIN</code> and <code>MAX</code> (the smallest and the largest). Used on their own, each one turns the whole result into a single row. <code>COUNT(*)</code> counts rows; <code>COUNT(column)</code> counts the rows where that column is not NULL; <code>COUNT(DISTINCT column)</code> counts the different values. The examples run on the bakery database from the <a href="database.html">bakery database page</a>.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>,
        <span class="sql-fn">MIN</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">cheapest</span>,
        <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">dearest</span>,
@@ -105,7 +105,7 @@
 </table>
 
 <h2 id="one-row-per-group-group-by">One row per group: GROUP BY</h2>
-<p><code>GROUP BY</code> splits the rows into groups that share the same value in one or more columns, then computes each aggregate once per group. The result has one row per group. Picture the database sorting the rows into piles, one pile per category, and then counting or adding up each pile separately.</p>
+<p><code>GROUP BY</code> puts together the rows that share the same value in one or more columns. Each such set of rows is a <b>group</b>: all the breads, all the cakes. The aggregate is then worked out once for each group, and the result has one row per group. Picture the database sorting the rows into piles, one pile per category, and then counting or adding up each pile separately.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>), <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">average_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
@@ -135,7 +135,7 @@
 <tr><td>cake</td><td>7</td><td>Carrot cake slice</td></tr>
 <tr><td>pastry</td><td>7</td><td>Almond croissant</td></tr>
 </table>
-<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's primary key, every other column of that table has a single value per group, so you may select them. Here it counts each customer's orders; <code>LIMIT 5</code> keeps the five most frequent, and the cut is clean: the fifth has 17 orders, the sixth 16. Had they tied, <code>c.id</code> would pick one of them and silently drop the other.</p>
+<p>The same rule applies without <code>GROUP BY</code>: an aggregate turns the whole table into one row, so <code>SELECT category, COUNT(*) FROM product</code> is wrong too, and so is <code>SELECT *</code> with <code>GROUP BY</code>, unless you group by the primary key. That is the one exception: when you group by a table's <b>primary key</b>, the column whose value names one row and no other (the <code>id</code>), every other column of that table has a single value per group, so you may select them. Here it counts each customer's orders; <code>LIMIT 5</code> keeps the five most frequent, and the cut is clean: the fifth has 17 orders, the sixth 16. Had they <b>tied</b> (had the same count), <code>c.id</code> would pick one of them and silently drop the other.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">c</span>.<span class="sql-id">id</span>, <span class="sql-id">c</span>.<span class="sql-id">name</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span> <span class="sql-kw">AS</span> <span class="sql-id">c</span>
 <span class="sql-kw">JOIN</span> <span class="sql-id">orders</span> <span class="sql-kw">AS</span> <span class="sql-id">o</span> <span class="sql-kw">ON</span> <span class="sql-id">o</span>.<span class="sql-id">customer_id</span> = <span class="sql-id">c</span>.<span class="sql-id">id</span>
@@ -214,7 +214,7 @@
 </table>
 
 <h2 id="adding-up-quantities">Adding up quantities</h2>
-<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold over the four weeks. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least 58 pieces, and <code>lines</code> counts the order lines behind each total. Four products tie at 58, the croissant and the cinnamon roll among them, and <code>product_id</code> breaks the tie, so the order is fixed. To turn quantities into money, multiply each line by its <code>unit_price</code>, the price paid on that line: <code>SUM(quantity * unit_price)</code>. The catalogue's <code>product.price</code> is today's price, and three products cost less before Monday 16 March, so it would overstate the early takings; the <a href="joins.html">JOIN</a> page brings in the names and both prices.</p>
+<p><code>SUM</code> adds the values of a column within each group. In the bakery, the <code>order_item</code> table says how many of each product went into each order, so summing <code>quantity</code> per product gives the number of pieces sold over the four weeks. Sorting by the sum shows the best sellers first; <code>HAVING</code> keeps only the products with at least 58 pieces, and <code>lines</code> counts the order lines behind each total. Four products tie at 58 (they have the same total), the croissant and the cinnamon roll among them, and <code>product_id</code> as a second sort key breaks the tie, so the order is fixed. To turn quantities into money, multiply each line by its <code>unit_price</code>, the price paid on that line: <code>SUM(quantity * unit_price)</code>. The catalogue's <code>product.price</code> is today's price, and three products cost less before Monday 16 March, so it would overstate the early takings; the <a href="joins.html">JOIN</a> page brings in the names and both prices.</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">product_id</span>, <span class="sql-fn">SUM</span>(<span class="sql-id">quantity</span>) <span class="sql-kw">AS</span> <span class="sql-id">pieces</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">lines</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">order_item</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">product_id</span>
@@ -233,7 +233,7 @@
 </table>
 
 <h2 id="order-by-grouped" class="rule">Grammar: ORDER BY after GROUP BY</h2>
-<p>Sorting happens after grouping, so <code>ORDER BY</code> follows the same rule as <code>SELECT</code>: a grouped column, an aggregate, or an alias from the <code>SELECT</code> list.</p>
+<p>Sorting happens after grouping, so <code>ORDER BY</code> follows the same rule as <code>SELECT</code>: a grouped column, an aggregate, or an <b>alias</b> (a name given with <code>AS</code>) from the <code>SELECT</code> list.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
@@ -269,7 +269,7 @@
 </table>
 
 <h2 id="the-order-in-which-a-query-runs">The order in which a query runs</h2>
-<p>It helps to know the logical order: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page; <a href="grammar.html#order-of-execution">Order of execution</a> goes through it step by step.</p>
+<p>It helps to know the order in which the database works through the clauses (the parts of the query), whatever order you write them in: <code>FROM</code>, then <code>WHERE</code>, then <code>GROUP BY</code>, then <code>HAVING</code>, then <code>SELECT</code>, then <code>ORDER BY</code>, then <code>LIMIT</code>. Each step only sees what the previous one produced. That order explains most of the rules on this page; <a href="grammar.html#order-of-execution">Order of execution</a> goes through it step by step.</p>
 
 <h2 id="group-by-having-common-mistakes" class="mistakes">Common mistakes</h2>
 <p>Putting an aggregate condition in <code>WHERE</code> instead of <code>HAVING</code>. Putting a plain row condition in <code>HAVING</code>: it may work, but it filters late and reads badly. Selecting a column that is neither grouped nor aggregated, which has no single value to show (see <a href="#group-by">Grammar: grouped or aggregated</a>). Using <code>COUNT(column)</code> when you meant <code>COUNT(*)</code> and losing the rows where the column is NULL. Expecting a group for something that has no rows: a product that was never ordered, such as the Pistachio financier, simply does not appear when you group <code>order_item</code>.</p>
