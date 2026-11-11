@@ -369,8 +369,8 @@ GA about 2026-11-15 (phone leak, `try_here` use). Not verified end to end since 
 - ~~Handbook for complete beginners~~ Done 2026-11-11 (a beginner's feedback of 2026-11-10; owner approved all of it):
   every term defined at first use (d33a757), `learn/glossary.html` and three easier warm-ups, exercises now 23
   (a2a9815), the house ad repainted to "Twenty-three graded exercises" (b23d751), fifteen Try it here tasks in the
-  lessons (67eda0d). Wording calls left for the owner: the keyword-capitals line on select-where, "the beginning of a
-  word" on like, "position" on case-when. The reader left no email.
+  lessons (67eda0d). Wording calls settled by the owner the same day: the keyword-capitals line and "position" kept,
+  "part of a word" on like. The reader left no email.
 - ~~After the AdSense verdict: let Google see the desk's noindex~~ Done 2026-11-11 (owner asked for it before the verdict). (owner, 2026-11-09). Search Console lists
   alephb.uk/ritz-affair/admin.html as "Indexed, though blocked by robots.txt": the Disallow lines stop Google reading
   its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
