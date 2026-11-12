@@ -344,8 +344,8 @@ passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of
 35% of phone openers run a query. Phone fixes for it live 2026-11-09 (`docs/research/2026-11-09-phone-first-query.md`).
 2026-11-11, from two readers' feedback (section 8): the consent fix outside Europe, the desk's robots lines dropped, and
 the handbook pass (plain words, glossary, three easier warm-ups, a Try it here task on every lesson). Waiting on Google:
-the AdSense review (requested 2026-11-02, still "getting ready" on 2026-11-11, ads.txt "Authorised"; the verdict comes
-by email), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`), the 24
+the AdSense review (requested 2026-11-02; refused again on 2026-11-12, 04:48 CET, "low-value content", the third refusal;
+ads.txt "Authorised"; next step is the owner's call), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`), the 24
 outreach emails (all sent by the owner at once), the rollback's removal and three more phone changes (section 8).
 Waiting on the owner: a look at the desk charts with real data. Next: re-read
 GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is in `docs/research/2026-11-09-phone-first-query.md`). Not verified end to end since the module split: a real compete season.
