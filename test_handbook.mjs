@@ -77,10 +77,11 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   // each monitor page names its view for monitor.js; each carries the Count select beside the period buttons
   assert.deepEqual(desk.slice(1, 4).map(([, h]) => [h.match(/<body data-view="(\w+)">/)[1], /<span id="days"[^]*<label class="pick">Count <select id="count"><\/select><\/label>/.test(h)]), [["global", true], ["game", true], ["handbook", true]]);
   assert.equal((admin.match(/monitor-link/g) || []).length, 1, "the old SEASONS-row link is gone");
-  const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html", "glossary.html"].includes(f));
+  const chapters = readingOrder.filter((f) => !["index.html", "exercises.html", "grammar.html", "glossary.html", "postgresql-vs-sqlite.html"].includes(f));
   const linked = (f) => {
     const menu = one(learnHtml[f], /<nav class="learn-menu">([\s\S]*?)<\/nav>/, f + " menu");
     const cur = [...menu.matchAll(/<span class="current" aria-current="page">([^<]*)<\/span>/g)];
+    if (f === "postgresql-vs-sqlite.html") { assert.equal(cur.length + (menu.match(/class="current"/g) || []).length, 0, f + ": an article, not in the menu row"); return menu; }
     assert.equal(cur.length, 1, f + ": one current item");
     assert.equal((menu.match(/class="current"/g) || []).length, chapters.includes(f) ? 2 : 1, f + ": Learning chapters is current on a learning page only");
     if (chapters.includes(f)) assert.ok(menu.includes(`<summary class="current">Learning chapters: ${cur[0][1]}</summary>`), f + " summary names the page");

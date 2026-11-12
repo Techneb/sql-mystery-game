@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PostgreSQL vs SQLite: the differences SQL learners meet -- The Ritz Affair</title>
+<meta name="description" content="PostgreSQL vs SQLite for SQL learners: a server against a single file, when to use which, and the differences you meet in practice (types, LIKE and ILIKE, dates, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND), each with an example and a summary table.">
+<link rel="canonical" href="https://alephb.uk/learn/postgresql-vs-sqlite.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Ritz Affair">
+<meta property="og:title" content="PostgreSQL vs SQLite: the differences SQL learners meet -- The Ritz Affair">
+<meta property="og:description" content="PostgreSQL vs SQLite for SQL learners: a server against a single file, when to use which, and the differences you meet in practice (types, LIKE and ILIKE, dates, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND), each with an example and a summary table.">
+<meta property="og:url" content="https://alephb.uk/learn/postgresql-vs-sqlite.html">
+<meta property="og:image" content="https://alephb.uk/ritz-affair/landing-pillow.jpg">
+<meta property="og:image:width" content="960">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="A calling card signed A. L., lying on a white damask pillow with gold tassels">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"PostgreSQL vs SQLite","description":"PostgreSQL vs SQLite for SQL learners: a server against a single file, when to use which, and the differences you meet in practice (types, LIKE and ILIKE, dates, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND), each with an example and a summary table.","url":"https://alephb.uk/learn/postgresql-vs-sqlite.html","image":"https://alephb.uk/ritz-affair/landing-pillow.jpg","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"Article","educationalLevel":"Beginner","teaches":"SQL","author":{"@type":"Organization","name":"AlephB","url":"https://alephb.uk/"},"isPartOf":{"@type":"WebSite","name":"AlephB","url":"https://alephb.uk/"}}</script>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="learn.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<div class="corners">
+<button id="btn-feedback" class="quiet feedback-corner" title="Send feedback" aria-label="Send feedback"><svg class="icon mail" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M2 4.5L8 9L14 4.5"/></svg><span class="btn-text">Feedback</span></button>
+<button id="btn-theme" class="quiet theme-corner" title="Night edition" aria-label="Night edition"><svg class="icon moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8.53A6 6 0 1 1 7.47 2A4.67 4.67 0 0 0 14 8.53Z"/></svg><span class="btn-text">Night edition</span></button>
+</div>
+<header class="masthead">
+  <div class="mast-title">LE PETIT JOURNAL</div>
+  <div class="mast-sub">THE CLERK'S HANDBOOK</div>
+  <nav class="learn-nav muted"><a href="../" title="The game">The Ritz Affair</a> &middot; <span class="current" aria-current="page" title="Training content: SQL lessons and exercises">The Clerk's Handbook</span></nav>
+</header>
+<!-- menu: colour_learn.mjs -->
+<nav class="learn-menu"><a href="index.html">Index</a> &middot;
+  <details class="learn-chapters"><summary>Learning chapters</summary><ol>
+    <li><a href="database.html">1. Database</a></li>
+    <li><a href="schema.html">2. Schema</a></li>
+    <li><a href="select-where.html">3. SELECT</a></li>
+    <li><a href="order-by-limit.html">4. ORDER BY</a></li>
+    <li><a href="like.html">5. LIKE</a></li>
+    <li><a href="dates-times.html">6. Dates</a></li>
+    <li><a href="group-by-having.html">7. GROUP BY</a></li>
+    <li><a href="joins.html">8. JOIN</a></li>
+    <li><a href="nulls.html">9. NULL</a></li>
+    <li><a href="case-when.html">10. CASE</a></li>
+    <li><a href="subqueries.html">11. Subqueries</a></li>
+    <li><a href="set-operations.html">12. UNION</a></li>
+    <li><a href="window-functions.html">13. Windows</a></li>
+    <li><a href="ctes.html">14. CTEs</a></li>
+  </ol></details> &middot;
+  <a href="exercises.html">Exercises</a> &middot;
+  <a href="grammar.html">Grammar</a> &middot;
+  <a href="glossary.html">Glossary</a></nav>
+<!-- /menu -->
+<main class="learn">
+<h1>PostgreSQL vs SQLite</h1>
+<p class="game-label">Game: the terminal of every <a href="../">chapter</a></p>
+<p class="lede">PostgreSQL and SQLite both speak SQL, and most queries run the same on both. This page is about the places where they differ: what each one is, when to pick which, and the differences a learner actually runs into, each shown on the <a href="database.html">bakery database</a>.</p>
+<p>The terminal in this handbook and in the game runs SQLite inside your browser, but it reads your SQL by PostgreSQL's rules. So if a query from a SQLite tutorial is refused here, or a query you wrote here fails on a PostgreSQL server at work, one of the sections below explains why. A table at the end sums it all up.</p>
+
+<h2 id="a-server-and-a-file">A server and a file</h2>
+<p><b>PostgreSQL</b> is a database server. It is a program that runs on its own, often on another machine, and waits for connections, by default on port 5432. Your application, a command-line client such as <code>psql</code> or a desktop tool connects to it, sends a query and gets the rows back. The server keeps the data in its own directory of files, which you never open yourself. It serves many connections at once, knows who each user is and what they may do, and keeps going while hundreds of programs read and write.</p>
+<p><b>SQLite</b> is a library. There is no server to start: the program that wants a database includes SQLite, and SQLite reads and writes one ordinary file on disk, such as <code>bakery.db</code>. Copy the file and you have copied the database, tables, data and all. Setting it up takes nothing, and the file goes wherever you send it. That is why SQLite sits inside nearly every phone, most web browsers and a great many desktop programs, usually without their users knowing.</p>
+<p>Both are free, open source and mature: each has been developed for more than twenty-five years, each for a different job.</p>
+
+<h2 id="when-to-use-which">When to use which</h2>
+<p>Pick SQLite when the data belongs to one program. A mobile app's local data, a desktop tool's documents, automated tests that need a throwaway database, a small website on a single machine that writes now and then, a dataset you want to hand to a colleague as one file, a notebook where you explore data on your own laptop: SQLite fits all of these. Its own documentation sums up its place well: SQLite does not compete with client/server databases, it competes with <code>fopen()</code>, the function a program uses to open a plain file.</p>
+<p>Pick PostgreSQL when several programs or people share the data, when many users write at the same moment, when you need accounts and permissions, or when the data must live on its own machine, backed up and copied to a standby. Most web applications with real traffic, and most databases a team shares, run on a server like PostgreSQL (or MySQL, SQL Server, Oracle). PostgreSQL also brings things SQLite has no equivalent for: real date, time and interval types, exact decimals, arrays, and extensions such as PostGIS for maps.</p>
+<p>For a learner the choice matters less than it seems. The core of SQL, <code>SELECT</code>, <code>WHERE</code>, joins, grouping, subqueries, window functions, is the same in both. Learn that core, practise wherever it is convenient, and keep the differences below in mind.</p>
+
+<h2 id="why-postgresql-grammar">Why the handbook writes PostgreSQL's SQL</h2>
+<p>Running SQLite in the page has real advantages. There is nothing to install and no account to create, your queries never leave your browser, and the bakery is small enough that every query answers at once.</p>
+<p>But SQLite is forgiving. It runs queries that most other databases reject, and it often gives an answer where it should give an error. Compare a number with text and you get no rows, silently. Leave a column out of <code>GROUP BY</code> and it picks a value from some row. Put a value in double quotes and it may take it as text. Someone who practises only on SQLite picks up habits that fail on the first server they use.</p>
+<p>So the terminal checks every query against PostgreSQL's grammar before SQLite sees it. A query that PostgreSQL would reject does not run: the terminal answers with PostgreSQL's own error line and a sentence on how to fix it, linked to the rule in <a href="grammar.html">The Grammar of SQL</a>. It also accepts a few PostgreSQL forms that SQLite lacks and translates them for SQLite: <code>ILIKE</code>, <code>LEFT(text, n)</code>, <code>RIGHT(text, n)</code> and the <code>x::type</code> cast. And <code>LIKE</code> is case-sensitive here, as in PostgreSQL.</p>
+<p>On one point the terminal asks for more than PostgreSQL does: a number in quotes, as in <code>price &gt; '3'</code>, is refused, although PostgreSQL would read the quoted 3 as a number. The terminal wants numbers written as numbers, so the type shows in the query. The goal is SQL you can take to a PostgreSQL server as it is; the sections below say what to check when you do.</p>
+
+<h2 id="types-declared-or-suggested">Types: declared or suggested</h2>
+<p>In PostgreSQL a column's type is a promise. A column declared <code>integer</code> holds whole numbers and nothing else: inserting <code>'abc'</code> fails with <i>invalid input syntax for type integer</i>. The types are many and precise: <code>integer</code> and <code>bigint</code>, <code>numeric</code> for exact decimals, <code>real</code> and <code>double precision</code> for floating point, <code>text</code> and <code>varchar(n)</code>, <code>boolean</code>, <code>date</code>, <code>time</code>, <code>timestamp</code>, <code>interval</code> and more.</p>
+<p>In SQLite a declared type is closer to a preference, which SQLite calls <b>type affinity</b>. Every value carries its own type, one of five storage classes: NULL, INTEGER, REAL, TEXT and BLOB. A column declared <code>INTEGER</code> turns <code>'12'</code> into the number 12 when it can, but it keeps <code>'abc'</code> as text, without complaint. Since version 3.37, a table created with the <code>STRICT</code> keyword checks types much as PostgreSQL does; ordinary tables, the bakery's included, do not.</p>
+<p>Comparisons follow the same logic. In the bakery, <code>orders.day</code> is <code>TEXT</code> holding dates such as <code>'2026-03-02'</code>. Compare it with a number and PostgreSQL stops with an error. SQLite runs the query, finds that the text and the number are not equal, and returns no rows, with no warning. The terminal refuses it, as PostgreSQL would:</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-num">20260302</span>;</code></pre>
+<div class="refusal"><code>ERROR: operator does not exist: text = integer</code> day is a text column and 20260302 is a number: write the value as text in single quotes, in the column's own format.</div>
+<p>Write the date as text, in the column's own format: <code>day = '2026-03-02'</code>. The full rule is in <a href="select-where.html#types">Grammar: types</a>.</p>
+<p>Text and numbers also sort differently. As text, <code>'10'</code> comes before <code>'9'</code>, because the first characters are compared first. Dates written year-month-day escape this trap because every part has a fixed width, which is why the bakery can keep them as text: see <a href="dates-times.html#why-text-order-is-calendar-order">why text order is calendar order</a>.</p>
+
+<h2 id="like-ilike-and-case">LIKE, ILIKE and letter case</h2>
+<p>PostgreSQL's <code>LIKE</code> is case-sensitive: <code>'Almond croissant' LIKE '%Croissant%'</code> is false. For a match that ignores case, PostgreSQL adds <code>ILIKE</code>. SQLite's <code>LIKE</code> ignores case, but only for the 26 letters of plain English: <code>'Cake' LIKE 'cake'</code> is true, while <code>'CAF&Eacute;' LIKE 'caf&eacute;'</code> is false. SQLite has no <code>ILIKE</code>.</p>
+<p>This terminal follows PostgreSQL. With a capital C, <code>LIKE</code> finds the plain croissant only:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%Croissant%'</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Croissant</td></tr>
+</table>
+<p><code>ILIKE</code> finds the almond one too:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%croissant%'</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Croissant</td></tr>
+<tr><td>Almond croissant</td></tr>
+</table>
+<p>In plain SQLite the first query would already return both rows, and the second would be a syntax error. If a query has to ignore case on both databases, lower the text first: <code>lower(name) LIKE '%croissant%'</code> works everywhere. SQLite's <code>GLOB</code>, a case-sensitive pattern match with <code>*</code> and <code>?</code>, exists in SQLite only. More in <a href="like.html#case-like-and-ilike">Case: LIKE and ILIKE</a> and <a href="like.html#like-ilike">Grammar: LIKE and ILIKE</a>.</p>
+
+<h2 id="dates-and-times-in-both">Dates and times</h2>
+<p>PostgreSQL has real date and time types. A <code>date</code> column holds a calendar day, and <code>'2026-02-30'</code> is rejected because February has no 30th. You can add days to a date (<code>day + 1</code> is the next day), subtract two dates to get a number of days, take a part out with <code>EXTRACT(MONTH FROM day)</code> or <code>EXTRACT(DOW FROM day)</code> (0 is Sunday), cut a timestamp down to its month with <code>date_trunc('month', ts)</code> and format it with <code>to_char(day, 'YYYY-MM')</code>.</p>
+<p>SQLite has no date type at all. A date is stored as text (<code>'2026-03-02'</code>), as a Julian day number (REAL) or as Unix time, the seconds since 1970 (INTEGER), and a family of functions reads any of the three: <code>date()</code>, <code>time()</code>, <code>datetime()</code>, <code>julianday()</code> and <code>strftime()</code>. So <code>date('2026-03-02', '+1 day')</code> gives <code>'2026-03-03'</code> and <code>strftime('%w', day)</code> gives the day of the week, 0 for Sunday. They are handy, but none of them exists in PostgreSQL. SQLite does not check that a date is real either: <code>date('2026-02-30')</code> comes back as <code>'2026-03-02'</code>.</p>
+<p>The bakery stores <code>day</code> and <code>time</code> as text, as many SQLite databases do. The handbook works with them in ways both databases accept: it compares the text, which works because these dates sort in calendar order, and it takes a part out with <code>substr</code> or <code>CAST</code>. Here are the orders of the first three days:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-02'</span> <span class="sql-kw">AND</span> <span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-05'</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
+<table class="result">
+<tr><th>day</th><th>orders</th></tr>
+<tr><td>2026-03-02</td><td>13</td></tr>
+<tr><td>2026-03-03</td><td>10</td></tr>
+<tr><td>2026-03-04</td><td>10</td></tr>
+</table>
+<p>SQLite's own date functions are refused, as PostgreSQL would refuse them:</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">strftime</span>(<span class="sql-str">'%w'</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> <span class="sql-id">weekday</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>;</code></pre>
+<div class="refusal"><code>ERROR: function strftime(text, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= '1912-01-01', or substr(d, 1, 7) for its year and month instead.</div>
+<p>The <a href="dates-times.html">dates and times</a> page covers this ground in full: <a href="dates-times.html#comparing-and-filtering-ranges">comparing and filtering ranges</a>, <a href="dates-times.html#taking-apart">taking a date apart</a> and <a href="dates-times.html#date-functions">Grammar: dates, substr and CAST</a>. If you move such a database to PostgreSQL, declare those columns as <code>date</code> and <code>time</code>. Comparisons with a quoted date keep working, and PostgreSQL's date functions become available.</p>
+
+<h2 id="joining-text">Joining text with ||</h2>
+<p>Both databases join text with <code>||</code>, the standard operator. (<code>+</code> is for numbers only, in both.)</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> || <span class="sql-str">' ('</span> || <span class="sql-id">category</span> || <span class="sql-str">')'</span> <span class="sql-kw">AS</span> <span class="sql-id">label</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">4</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>label</th></tr>
+<tr><td>Sourdough loaf (bread)</td></tr>
+<tr><td>Walnut bread (bread)</td></tr>
+<tr><td>Raspberry tart (cake)</td></tr>
+</table>
+<p>The difference shows with two numbers. SQLite turns <code>2 || 3</code> into the text <code>'23'</code>; PostgreSQL refuses it, because <code>||</code> means nothing for two integers. The terminal follows PostgreSQL:</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span> || <span class="sql-id">staff_id</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>;</code></pre>
+<div class="refusal"><code>ERROR: operator does not exist: integer || integer</code> || joins text, and id and staff_id are both numbers: add them with +, or make one of them text first, as in CAST(id AS TEXT) || ...</div>
+<p>Make one side text first, as in <code>CAST(id AS TEXT) || '-' || staff_id</code>. One rule is the same on both: anything joined with NULL is NULL, so a missing value blanks the whole label. <code>COALESCE</code> (below) fills the gap. PostgreSQL's <code>concat()</code> skips NULLs instead, and SQLite has had <code>concat()</code> too since version 3.44. To join the values of a whole group, PostgreSQL has <code>string_agg(name, ', ')</code>, where older SQLite only had <code>group_concat</code>; SQLite added <code>string_agg</code> in the same version. See <a href="group-by-having.html#group-concat">Grammar: string_agg and SUM</a>.</p>
+
+<h2 id="group-by-in-both">GROUP BY and the columns you may show</h2>
+<p>PostgreSQL's rule: in a grouped query, every column in <code>SELECT</code> is either listed in <code>GROUP BY</code> or wrapped in an aggregate such as <code>MAX</code> or <code>COUNT</code>. (Grouping by a table's primary key also covers that table's other columns.) Anything else is an error, because a group can hold several values for that column and PostgreSQL will not choose one for you.</p>
+<p>SQLite allows these "bare" columns and picks a value itself. Ask for each category's dearest price with a product name beside it:</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
+<div class="refusal"><code>ERROR: column "product.name" must appear in the GROUP BY clause or be used in an aggregate function</code> Each row of the result is one group, and product.name can hold several values inside a group: add product.name to GROUP BY, or wrap it in an aggregate such as MAX(product.name).</div>
+<p>Plain SQLite runs this and answers Sourdough loaf, Raspberry tart and Cinnamon roll. With a single <code>MAX</code> or <code>MIN</code>, SQLite documents that bare columns come from the row that holds it, so the names are right this time. Add a second aggregate, or use <code>AVG</code>, and the name comes from some row of the group, and nothing tells you which. If two products shared the top price, you would see one of them and never know about the other.</p>
+<p>PostgreSQL refuses the query, and so does the terminal. Show only what the grouping can answer:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">AS</span> <span class="sql-id">top_price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
+<table class="result">
+<tr><th>category</th><th>top_price</th></tr>
+<tr><td>bread</td><td>4.5</td></tr>
+<tr><td>cake</td><td>4.1</td></tr>
+<tr><td>pastry</td><td>2.6</td></tr>
+</table>
+<p>To get the name as well, rank the rows with a window function, as in the <a href="#windows-and-ctes-in-both">window functions section</a> below. The rule is set out in <a href="group-by-having.html#group-by">Grammar: grouped or aggregated</a>, and the order the clauses run in is on <a href="grammar.html#order-of-execution">the grammar page</a>.</p>
+
+<h2 id="single-and-double-quotes">Single and double quotes</h2>
+<p>In standard SQL, PostgreSQL included, single quotes hold a value (<code>'cake'</code>) and double quotes hold a name, of a table or a column (<code>"category"</code>). You rarely need double quotes: only for a name with a space or capitals in it, or one that is also a keyword. PostgreSQL turns names without quotes into lowercase, so <code>Category</code> and <code>category</code> are the same column, while <code>"Category"</code> in quotes names a different one.</p>
+<p>SQLite accepts double quotes for names too, but when the quoted word matches no column, it quietly takes it as a text value. SQLite's own documentation lists this among its quirks, kept so that old programs keep working. So the query below runs in plain SQLite and finds the cakes. The trouble comes later: if a column named <code>cake</code> were ever added, the same query would quietly change meaning.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">"cake"</span>;</code></pre>
+<div class="refusal"><code>ERROR: column "cake" does not exist</code> "cake" in double quotes is the name of a column, and there is none: a text value takes single quotes, 'cake'.</div>
+<p>Single quotes for the value, and it runs on both:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span> <span class="sql-kw">AND</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3.5</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th></tr>
+<tr><td>Lemon tart</td></tr>
+<tr><td>Cheesecake slice</td></tr>
+<tr><td>Raspberry tart</td></tr>
+</table>
+<p>See <a href="select-where.html#double-quotes">Grammar: double quotes</a>, which also covers SQLite's backticks and <code>AS 'text'</code>.</p>
+
+<h2 id="limit-and-offset-in-both">LIMIT and OFFSET</h2>
+<p>Both accept <code>LIMIT n OFFSET m</code>: skip m rows, then keep n. SQLite also takes <code>LIMIT m, n</code>, with the number to skip first, the reverse of what most readers expect. PostgreSQL rejects that form with <i>LIMIT #,# syntax is not supported</i>. PostgreSQL also accepts the SQL standard's longer form, <code>OFFSET 3 ROWS FETCH FIRST 2 ROWS ONLY</code>, which SQLite does not.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>, <span class="sql-num">2</span>;</code></pre>
+<div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 3, 2 is not standard SQL: write LIMIT 2 OFFSET 3 (the row count first, then how many rows to skip).</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">2</span> <span class="sql-kw">OFFSET</span> <span class="sql-num">3</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th></tr>
+<tr><td>Lemon tart</td><td>3.9</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td></tr>
+</table>
+<p>Without <code>ORDER BY</code>, neither database promises which rows come first, and the two may well disagree. The <code>id</code> above breaks ties between equal prices, so the result is the same everywhere. See <a href="order-by-limit.html#limit-offset">Grammar: LIMIT and OFFSET</a> and <a href="order-by-limit.html#ties-and-limit">ties and LIMIT</a>.</p>
+
+<h2 id="true-and-false">True and false</h2>
+<p>PostgreSQL has a <code>boolean</code> type with three values: true, false and NULL. A comparison such as <code>price &gt; 3</code> is a boolean, and <code>WHERE</code>, <code>HAVING</code>, <code>ON</code> and <code>CASE WHEN</code> each need one. SQLite has no boolean type: a comparison gives 1 or 0, and since version 3.23 the words <code>TRUE</code> and <code>FALSE</code> are other names for 1 and 0.</p>
+<p>The same query shows the difference. Here the <code>dear</code> column reads 1 and 0; PostgreSQL would show true and false (<code>psql</code> prints them as t and f).</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>, <span class="sql-id">price</span> &gt; <span class="sql-num">3</span> <span class="sql-kw">AS</span> <span class="sql-id">dear</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'bread'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>price</th><th>dear</th></tr>
+<tr><td>Baguette</td><td>1.2</td><td>0</td></tr>
+<tr><td>Sourdough loaf</td><td>4.5</td><td>1</td></tr>
+<tr><td>Rye loaf</td><td>3.8</td><td>1</td></tr>
+<tr><td>Seeded rolls</td><td>3.8</td><td>1</td></tr>
+<tr><td>Focaccia</td><td>3.6</td><td>1</td></tr>
+<tr><td>Walnut bread</td><td>4.2</td><td>1</td></tr>
+</table>
+<p>Because SQLite treats a condition as a number, it lets you add conditions up: <code>SUM(price &gt; 3)</code> counts the dear products. PostgreSQL has no sum of booleans, and the terminal refuses it. It refuses <code>WHERE 1</code> for the same reason: 1 is a number, not a condition.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-fn">SUM</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
+<div class="refusal"><code>ERROR: function sum(boolean) does not exist</code> price &gt; 3 is a condition (true or false), not a number: count where it holds with SUM(CASE WHEN price &gt; 3 THEN 1 ELSE 0 END).</div>
+<p>Count with a condition instead. <code>FILTER</code> after an aggregate works in both (SQLite since 3.30), and <code>SUM(CASE WHEN price &gt; 3 THEN 1 ELSE 0 END)</code> works everywhere:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">FILTER</span> (<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span>) <span class="sql-kw">AS</span> <span class="sql-id">dear</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
+<table class="result">
+<tr><th>dear</th><th>products</th></tr>
+<tr><td>9</td><td>20</td></tr>
+</table>
+<p>See <a href="select-where.html#boolean">Grammar: conditions</a> and <a href="case-when.html#conditional-counts-and-sums">conditional counts and sums</a>.</p>
+
+<h2 id="ifnull-and-coalesce">IFNULL, COALESCE and NULL</h2>
+<p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL, in both databases. SQLite also has <code>IFNULL(a, b)</code>, the two-argument version, which PostgreSQL does not have.</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IFNULL</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
+<div class="refusal"><code>ERROR: function ifnull(text, text) does not exist</code> ifnull() is not standard SQL: use COALESCE(a, b) instead.</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">AS</span> <span class="sql-id">email</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">town</span> = <span class="sql-str">'Old Town'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">4</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>email</th></tr>
+<tr><td>David Chen</td><td>no email</td></tr>
+<tr><td>Farid Haddad</td><td>FARID.HADDAD@MAIL.COM</td></tr>
+<tr><td>Wen Petrov</td><td>no email</td></tr>
+<tr><td>Hassan Ivanova</td><td>hassan.ivanova@post.net</td></tr>
+</table>
+<p><code>NULLIF(a, b)</code>, which turns a value into NULL, exists in both. Two more NULL differences are worth knowing. In sorting, SQLite puts NULLs first in ascending order and PostgreSQL puts them last; when it matters, write <code>NULLS FIRST</code> or <code>NULLS LAST</code>, which both accept (SQLite since 3.30). And SQLite's <code>x IS 3</code>, an equality that treats two NULLs as equal, is written <code>x IS NOT DISTINCT FROM 3</code> in standard SQL, a form both accept. See <a href="nulls.html#coalesce">Grammar: COALESCE and IS</a> and <a href="nulls.html#null-in-sorting-and-grouping">NULL in sorting and grouping</a>.</p>
+
+<h2 id="iif-and-case">IIF and CASE</h2>
+<p>SQLite 3.32 added <code>IIF(condition, a, b)</code>, borrowed from Microsoft's databases. PostgreSQL has no <code>IIF</code>. <code>CASE</code> is in the SQL standard and in both, and it does everything <code>IIF</code> does:</p>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IIF</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>, <span class="sql-str">'dear'</span>, <span class="sql-str">'cheap'</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
+<div class="refusal"><code>ERROR: function iif(boolean, text, text) does not exist</code> iif() is not standard SQL: use CASE WHEN ... THEN ... ELSE ... END instead.</div>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span> <span class="sql-kw">THEN</span> <span class="sql-str">'dear'</span> <span class="sql-kw">ELSE</span> <span class="sql-str">'cheap'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<table class="result">
+<tr><th>name</th><th>band</th></tr>
+<tr><td>Lemon tart</td><td>dear</td></tr>
+<tr><td>Chocolate eclair</td><td>cheap</td></tr>
+<tr><td>Carrot cake slice</td><td>dear</td></tr>
+<tr><td>Cheesecake slice</td><td>dear</td></tr>
+<tr><td>Raspberry tart</td><td>dear</td></tr>
+<tr><td>Coffee eclair</td><td>cheap</td></tr>
+<tr><td>Pistachio financier</td><td>cheap</td></tr>
+</table>
+<p>See <a href="case-when.html#iif">Grammar: CASE, not IIF</a>.</p>
+
+<h2 id="round-and-division">ROUND, division and decimals</h2>
+<p>SQLite's <code>ROUND(x, n)</code> rounds any number to n decimal places. PostgreSQL's two-argument <code>round</code> wants a <code>numeric</code>, its exact decimal type. Given a <code>real</code> or <code>double precision</code> value it fails with <i>function round(double precision, integer) does not exist</i>. The average of a <code>real</code> column is a <code>double precision</code>, so <code>ROUND(AVG(price), 2)</code>, fine in SQLite, fails there. Convert first:</p>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>)::<span class="sql-id">numeric</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">avg_price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
+<table class="result">
+<tr><th>category</th><th>avg_price</th></tr>
+<tr><td>bread</td><td>3.52</td></tr>
+<tr><td>cake</td><td>3.29</td></tr>
+<tr><td>pastry</td><td>1.9</td></tr>
+</table>
+<p>The cast changes nothing in SQLite and lets the query run in PostgreSQL. <code>CAST(AVG(price) AS NUMERIC)</code> is the same thing, written out. Other pages of this handbook round without the cast, because their examples are written for the terminal; this is the first thing to add when you take one to a PostgreSQL server.</p>
+<p>Division works alike in one respect: both divide two integers as integers, so <code>7 / 2</code> is 3. Write <code>7 / 2.0</code>, or cast one side, to get 3.5. Division by zero differs: SQLite returns NULL, PostgreSQL stops with <i>division by zero</i>. And <code>real</code> is floating point in both, so <code>0.1 + 0.2 = 0.3</code> is false. For money, PostgreSQL's <code>numeric</code> is exact; SQLite has no exact decimal type built in.</p>
+
+<h2 id="returning-and-upserts">Changing data: RETURNING and upserts</h2>
+<p>This handbook only reads data, and its terminal will not run <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code>. Two features for changing data are still worth knowing, because both databases now share them, with the same syntax.</p>
+<p><code>RETURNING</code> makes an <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> return the rows it touched. The common use is to get the id of a new row: <code>INSERT INTO product (name, category, price) VALUES ('Fig roll', 'pastry', 2.3) RETURNING id</code>. PostgreSQL has had it for many years; SQLite added it in version 3.35.</p>
+<p>An <b>upsert</b> inserts a row, or updates it when its key already exists: <code>INSERT INTO product (id, name, category, price) VALUES (1, 'Baguette', 'bread', 1.3) ON CONFLICT (id) DO UPDATE SET price = excluded.price</code>. PostgreSQL has it since 9.5, SQLite since 3.24. SQLite's older <code>INSERT OR REPLACE</code> exists only in SQLite, and it behaves differently: it deletes the old row and inserts a new one, so any column you did not give falls back to its default. PostgreSQL also has <code>MERGE</code>, since version 15.</p>
+
+<h2 id="windows-and-ctes-in-both">Window functions and CTEs: the same in both</h2>
+<p>Here the two agree. SQLite gained window functions in version 3.25 (2018) and common table expressions, <code>WITH RECURSIVE</code> included, in 3.8.3 (2014). PostgreSQL has had both since 8.4 (2009). <code>ROW_NUMBER</code>, <code>RANK</code>, <code>LAG</code>, <code>PARTITION BY</code> and <code>WITH</code> are written the same way in both. Older tutorials that say SQLite lacks them are out of date, as are those that say it has no <code>RIGHT JOIN</code> or <code>FULL OUTER JOIN</code>: both arrived in SQLite 3.39 (2022).</p>
+<p>This is how to get the name of each category's dearest product, the question the bare column above could not answer safely. It runs unchanged on both:</p>
+<pre><code><span class="sql-kw">WITH</span> <span class="sql-id">ranked</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>,
+         <span class="sql-fn">RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">r</span>
+  <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+)
+<span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">ranked</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">r</span> = <span class="sql-num">1</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>;</code></pre>
+<table class="result">
+<tr><th>category</th><th>name</th><th>price</th></tr>
+<tr><td>bread</td><td>Sourdough loaf</td><td>4.5</td></tr>
+<tr><td>cake</td><td>Raspberry tart</td><td>4.1</td></tr>
+<tr><td>pastry</td><td>Cinnamon roll</td><td>2.6</td></tr>
+</table>
+<p>Unlike the bare column, this query is honest about ties: two products sharing the top price would both get rank 1, and both would be listed. See <a href="window-functions.html#numbering-and-ranking">numbering and ranking</a> and <a href="ctes.html#with-naming-a-result">WITH: naming a result</a>.</p>
+
+<h2 id="many-users-at-once">Many users at once</h2>
+<p>SQLite lets any number of connections read at the same time, but only one can write at a time, and a writer locks the whole database file, not just the rows it changes. In WAL mode (write-ahead logging), readers carry on during a write, but writers still wait their turn. For one application, or a website that writes now and then, that is plenty. With many people writing at the same moment, they queue. SQLite also has no users: whoever can open the file can read and change everything in it, so access depends on the operating system's file permissions.</p>
+<p>PostgreSQL was built for many users at once. Each connection is served by its own process. A scheme called multiversion concurrency control means that, in the words of its manual, reading never blocks writing and writing never blocks reading; two writers wait for each other only when they change the same row. It has roles with passwords, <code>GRANT</code> and <code>REVOKE</code> per table, and even rules per row (row-level security). It can keep copies of the database on standby servers. None of this shows in a <code>SELECT</code>, but it is a large part of why companies run a server.</p>
+
+<h2 id="pg-sqlite-summary">Summary table</h2>
+<table class="result shorthands">
+<tr><th>Topic</th><th>PostgreSQL</th><th>SQLite</th></tr>
+<tr><td>What it is</td><td>a server that programs connect to</td><td>a library that reads one file</td></tr>
+<tr><td>Column types</td><td>enforced</td><td>a preference (affinity); <code>STRICT</code> tables enforce them</td></tr>
+<tr><td>Text compared with a number</td><td>an error</td><td>runs, usually finds nothing</td></tr>
+<tr><td><code>LIKE</code></td><td>case-sensitive; <code>ILIKE</code> ignores case</td><td>ignores case for A to Z; no <code>ILIKE</code></td></tr>
+<tr><td>Dates</td><td><code>date</code>, <code>time</code>, <code>timestamp</code>, <code>interval</code>; <code>EXTRACT</code>, <code>to_char</code></td><td>text or numbers; <code>date()</code>, <code>strftime()</code></td></tr>
+<tr><td><code>2 || 3</code></td><td>an error</td><td><code>'23'</code></td></tr>
+<tr><td>Column not in <code>GROUP BY</code></td><td>an error</td><td>a value from some row</td></tr>
+<tr><td><code>"cake"</code></td><td>a column name</td><td>text, when no column has that name</td></tr>
+<tr><td><code>LIMIT 3, 2</code></td><td>an error; <code>LIMIT 2 OFFSET 3</code> or <code>FETCH FIRST</code></td><td>skips 3, keeps 2</td></tr>
+<tr><td>Booleans</td><td>a <code>boolean</code> type: true, false</td><td>1 and 0</td></tr>
+<tr><td><code>IFNULL</code>, <code>IIF</code></td><td>none: <code>COALESCE</code>, <code>CASE</code></td><td>both, plus <code>COALESCE</code> and <code>CASE</code></td></tr>
+<tr><td><code>ROUND(x, 2)</code> on <code>real</code></td><td>needs <code>x::numeric</code></td><td>works</td></tr>
+<tr><td>Division by zero</td><td>an error</td><td>NULL</td></tr>
+<tr><td>NULLs in ascending order</td><td>last</td><td>first</td></tr>
+<tr><td><code>RETURNING</code>, <code>ON CONFLICT</code></td><td>yes</td><td>yes (3.35, 3.24)</td></tr>
+<tr><td>Window functions, CTEs</td><td>yes</td><td>yes (3.25, 3.8.3)</td></tr>
+<tr><td>Writers at the same time</td><td>many</td><td>one</td></tr>
+<tr><td>Users and permissions</td><td>roles, <code>GRANT</code>, row-level security</td><td>none: the file's permissions</td></tr>
+</table>
+
+<h2 id="moving-a-query">Moving a query from one to the other</h2>
+<p>A query that runs in this terminal is written in PostgreSQL's grammar, so most of the work is done. Before running it on a PostgreSQL server, check three things. A <code>ROUND(x, n)</code> on a <code>real</code> value needs <code>::numeric</code>. An <code>ORDER BY</code> on a column with NULLs puts them at the other end unless you say <code>NULLS FIRST</code> or <code>NULLS LAST</code>. And the server's tables may declare dates as <code>date</code> rather than text, which opens up <code>EXTRACT</code> and date arithmetic but rules out <code>substr</code> on them.</p>
+<p>The other way round, from PostgreSQL to plain SQLite, look for <code>ILIKE</code>, the <code>::</code> cast, <code>LEFT</code> and <code>RIGHT</code>, date functions such as <code>EXTRACT</code> and <code>date_trunc</code>, and any column type SQLite does not know, such as arrays or intervals. Then remember that plain SQLite will run some mistakes that PostgreSQL would have caught, which is the reason this handbook checks them for you.</p>
+
+<!-- pager: colour_learn.mjs -->
+<nav class="learn-pager"><a class="prev" href="glossary.html">Previous: SQL glossary</a></nav>
+<!-- /pager -->
+</main>
+<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
+  <span>Help improve the course: allow anonymous usage statistics?</span>
+  <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="../privacy.html">Privacy notice</a></span>
+</div>
+<script type="module" src="handbook.js"></script>
+</body>
+</html>

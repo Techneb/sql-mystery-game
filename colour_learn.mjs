@@ -35,7 +35,7 @@ export const colourPage = (html, schema) => html
 
 // The handbook's table of contents, the one list its navigation is built from: the fourteen learning chapters in
 // reading order, each [page, menu label, the index's one-line blurb]. Pages read: index, the chapters, exercises,
-// grammar, glossary. Adding or reordering a chapter = one edit here (the new page copied from a sibling, for its markers), then
+// grammar, glossary, PostgreSQL vs SQLite (an article, in the pagers and the index but not the menu row). Adding or reordering a chapter = one edit here (the new page copied from a sibling, for its markers), then
 // node colour_learn.mjs. Pager and index labels are each target page's own <h1>.
 export const CHAPTERS = [
   ["database.html", "Database", "the example data, with a script to recreate it."],
@@ -53,7 +53,7 @@ export const CHAPTERS = [
   ["window-functions.html", "Windows", "ranking rows and comparing with the previous one."],
   ["ctes.html", "CTEs", "named steps and following chains."],
 ];
-export const READING = ["index.html", ...CHAPTERS.map((c) => c[0]), "exercises.html", "grammar.html", "glossary.html"];
+export const READING = ["index.html", ...CHAPTERS.map((c) => c[0]), "exercises.html", "grammar.html", "glossary.html", "postgresql-vs-sqlite.html"];
 const isChapter = (f) => CHAPTERS.some((c) => c[0] === f);
 
 // Each generated block sits between a <!-- name: colour_learn.mjs --> line and a <!-- /name --> line.

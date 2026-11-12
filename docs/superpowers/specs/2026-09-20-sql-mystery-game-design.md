@@ -352,6 +352,14 @@ GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is i
 
 ## 8. Backlog (not scheduled)
 
+- **Handbook article: PostgreSQL vs SQLite** (2026-11-12, owner, after the third AdSense refusal for low-value content;
+  built on a branch, not yet pushed): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
+  when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,
+  dates, `||`, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND, RETURNING/upsert, windows and CTEs, concurrency),
+  13 bakery examples and 9 refused ones, a summary table. Last in the reading order (after the glossary), on the
+  index's Practice and reference card (now a 2 x 2 grid) and linked from grammar.html's intro; not in the menu row.
+  Left: push, redeploy the feedback script (`LEARN_PAGES` gained its slug), then ask AdSense again.
+
 - ~~Desk on any device~~ Done 2026-11-08 (3264a7c, live): the board URL ships sealed under the passphrase (`BOARD_SEALED` in `shared.js`), so the passphrase alone opens the desk; a new URL or passphrase means a new Save for every device code from Setup.
 
 - ~~The game moves to alephb.uk/ritz-affair/~~ Done 2026-10-31 (runbook finished 2026-11-01). (owner, 2026-10-31; live the same evening). The game and the

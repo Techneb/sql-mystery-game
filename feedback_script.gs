@@ -120,7 +120,7 @@ function context_(c) {
 var LEARN_PAGES = { "case-when": "CASE WHEN", "ctes": "CTEs and WITH RECURSIVE", "database": "The bakery database",
   "dates-times": "Dates and times stored as text or numbers", "exercises": "SQL exercises with solutions",
   "glossary": "SQL glossary", "grammar": "The Grammar of SQL", "group-by-having": "GROUP BY, aggregates and HAVING", "joins": "JOIN, LEFT JOIN and self-joins",
-  "like": "LIKE and text patterns", "nulls": "NULL and missing values", "order-by-limit": "ORDER BY and LIMIT",
+  "like": "LIKE and text patterns", "nulls": "NULL and missing values", "order-by-limit": "ORDER BY and LIMIT", "postgresql-vs-sqlite": "PostgreSQL vs SQLite",
   "schema": "Tables, keys and the schema", "select-where": "SELECT and WHERE", "set-operations": "UNION, INTERSECT and EXCEPT",
   "subqueries": "Subqueries", "window-functions": "Window functions: RANK and LAG" };
 var DESK_PAGES = ["/admin.html", "/monitor.html", "/monitor-game.html", "/monitor-handbook.html", "/explore.html", "/inbox.html", "/leaderboard.html"];
