@@ -596,30 +596,13 @@ test("publish: publish.mjs refuses a target that is, holds or sits inside the so
   assert.equal(fs.readdirSync("site").length, before, "nothing removed");
 });
 
-test("deploy: with BRIDGE on, pages.yml skips the season build and the tests (publish-alephb.yml keeps them)", () => {
+test("deploy: pages.yml deploys the bridge alone (publish-alephb.yml keeps the season build and the tests)", () => {
   const y = fs.readFileSync(".github/workflows/pages.yml", "utf8");
-  for (const step of ["Build the compete databases", "Test the site and the backend"])
-    assert.match(y, new RegExp("- name: " + step + "\\n(?:\\s+#.*\\n)*\\s+if: vars\\.BRIDGE != 'on'\\n"), step);
+  assert.match(y, /node publish\.mjs bridge out/);
+  assert.doesNotMatch(y, /generate_db|node --test|BRIDGE/);
   const p = fs.readFileSync(".github/workflows/publish-alephb.yml", "utf8");
   assert.match(p, /generate_db\.py --seasons/);
   assert.match(p, /node --test test_site\.mjs test_desk\.mjs test_handbook\.mjs test_backend\.mjs/);
-});
-
-test("stubs: a stubs deploy (rollback) serves a robots.txt and sitemap for mystery.alephb.uk's root", async () => {
-  const os = (await import("node:os")).default;
-  const { stubsRobots, stubsSitemap } = await import("./publish.mjs");
-  const OLD = OLD_ORIGIN + "/";
-  const r = stubsRobots(fs.readFileSync("site/robots.txt", "utf8"));
-  assert.doesNotMatch(r, /ritz-affair|https:\/\/alephb/);
-  assert.match(r, new RegExp("^Sitemap: " + OLD + "sitemap\\.xml$", "m"));
-  const s = stubsSitemap(fs.readFileSync("site/sitemap.xml", "utf8"));
-  assert.ok(!s.includes(GAME_URL) && s.includes("<loc>" + OLD + "</loc>"));
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "stubs-"));
-  try {
-    fs.cpSync("site", dir, { recursive: true, filter: (f) => !/\.sqlite$|video/.test(f) });
-    execFileSync("node", ["publish.mjs", "stubs", dir]);
-    assert.equal(fs.readFileSync(path.join(dir, "robots.txt"), "utf8"), r, "the stubs command writes it");
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
 test("addresses: alephb.uk, the game and the handbook are defined once, in shared.js", async () => {

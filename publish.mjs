@@ -6,14 +6,13 @@
 //                                                  (site/learn/), relinked and versioned; nothing else in <dir>
 //   node publish.mjs bridge <out dir> [site]       writes the bridge for mystery.alephb.uk: index.html carries this
 //                                                  origin's ritz.* keys to the game, every other page redirects
-//   node publish.mjs stubs [site]                  before the switch: site/learn/ pages become redirects in place
 // Run both on the built site/ (python3 generate_db.py --seasons, then the tests): the season-N files are gitignored.
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { versionText } from "./version_site.mjs";
 
-import { GAME_URL, HANDBOOK, OLD_ORIGIN } from "./site/shared.js";
+import { GAME_URL, HANDBOOK } from "./site/shared.js";
 import { importFragment } from "./site/state.js";
 
 // Every alephb.uk page carries the AdSense account tag (alephb-site's CLAUDE.md).
@@ -103,11 +102,6 @@ export function bridgeFiles(site) {
   return out;
 }
 
-// Before a stubs deploy (BRIDGE off: the rollback, mystery.alephb.uk serving the game at its root again): site/robots.txt
-// and site/sitemap.xml are written for alephb.uk/ritz-affair/, so their paths and host move to this origin's root.
-export const stubsRobots = (robots) => robots.replace(/\/ritz-affair\//g, "/").replace(/^Sitemap: .*$/m, "Sitemap: " + OLD_ORIGIN + "/sitemap.xml");
-export const stubsSitemap = (xml) => xml.split(GAME_URL).join(OLD_ORIGIN + "/");
-
 // True when a and b are the same directory or one holds the other: a target like that would rmSync the source.
 export function overlaps(a, b) {
   const inside = (x, y) => { const r = path.relative(path.resolve(y), path.resolve(x)); return !r.startsWith("..") && !path.isAbsolute(r); };
@@ -129,17 +123,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     guard(b, c || "site");
     fs.rmSync(b, { recursive: true, force: true });
     writeTree(b, bridgeFiles(c || "site"));
-  } else if (a === "stubs") {
-    // Until the bridge is switched on (pages.yml, repository variable BRIDGE), mystery.alephb.uk keeps the whole game,
-    // its learn/ pages redirecting to alephb.uk/learn/ as since 2026-10-30.
-    const site = b || "site", stubs = Object.entries(bridgeFiles(site)).filter(([f]) => f.startsWith("learn/"));
-    writeTree(site, Object.fromEntries(stubs));
-    fs.rmSync(path.join(site, "learn", "sitemap.xml"), { force: true });
-    for (const [f, fix] of [["robots.txt", stubsRobots], ["sitemap.xml", stubsSitemap]])
-      fs.writeFileSync(path.join(site, f), fix(fs.readFileSync(path.join(site, f), "utf8")));
   } else if (/^[0-9a-f]{4,40}$/i.test(a || "") && b) {
     guard(b, "site");
     for (const d of ["ritz-affair", "learn"]) fs.rmSync(path.join(b, d), { recursive: true, force: true });
     writeTree(b, publishFiles("site"), a);
-  } else throw new Error("usage: node publish.mjs <commit> <alephb-site dir> | bridge <out dir> [site] | stubs [site]");
+  } else throw new Error("usage: node publish.mjs <commit> <alephb-site dir> | bridge <out dir> [site]");
 }

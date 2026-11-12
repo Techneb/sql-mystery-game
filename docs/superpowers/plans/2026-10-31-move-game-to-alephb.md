@@ -93,5 +93,4 @@ databases, and the bridge moves players mid-game.
     README if anything changed, and the project memory (the resume note; the Apps Script URL is unchanged).
     **Check:** `git grep -n "waiting for go-live"` prints nothing.
 
-Rollback: `gh variable delete BRIDGE` then `gh workflow run pages.yml` puts the old game back on mystery.alephb.uk
-(its canonicals already name alephb.uk); remove the Cloudflare rules first if step 8 was done.
+~~Rollback: `gh variable delete BRIDGE` then `gh workflow run pages.yml` puts the old game back on mystery.alephb.uk (its canonicals already name alephb.uk); remove the Cloudflare rules first if step 8 was done.~~ Removed 2026-11-12 (owner): `publish.mjs stubs` and the `BRIDGE` conditions are gone; pages.yml deploys only the bridge.

@@ -382,7 +382,7 @@ GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is i
   button in the phone tour's last box (changes what `tour_done` counts in GA); (2) on phones a shorter prologue title
   and no intro paragraph; (3) a smaller cookie banner on phones, or one shown later (it covers the bottom 200 px).
   Re-read GA (about 2026-11-15) first to see what the 2026-11-09 fixes did.
-- **Delete the move's rollback once the AdSense verdict is in** (owner, 2026-11-01; about 1-2 weeks after the
+- ~~Delete the move's rollback once the AdSense verdict is in~~ Done 2026-11-12 (owner approved after the 2026-11-12 refusal; pages.yml now deploys only the bridge, the `BRIDGE` variable is unused). (owner, 2026-11-01; about 1-2 weeks after the
   review request). Until then `BRIDGE` = off and a push bring the old game back on mystery.alephb.uk (alephb-site
   publishing broken, the move wrong for AdSense, or a save-import bug). Then remove `publish.mjs stubs`,
   `stubsRobots`/`stubsSitemap`, the `BRIDGE` conditions in `pages.yml` (it shrinks to the bridge deploy, without
