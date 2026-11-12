@@ -345,20 +345,19 @@ passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of
 2026-11-11, from two readers' feedback (section 8): the consent fix outside Europe, the desk's robots lines dropped, and
 the handbook pass (plain words, glossary, three easier warm-ups, a Try it here task on every lesson). Waiting on Google:
 the AdSense review (requested 2026-11-02; refused again on 2026-11-12, 04:48 CET, "low-value content", the third refusal;
-review requested again the same day after the PostgreSQL vs SQLite article; ads.txt "Authorised"), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`), the 24
-outreach emails (all sent by the owner at once), the rollback's removal and three more phone changes (section 8).
+review requested again the same day after the PostgreSQL vs SQLite article; ads.txt "Authorised"), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`) and the 24
+outreach emails (all sent by the owner at once). Done 2026-11-12 without waiting: the rollback's removal, the three phone changes.
 Waiting on the owner: a look at the desk charts with real data. Next: re-read
 GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is in `docs/research/2026-11-09-phone-first-query.md`). Not verified end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
-- **Handbook article: PostgreSQL vs SQLite** (2026-11-12, owner, after the third AdSense refusal for low-value content;
-  built on a branch, not yet pushed): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
+- ~~Handbook article: PostgreSQL vs SQLite~~ Done 2026-11-12 (09aa9f9; owner, after the third AdSense refusal for low-value content): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
   when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,
   dates, `||`, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND, RETURNING/upsert, windows and CTEs, concurrency),
   13 bakery examples and 9 refused ones, a summary table. Last in the reading order (after the glossary), on the
   index's Practice and reference card (now a 2 x 2 grid) and linked from grammar.html's intro; not in the menu row.
-  Left: push, redeploy the feedback script (`LEARN_PAGES` gained its slug), then ask AdSense again.
+  Feedback script redeployed @17; AdSense review requested again the same day.
 
 - ~~Desk on any device~~ Done 2026-11-08 (3264a7c, live): the board URL ships sealed under the passphrase (`BOARD_SEALED` in `shared.js`), so the passphrase alone opens the desk; a new URL or passphrase means a new Save for every device code from Setup.
 
