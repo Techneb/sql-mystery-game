@@ -135,7 +135,7 @@
 </table>
 
 <h2 id="like-ilike" class="rule">Grammar: LIKE and ILIKE</h2>
-<p>Patterns are written with <code>LIKE</code>, or <code>ILIKE</code> to ignore case, and nothing else: <code>GLOB</code> and <code>REGEXP</code> are not standard SQL, and neither is <code>COLLATE NOCASE</code>. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
+<p>The terminal takes two pattern matches: <code>LIKE</code>, which is standard SQL, and <code>ILIKE</code>, PostgreSQL's LIKE that ignores case. <code>GLOB</code>, <code>REGEXP</code> and <code>COLLATE NOCASE</code> exist only in SQLite. PostgreSQL also has <code>SIMILAR TO</code> and regular expressions with <code>~</code>, which the terminal does not take. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">GLOB</span> <span class="sql-str">'C*'</span>;</code></pre>

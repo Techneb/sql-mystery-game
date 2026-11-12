@@ -243,7 +243,10 @@ export function adOutcome({ status, height, elapsed, failed }) {
   return elapsed >= AD_WAIT_MS ? "house" : "wait";
 }
 // Also run by learn/exercises.js, the one handbook page with the ad box (owner, 2026-10-19): the page needs a #press-box.
-export function initAds() {
+// The game calls it with { slot: false } at boot (adsbygoogle.js also brings Google's consent message, so it loads
+// at once) and showAd() once the landing card is gone: an ad requested under that full-screen card would be hidden.
+let adsFailed = false, adCheck = () => {}, adStarted = false;
+export function initAds({ slot = true } = {}) {
   const box = $("press-box");
   if (!adsOn()) return;
   gtagDefaults();   // Consent Mode defaults before adsbygoogle.js (the game also sets them for GA; set once)
@@ -252,26 +255,29 @@ export function initAds() {
   const s = document.createElement("script");
   s.async = true; s.crossOrigin = "anonymous";
   s.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + ADS_CLIENT;
-  let failed = false, check = () => {};
-  s.onerror = () => { failed = true; check(); cmpDone(true); };
+  s.onerror = () => { adsFailed = true; adCheck(); cmpDone(true); };
   s.onload = () => cmpDone(false);
-  if (AD_SLOT) {
-    // The house ad stays in the DOM, hidden while Google's ad is tried beside it (the slot keeps its min-height).
-    const slot = box.querySelector(".press-slot"), house = slot.querySelector(".press-notice");
-    slot.insertAdjacentHTML("beforeend", adSlotHtml(ADS_CLIENT, AD_SLOT));
-    const ins = slot.querySelector("ins.adsbygoogle"), t0 = Date.now();
-    house.hidden = true;
-    const obs = new MutationObserver(() => check());
-    const timer = setTimeout(() => check(), AD_WAIT_MS);
-    check = () => {
-      const v = adOutcome({ status: ins.dataset.adStatus, height: ins.offsetHeight, elapsed: Date.now() - t0, failed });
-      if (v === "wait") return;
-      obs.disconnect(); clearTimeout(timer);
-      if (v === "house") { ins.remove(); house.hidden = false; }
-    };
-    obs.observe(ins, { attributes: true, attributeFilter: ["data-ad-status"] });
-    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { failed = true; check(); }
-  }
+  if (slot) showAd();
   document.head.appendChild(s);
+}
+// Google's <ins> beside the house ad, once per page load, after initAds.
+export function showAd() {
+  if (!adsOn() || !AD_SLOT || adStarted) return;
+  adStarted = true;
+  // The house ad stays in the DOM, hidden while Google's ad is tried beside it (the slot keeps its min-height).
+  const slot = $("press-box").querySelector(".press-slot"), house = slot.querySelector(".press-notice");
+  slot.insertAdjacentHTML("beforeend", adSlotHtml(ADS_CLIENT, AD_SLOT));
+  const ins = slot.querySelector("ins.adsbygoogle"), t0 = Date.now();
+  house.hidden = true;
+  const obs = new MutationObserver(() => adCheck());
+  const timer = setTimeout(() => adCheck(), AD_WAIT_MS);
+  adCheck = () => {
+    const v = adOutcome({ status: ins.dataset.adStatus, height: ins.offsetHeight, elapsed: Date.now() - t0, failed: adsFailed });
+    if (v === "wait") return;
+    obs.disconnect(); clearTimeout(timer);
+    if (v === "house") { ins.remove(); house.hidden = false; }
+  };
+  obs.observe(ins, { attributes: true, attributeFilter: ["data-ad-status"] });
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch { adsFailed = true; adCheck(); }
 }
 

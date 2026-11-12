@@ -269,7 +269,7 @@
 <p>Say which price you mean: the dearest of each category here, or <code>MIN(price)</code>, or <code>AVG(price)</code>.</p>
 
 <h2 id="group-concat" class="rule">Grammar: string_agg and SUM</h2>
-<p>To join the texts of a group into one, standard SQL writes <code>string_agg(column, ', ')</code>, with an <code>ORDER BY</code> inside the parentheses to fix the order of the pieces. <code>GROUP_CONCAT</code> is not standard SQL, and neither is <code>TOTAL(x)</code>: write <code>SUM(x)</code>, or <code>COALESCE(SUM(x), 0)</code> when an empty group should read 0.</p>
+<p>To join the texts of a group into one, PostgreSQL writes <code>string_agg(column, ', ')</code>, with an <code>ORDER BY</code> inside the parentheses to fix the order of the pieces. <code>GROUP_CONCAT</code> is not standard SQL, and neither is <code>TOTAL(x)</code>: write <code>SUM(x)</code>, or <code>COALESCE(SUM(x), 0)</code> when an empty group should read 0.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">GROUP_CONCAT</span>(<span class="sql-id">name</span>)
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>

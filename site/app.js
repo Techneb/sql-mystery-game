@@ -4,7 +4,7 @@
 // the game page.
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
-import { track, trackOnce, useFeature, queryFail, initConsent, initAds, quietStats } from "./stats.js";
+import { track, trackOnce, useFeature, queryFail, initConsent, initAds, showAd, quietStats } from "./stats.js";
 import { freshState, migrateSave, bridgeImport, importWrites, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, answerVerdict } from "./state.js";
 import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
 import { BADGES, eggText, seenFilms, detectBadges, rank } from "./badges.js";
@@ -820,7 +820,7 @@ async function renderAdminPanel() {
 }
 
 function enterGame() {
-  $("landing").hidden = true; applyMood(); renderChapter(); renderErd(); renderAdminPanel();
+  $("landing").hidden = true; showAd(); applyMood(); renderChapter(); renderErd(); renderAdminPanel();
   if (!$("sql").value) { $("sql").value = starterSql(state); syncSql(); }   // a first query that runs
   if (awaitingCode(state) && !state.extraSeen) showExtra(state, data, hooks());   // solved chapter VIII, closed the page before the extra edition
   if (state.mode !== "compete" && state.solved.includes(12) && !state.extraSeen2) showExtra2(state, data, hooks());   // the same for chapter XII
@@ -846,7 +846,7 @@ async function boot() {
   wireFeedback(() => useFeature("feedback", { chapter: curChapter() }),
     () => state ? { chapter: String(curChapter()), mode: state.mode, part: state.part2 ? "2" : "1" } : {});
   initConsent();
-  initAds();
+  initAds({ slot: false });   // the script and the consent path now; Google's ad once the landing card is gone (enterGame)
   applyMood();   // the reader's palette on the landing page too, before any state is loaded
   const params = new URLSearchParams(location.search);
   seasonId = params.get("season") || "";

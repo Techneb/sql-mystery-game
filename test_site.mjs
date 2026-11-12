@@ -601,6 +601,17 @@ test("ad box: Google's ad only once filled, else the house ad comes back", () =>
   assert.ok(AD_WAIT_MS >= 3000 && AD_WAIT_MS <= 6000);
 });
 
+test("game: Google's ad is requested only once the landing card is hidden, consent still starts at boot", () => {
+  const app = fs.readFileSync("site/app.js", "utf8");
+  const boot = app.slice(app.indexOf("async function boot()"), app.indexOf("$(\"btn-investigate\").disabled"));
+  assert.match(boot, /initConsent\(\);\n\s+initAds\(\{ slot: false \}\);/);   // the script (and Google's message) at boot
+  assert.doesNotMatch(boot, /showAd\(/);
+  assert.match(app, /\$\("landing"\)\.hidden = true; showAd\(\);/);            // the one place the landing card hides
+  assert.equal(app.match(/\$\("landing"\)\.hidden = true/g).length, 1);
+  const stats = fs.readFileSync("site/stats.js", "utf8");
+  assert.match(stats, /if \(!adsOn\(\) \|\| !AD_SLOT \|\| adStarted\) return;\n\s+adStarted = true;/);   // once only
+});
+
 test("a comma join with nothing to match is refused before it can hang the page", () => {
   assert.ok(cartesian("SELECT count(*) FROM bank_transaction, cab_ride"));
   assert.ok(cartesian("select * from a as x, b"));
