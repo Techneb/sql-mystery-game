@@ -13,7 +13,7 @@ import { showExtra, showExtra2, part2Ending, certificateHtml } from "./endings.j
 import { prologueOn, tourOn, showPrologue, tourSteps } from "./onboarding.js";
 import { openHowto, howtoHtml } from "./howto.js";
 import { ROMAN, mastheadChapterHtml, crackedHtml, objectiveHtml, stepDoneHtml, currentObjectiveHtml, whereOpened, boardCardsHtml } from "./board.js";
-import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText, NARROW, revealOnPhone } from "./ui.js";
+import { esc, btnLike, erdButtonHtml, themeButtonHtml, setIconButton, showCallouts, richText, NARROW, PHONE, revealOnPhone } from "./ui.js";
 
 const NAMES_ASK = "Names for the certificate (both of you):";   // #names' label, and prompt()'s where <dialog> cannot open
 export function resetMessage(mode) {   // the New investigation question (#reset, or confirm() as the fallback)
@@ -319,9 +319,10 @@ function renderStrip() {
 
 // The game's hooks for the endings (endings.js): save, the chapter GA reports, New investigation's question.
 const hooks = () => ({ save: () => save(state), chapter: curChapter, reset: askReset });
-const showTour = () => showCallouts(tourSteps(matchMedia(NARROW).matches), how => {
+const showTour = () => showCallouts(tourSteps(matchMedia(NARROW).matches, matchMedia(PHONE).matches), how => {
   state.onboarding = "done"; save(state);
-  useFeature(how === "done" ? "tour_done" : "tour_skip", { chapter: 1 });
+  useFeature(how === "skip" ? "tour_skip" : "tour_done", { chapter: 1 });
+  if (how === "run") $("btn-run").click();   // the phone tour's Run it: exactly a press on Run
 });
 const afterPrologue = how => {
   state.onboarding = "tour"; save(state);

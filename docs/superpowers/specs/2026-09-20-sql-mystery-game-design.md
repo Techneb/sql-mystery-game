@@ -377,7 +377,10 @@ GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is i
   its noindex. Drop the six desk Disallow lines from alephb-site's robots.txt and `site/robots.txt` (and the robots
   asserts in `test_desk.mjs`), keep the noindex tags, then tell the Supermain. Not before the verdict: nothing that could
   touch the review.
-- **After the AdSense verdict: three more phone changes** (owner, 2026-11-09, from
+- ~~After the AdSense verdict: three more phone changes~~ Done 2026-11-12 (phones only, desktop unchanged): the tour's
+  last box reads Run it (tour_done, then a press on Run; Skip kept), the prologue's title is 22 px with no intro
+  paragraph, and for the banner the option chosen was "smaller" (14 px, one line of text over 44 px buttons, about
+  72 px tall at 390 px instead of 200; when it shows is unchanged). (owner, 2026-11-09, from
   `docs/research/2026-11-09-phone-first-query.md`; kept until the verdict so nothing touches the review). (1) A Run it
   button in the phone tour's last box (changes what `tour_done` counts in GA); (2) on phones a shorter prologue title
   and no intro paragraph; (3) a smaller cookie banner on phones, or one shown later (it covers the bottom 200 px).

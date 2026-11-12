@@ -64,11 +64,11 @@ export function showCallouts(steps, done) {
   };
   const end = how => { el.remove(); removeEventListener("resize", place); done(how); };
   const step = () => {
-    const last = i === steps.length - 1;
+    const last = i === steps.length - 1, act = last && steps[i][2];   // a last step's third element: its button, ending with "run"
     el.innerHTML = "<p>" + esc(steps[i][1]) + '</p><div class="row"><span class="muted">' + (i + 1) + " of " + steps.length + "</span>" +
-      (last ? "" : '<button class="quiet callout-skip">Skip</button>') + '<button class="callout-next">' + (last ? "Got it" : "Next") + "</button></div>";
-    if (!last) el.querySelector(".callout-skip").onclick = () => end("skip");
-    el.querySelector(".callout-next").onclick = () => { if (last) end("done"); else { i++; step(); } };
+      (last && !act ? "" : '<button class="quiet callout-skip">Skip</button>') + '<button class="callout-next">' + esc(act || (last ? "Got it" : "Next")) + "</button></div>";
+    el.querySelector(".callout-skip")?.addEventListener("click", () => end("skip"));
+    el.querySelector(".callout-next").onclick = () => { if (last) end(act ? "run" : "done"); else { i++; step(); } };
     document.querySelector(steps[i][0])?.scrollIntoView({ block: "center", behavior: "smooth" });
     place(); setTimeout(place, 500);   // again once the smooth scroll has settled
     el.querySelector(".callout-next").focus({ preventScroll: true });

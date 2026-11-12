@@ -1523,6 +1523,12 @@ test("callouts point at parts of the page, never at a table", () => {
   assert.deepEqual(onb.tourSteps(true).map(s => s[0]), ["#objective", "#erd", "#board", "#btn-run"]);
   assert.ok(onb.tourSteps(true).every(s => !s[1].includes("Ctrl")), "no keyboard shortcut on a phone");
   assert.ok(onb.CALLOUTS.some(s => s[1].includes("Ctrl+Enter")), "desktop keeps it");
+  // phones: the last box (Run) carries Run it; nothing else changes, and desktop never gets it
+  const phone = onb.tourSteps(true, true);
+  assert.deepEqual(phone.at(-1), [...onb.tourSteps(true).at(-1), "Run it"]);
+  assert.deepEqual(phone.slice(0, -1), onb.tourSteps(true).slice(0, -1));
+  assert.ok(onb.tourSteps(true).every(s => s.length === 2) && onb.tourSteps(false, false).every(s => s.length === 2));
+  assert.ok(onb.tourSteps(false, true).every(s => s.length === 2), "a last box that is not Run gets no Run it");
 });
 test("phones: curly quotes from a phone keyboard become straight, one character for one", () => {
   const typed = "SELECT * FROM interview WHERE person_name = ‘Duroc’ OR x = “y”";
