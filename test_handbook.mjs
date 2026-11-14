@@ -56,7 +56,7 @@ test("handbook: every page carries the same masthead nav and footer; the generat
   const links = (h) => [...h.matchAll(/<a href="([^"]+)"(?: title="[^"]*")?>([^<]*)<\/a>/g)].map((m) => m[2]);
   assert.deepEqual(navItems(nav), ["The Ritz Affair", "The Clerk's Handbook"], "the header: the game and the handbook only (owner, 2026-10-24)");
   assert.deepEqual(navCurrent(nav), ["The Clerk's Handbook"], "the handbook's section in colour, a span (owner, 2026-10-26)");
-  assert.deepEqual(links(foot), ["Privacy notice", "The Clerk's Desk", "AlephB", "Contact"], "the footer: the rest, the desk included (Statistics has an id)");
+  assert.deepEqual(links(foot), ["Privacy notice", "The Clerk's Desk (teachers)", "AlephB", "Contact"], "the footer: the rest, the desk included (Statistics has an id)");
   const admin = fs.readFileSync("site/admin.html", "utf8");
   const adminNav = one(admin, /<nav class="learn-nav muted">([\s\S]*?)<\/nav>/, "admin nav");
   assert.deepEqual(navItems(adminNav), navItems(nav), "the admin page's header");

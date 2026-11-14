@@ -233,7 +233,7 @@
 <p>Everything on this page is done with comparisons of the date text, <code>substr</code> and <code>CAST</code>, which every database knows. Date functions such as <code>strftime</code> differ from one database to the next and are not standard SQL. A query with a red edge is one the game's terminal refuses: the answer under it is the terminal's own.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-fn">strftime</span>(<span class="sql-str">'%m'</span>, <span class="sql-id">joined</span>) <span class="sql-kw">AS</span> <span class="sql-id">month</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
-<div class="refusal"><code>ERROR: function strftime(text, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= '1912-01-01', or substr(d, 1, 7) for its year and month instead.</div>
+<div class="refusal"><code>ERROR: function strftime(unknown, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= 'YYYY-MM-DD', or substr(d, 1, 7) for its year and month instead.</div>
 <p>Write <code>substr(joined, 6, 2)</code> instead, as in <a href="#taking-apart">Taking a date apart</a>. The others, with what to write instead:</p>
 <table class="result">
 <tr><th>Instead of</th><th>Write</th></tr>
@@ -251,7 +251,7 @@
 <nav class="learn-pager"><a class="prev" href="like.html">Previous: LIKE and text patterns</a><a class="next" href="group-by-having.html">Next: GROUP BY, aggregates and HAVING</a></nav>
 <!-- /pager -->
 </main>
-<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk (teachers)</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 <div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
   <span>Help improve the course: allow anonymous usage statistics?</span>
   <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="../privacy.html">Privacy notice</a></span>

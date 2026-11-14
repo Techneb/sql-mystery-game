@@ -131,7 +131,7 @@
 <p>SQLite's own date functions are refused, as PostgreSQL would refuse them:</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">strftime</span>(<span class="sql-str">'%w'</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> <span class="sql-id">weekday</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>;</code></pre>
-<div class="refusal"><code>ERROR: function strftime(text, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= '1912-01-01', or substr(d, 1, 7) for its year and month instead.</div>
+<div class="refusal"><code>ERROR: function strftime(unknown, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= 'YYYY-MM-DD', or substr(d, 1, 7) for its year and month instead.</div>
 <p>The <a href="dates-times.html">dates and times</a> page covers this ground in full: <a href="dates-times.html#comparing-and-filtering-ranges">comparing and filtering ranges</a>, <a href="dates-times.html#taking-apart">taking a date apart</a> and <a href="dates-times.html#date-functions">Grammar: dates, substr and CAST</a>. If you move such a database to PostgreSQL, declare those columns as <code>date</code> and <code>time</code>. Comparisons with a quoted date keep working, and PostgreSQL's date functions become available.</p>
 
 <h2 id="joining-text">Joining text with ||</h2>
@@ -245,7 +245,7 @@
 <p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL, in both databases. SQLite also has <code>IFNULL(a, b)</code>, the two-argument version, which PostgreSQL does not have.</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IFNULL</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>)
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
-<div class="refusal"><code>ERROR: function ifnull(text, text) does not exist</code> ifnull() is not standard SQL: use COALESCE(a, b) instead.</div>
+<div class="refusal"><code>ERROR: function ifnull(text, unknown) does not exist</code> ifnull() is not standard SQL: use COALESCE(a, b) instead.</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
        <span class="sql-fn">COALESCE</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">AS</span> <span class="sql-id">email</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
@@ -265,7 +265,7 @@
 <p>SQLite 3.32 added <code>IIF(condition, a, b)</code>, borrowed from Microsoft's databases. PostgreSQL has no <code>IIF</code>. <code>CASE</code> is in the SQL standard and in both, and it does everything <code>IIF</code> does:</p>
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IIF</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>, <span class="sql-str">'dear'</span>, <span class="sql-str">'cheap'</span>)
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
-<div class="refusal"><code>ERROR: function iif(boolean, text, text) does not exist</code> iif() is not standard SQL: use CASE WHEN ... THEN ... ELSE ... END instead.</div>
+<div class="refusal"><code>ERROR: function iif(boolean, unknown, unknown) does not exist</code> iif() is not standard SQL: use CASE WHEN ... THEN ... ELSE ... END instead.</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
        <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span> <span class="sql-kw">THEN</span> <span class="sql-str">'dear'</span>
             <span class="sql-kw">ELSE</span> <span class="sql-str">'cheap'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
@@ -363,7 +363,7 @@
 <nav class="learn-pager"><a class="prev" href="glossary.html">Previous: SQL glossary</a></nav>
 <!-- /pager -->
 </main>
-<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
+<footer class="learn-foot muted"><a href="../privacy.html">Privacy notice</a><span id="stats-link" hidden> &middot; <a href="#" id="btn-stats">Statistics</a></span> &middot; <a href="../admin.html">The Clerk's Desk (teachers)</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></footer>
 <div id="consent" class="consent" role="region" aria-label="Usage statistics" hidden>
   <span>Help improve the course: allow anonymous usage statistics?</span>
   <span><button id="consent-yes">Yes</button> <button id="consent-no" class="quiet">No</button> <a href="../privacy.html">Privacy notice</a></span>

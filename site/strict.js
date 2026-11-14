@@ -19,7 +19,7 @@ const RESERVED = new Set(("select from where group by having order limit offset 
 // array_agg, bool_and, bool_or, every: not in SQLite, kept so a GROUP BY around one is not refused for its argument (SQLite then names the function).
 const AGGS = new Set("count sum avg min max total group_concat string_agg array_agg bool_and bool_or every".split(" "));
 // Each suggestion must also run here (sql.js), not only in PostgreSQL: a test checks every function it names exists in SQLite.
-const DATE_TEXT = "a comparison of the date text, as in d >= '1912-01-01', or substr(d, 1, 7) for its year and month";
+const DATE_TEXT = "a comparison of the date text, as in d >= 'YYYY-MM-DD', or substr(d, 1, 7) for its year and month";
 export const SQLITE_FUNCS = { ifnull: "COALESCE(a, b)", iif: "CASE WHEN ... THEN ... ELSE ... END", group_concat: "string_agg(x, ', ')",
   instr: "text LIKE '%part%'", strftime: DATE_TEXT, julianday: DATE_TEXT, datetime: DATE_TEXT, unixepoch: DATE_TEXT,
   printf: "format()", total: "SUM(x)", randomblob: "random()", zeroblob: "nothing like it", last_insert_rowid: "RETURNING",
@@ -447,7 +447,8 @@ function analyse(stmts, schema, src) {
     if (n.filter) boolean(T(n.filter, cx), "FILTER", n.filter);
     if (n.aggOrder) n.aggOrder.forEach(o => T(o.e, cx));
     if (n.over) { n.over.partition.forEach(e => T(e, cx)); n.over.order.forEach(o => T(o.e, cx)); }
-    const sig = n.name + "(" + a.map(pgT).join(", ") + ")";
+    // a bare string literal is "unknown" to PostgreSQL until something gives it a type
+    const sig = n.name + "(" + a.map(t => t === "str" ? "unknown" : pgT(t)).join(", ") + ")";
     if (Object.hasOwn(SQLITE_FUNCS, n.name)) refuse("function " + sig + " does not exist", n.name + "() is not standard SQL: use " + SQLITE_FUNCS[n.name] + " instead.", FUNC_ANCHOR[n.name] || "sqlite-only");
     if ((n.name === "date" || n.name === "time") && n.args.length > 1) refuse("function " + sig + " does not exist",
       n.name + "() with a modifier is not standard SQL: use " + DATE_TEXT + " instead.", "date-functions");
