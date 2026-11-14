@@ -25,9 +25,20 @@ export const PULL_WAIT_MS = 2000, PUSH_DELAY_MS = 3000;
 export function readAccount(raw, now = Date.now()) {
   try {
     const a = JSON.parse(raw);
-    return a && typeof a.token === "string" && a.token && Number(a.expires) > now ? { token: a.token, expires: Number(a.expires) } : null;
+    return a && typeof a.token === "string" && a.token && Number(a.expires) > now ? sessionOf(a) : null;
   } catch { return null; }
 }
+// What ritz.account keeps from a server answer: the session token, and, for the news opt-in, the address the sign-in
+// proved with its signature and whether it is subscribed (prev: the stored account, for a pull's renewed token).
+export function sessionOf(j, prev = {}) {
+  const a = { token: j.token, expires: Number(j.expires) };
+  for (const [k, type] of [["email", "string"], ["emailSig", "string"], ["updates", "boolean"]]) {
+    const v = k in j ? j[k] : prev[k];
+    if (typeof v === type) a[k] = v;
+  }
+  return a;
+}
+export const UPDATES_LABEL = "Email me about new games and updates (about once a month at most; unsubscribe anytime)";
 // This browser's synced keys that hold a value, in SYNC_KEYS order. get(key): localStorage.getItem.
 export function localSaves(get) {
   const out = {};
@@ -91,7 +102,7 @@ export const signedIn = () => !!account;
 async function pull(ms) {
   try {
     const j = await call(JSON.stringify({ action: "pull", token: account.token }), ms);
-    setAccount({ token: j.token, expires: j.expires });
+    setAccount(sessionOf(j, account));
     const w = pullWrites(j.saves, getItem);
     try { for (const [k, v] of Object.entries(w)) localStorage.setItem(k, v); } catch {}
     lastPushed = savesText(j.saves);
@@ -142,7 +153,7 @@ const ask = (title, body, buttons) => `<form method="dialog">
   <p class="ask-msg"></p>${body}
   ${buttons}
 </form>`;
-const MANAGE = ask("YOUR SAVED PROGRESS", "", '<button value="" autofocus>Close</button> <button value="signout" class="quiet">Sign out</button> <button value="delete" class="quiet">Delete my saved progress</button>');
+const MANAGE = ask("YOUR SAVED PROGRESS", `<p class="acct-updates"><label><input type="checkbox" class="acct-updates-box"> ${UPDATES_LABEL}</label></p><p class="acct-updates-msg muted" role="status"></p>`, '<button value="" autofocus>Close</button> <button value="signout" class="quiet">Sign out</button> <button value="delete" class="quiet">Delete my saved progress</button>');
 const CONFIRM = ask("DELETE YOUR SAVED PROGRESS", "", '<button value="" autofocus>Cancel</button> <button value="delete" class="quiet">Delete it</button>');
 // The corner's sign-in dialog: Google's button, then the email form; the code step replaces the email step.
 const SIGNIN = `<form method="dialog" novalidate>
@@ -153,6 +164,7 @@ const SIGNIN = `<form method="dialog" novalidate>
   <div class="acct-step acct-email">
     <p><label for="acct-email">Email</label><input id="acct-email" type="email" autocomplete="email" maxlength="${EMAIL_MAX}" spellcheck="false"></p>
     <p><label for="acct-pass">Password</label><input id="acct-pass" type="password" autocomplete="current-password"></p>
+    <p class="acct-updates"><label><input type="checkbox" id="acct-news"> ${UPDATES_LABEL}</label></p>
     <p class="acct-buttons"><button type="button" data-act="signin">Sign in</button> <button type="button" class="quiet" data-act="register">Create an account</button> <button type="button" class="quiet" data-act="forgot">Forgot password?</button></p>
   </div>
   <div class="acct-step acct-code" hidden>
@@ -195,7 +207,21 @@ export function wireAccount(onChange) {
   corner.onclick = () => account ? manage() : signInDialog();
 
   async function manage() {
-    const v = await askDialog(dialog("account", MANAGE), ACCOUNT_MSG, () => confirm("Sign out?") ? "signout" : "");
+    const d = dialog("account", MANAGE), box = d.querySelector(".acct-updates-box"), note = d.querySelector(".acct-updates-msg");
+    // The news opt-in: only with an address the sign-in proved (an older sign-in has none: sign in again to choose it).
+    d.querySelector(".acct-updates").hidden = !account.email;
+    box.checked = !!account.updates; note.textContent = "";
+    box.onchange = async () => {
+      const on = box.checked;
+      box.disabled = true;
+      try {
+        await call(JSON.stringify({ action: "updates", token: account.token, on, email: account.email, emailSig: account.emailSig }));
+        setAccount({ ...account, updates: on });
+        note.textContent = on ? "Saved. We will write to " + account.email + "." : "Saved. You will get no emails about new games or updates.";
+      } catch { box.checked = !on; note.textContent = "That did not go through. Try again later."; }
+      finally { box.disabled = false; }
+    };
+    const v = await askDialog(d, ACCOUNT_MSG, () => confirm("Sign out?") ? "signout" : "");
     if (v === "signout") { setAccount(null); useFeature("account_signout"); render(); }
     if (v !== "delete" || await askDialog(dialog("account-delete", CONFIRM), DELETE_ASK, () => confirm(DELETE_ASK) ? "delete" : "") !== "delete") return;
     try {
@@ -219,7 +245,7 @@ export function wireAccount(onChange) {
     }
   }
   async function signedInWith(j) {
-    setAccount({ token: j.token, expires: j.expires });
+    setAccount(sessionOf(j));
     useFeature("account_signin");
     if (await pull(10000)) return onChange();
     pushSaves();
@@ -275,7 +301,7 @@ export function wireAccount(onChange) {
       if (name !== "code" && name !== "back" && bad) return err(bad);
       if (name === "back") { err(""); return step(""); }
       if (name === "forgot") { if (await send({ action: "resetcode", email: normEmail(email) }, btn)) step("reset"); return; }
-      if (name === "register") { if (await send({ action: "register", email: normEmail(email), verifier: await passwordVerifier(email, pw) }, btn)) step("register"); return; }
+      if (name === "register") { if (await send({ action: "register", email: normEmail(email), verifier: await passwordVerifier(email, pw), updates: $("#acct-news").checked }, btn)) step("register"); return; }
       if (name === "signin") { const j = await send({ action: "signin", email: normEmail(email), verifier: await passwordVerifier(email, pw) }, btn); if (j) { d.close(); await signedInWith(j); } return; }
       const code = $("#acct-code").value.trim();   // Confirm
       if (!/^\d{6}$/.test(code)) return err("Type the 6 digits from the email.");

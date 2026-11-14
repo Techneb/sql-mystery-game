@@ -464,6 +464,9 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .account-dialog .acct-buttons button { padding: 8px 14px; }
 .account-dialog .acct-error { color: var(--rel); font-weight: 700; text-align: center; }
 .account-dialog .acct-error:empty { display: none; }
+.acct-updates label { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; font-size: 15px; text-align: left; }
+.acct-updates input[type=checkbox] { width: auto; margin: 3px 0 0; flex: none; }
+.acct-updates-msg:empty { display: none; }
 .landing-account .account-manage { font-size: 14px; padding: 2px 10px; }
 .gsi-btn { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 1px solid #747775; border-radius: 4px;
   background: #fff; color: #1f1f1f; font: 500 14px/20px Roboto, Arial, sans-serif; letter-spacing: 0.25px; text-transform: none; box-shadow: none; cursor: pointer; }

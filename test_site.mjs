@@ -1818,3 +1818,17 @@ test("accounts: the email form's checks, and the password verifier derived in th
   for (const ac of ["email", "current-password", "new-password", "one-time-code"]) assert.ok(src.includes('autocomplete="' + ac + '"'), ac);
   assert.ok(!/action: "(signin|register|reset)", email: normEmail\(email\), (password|pw)\b/.test(src), "only the verifier is sent");
 });
+
+test("accounts: the news opt-in is unticked, separate from signing in, and kept with the session", async () => {
+  const acc = await import("./site/account.js");
+  const a = acc.sessionOf({ token: "t", expires: 9, email: "a@b.cd", emailSig: "s", updates: true, saves: {} });
+  assert.deepEqual(a, { token: "t", expires: 9, email: "a@b.cd", emailSig: "s", updates: true }, "nothing else from the answer");
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10 }, a), { ...a, token: "u", expires: 10 }, "a pull renews the token and keeps the address");
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10, updates: false }, a).updates, false);
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10, email: 3, updates: "yes" }), { token: "u", expires: 10 }, "wrong types dropped");
+  assert.equal(acc.UPDATES_LABEL, "Email me about new games and updates (about once a month at most; unsubscribe anytime)");
+  const src = fs.readFileSync("site/account.js", "utf8");
+  assert.equal((src.match(/type="checkbox"/g) || []).length, 2, "on the registration form and in Manage");
+  assert.ok(!/type="checkbox"[^>]*checked/.test(src), "never ticked by default");
+  assert.match(src, /updates: \$\("#acct-news"\)\.checked/, "registration sends the box as it is");
+});

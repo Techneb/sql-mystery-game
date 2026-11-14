@@ -13,6 +13,8 @@
 //   signin    {email, verifier}       -> {token, expires}, or "wrong email or password"
 //   resetcode {email}                 a code mailed if the account exists; the same answer either way
 //   reset     {email, code, verifier} the code and a new password -> {token, expires}
+//   updates   {token, on, email, emailSig}  the news opt-in (owner, 2026-11-14), below
+//   GET ?unsubscribe=<token>          the link in a news email: a plain page, no sign-in
 //   Codes: 15 minutes, 5 tries, kept only as HMACs in CacheService under the email key; the address is used only to
 //   send the mail at that moment.
 //   pull   {token}             -> {saves: {key: value}, token, expires} (a fresh 60-day token each time)
@@ -22,6 +24,11 @@
 // or HMAC("email|" + the lowercased address, SECRET); never the email, the name or the password. A row: key, created,
 // updated (ms numbers, never Date cells), clientAt, the saves as one JSON text split across saves1..saves4 (a Sheet
 // cell holds 50,000 characters at most), then pwHash and pwSalt for an email account.
+// The news opt-in is separate from signing in: only a player who ticks "Email me about new games and updates" has the
+// address written, in plaintext, to the "Updates" tab (UPDATES_HEADERS), never in the Saves row. The address comes
+// from the sign-in itself (Google's verified email claim, or the email account's own address), returned to the page
+// with emailSig = HMAC(key|address), so a page can only subscribe the address it signed in with. Unticking, Delete my
+// saved progress or the unsubscribe link blank the address and set unsubscribed_at (the row stays as the record).
 
 var TAB = "Saves";
 var HEADERS = ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4", "pwHash", "pwSalt"];
@@ -35,6 +42,7 @@ var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, EMAIL_MAX = 120;
 var CODE_S = 900, CODE_TRIES = 5;                                   // a code lasts 15 minutes and 5 tries
 var SENDS_PER_HOUR = 5, SENDS_PER_DAY = 80, FAILS_LIMIT = 10;       // per address per hour, all together per day (Gmail's quota), sign-in failures per 10 min
 var MAIL_FROM = "The Ritz Affair <contact@alephb.uk>", MAIL_REPLY = "contact@alephb.uk";
+var UPDATES_TAB = "Updates", UPDATES_HEADERS = ["email", "key", "consented_at", "source", "unsubscribed_at", "unsub_token"];
 
 function doPost(e) {
   var out;
@@ -42,10 +50,19 @@ function doPost(e) {
     var b = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (!b || typeof b !== "object" || Array.isArray(b)) throw new Error("bad request");
     var act = { signin: function (x) { return x.email != null ? emailSignin_(x) : signin_(x); }, pull: pull_, push: push_, "delete": delete_,
-      register: register_, verify: verify_, resetcode: resetcode_, reset: reset_ }[b.action];
+      register: register_, verify: verify_, resetcode: resetcode_, reset: reset_, updates: updates_ }[b.action];
     out = act ? act(b) : { ok: false, error: "unknown action" };
   } catch (err) { out = { ok: false, error: String(err && err.message || err) }; }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// The unsubscribe link of a news email: ?unsubscribe=<the row's unsub_token>. A plain text page either way.
+function doGet(e) {
+  var t = (e && e.parameter && e.parameter.unsubscribe) || "", msg;
+  try { msg = unsubscribeLink_(t) ? "You are unsubscribed. The Ritz Affair will not email you about new games or updates again."
+    : "This unsubscribe link is not valid. Write to contact@alephb.uk and we will remove your address."; }
+  catch (err) { msg = "Something went wrong. Write to contact@alephb.uk and we will remove your address."; }
+  return ContentService.createTextOutput(msg).setMimeType(ContentService.MimeType.TEXT);
 }
 
 function prop_(k) {
@@ -73,7 +90,8 @@ function signin_(b) {
   var info = JSON.parse(r.getContentText());
   if (info.aud !== prop_("GOOGLE_CLIENT_ID") || ISSUERS.indexOf(info.iss) < 0 || !(Number(info.exp) * 1000 > Date.now())
       || typeof info.sub !== "string" || !/^[0-9]{1,64}$/.test(info.sub)) return { ok: false, error: "bad id token" };
-  return session_(hmac_("account|" + info.sub));
+  var key = hmac_("account|" + info.sub);
+  return info.email_verified === true || info.email_verified === "true" ? mailed_(session_(key), key, info.email) : session_(key);
 }
 
 // token = key.expires.signature; the key is never secret alone, the signature makes the token.
@@ -116,6 +134,7 @@ function readSaves_(sheet, r) {
 function pull_(b) {
   var key = authed_(b), sheet = tab_(), r = find_(sheet, key), out = session_(key);
   out.saves = r ? readSaves_(sheet, r) : {};
+  out.updates = updatesOn_(key);
   return out;
 }
 
@@ -182,6 +201,7 @@ function delete_(b) {
   try {
     var sheet = tab_(), r = find_(sheet, key);
     if (r) sheet.deleteRow(r);
+    unsubscribe_(key);   // the news opt-in goes with the account
     return { ok: true, removed: !!r };
   } finally { lock.releaseLock(); }
 }
@@ -281,16 +301,19 @@ function register_(b) {
     return { ok: true, sent: true };
   }
   var salt = salt_();
-  return sendCode_(e, key, "register", { hash: pwHash_(v, salt), salt: salt });
+  return sendCode_(e, key, "register", { hash: pwHash_(v, salt), salt: salt, updates: b.updates === true });
 }
 function verify_(b) {
-  var key = emailKey_(email_(b.email)), c = checkCode_(key, "register", b.code);
+  var e = email_(b.email), key = emailKey_(e), c = checkCode_(key, "register", b.code);
   if (c.error) return { ok: false, error: c.error };
   return withLock_(function () {
     var sheet = tab_(), r = find_(sheet, key), now = Date.now();
     if (r) sheet.getRange(r, 9, 1, 2).setValues([[text_(c.p.hash), text_(c.p.salt)]]);
     else sheet.appendRow([text_(key), now, now, "", "", "", "", "", text_(c.p.hash), text_(c.p.salt)]);
-    return session_(key);
+    if (c.p.updates) subscribe_(key, e, "register");
+    var out = mailed_(session_(key), key, e);
+    out.updates = !!c.p.updates;
+    return out;
   });
 }
 function emailSignin_(b) {
@@ -298,7 +321,7 @@ function emailSignin_(b) {
   var fails = "fails-" + key + "-" + Math.floor(Date.now() / (RATE_WINDOW_S * 1000));
   if (count_(fails) >= FAILS_LIMIT) return { ok: false, error: "busy" };
   var sheet = tab_(), pw = pwOf_(sheet, find_(sheet, key));
-  if (pw[0] && same_(pwHash_(v, pw[1]), pw[0])) return session_(key);
+  if (pw[0] && same_(pwHash_(v, pw[1]), pw[0])) { var out = mailed_(session_(key), key, e); out.updates = updatesOn_(key); return out; }
   bump_(fails, RATE_WINDOW_S);
   return { ok: false, error: "wrong email or password" };
 }
@@ -319,6 +342,65 @@ function reset_(b) {
     var sheet = tab_(), r = find_(sheet, key), salt = salt_();
     if (!r) return { ok: false, error: "code expired" };
     sheet.getRange(r, 9, 1, 2).setValues([[text_(pwHash_(v, salt)), text_(salt)]]);
-    return session_(key);
+    return mailed_(session_(key), key, e);
   });
+}
+
+// --- the news opt-in (Updates tab) ---
+function emailSig_(key, e) { return hmac_("optin|" + key + "|" + e); }
+// A session answer with the address the sign-in proved, signed for this account (nothing is stored).
+function mailed_(out, key, email) {
+  try { var e = email_(email); out.email = e; out.emailSig = emailSig_(key, e); } catch (err) {}
+  return out;
+}
+function updatesTab_() {
+  var ss = SpreadsheetApp.openById(prop_("SHEET_ID")), s = ss.getSheetByName(UPDATES_TAB);
+  if (!s) { s = ss.insertSheet(UPDATES_TAB); s.appendRow(UPDATES_HEADERS); }
+  return s;
+}
+// The account's Updates row number (column B), or 0.
+function updatesRow_(sheet, key) {
+  var n = sheet.getLastRow();
+  if (n < 2) return 0;
+  var keys = sheet.getRange(2, 2, n - 1, 1).getValues();
+  for (var i = 0; i < keys.length; i++) if (String(keys[i][0]) === key) return i + 2;
+  return 0;
+}
+function updatesOn_(key) {
+  var sheet = updatesTab_(), r = updatesRow_(sheet, key);
+  return !!r && String(sheet.getRange(r, 1, 1, 1).getValues()[0][0]) !== "";
+}
+function unsubToken_(key) { return key + "." + hmac_("unsub|" + key); }
+// Called under the script lock. One row per account: a new consent rewrites it.
+function subscribe_(key, e, source) {
+  var sheet = updatesTab_(), r = updatesRow_(sheet, key), row = [text_(e), text_(key), Date.now(), source, "", text_(unsubToken_(key))];
+  if (r) sheet.getRange(r, 1, 1, 6).setValues([row]); else sheet.appendRow(row);
+}
+// Blanks the address and stamps unsubscribed_at; true when there was an address. Called under the script lock.
+function unsubscribe_(key) {
+  var sheet = updatesTab_(), r = updatesRow_(sheet, key);
+  if (!r || String(sheet.getRange(r, 1, 1, 1).getValues()[0][0]) === "") return false;
+  sheet.getRange(r, 1, 1, 1).setValues([[""]]);
+  sheet.getRange(r, 5, 1, 1).setValues([[Date.now()]]);
+  return true;
+}
+function updates_(b) {
+  var key = authed_(b);
+  if (typeof b.on !== "boolean") return { ok: false, error: "bad request" };
+  var e = "";
+  if (b.on) {
+    e = email_(b.email);
+    if (typeof b.emailSig !== "string" || !same_(emailSig_(key, e), b.emailSig)) return { ok: false, error: "bad email" };
+  }
+  return withLock_(function () {
+    if (b.on) subscribe_(key, e, "manage"); else unsubscribe_(key);
+    return { ok: true, updates: b.on };
+  });
+}
+function unsubscribeLink_(t) {
+  var p = typeof t === "string" && t.length < 200 ? t.split(".") : [];
+  if (p.length !== 2 || !/^[A-Za-z0-9_-]{43}$/.test(p[0]) || !same_(hmac_("unsub|" + p[0]), p[1])) return false;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error("busy");
+  try { unsubscribe_(p[0]); return true; } finally { lock.releaseLock(); }
 }

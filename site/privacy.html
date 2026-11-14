@@ -204,18 +204,34 @@
   (from accounts.google.com) is loaded only when you press one of them, and Google then asks you to choose your account.
   The page receives a token from Google that says which Google account signed in, and sends it once to a Google
   Apps Script of the course owner. The script checks it with Google and keeps one thing from it, a code computed
-  from your account's Google id with a secret key. It cannot be turned back into your id, and your email address
-  and name are never kept. The script answers with its own sign-in token, valid for 60 days, which your browser
+  from your account's Google id with a secret key. It cannot be turned back into your id, and signing in never keeps
+  your email address or name. The script answers with its own sign-in token, valid for 60 days, which your browser
   keeps in its local storage (<code>ritz.account</code>) and sends instead of Google's from then on.</p>
   <p>You can also sign in with an email address and a password instead of Google. Your password never leaves your
   browser: the page turns it into a verifier (PBKDF2-SHA256, 200,000 rounds, mixed with your address) and sends only
   that. To create an account or reset a password, the page sends your address to the same script, which emails a
   6-digit code to it from contact@alephb.uk through the owner's Gmail. The address is used to send that email and is
-  not kept. While a code waits, for 15 minutes at most, the script holds only a code computed from it. The account's row
+  not kept (unless you ask for news, below). While a code waits, for 15 minutes at most, the script holds only a code computed from it. The account's row
   holds a code computed from your address with the secret key, in place of the address, and one computed from the
   verifier with a random salt, in place of the password. Nobody can read your address or your password back from the
   Sheet. Each email sent also stays in the Sent folder of the owner's Gmail. After that, sign-in works as with Google:
   the same sign-in token and the same saved copy.</p>
+  <p>When you sign in, the script also sends your email address back to your browser: the one you typed, or the
+  one Google confirmed for your account. Your browser keeps it in <code>ritz.account</code>, for the choice below. The
+  script keeps no copy of it from signing in.</p>
+
+  <h2>Emails about new games and updates</h2>
+  <p>This is a separate choice, off unless you tick it: <i>Email me about new games and updates</i>, on the form that
+  creates an account with your email, and in the dialog under the <i>Saved</i> button for any signed-in account. Only
+  if you tick it, the script writes your email address, in plain text, to a separate tab of the owner's Google Sheet,
+  with the account's code, the time you agreed, where you ticked it, and a code for the unsubscribe link. Nothing
+  else about you is kept there, and your saved progress never holds the address. The owner uses it only to write
+  about new games and updates to The Ritz Affair, about once a month at most. No such email has been sent yet, and
+  the address is never sold or passed to anyone else. If a mailing service is used later to send those emails, this
+  notice will name it first.</p>
+  <p>To stop, untick the box, use the unsubscribe link at the bottom of any such email (no sign-in needed), choose
+  <i>Delete my saved progress</i>, or write to contact@alephb.uk. Each of them removes the address from the tab at
+  once. The tab keeps only the account's code and the time you unsubscribed.</p>
   <p>While you are signed in, the page sends a copy of your learning-mode save (<code>ritz.learn</code>: progress,
   answers, notes, queries and badges) and the exercises page's solved list and history (<code>ritz.exercises</code>,
   <code>ritz.exercises.history</code>) to that script after you solve a chapter or an exercise, earn a badge, or

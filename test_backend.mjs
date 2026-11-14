@@ -697,7 +697,7 @@ function accountsBackend() {
     SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = sheet(); tabs.set(n, s); return s; } }), flush: () => {} },
     LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v), remove: k => cache.delete(k) }) },
-    ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
+    ContentService: { MimeType: { JSON: "json", TEXT: "text" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
     // Gmail decodes the raw message into {to, subject, body}; mails.gmailFail sends through MailApp instead
     Gmail: { Users: { Messages: { send: (res, user) => { if (mails.gmailFail || user !== "me") throw new Error("no gmail");
       const t = Buffer.from(res.raw, "base64url").toString("utf8"), [h, body] = t.split("\r\n\r\n");
@@ -925,4 +925,64 @@ test("email accounts: 5 mails per address per hour, 80 a day in all, then try la
   assert.equal(b.post({ action: "register", email: "late@l.mn", verifier: VER(1) }).error, "try later");
   assert.equal(b.post({ action: "resetcode", email: "late2@l.mn" }).error, "try later", "the same for an address with no account");
   assert.equal(b.mails.length, 80);
+});
+
+// --- the news opt-in (accounts_script.gs updates_, the Updates tab, ?unsubscribe=) ---
+const updatesRows = b => b.tabs.get("Updates") ? b.tabs.get("Updates").rows.map(r => [...r]) : [];
+test("news opt-in: off by default; the register box subscribes the address in the Updates tab only, never in Saves", () => {
+  const b = accountsBackend();
+  const plain = emailAccount(b, "plain@x.org");
+  assert.equal(plain.updates, false, "unticked by default");
+  assert.equal(plain.email, "plain@x.org", "the page gets the address it signed in with, and its signature");
+  assert.match(plain.emailSig, /^[A-Za-z0-9_-]{43}$/);
+  assert.ok(updatesRows(b).length <= 1, "nobody subscribed");
+  b.post({ action: "register", email: "News@X.org", verifier: VER(1), updates: true });
+  const s = b.post({ action: "verify", email: "news@x.org", code: codeOf(b.mails.at(-1)) });
+  assert.equal(s.updates, true);
+  const rows = updatesRows(b);
+  assert.deepEqual(rows[0], ["email", "key", "consented_at", "source", "unsubscribed_at", "unsub_token"]);
+  assert.equal(rows[1][0], "news@x.org"); assert.equal(rows[1][1], s.token.split(".")[0]); assert.equal(rows[1][3], "register");
+  assert.equal(typeof rows[1][2], "number"); assert.equal(rows[1][4], "");
+  assert.ok(!JSON.stringify(b.rows()).includes("news@x.org"), "never in the Saves row");
+  assert.equal(b.post({ action: "pull", token: s.token }).updates, true, "a pull says it");
+  assert.equal(b.post({ action: "signin", email: "news@x.org", verifier: VER(1) }).updates, true, "and a sign-in");
+});
+
+test("news opt-in: Manage ticks and unticks it for Google and email accounts; only the address the sign-in proved", () => {
+  const b = accountsBackend();
+  b.setInfo(t => ({ aud: CLIENT, iss: "accounts.google.com", exp: String(Math.floor(Date.now() / 1000) + 60), sub: t.slice(22), email: "Gina@Gmail.com", email_verified: "true" }));
+  const g = b.post({ action: "signin", idToken: "valid.google.id.token.31" });
+  assert.equal(g.email, "gina@gmail.com", "Google's verified email claim");
+  const on = { action: "updates", token: g.token, on: true, email: g.email, emailSig: g.emailSig };
+  assert.equal(b.post({ ...on, email: "victim@x.org" }).error, "bad email", "never another address");
+  assert.equal(b.post({ ...on, emailSig: "x".repeat(43) }).error, "bad email");
+  assert.equal(b.post({ ...on, on: "yes" }).error, "bad request");
+  assert.deepEqual(b.post(on), { ok: true, updates: true });
+  let rows = updatesRows(b);
+  assert.equal(rows.length, 2); assert.equal(rows[1][0], "gina@gmail.com"); assert.equal(rows[1][3], "manage");
+  assert.deepEqual(b.post({ action: "updates", token: g.token, on: false }), { ok: true, updates: false });
+  rows = updatesRows(b);
+  assert.equal(rows[1][0], "", "unticking blanks the address"); assert.equal(typeof rows[1][4], "number", "and stamps unsubscribed_at");
+  assert.ok(b.post(on).ok);
+  rows = updatesRows(b);
+  assert.equal(rows.length, 2, "one row per account"); assert.equal(rows[1][0], "gina@gmail.com"); assert.equal(rows[1][4], "");
+  b.setInfo(t => ({ aud: CLIENT, iss: "accounts.google.com", exp: String(Math.floor(Date.now() / 1000) + 60), sub: "32", email: "u@x.org", email_verified: "false" }));
+  assert.equal(b.post({ action: "signin", idToken: "valid.google.id.token.32" }).email, undefined, "an unverified Google address is never offered");
+  assert.ok(b.post({ action: "delete", token: g.token }).ok);
+  assert.equal(updatesRows(b)[1][0], "", "Delete my saved progress unsubscribes too");
+});
+
+test("news opt-in: the unsubscribe link works without signing in and answers a plain page", () => {
+  const b = accountsBackend();
+  b.post({ action: "register", email: "l@x.org", verifier: VER(1), updates: true });
+  b.post({ action: "verify", email: "l@x.org", code: codeOf(b.mails.at(-1)) });
+  const token = updatesRows(b)[1][5];
+  const get = t => b.ctx.doGet({ parameter: { unsubscribe: t } }).text;
+  assert.match(get("nope"), /not valid/);
+  assert.match(get(token.slice(0, -1) + (token.endsWith("A") ? "B" : "A")), /not valid/, "a forged token");
+  assert.equal(updatesRows(b)[1][0], "l@x.org");
+  assert.match(get(token), /You are unsubscribed/);
+  assert.equal(updatesRows(b)[1][0], ""); assert.equal(typeof updatesRows(b)[1][4], "number");
+  assert.match(get(token), /You are unsubscribed/, "twice: the same page");
+  assert.equal(b.post({ action: "signin", email: "l@x.org", verifier: VER(1) }).updates, false);
 });
