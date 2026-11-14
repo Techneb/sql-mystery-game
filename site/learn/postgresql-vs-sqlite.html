@@ -82,7 +82,9 @@
 <p>In PostgreSQL a column's type is a promise. A column declared <code>integer</code> holds whole numbers and nothing else: inserting <code>'abc'</code> fails with <i>invalid input syntax for type integer</i>. The types are many and precise: <code>integer</code> and <code>bigint</code>, <code>numeric</code> for exact decimals, <code>real</code> and <code>double precision</code> for floating point, <code>text</code> and <code>varchar(n)</code>, <code>boolean</code>, <code>date</code>, <code>time</code>, <code>timestamp</code>, <code>interval</code> and more.</p>
 <p>In SQLite a declared type is closer to a preference, which SQLite calls <b>type affinity</b>. Every value carries its own type, one of five storage classes: NULL, INTEGER, REAL, TEXT and BLOB. A column declared <code>INTEGER</code> turns <code>'12'</code> into the number 12 when it can, but it keeps <code>'abc'</code> as text, without complaint. Since version 3.37, a table created with the <code>STRICT</code> keyword checks types much as PostgreSQL does; ordinary tables, the bakery's included, do not.</p>
 <p>Comparisons follow the same logic. In the bakery, <code>orders.day</code> is <code>TEXT</code> holding dates such as <code>'2026-03-02'</code>. Compare it with a number and PostgreSQL stops with an error. SQLite runs the query, finds that the text and the number are not equal, and returns no rows, with no warning. The terminal refuses it, as PostgreSQL would:</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span> <span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-num">20260302</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">id</span>, <span class="sql-id">time</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> = <span class="sql-num">20260302</span>;</code></pre>
 <div class="refusal"><code>ERROR: operator does not exist: text = integer</code> day is a text column and 20260302 is a number: write the value as text in single quotes, in the column's own format.</div>
 <p>Write the date as text, in the column's own format: <code>day = '2026-03-02'</code>. The full rule is in <a href="select-where.html#types">Grammar: types</a>.</p>
 <p>Text and numbers also sort differently. As text, <code>'10'</code> comes before <code>'9'</code>, because the first characters are compared first. Dates written year-month-day escape this trap because every part has a fixed width, which is why the bakery can keep them as text: see <a href="dates-times.html#why-text-order-is-calendar-order">why text order is calendar order</a>.</p>
@@ -90,13 +92,19 @@
 <h2 id="like-ilike-and-case">LIKE, ILIKE and letter case</h2>
 <p>PostgreSQL's <code>LIKE</code> is case-sensitive: <code>'Almond croissant' LIKE '%Croissant%'</code> is false. For a match that ignores case, PostgreSQL adds <code>ILIKE</code>. SQLite's <code>LIKE</code> ignores case, but only for the 26 letters of plain English: <code>'Cake' LIKE 'cake'</code> is true, while <code>'CAF&Eacute;' LIKE 'caf&eacute;'</code> is false. SQLite has no <code>ILIKE</code>.</p>
 <p>This terminal follows PostgreSQL. With a capital C, <code>LIKE</code> finds the plain croissant only:</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%Croissant%'</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">LIKE</span> <span class="sql-str">'%Croissant%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Croissant</td></tr>
 </table>
 <p><code>ILIKE</code> finds the almond one too:</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%croissant%'</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">name</span> <span class="sql-kw">ILIKE</span> <span class="sql-str">'%croissant%'</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
 <table class="result">
 <tr><th>name</th></tr>
 <tr><td>Croissant</td></tr>
@@ -110,7 +118,8 @@
 <p>The bakery stores <code>day</code> and <code>time</code> as text, as many SQLite databases do. The handbook works with them in ways both databases accept: it compares the text, which works because these dates sort in calendar order, and it takes a part out with <code>substr</code> or <code>CAST</code>. Here are the orders of the first three days:</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">orders</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>
-<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-02'</span> <span class="sql-kw">AND</span> <span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-05'</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">day</span> &gt;= <span class="sql-str">'2026-03-02'</span>
+  <span class="sql-kw">AND</span> <span class="sql-id">day</span> &lt; <span class="sql-str">'2026-03-05'</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">day</span>;</code></pre>
 <table class="result">
@@ -120,13 +129,15 @@
 <tr><td>2026-03-04</td><td>10</td></tr>
 </table>
 <p>SQLite's own date functions are refused, as PostgreSQL would refuse them:</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">strftime</span>(<span class="sql-str">'%w'</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> <span class="sql-id">weekday</span> <span class="sql-kw">FROM</span> <span class="sql-id">orders</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">day</span>, <span class="sql-fn">strftime</span>(<span class="sql-str">'%w'</span>, <span class="sql-id">day</span>) <span class="sql-kw">AS</span> <span class="sql-id">weekday</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">orders</span>;</code></pre>
 <div class="refusal"><code>ERROR: function strftime(text, text) does not exist</code> strftime() is not standard SQL: use a comparison of the date text, as in d &gt;= '1912-01-01', or substr(d, 1, 7) for its year and month instead.</div>
 <p>The <a href="dates-times.html">dates and times</a> page covers this ground in full: <a href="dates-times.html#comparing-and-filtering-ranges">comparing and filtering ranges</a>, <a href="dates-times.html#taking-apart">taking a date apart</a> and <a href="dates-times.html#date-functions">Grammar: dates, substr and CAST</a>. If you move such a database to PostgreSQL, declare those columns as <code>date</code> and <code>time</code>. Comparisons with a quoted date keep working, and PostgreSQL's date functions become available.</p>
 
 <h2 id="joining-text">Joining text with ||</h2>
 <p>Both databases join text with <code>||</code>, the standard operator. (<code>+</code> is for numbers only, in both.)</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> || <span class="sql-str">' ('</span> || <span class="sql-id">category</span> || <span class="sql-str">')'</span> <span class="sql-kw">AS</span> <span class="sql-id">label</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> || <span class="sql-str">' ('</span> || <span class="sql-id">category</span> || <span class="sql-str">')'</span>
+       <span class="sql-kw">AS</span> <span class="sql-id">label</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">4</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
@@ -144,7 +155,9 @@
 <h2 id="group-by-in-both">GROUP BY and the columns you may show</h2>
 <p>PostgreSQL's rule: in a grouped query, every column in <code>SELECT</code> is either listed in <code>GROUP BY</code> or wrapped in an aggregate such as <code>MAX</code> or <code>COUNT</code>. (Grouping by a table's primary key also covers that table's other columns.) Anything else is an error, because a group can hold several values for that column and PostgreSQL will not choose one for you.</p>
 <p>SQLite allows these "bare" columns and picks a value itself. Ask for each category's dearest price with a product name beside it:</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-fn">MAX</span>(<span class="sql-id">price</span>)
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
 <div class="refusal"><code>ERROR: column "product.name" must appear in the GROUP BY clause or be used in an aggregate function</code> Each row of the result is one group, and product.name can hold several values inside a group: add product.name to GROUP BY, or wrap it in an aggregate such as MAX(product.name).</div>
 <p>Plain SQLite runs this and answers Sourdough loaf, Raspberry tart and Cinnamon roll. With a single <code>MAX</code> or <code>MIN</code>, SQLite documents that bare columns come from the row that holds it, so the names are right this time. Add a second aggregate, or use <code>AVG</code>, and the name comes from some row of the group, and nothing tells you which. If two products shared the top price, you would see one of them and never know about the other.</p>
 <p>PostgreSQL refuses the query, and so does the terminal. Show only what the grouping can answer:</p>
@@ -163,7 +176,9 @@
 <h2 id="single-and-double-quotes">Single and double quotes</h2>
 <p>In standard SQL, PostgreSQL included, single quotes hold a value (<code>'cake'</code>) and double quotes hold a name, of a table or a column (<code>"category"</code>). You rarely need double quotes: only for a name with a space or capitals in it, or one that is also a keyword. PostgreSQL turns names without quotes into lowercase, so <code>Category</code> and <code>category</code> are the same column, while <code>"Category"</code> in quotes names a different one.</p>
 <p>SQLite accepts double quotes for names too, but when the quoted word matches no column, it quietly takes it as a text value. SQLite's own documentation lists this among its quirks, kept so that old programs keep working. So the query below runs in plain SQLite and finds the cakes. The trouble comes later: if a column named <code>cake</code> were ever added, the same query would quietly change meaning.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">"cake"</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">"cake"</span>;</code></pre>
 <div class="refusal"><code>ERROR: column "cake" does not exist</code> "cake" in double quotes is the name of a column, and there is none: a text value takes single quotes, 'cake'.</div>
 <p>Single quotes for the value, and it runs on both:</p>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>
@@ -180,7 +195,10 @@
 
 <h2 id="limit-and-offset-in-both">LIMIT and OFFSET</h2>
 <p>Both accept <code>LIMIT n OFFSET m</code>: skip m rows, then keep n. SQLite also takes <code>LIMIT m, n</code>, with the number to skip first, the reverse of what most readers expect. PostgreSQL rejects that form with <i>LIMIT #,# syntax is not supported</i>. PostgreSQL also accepts the SQL standard's longer form, <code>OFFSET 3 ROWS FETCH FIRST 2 ROWS ONLY</code>, which SQLite does not.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span> <span class="sql-kw">FROM</span> <span class="sql-id">product</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span> <span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>, <span class="sql-num">2</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>
+<span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>, <span class="sql-id">id</span>
+<span class="sql-kw">LIMIT</span> <span class="sql-num">3</span>, <span class="sql-num">2</span>;</code></pre>
 <div class="refusal"><code>ERROR: LIMIT #,# syntax is not supported</code> LIMIT 3, 2 is not standard SQL: write LIMIT 2 OFFSET 3 (the row count first, then how many rows to skip).</div>
 <pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-id">price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
@@ -213,7 +231,9 @@
 <pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-fn">SUM</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
 <div class="refusal"><code>ERROR: function sum(boolean) does not exist</code> price &gt; 3 is a condition (true or false), not a number: count where it holds with SUM(CASE WHEN price &gt; 3 THEN 1 ELSE 0 END).</div>
 <p>Count with a condition instead. <code>FILTER</code> after an aggregate works in both (SQLite since 3.30), and <code>SUM(CASE WHEN price &gt; 3 THEN 1 ELSE 0 END)</code> works everywhere:</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">FILTER</span> (<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span>) <span class="sql-kw">AS</span> <span class="sql-id">dear</span>, <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">FILTER</span> (<span class="sql-kw">WHERE</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span>)
+         <span class="sql-kw">AS</span> <span class="sql-id">dear</span>,
+       <span class="sql-fn">COUNT</span>(*) <span class="sql-kw">AS</span> <span class="sql-id">products</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
 <table class="result">
 <tr><th>dear</th><th>products</th></tr>
@@ -223,9 +243,11 @@
 
 <h2 id="ifnull-and-coalesce">IFNULL, COALESCE and NULL</h2>
 <p><code>COALESCE(a, b, ...)</code> returns the first of its arguments that is not NULL, in both databases. SQLite also has <code>IFNULL(a, b)</code>, the two-argument version, which PostgreSQL does not have.</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IFNULL</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IFNULL</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>)
+<span class="sql-kw">FROM</span> <span class="sql-id">customer</span>;</code></pre>
 <div class="refusal"><code>ERROR: function ifnull(text, text) does not exist</code> ifnull() is not standard SQL: use COALESCE(a, b) instead.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">COALESCE</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">AS</span> <span class="sql-id">email</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
+       <span class="sql-fn">COALESCE</span>(<span class="sql-id">email</span>, <span class="sql-str">'no email'</span>) <span class="sql-kw">AS</span> <span class="sql-id">email</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">customer</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">town</span> = <span class="sql-str">'Old Town'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>
@@ -241,9 +263,12 @@
 
 <h2 id="iif-and-case">IIF and CASE</h2>
 <p>SQLite 3.32 added <code>IIF(condition, a, b)</code>, borrowed from Microsoft's databases. PostgreSQL has no <code>IIF</code>. <code>CASE</code> is in the SQL standard and in both, and it does everything <code>IIF</code> does:</p>
-<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IIF</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>, <span class="sql-str">'dear'</span>, <span class="sql-str">'cheap'</span>) <span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
+<pre class="wrong"><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-fn">IIF</span>(<span class="sql-id">price</span> &gt; <span class="sql-num">3</span>, <span class="sql-str">'dear'</span>, <span class="sql-str">'cheap'</span>)
+<span class="sql-kw">FROM</span> <span class="sql-id">product</span>;</code></pre>
 <div class="refusal"><code>ERROR: function iif(boolean, text, text) does not exist</code> iif() is not standard SQL: use CASE WHEN ... THEN ... ELSE ... END instead.</div>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>, <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span> <span class="sql-kw">THEN</span> <span class="sql-str">'dear'</span> <span class="sql-kw">ELSE</span> <span class="sql-str">'cheap'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">name</span>,
+       <span class="sql-kw">CASE</span> <span class="sql-kw">WHEN</span> <span class="sql-id">price</span> &gt; <span class="sql-num">3</span> <span class="sql-kw">THEN</span> <span class="sql-str">'dear'</span>
+            <span class="sql-kw">ELSE</span> <span class="sql-str">'cheap'</span> <span class="sql-kw">END</span> <span class="sql-kw">AS</span> <span class="sql-id">band</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">WHERE</span> <span class="sql-id">category</span> = <span class="sql-str">'cake'</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">id</span>;</code></pre>
@@ -261,7 +286,9 @@
 
 <h2 id="round-and-division">ROUND, division and decimals</h2>
 <p>SQLite's <code>ROUND(x, n)</code> rounds any number to n decimal places. PostgreSQL's two-argument <code>round</code> wants a <code>numeric</code>, its exact decimal type. Given a <code>real</code> or <code>double precision</code> value it fails with <i>function round(double precision, integer) does not exist</i>. The average of a <code>real</code> column is a <code>double precision</code>, so <code>ROUND(AVG(price), 2)</code>, fine in SQLite, fails there. Convert first:</p>
-<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>)::<span class="sql-id">numeric</span>, <span class="sql-num">2</span>) <span class="sql-kw">AS</span> <span class="sql-id">avg_price</span>
+<pre><code><span class="sql-kw">SELECT</span> <span class="sql-id">category</span>,
+       <span class="sql-fn">ROUND</span>(<span class="sql-fn">AVG</span>(<span class="sql-id">price</span>)::<span class="sql-id">numeric</span>, <span class="sql-num">2</span>)
+         <span class="sql-kw">AS</span> <span class="sql-id">avg_price</span>
 <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 <span class="sql-kw">GROUP</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
 <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>;</code></pre>
@@ -284,7 +311,9 @@
 <p>This is how to get the name of each category's dearest product, the question the bare column above could not answer safely. It runs unchanged on both:</p>
 <pre><code><span class="sql-kw">WITH</span> <span class="sql-id">ranked</span> <span class="sql-kw">AS</span> (
   <span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>,
-         <span class="sql-fn">RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span> <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>) <span class="sql-kw">AS</span> <span class="sql-id">r</span>
+         <span class="sql-fn">RANK</span>() <span class="sql-kw">OVER</span> (<span class="sql-kw">PARTITION</span> <span class="sql-kw">BY</span> <span class="sql-id">category</span>
+                      <span class="sql-kw">ORDER</span> <span class="sql-kw">BY</span> <span class="sql-id">price</span> <span class="sql-kw">DESC</span>)
+           <span class="sql-kw">AS</span> <span class="sql-id">r</span>
   <span class="sql-kw">FROM</span> <span class="sql-id">product</span>
 )
 <span class="sql-kw">SELECT</span> <span class="sql-id">category</span>, <span class="sql-id">name</span>, <span class="sql-id">price</span>
