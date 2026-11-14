@@ -174,6 +174,7 @@ const SIGNIN = `<form method="dialog" novalidate>
     <p class="acct-buttons"><button type="button" data-act="code">Confirm</button> <button type="button" class="quiet" data-act="back">Back</button></p>
   </div>
   <p class="acct-error" role="alert"></p>
+  <p class="acct-wait" aria-live="polite"></p>
   <button value="" class="quiet">Cancel</button>
 </form>`;
 const ACCOUNT_MSG = "Signed in. Your progress in the game and on the handbook's exercises page is saved and follows you to any device where you sign in.";
@@ -213,7 +214,7 @@ export function wireAccount(onChange) {
     box.checked = !!account.updates; note.textContent = "";
     box.onchange = async () => {
       const on = box.checked;
-      box.disabled = true;
+      box.disabled = true; note.textContent = "Saving...";
       try {
         await call(JSON.stringify({ action: "updates", token: account.token, on, email: account.email, emailSig: account.emailSig }));
         setAccount({ ...account, updates: on });
@@ -259,6 +260,7 @@ export function wireAccount(onChange) {
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, use_fedcm_for_prompt: true, callback: async r => {
         const d = document.getElementById("account-signin");
         if (d && d.open) d.close();
+        render("Signing you in...");
         try { await signedInWith(await call(JSON.stringify({ action: "signin", idToken: r.credential }))); }
         catch { render("The sign-in did not go through. Try again later."); }
       } });
@@ -281,6 +283,7 @@ export function wireAccount(onChange) {
   // The email form: Sign in, Create an account (a code by email, then Confirm), Forgot password? (a code and a new password).
   function wireEmail(d) {
     const $ = sel => d.querySelector(sel), err = t => { $(".acct-error").textContent = t; };
+    const wait = on => { $(".acct-wait").textContent = on ? "Sending... this can take ten seconds." : ""; };
     let pending = "";   // "register" or "reset" while the code step shows
     const step = kind => {
       pending = kind;
@@ -290,10 +293,10 @@ export function wireAccount(onChange) {
       (kind ? $("#acct-code") : $("#acct-pass")).focus();
     };
     async function send(body, busy) {
-      busy.disabled = true; err("");
+      busy.disabled = true; busy.classList.add("busy"); busy.setAttribute("aria-busy", "true"); err(""); wait(true);
       try { return await call(JSON.stringify(body)); }
       catch (e) { err(EMAIL_ERRORS[e.message] || "That did not go through. Check the connection and try again."); return null; }
-      finally { busy.disabled = false; }
+      finally { busy.disabled = false; busy.classList.remove("busy"); busy.removeAttribute("aria-busy"); wait(false); }
     }
     async function act(name, btn) {
       const email = $("#acct-email").value, pw = $("#acct-pass").value;

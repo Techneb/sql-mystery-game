@@ -464,6 +464,12 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .account-dialog .acct-buttons button { padding: 8px 14px; }
 .account-dialog .acct-error { color: var(--rel); font-weight: 700; text-align: center; }
 .account-dialog .acct-error:empty { display: none; }
+/* while the script answers (about 10 s): a spinning ring on the pressed button and a muted line under the errors */
+.account-dialog .acct-wait { text-align: center; font-size: 14px; opacity: .75; margin: 4px 0; }
+.account-dialog .acct-wait:empty { display: none; }
+.account-dialog button.busy::after { content: ""; display: inline-block; width: 12px; height: 12px; margin-left: 8px; vertical-align: -2px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: acct-spin .8s linear infinite; }
+@keyframes acct-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .account-dialog button.busy::after { animation-duration: 3s; } }
 .acct-updates label { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; font-size: 15px; text-align: left; }
 .acct-updates input[type=checkbox] { width: auto; margin: 3px 0 0; flex: none; }
 .acct-updates-msg:empty { display: none; }
