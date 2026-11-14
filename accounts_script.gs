@@ -257,18 +257,32 @@ function sendCode_(e, key, kind, extra) {
   var p = { kind: kind, code: hmac_("code|" + key + "|" + code), tries: 0 };
   for (var k in extra) p[k] = extra[k];
   CacheService.getScriptCache().put("pending-" + key, JSON.stringify(p), CODE_S);
-  mail_(e, "Your code is " + code + ". It works for 15 minutes.\n\nIf you did not ask for it, you can ignore this email. Nothing happens without the code.");
+  mail_(e, code + " is your Ritz Affair code", "Your code:", code,
+    "Type it in the game within 15 minutes. If you did not ask for it, ignore this email: nothing happens without the code.");
   return { ok: true, sent: true };
 }
 // Gmail from contact@alephb.uk (as feedback_script.gs confirm_), MailApp if the alias or the scope is missing.
-function mail_(to, text) {
-  var subject = "Your Ritz Affair code", body = "Hello,\n\n" + text + "\n\nAlephB\nhttps://alephb.uk/ritz-affair/\n";
+// multipart/alternative: Outlook for iOS re-wraps a text/plain-only mail at about 70 characters (seen 2026-11-14),
+// so the HTML part carries the layout, the code alone in a large box; the text part stays one line per paragraph.
+function mail_(to, subject, lead, code, text) {
+  var plain = "Hello,\n\n" + (code ? lead + " " + code + "\n\n" : "") + text + "\n\nAlephB\nThe Ritz Affair, https://alephb.uk/ritz-affair/\n";
+  var html = '<div style="font-family:Georgia,serif;font-size:16px;line-height:1.5;color:#1c1a17;max-width:480px">' +
+    "<p>Hello,</p>" +
+    (code ? "<p style=\"margin:0 0 8px\">" + lead + "</p>" +
+      '<p style="margin:0 0 20px"><span style="display:inline-block;font-family:Menlo,Consolas,monospace;font-size:32px;font-weight:bold;' +
+      'letter-spacing:6px;padding:10px 18px;border:1px solid #8b2a2a;border-radius:8px;background:#f3ead7;color:#1c1a17">' + code + "</span></p>" : "") +
+    "<p>" + text + "</p>" +
+    '<p style="color:#5a5246">AlephB<br><a href="https://alephb.uk/ritz-affair/" style="color:#8b2a2a">The Ritz Affair</a></p></div>';
   try {
-    // to passed email_ (no spaces, no line breaks): no header injection
-    var mime = "From: " + MAIL_FROM + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + body;
+    // to passed email_ (no spaces, no line breaks): no header injection; every part is ASCII
+    var b = "ritz-" + Utilities.getUuid();
+    var mime = "From: " + MAIL_FROM + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nMIME-Version: 1.0\r\n" +
+      "Content-Type: multipart/alternative; boundary=\"" + b + "\"\r\n\r\n" +
+      "--" + b + "\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + plain + "\r\n" +
+      "--" + b + "\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html + "\r\n--" + b + "--\r\n";
     Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime) }, "me");
   } catch (err) {
-    MailApp.sendEmail({ to: to, name: "The Ritz Affair", replyTo: MAIL_REPLY, subject: subject, body: body });
+    MailApp.sendEmail({ to: to, name: "The Ritz Affair", replyTo: MAIL_REPLY, subject: subject, body: plain, htmlBody: html });
   }
 }
 // The pending code checked: {p}, or {error}. A wrong code counts a try; the fifth wrong one ends the code.
@@ -296,7 +310,8 @@ function register_(b) {
   if (pwOf_(sheet, find_(sheet, key))[0]) {   // the account exists: the same answer, and a note instead of a code
     var err = allowSend_(key);
     if (err) return { ok: false, error: err };
-    mail_(e, "Someone, probably you, tried to create a Ritz Affair account with this address, but it already has one. " +
+    mail_(e, "Your Ritz Affair account", "", "",
+      "Someone, probably you, tried to create a Ritz Affair account with this address, but it already has one. " +
       "Sign in, or choose Forgot password? to set a new password.");
     return { ok: true, sent: true };
   }

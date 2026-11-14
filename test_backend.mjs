@@ -700,7 +700,7 @@ function accountsBackend() {
     ContentService: { MimeType: { JSON: "json", TEXT: "text" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
     // Gmail decodes the raw message into {to, subject, body}; mails.gmailFail sends through MailApp instead
     Gmail: { Users: { Messages: { send: (res, user) => { if (mails.gmailFail || user !== "me") throw new Error("no gmail");
-      const t = Buffer.from(res.raw, "base64url").toString("utf8"), [h, body] = t.split("\r\n\r\n");
+      const t = Buffer.from(res.raw, "base64url").toString("utf8"), h = t.split("\r\n\r\n")[0], body = t.slice(h.length + 4);
       const head = Object.fromEntries(h.split("\r\n").map(l => [l.split(": ")[0].toLowerCase(), l.slice(l.indexOf(": ") + 2)]));
       mails.push({ to: head.to, from: head.from, subject: head.subject, body, gmail: true }); } } } },
     MailApp: { sendEmail: m => mails.push(m) },
@@ -845,7 +845,7 @@ test("email accounts: register mails a code from contact@ via Gmail; verify make
   const b = accountsBackend();
   assert.deepEqual(b.post({ action: "register", email: " Ann@Example.org ", verifier: VER(1) }), { ok: true, sent: true });
   const m = b.mails[0];
-  assert.equal(m.to, "ann@example.org"); assert.equal(m.subject, "Your Ritz Affair code"); assert.ok(m.gmail && /contact@alephb\.uk/.test(m.from));
+  assert.equal(m.to, "ann@example.org"); assert.equal(m.subject, codeOf(m) + " is your Ritz Affair code"); assert.match(m.body, /multipart\/alternative|text\/html/i); assert.ok(m.gmail && /contact@alephb\.uk/.test(m.from));
   assert.match(codeOf(m), /^\d{6}$/);
   assert.ok(![...b.cache.values()].some(v => String(v).includes(codeOf(m))), "the code is kept only as an HMAC");
   assert.ok(!b.tabs.get("Saves") || b.rows().length === 1, "no row before the code");
