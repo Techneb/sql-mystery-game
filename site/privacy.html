@@ -200,8 +200,8 @@
 
   <h2>Saved progress (Sign in with Google)</h2>
   <p>Signing in is optional and only for learning mode: it keeps a copy of your progress so you can continue on
-  another device. The game's front page offers a <i>Sign in with Google</i> button. Google's sign-in script
-  (from accounts.google.com) is loaded only when you press it, and Google then asks you to choose your account.
+  another device. The game's front page and the <i>Sign in</i> button at the top right of the game and the handbook's pages offer it. Google's sign-in script
+  (from accounts.google.com) is loaded only when you press one of them, and Google then asks you to choose your account.
   The page receives a token from Google that says which Google account signed in, and sends it once to a Google
   Apps Script of the course owner. The script checks it with Google and keeps one thing from it, a code computed
   from your account's Google id with a secret key. It cannot be turned back into your id, and your email address
@@ -214,7 +214,7 @@
   The script keeps one row per account in the owner's Google Sheet: the code above, when the row was created and
   last updated, your browser's clock at the last update, and the saves. When two devices disagree, the save further
   along is kept, so a device that is behind never wipes your progress; <i>New investigation</i> also starts the saved copy afresh.</p>
-  <p><i>Sign out</i> (the <i>Saved</i> button beside the case board's Suspects, or <i>Manage</i> on the front page)
+  <p><i>Sign out</i> (under the <i>Saved</i> button at the top right of the game and the handbook's pages)
   forgets the sign-in on this device. <i>Delete my saved progress</i>, in the same place, removes your row from the
   Sheet at once and signs you out; the copy in your browser stays until you clear it.</p>
 

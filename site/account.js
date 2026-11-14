@@ -10,8 +10,8 @@ import { useFeature } from "./stats.js";
 
 // The OAuth client (Web application) and the accounts script's /exec URL: both public by design, empty until the owner
 // creates them. Pasting both is the whole switch-on.
-export const GOOGLE_CLIENT_ID = "";
-export const ACCOUNTS_URL = "";
+export const GOOGLE_CLIENT_ID = "777203421471-ejn31449p1knbaf2tmm3sl04ng0d037q.apps.googleusercontent.com";
+export const ACCOUNTS_URL = "https://script.google.com/macros/s/AKfycbz1_7s0fgH0Qz3H6b4SbnBFwvtLRRTYJ2p5qhpzw2c8KqQm5ggkJzwpP0t_dWK89xG_HQ/exec";
 export const ACCOUNTS_ON = GOOGLE_CLIENT_ID !== "" && ACCOUNTS_URL !== "";
 
 export const ACCOUNT_KEY = "ritz.account";   // {token, expires}: the script's session token, never Google's
@@ -90,32 +90,40 @@ export function pushSaves({ beacon = false, replace } = {}) {
 export function schedulePush() { if (account) { clearTimeout(timer); timer = setTimeout(pushSaves, PUSH_DELAY_MS); } }
 
 // At boot, before the page reads its saves: the stored account, its pull (PULL_WAIT_MS at most), a push on leaving.
-// Resolves true when the saves changed.
-export async function startSync() {
+// Resolves true when the saves changed. Once per page load (exercises.js and handbook.js both ask on exercises.html).
+let syncing = null;
+export function startSync() { return syncing || (syncing = sync()); }
+async function sync() {
   if (!ACCOUNTS_ON) return false;
   account = readAccount(getItem(ACCOUNT_KEY));
   if (!account) { setAccount(null); return false; }
-  if (!wired) {
-    wired = true;
-    window.addEventListener("pagehide", () => pushSaves({ beacon: true }));
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pushSaves({ beacon: true }); });
-  }
+  window.addEventListener("pagehide", () => pushSaves({ beacon: true }));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") pushSaves({ beacon: true }); });
   return pull(PULL_WAIT_MS);
 }
 
-// --- the game's UI: a line on the landing card, an Account button on the case board's row, one dialog ---
+// --- the UI: a corner button (Sign in, or Saved once signed in) beside Feedback on the game and every handbook page,
+// a line on the game's landing card, and small dialogs ---
 const G_LOGO = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 export const signinButtonHtml = () => '<button type="button" class="gsi-btn">' + G_LOGO + "<span>Sign in with Google</span></button>";
-const CLOUD = '<svg class="icon cloud" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5h7a3 3 0 0 0 .4-5.97A4 4 0 0 0 4.2 7.6 2.5 2.5 0 0 0 4.5 12.5Z"/><path d="M6.25 9.75L7.5 11L10 8.5"/></svg>';
-const ask = (title, buttons) => `<form method="dialog">
+const ICON = '<svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const CLOUD = ICON + '<path d="M4.5 12.5h7a3 3 0 0 0 .4-5.97A4 4 0 0 0 4.2 7.6 2.5 2.5 0 0 0 4.5 12.5Z"/><path d="M6.25 9.75L7.5 11L10 8.5"/></svg>';
+const SIGN_IN = ICON + '<path d="M9.5 2.5h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3"/><path d="M2.5 8h7M7 5.5L9.5 8L7 10.5"/></svg>';
+// The corner button's inner HTML, title and aria-label: Saved once signed in, else Sign in (tested).
+export const accountButton = signed => signed
+  ? { html: CLOUD + '<span class="btn-text">Saved</span>', title: "Signed in, progress saved" }
+  : { html: SIGN_IN + '<span class="btn-text">Sign in</span>', title: "Sign in with Google to save your progress across devices" };
+const ask = (title, body, buttons) => `<form method="dialog">
   <div class="label">${title}</div>
-  <p class="ask-msg"></p>
+  <p class="ask-msg"></p>${body}
   ${buttons}
 </form>`;
-const MANAGE = ask("YOUR SAVED PROGRESS", '<button value="" autofocus>Close</button> <button value="signout" class="quiet">Sign out</button> <button value="delete" class="quiet">Delete my saved progress</button>');
-const CONFIRM = ask("DELETE YOUR SAVED PROGRESS", '<button value="" autofocus>Cancel</button> <button value="delete" class="quiet">Delete it</button>');
+const MANAGE = ask("YOUR SAVED PROGRESS", "", '<button value="" autofocus>Close</button> <button value="signout" class="quiet">Sign out</button> <button value="delete" class="quiet">Delete my saved progress</button>');
+const CONFIRM = ask("DELETE YOUR SAVED PROGRESS", "", '<button value="" autofocus>Cancel</button> <button value="delete" class="quiet">Delete it</button>');
+const SIGNIN = ask("SIGN IN", '<p class="gsi-box"></p>', '<button value="" class="quiet">Cancel</button>');
 const ACCOUNT_MSG = "Signed in with Google. Your progress in the game and on the handbook's exercises page is saved and follows you to any device where you sign in.";
 const DELETE_ASK = "Delete the progress saved with your Google account? This browser keeps its own copy, and you are signed out.";
+const SIGNIN_MSG = "Sign in with Google to keep your progress in the game and on the exercises page on every device you use.";
 
 function loadGis() {
   if (globalThis.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -127,17 +135,22 @@ function loadGis() {
 }
 function dialog(id, html) {
   let d = document.getElementById(id);
-  if (!d) { d = document.createElement("dialog"); d.id = id; d.className = "part2"; d.innerHTML = html; document.body.appendChild(d); }
+  if (!d) { d = document.createElement("dialog"); d.id = id; d.className = "part2 account-dialog"; d.innerHTML = html; document.body.appendChild(d); }
   return d;
 }
 
-// Wires the game's account UI after the landing's #status: nothing at all while ACCOUNTS_ON is false (and never in
-// compete: app.js does not call it there). onChange(): the saves changed (the page reloads to read them).
+// Wires the account UI: nothing at all while ACCOUNTS_ON is false, and never in compete (app.js does not call it
+// there). onChange(): a sign-in changed the saves (the page reloads to read them).
 export function wireAccount(onChange) {
   if (!ACCOUNTS_ON) return false;
-  const line = document.createElement("p");
-  line.className = "landing-account muted";
-  document.getElementById("status").after(line);
+  const corners = document.querySelector(".corners"), status = document.getElementById("status");
+  let line = null, gisReady = false;
+  if (status) { line = document.createElement("p"); line.className = "landing-account muted"; status.after(line); }   // the game's landing
+  const corner = document.createElement("button");
+  corner.id = "btn-account"; corner.className = "quiet account-corner";
+  if (corners) corners.prepend(corner);
+  corner.onclick = () => account ? manage() : signInDialog();
+
   async function manage() {
     const v = await askDialog(dialog("account", MANAGE), ACCOUNT_MSG, () => confirm("Sign out?") ? "signout" : "");
     if (v === "signout") { setAccount(null); useFeature("account_signout"); render(); }
@@ -148,40 +161,47 @@ export function wireAccount(onChange) {
     } catch { render("It could not be deleted just now. Try again later."); }
   }
   function render(msg = "") {
-    const btn = document.getElementById("btn-account");
+    const b = accountButton(!!account);
+    corner.innerHTML = b.html; corner.title = b.title; corner.setAttribute("aria-label", b.title);
+    const sd = document.getElementById("account-signin");
+    if (msg && sd) sd.querySelector(".ask-msg").textContent = msg;   // the corner's flow says it there
+    if (!line) return;
     line.textContent = msg ? msg + " " : "";
-    if (account) {
-      line.insertAdjacentHTML("beforeend", 'Signed in, progress saved. <button type="button" class="quiet account-manage">Manage</button>');
-      line.querySelector("button").onclick = manage;
-      if (!btn) {
-        const b = document.createElement("button");
-        b.id = "btn-account"; b.className = "quiet"; b.title = "Signed in, progress saved";
-        b.setAttribute("aria-label", b.title);
-        b.innerHTML = CLOUD + '<span class="btn-text">Saved</span>';
-        b.onclick = manage;
-        document.getElementById("btn-suspects").after(" ", b);
-      }
-    } else {
-      if (btn) btn.remove();
-      line.insertAdjacentHTML("beforeend", 'Save your progress across devices: <span class="gsi-box">' + signinButtonHtml() + "</span>");
+    if (account) line.insertAdjacentHTML("beforeend", '<span class="account-text">Signed in, progress saved.</span>');
+    else {
+      line.insertAdjacentHTML("beforeend", '<span class="account-text">Save your progress across devices:</span> <span class="gsi-box">' + signinButtonHtml() + "</span>");
       line.querySelector(".gsi-btn").onclick = () => signIn(line.querySelector(".gsi-box"));
     }
   }
-  // Google's script loads only now; its own button replaces ours (in case its prompt is not shown) and returns the ID token.
+  // Google's script loads only now (one press); its own button replaces ours in box (in case its prompt is not shown).
   async function signIn(box) {
-    try { await loadGis(); } catch { render("Google's sign-in did not load (a blocker, or no connection)."); return; }
-    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, use_fedcm_for_prompt: true, callback: async r => {
-      try {
-        const j = await call(JSON.stringify({ action: "signin", idToken: r.credential }));
-        setAccount({ token: j.token, expires: j.expires });
-        useFeature("account_signin");
-        if (await pull(10000)) return onChange();
-        pushSaves();
-        render();
-      } catch { render("The sign-in did not go through. Try again later."); }
-    } });
+    try { await loadGis(); } catch { render("Google's sign-in did not load (a blocker, or no connection)."); return false; }
+    if (!gisReady) {
+      gisReady = true;
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, use_fedcm_for_prompt: true, callback: async r => {
+        const d = document.getElementById("account-signin");
+        if (d && d.open) d.close();
+        try {
+          const j = await call(JSON.stringify({ action: "signin", idToken: r.credential }));
+          setAccount({ token: j.token, expires: j.expires });
+          useFeature("account_signin");
+          if (await pull(10000)) return onChange();
+          pushSaves();
+          render();
+        } catch { render("The sign-in did not go through. Try again later."); }
+      } });
+    }
+    box.replaceChildren();
     google.accounts.id.renderButton(box, { theme: "outline", text: "signin_with", size: "large", shape: "rectangular" });
     google.accounts.id.prompt();
+    return true;
+  }
+  // The corner's Sign in: a small dialog holding Google's button, so the corner row never changes shape.
+  async function signInDialog() {
+    const d = dialog("account-signin", SIGNIN);
+    d.querySelector(".ask-msg").textContent = SIGNIN_MSG;
+    if (d.showModal && !d.open) d.showModal();
+    await signIn(d.querySelector(".gsi-box"));
   }
   render();
   return true;

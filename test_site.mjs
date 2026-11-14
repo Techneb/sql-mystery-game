@@ -1741,14 +1741,24 @@ test("chapter I: its two steps count their Where to look apart (hint_where carri
 test("accounts: off while GOOGLE_CLIENT_ID is empty, no sign-in UI and no Google script anywhere", async () => {
   const acc = await import("./site/account.js");
   assert.equal(acc.ACCOUNTS_ON, acc.GOOGLE_CLIENT_ID !== "" && acc.ACCOUNTS_URL !== "", "the client id and the URL are the whole switch");
-  if (acc.GOOGLE_CLIENT_ID === "") {
-    assert.equal(acc.ACCOUNTS_ON, false);
-    // a document that throws on any touch: wireAccount and startSync must not reach it
+  // the same module with both constants emptied (a copy beside it, so its imports resolve): it touches no page at all
+  const src0 = fs.readFileSync("site/account.js", "utf8").replace(/(export const (GOOGLE_CLIENT_ID|ACCOUNTS_URL) = )"[^"]*"/g, '$1""');
+  const tmp = "site/.account-dark-" + process.pid + ".mjs";
+  fs.writeFileSync(tmp, src0);
+  try {
+    const dark = await import("./" + tmp);
+    assert.equal(dark.ACCOUNTS_ON, false);
     const trap = new Proxy({}, { get() { throw new Error("touched the page while accounts are off"); } });
     const saved = globalThis.document; globalThis.document = trap;
-    try { assert.equal(acc.wireAccount(() => {}), false); assert.equal(await acc.startSync(), false); assert.equal(acc.signedIn(), false); }
+    try { assert.equal(dark.wireAccount(() => {}), false); assert.equal(await dark.startSync(), false); assert.equal(dark.signedIn(), false); }
     finally { globalThis.document = saved; }
-  }
+  } finally { fs.unlinkSync(tmp); }
+  // the corner square is added by account.js at run time: the pages' static .corners stay identical (test_handbook)
+  assert.equal(acc.accountButton(false).title, "Sign in with Google to save your progress across devices");
+  assert.match(acc.accountButton(false).html, /stroke="currentColor"[\s\S]*<span class="btn-text">Sign in<\/span>$/);
+  assert.match(acc.accountButton(true).html, /class="btn-text">Saved<\/span>$/);
+  assert.match(src0, /corners\.prepend\(corner\)/, "beside Feedback, in the corners box");
+  assert.match(fs.readFileSync("site/learn/handbook.js", "utf8"), /wireAccount\(/, "the handbook pages carry it too");
   const files = execFileSync("git", ["ls-files", "site"], { encoding: "utf8" }).split("\n").filter(f => /\.(html|js)$/.test(f) && !["site/account.js", "site/privacy.html"].includes(f));   // the notice describes it
   for (const f of files) assert.ok(!/accounts\.google\.com\/gsi|Sign in with Google/.test(fs.readFileSync(f, "utf8")), f + ": the sign-in lives in account.js only");
   const src = fs.readFileSync("site/account.js", "utf8");

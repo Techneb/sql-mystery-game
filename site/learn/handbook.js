@@ -3,10 +3,12 @@
 // The ad path (Google's message) applies only where the ad box is, exercises.html; elsewhere the banner asks.
 import { initConsent, useFeature } from "../stats.js";
 import { wireFeedback } from "../feedback.js";
+import { startSync, wireAccount } from "../account.js";
 
 if (typeof document !== "undefined") {
   initConsent(!!document.getElementById("press-box"));
   wireFeedback(() => useFeature("feedback"));
+  startSync().then(() => wireAccount(() => location.reload()));   // the corner Sign in / Saved, as on the game
   document.addEventListener("click", e => {
     const a = e.target.closest && e.target.closest("a, button");
     if (!a) return;

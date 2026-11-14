@@ -329,7 +329,8 @@ export const GAME_FEATURES = { schema_enlarge: "Schema enlarged", suspects_open:
   account_signin: "Signed in with Google", account_signout: "Signed out", account_delete: "Saved progress deleted" };
 export const HANDBOOK_FEATURES = { schema_enlarge: "Schema enlarged", history_reuse: "History query reused", grammar_link: "Grammar link followed",
   howto_open: "How to use opened", solution_open: "Solution opened", try_it: "Try it link followed", theme_toggle: "Day/Night toggled", ad_house_click: "House ad clicked",
-  tour_done: "Tour finished", tour_skip: "Tour skipped", feedback: "Feedback link pressed", try_here: "Try it here opened" };
+  tour_done: "Tour finished", tour_skip: "Tour skipped", feedback: "Feedback link pressed", try_here: "Try it here opened",
+  account_signin: "Signed in with Google", account_signout: "Signed out", account_delete: "Saved progress deleted" };
 export const MODES = { learn: "Learn", compete: "Compete" };
 export const KINDS = { error: "SQLite error", refused: "Refused by the grammar check" };
 export const LEVELS = { "warm-up": "Warm-up", practice: "Practice", challenge: "Challenge" };

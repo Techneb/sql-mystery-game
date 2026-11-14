@@ -38,9 +38,9 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
 /* fixed, above the landing overlay (z-index 20), so it works on the landing page and in the game */
 .corners { position: absolute; right: 16px; top: 12px; z-index: 21; display: flex; gap: 6px; }   /* Send feedback, then Day/Night */
-.theme-corner, .feedback-corner { font-size: 13px; padding: 2px 10px; background: var(--paper); }
+.theme-corner, .feedback-corner, .account-corner { font-size: 13px; padding: 2px 10px; background: var(--paper); }
 .mast-sub { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
-.theme-corner svg, .feedback-corner svg, .reset-corner svg { vertical-align: -3px; margin-right: 6px; }
+.theme-corner svg, .feedback-corner svg, .account-corner svg, .reset-corner svg { vertical-align: -3px; margin-right: 6px; }
 
 /* landing */
 /* scrolls when the card is taller than the window; the card's auto margins centre it only when it fits
@@ -355,10 +355,10 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .erd { max-height: 40vh; }
   .mast-title { font-size: 24px; }
   /* icon-only 32px squares in the top corners: the 24px title (~262px at 430px) clears both */
-  .reset-corner, .theme-corner, .feedback-corner { width: 32px; height: 32px; padding: 0; top: 8px; display: flex; align-items: center; justify-content: center; }
+  .reset-corner, .theme-corner, .feedback-corner, .account-corner { width: 32px; height: 32px; padding: 0; top: 8px; display: flex; align-items: center; justify-content: center; }
   .reset-corner { left: 8px; } .corners { right: 8px; top: 8px; flex-direction: column-reverse; }   /* Feedback under Day/Night: side by side they met the title */
-  .theme-corner svg, .feedback-corner svg, .reset-corner svg { margin: 0; }
-  .reset-corner .btn-text, .theme-corner .btn-text, .feedback-corner .btn-text { display: none; }   /* Run, Badges and Suspects keep their text */
+  .theme-corner svg, .feedback-corner svg, .account-corner svg, .reset-corner svg { margin: 0; }
+  .reset-corner .btn-text, .theme-corner .btn-text, .feedback-corner .btn-text, .account-corner .btn-text { display: none; }   /* Run, Badges and Suspects keep their text */
   .mast-sub { letter-spacing: 1px; font-size: 10px; }   /* the bold numeral widened the line: keep it on one line at 430 px */
   .row, .landing-buttons, .answer-row { flex-wrap: wrap; }
   .landing-card { padding: 16px; }
@@ -367,7 +367,16 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
      side above the card, the photograph is cropped shorter, the text is ragged-right, and what a lone visitor cannot
      use (Compete without a season link, the idle status line) is hidden */
   #landing { padding-top: 48px; }
-  body:has(#landing:not([hidden])) .corners { flex-direction: row; }
+  body:has(#landing:not([hidden])) .corners { flex-direction: row; }   /* up to four squares in a row (148 px), above the card */
+  /* off the landing (the game, the handbook), with the account square (account.js): a grid over the masthead's top
+     corners, Day/Night and Feedback down the right as before, Sign in / Saved on the left under New investigation, so
+     the stack stays two squares deep (78 px) and clear of the title; the empty middle lets clicks through */
+  body:not(:has(#landing:not([hidden]))) .corners:has(.account-corner) { left: 8px; display: grid; grid-template-columns: 32px 1fr 32px; grid-auto-rows: 32px; gap: 6px; pointer-events: none; }
+  .corners > * { pointer-events: auto; }
+  body:not(:has(#landing:not([hidden]))) .corners .theme-corner { grid-area: 1 / 3; }
+  body:not(:has(#landing:not([hidden]))) .corners .feedback-corner { grid-area: 2 / 3; }
+  body:not(:has(#landing:not([hidden]))) .corners .account-corner { grid-area: 2 / 1; }
+  body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }   /* again: the grid rule above outranks the first */
   .landing-card h1 { font-size: 22px; }
   .landing-photo { margin: 10px 0 12px; }
   .landing-photo img { height: 130px; object-fit: cover; object-position: 50% 55%; }
@@ -437,7 +446,11 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .landing-warmup { display: inline-block; margin: 10px 0 10px; padding: 7px 14px; font-size: 17px; border: 1px solid var(--rule); border-left: 4px solid var(--rel); border-radius: var(--r-box); background: var(--shade); }
 /* Accounts (account.js, off while GOOGLE_CLIENT_ID is empty): the landing's line and Google's sign-in button, drawn to
    Google's branding rules (white, #747775 outline, the four-colour G, "Sign in with Google"), the same in both editions */
-.landing-account { margin: 6px 0 4px; font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; }
+.landing-account { margin: 6px 0 4px; font-size: 15px; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px 10px; }
+.landing-account .gsi-box, .account-dialog .gsi-box { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; margin: 0; }
+.account-dialog .gsi-box { display: flex; margin: 12px 0; }   /* Google's own button, centred in the corner's dialog */
+.landing-account .gsi-box > div, .account-dialog .gsi-box > div { margin: 0 auto; }   /* Google's rendered button: its own block */
+@media (max-width: 600px) { .landing-account { flex-wrap: wrap; } }   /* the text and the button do not fit one phone line */
 .landing-account .account-manage { font-size: 14px; padding: 2px 10px; }
 .gsi-btn { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 1px solid #747775; border-radius: 4px;
   background: #fff; color: #1f1f1f; font: 500 14px/20px Roboto, Arial, sans-serif; letter-spacing: 0.25px; text-transform: none; box-shadow: none; cursor: pointer; }
