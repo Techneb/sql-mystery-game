@@ -676,3 +676,152 @@ test("feedback desk: a <script> in a draft reaches the email escaped in its HTML
   assert.match(m.html, /<strong>Read<\/strong> <code [^>]*>lift_log<\/code>/);
   assert.deepEqual([m.h.to, m.h.from, m.h.subject], ["a@b.co", "The Ritz Affair <contact@alephb.uk>", "Re: The Ritz Affair feedback: landing page"]);
 });
+
+// --- accounts_script.gs (site/account.js): its own vm, the coercing Sheet, Google's tokeninfo stubbed ---
+const CLIENT = "123-abc.apps.googleusercontent.com";
+function accountsBackend() {
+  const props = new Map([["SHEET_ID", "sheet-1"], ["SECRET", "s3cret"], ["GOOGLE_CLIENT_ID", CLIENT]]);
+  const tabs = new Map(), cache = new Map(), lock = { busy: false }, fetched = [];
+  const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
+  const sheet = () => {
+    const rows = [];
+    return { rows, appendRow: r => { rows.push(r.map(coerce)); }, getLastRow: () => rows.length, deleteRow: r => { rows.splice(r - 1, 1); },
+      getRange: (r, c, nr, nc) => ({
+        getValues: () => rows.slice(r - 1, r - 1 + nr).map(x => Array.from({ length: nc }, (_, j) => x[c - 1 + j] ?? "")),
+        setValues: v => v.forEach((row, i) => row.forEach((x, j) => { rows[r - 1 + i][c - 1 + j] = coerce(x); })) }) };
+  };
+  // tokeninfo: an id token "valid.google.id.token.<sub>" is valid; anything else Google refuses with a 400
+  let info = t => t.startsWith("valid.google.id.token.") ? { aud: CLIENT, iss: "https://accounts.google.com", exp: String(Math.floor(Date.now() / 1000) + 3600), sub: t.slice(22) } : null;
+  const ctx = vm.createContext({
+    PropertiesService: { getScriptProperties: () => ({ getProperty: k => props.get(k) ?? null }) },
+    SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = sheet(); tabs.set(n, s); return s; } }), flush: () => {} },
+    LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
+    CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
+    ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
+    Utilities: { computeHmacSha256Signature: (v, k) => [...crypto.createHmac("sha256", k).update(v).digest()],
+      base64EncodeWebSafe: b => Buffer.from(b).toString("base64").replace(/\+/g, "-").replace(/\//g, "_") },
+    UrlFetchApp: { fetch: url => {
+      fetched.push(url);
+      const t = decodeURIComponent(url.split("id_token=")[1]), i = info(t);
+      return { getResponseCode: () => i ? 200 : 400, getContentText: () => JSON.stringify(i || { error: "invalid_token" }) };
+    } },
+  });
+  vm.runInContext(fs.readFileSync(new URL("./accounts_script.gs", import.meta.url), "utf8"), ctx);
+  const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === "string" ? body : JSON.stringify(body) } }).text);
+  const signin = sub => post({ action: "signin", idToken: "valid.google.id.token." + sub }).token;
+  return { post, signin, props, tabs, cache, lock, fetched, ctx, setInfo: f => { info = f; }, rows: () => tabs.get("Saves").rows };
+}
+const learnSave = (solved, totalQueries) => JSON.stringify({ solved, totalQueries, notes: "" });
+
+test("accounts script: signin checks Google's token (audience, issuer, expiry) and stores nothing about the person", () => {
+  const b = accountsBackend();
+  const r = b.post({ action: "signin", idToken: "valid.google.id.token.1234567890" });
+  assert.ok(r.ok && /^[A-Za-z0-9_-]{43}\.\d{13}\.[A-Za-z0-9_-]{43}$/.test(r.token));
+  assert.ok(r.expires - Date.now() > 59 * 86400000 && r.expires - Date.now() <= 60 * 86400000, "60 days");
+  assert.ok(b.fetched[0].startsWith("https://oauth2.googleapis.com/tokeninfo?id_token="));
+  assert.equal(r.token.split(".")[0], b.signin("1234567890").split(".")[0], "one key per Google account");
+  assert.notEqual(r.token.split(".")[0], b.signin("999").split(".")[0]);
+  assert.ok(!r.token.includes("1234567890"), "the key is an HMAC, never the sub");
+  assert.equal(b.post({ action: "signin", idToken: "bad-token-of-some-length" }).error, "bad id token");
+  for (const t of [undefined, 3, "short", "x".repeat(5000), "has spaces in it, twenty+"]) assert.equal(b.post({ action: "signin", idToken: t }).error, "bad id token");
+  for (const wrong of [{ aud: "someone-else" }, { iss: "evil.example" }, { exp: "1000" }, { sub: "../x" }]) {
+    b.setInfo(t => ({ aud: CLIENT, iss: "accounts.google.com", exp: String(Math.floor(Date.now() / 1000) + 60), sub: "42", ...wrong }));
+    assert.equal(b.post({ action: "signin", idToken: "valid.google.id.token.42" }).error, "bad id token", JSON.stringify(wrong));
+  }
+  b.props.delete("GOOGLE_CLIENT_ID");
+  assert.equal(b.post({ action: "signin", idToken: "valid.google.id.token.42" }).error, "not configured");
+});
+
+test("accounts script: push then pull round-trips the saves; a pull renews the token; text cells stay text", () => {
+  const b = accountsBackend(), t = b.signin("77");
+  assert.deepEqual(b.post({ action: "pull", token: t }).saves, {}, "nothing saved yet");
+  const saves = { "ritz.learn": learnSave([1, 2], 9), "ritz.exercises": '["007"]', "ritz.exercises.history": '["=1+1"]' };
+  assert.ok(b.post({ action: "push", token: t, saves, clientAt: 1700000000000 }).ok);
+  const p = b.post({ action: "pull", token: t });
+  assert.deepEqual(p.saves, saves);
+  assert.ok(p.token && p.expires > Date.now());
+  assert.deepEqual(b.post({ action: "pull", token: p.token }).saves, saves, "the renewed token works");
+  const row = b.rows()[1];
+  assert.deepEqual([...b.rows()[0]], ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4"]);
+  assert.equal(row[0], t.split(".")[0]);
+  assert.equal(typeof row[1], "number", "times are ms numbers, never Date cells");
+  assert.equal(row[3], 1700000000000);
+  assert.ok(!JSON.stringify(row).includes("77"), "no Google id, email or name in the row");
+});
+
+test("accounts script: the token is checked (forged, expired, tampered) and every input validated", () => {
+  const b = accountsBackend(), t = b.signin("5");
+  const [key, exp, sig] = t.split(".");
+  for (const bad of [undefined, "", "a.b.c", key + "." + exp + "." + sig.replace(/^./, c => c === "A" ? "B" : "A"), key + "." + (Number(exp) + 1) + "." + sig,
+    key + ".1000000000000." + sig, b.signin("6").split(".")[0] + "." + exp + "." + sig])
+    assert.equal(b.post({ action: "pull", token: bad }).error, "bad token", String(bad));
+  const push = (saves, extra = {}) => b.post({ action: "push", token: t, saves, ...extra }).error;
+  assert.equal(push({ "ritz.compete": "{}" }), "bad saves", "never compete");
+  assert.equal(push({ "ritz.consent": "yes" }), "bad saves");
+  assert.equal(push({ "ritz.learn": "not json" }), "bad saves");
+  assert.equal(push({ "ritz.learn": 3 }), "bad saves");
+  assert.equal(push(["x"]), "bad saves");
+  assert.equal(push({ "ritz.learn": JSON.stringify({ notes: "x".repeat(180000) }) }), "saves too large");
+  assert.equal(push({ "ritz.learn": "{}" }, { clientAt: -1 }), "bad clientAt");
+  assert.equal(push({ "ritz.learn": "{}" }, { clientAt: "soon" }), "bad clientAt");
+  assert.equal(b.post({ action: "nope" }).error, "unknown action");
+  assert.equal(b.post("not json").ok, false);
+  assert.equal(b.post("[1]").error, "bad request");
+});
+
+test("accounts script: a push merges, never wipes: the save further along wins, lists union, replace for a new investigation", () => {
+  const b = accountsBackend(), t = b.signin("8");
+  const push = (saves, replace) => b.post({ action: "push", token: t, saves, clientAt: 1, ...(replace ? { replace } : {}) });
+  const pull = () => b.post({ action: "pull", token: t }).saves;
+  push({ "ritz.learn": learnSave([1, 2, 3], 40), "ritz.exercises": '["a","b"]', "ritz.exercises.history": JSON.stringify(Array.from({ length: 20 }, (_, i) => "q" + i)) });
+  push({ "ritz.learn": learnSave([1], 5), "ritz.exercises": '["c"]', "ritz.exercises.history": '["new"]' });   // a device behind
+  let s = pull();
+  assert.equal(JSON.parse(s["ritz.learn"]).solved.length, 3, "the save further along stays");
+  assert.deepEqual(JSON.parse(s["ritz.exercises"]), ["c", "a", "b"], "a union, the device's first");
+  const h = JSON.parse(s["ritz.exercises.history"]);
+  assert.equal(h.length, 20); assert.equal(h[0], "new", "a history keeps its 20 newest, the device's first");
+  push({ "ritz.learn": learnSave([1, 2, 3], 40) });
+  assert.ok(pull()["ritz.exercises"], "a key the device does not send is kept");
+  push({ "ritz.learn": learnSave([1, 2, 3], 41) });
+  assert.equal(JSON.parse(pull()["ritz.learn"]).totalQueries, 41, "same chapters: more queries wins");
+  push({ "ritz.learn": learnSave([], 0) }, ["ritz.learn", "ritz.compete"]);
+  s = pull();
+  assert.equal(JSON.parse(s["ritz.learn"]).solved.length, 0, "New investigation replaces the learn save");
+  assert.deepEqual(JSON.parse(s["ritz.exercises"]), ["c", "a", "b"], "and nothing else");
+  assert.equal(b.rows().length, 2, "one row per account");
+});
+
+test("accounts script: the server's merge agrees with state.js importWrites", async () => {
+  const { importWrites } = await import("./site/state.js");
+  const b = accountsBackend();
+  const cases = [[learnSave([1, 2], 3), learnSave([1], 50)], [learnSave([1], 3), learnSave([1], 4)], [learnSave([1, 2, 3], 0), learnSave([1, 2], 99)], ["{}", learnSave([1], 0)]];
+  for (const [stored, device] of cases) {
+    const server = JSON.parse(JSON.stringify(b.ctx.merge_({ "ritz.learn": stored }, { "ritz.learn": device }, [])))["ritz.learn"];
+    const client = importWrites({ "ritz.learn": stored }, () => device)["ritz.learn"] || device;   // the device as "this origin"
+    assert.equal(server, client, stored + " vs " + device);
+  }
+});
+
+test("accounts script: a large save spans the cells; delete removes the row; busy lock and the rate limit", () => {
+  const b = accountsBackend(), t = b.signin("9");
+  const big = { "ritz.learn": JSON.stringify({ solved: [1], notes: "=".repeat(100000) }) };
+  assert.ok(b.post({ action: "push", token: t, saves: big }).ok);
+  const row = b.rows()[1];
+  assert.ok(row.slice(4, 8).every(c => typeof c === "string" && c.length <= 45000), "each cell under Sheets' 50,000");
+  assert.ok(row[5].startsWith("="), "a chunk that begins with = is written as text, not a formula");
+  assert.deepEqual(b.post({ action: "pull", token: t }).saves, big);
+  b.lock.busy = true;
+  assert.equal(b.post({ action: "push", token: t, saves: big }).error, "busy");
+  assert.equal(b.post({ action: "delete", token: t }).error, "busy");
+  b.lock.busy = false;
+  assert.deepEqual(b.post({ action: "delete", token: t }), { ok: true, removed: true });
+  assert.equal(b.rows().length, 1, "the row is gone");
+  assert.deepEqual(b.post({ action: "pull", token: t }).saves, {});
+  assert.deepEqual(b.post({ action: "delete", token: t }), { ok: true, removed: false });
+  const u = b.signin("10");
+  let n = 0;
+  while (b.post({ action: "pull", token: u }).ok) n++;
+  assert.equal(n, 60, "60 calls per account per 10 minutes");
+  assert.equal(b.post({ action: "pull", token: u }).error, "busy");
+  assert.ok(b.post({ action: "pull", token: b.signin("11") }).ok, "another account is not limited by it");
+});

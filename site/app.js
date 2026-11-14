@@ -4,6 +4,7 @@
 // the game page.
 import { normalise, sha256, ADMIN_PASS_SHA256, fmtTime, resultsLink, askDialog } from "./shared.js";
 import { wireFeedback } from "./feedback.js";
+import { startSync, wireAccount, schedulePush, pushSaves } from "./account.js";
 import { track, trackOnce, useFeature, queryFail, initConsent, initAds, showAd, quietStats } from "./stats.js";
 import { freshState, migrateSave, bridgeImport, importWrites, currentChapter, part1Done, awaitingCode, competeDone, storageKey, partStats, visibleTables, unseenBadges, answerVerdict } from "./state.js";
 import { wireEditor, runSql, runHtml, runInfo, columns, openSqlJs, terminalDb, readSchema, pushHistory, ROW_CAP, EMPTY_RUN } from "./terminal.js";
@@ -284,7 +285,7 @@ function award(list) {
     const t = document.createElement("div"); t.className = "toast"; t.innerHTML = "<b>Badge: " + esc(b.name) + "</b><br>" + esc(b.text);
     $("toasts").appendChild(t); setTimeout(() => t.remove(), 5000 + i * 400);   // stagger so a badge burst doesn't vanish as one block
   });
-  if (list.length) { save(state); markBadges(); }
+  if (list.length) { save(state); markBadges(); schedulePush(); }
 }
 
 // Seconds per wrong answer on the board; a compete game takes its season record's penalty.
@@ -338,7 +339,11 @@ function openSuspects() {
 // game's look (askDialog), the browser's own box where it cannot open.
 async function askReset() {
   const msg = resetMessage(state.mode);
-  if (await askDialog($("reset"), msg, () => confirm(msg) ? "ok" : "") === "ok") { state = freshState(); save(state); location.reload(); }
+  if (await askDialog($("reset"), msg, () => confirm(msg) ? "ok" : "") === "ok") {
+    state = freshState(); save(state);
+    if (key === storageKey("learn")) pushSaves({ beacon: true, replace: [key] });   // signed in: the saved copy starts afresh too
+    location.reload();
+  }
 }
 function renderSuspects() {
   const el = $("suspects"), met = metSuspects(data.cast, state, data.chapters);
@@ -410,7 +415,7 @@ async function submitAnswer() {
       state.step1 = raw.trim(); state.wrongStreak = 0; $("taunt").textContent = "";
       track("step_solve", { ...solveParams(ch), step: 1 });
       $("reply").textContent = "Correct. Ganimard writes the date on the folder. Now find its report.";
-      $("answer").value = ""; save(state); renderBoard(); renderChapter(); revealOnPhone($("objective")); return;
+      $("answer").value = ""; save(state); schedulePush(); renderBoard(); renderChapter(); revealOnPhone($("objective")); return;
     case "early":
       $("reply").textContent = "That is the report, clerk, and a good one. First the date it is filed under.";
       $("answer").value = ""; return;
@@ -519,6 +524,7 @@ function fitErd() {
 }
 
 function afterSolve(ch, event) {
+  schedulePush();   // signed in: the server copy follows (account.js), a few seconds later
   const newTables = [...visibleTables(data.chapters, state)].filter(t => !visBefore.has(t));
   const ending = awaitingCode(state) || competeDone(state) || state.solved.includes(12);
   if (event === "solve" && !ending) { reviewing = nextPending = ch.n; pendingReveal = newTables; }
@@ -840,6 +846,7 @@ function importSaves() {
 
 async function boot() {
   importSaves();
+  await startSync();   // signed in (account.js): the saved copy merged in first, 2 s at most; nothing while accounts are off
   // The query box; it completes only the tables the schema shows (learn or compete): never one the evidence has not reached.
   syncSql = wireEditor($("sql"), $("sql-hl"), { run: () => db && state && runQuery(), cols: visibleColumns, minHeight: matchMedia(NARROW).matches ? 64 : 160 });
   $("btn-theme").onclick = toggleTheme;
@@ -901,6 +908,7 @@ async function boot() {
   else if (resuming) waitForOpen();
   else renderAdminPanel();
   if (!resuming) offerCompete();
+  if (!seasonId) wireAccount(() => location.reload());   // never in compete; nothing while accounts are off
   $("btn-back").onclick = backToInvestigation;
   btnLike($("masthead-chapter"), e => {
     e.stopPropagation();

@@ -352,6 +352,20 @@ GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is i
 
 ## 8. Backlog (not scheduled)
 
+- **Player accounts (Sign in with Google)**: built dark 2026-11-14 (owner, after a reader asked to continue on PC or
+  phone). `site/account.js`, `accounts_script.gs`; off while `GOOGLE_CLIENT_ID` or `ACCOUNTS_URL` in `account.js` is
+  empty. Left for the owner, in order: (1) Google Cloud console, AlephB account: OAuth consent screen External, app
+  name The Ritz Affair, support email contact@alephb.uk, privacy policy URL https://alephb.uk/ritz-affair/privacy.html,
+  home page https://alephb.uk/ritz-affair/, scopes openid/email/profile only (the default of Sign in with Google), then
+  publish it; (2) Credentials > OAuth client ID, type Web application, Authorised JavaScript origins https://alephb.uk
+  and http://localhost:8000 (no redirect URI); (3) a new Sheet (or a tab in an owner's Sheet) and a new Apps Script
+  project "Ritz Affair accounts" in the AlephB account, from `assets-source/clasp-accounts/` (gitignored: `deploy.sh`,
+  `appsscript.json`; `clasp create` there first), Script Properties SHEET_ID, SECRET (a long random string, never
+  changed: it keys every account) and GOOGLE_CLIENT_ID, deployed as a web app run as the owner, anyone anonymous;
+  paste the deployment id into `deploy.sh`; (4) paste the client id and the `/exec` URL into `account.js`, run the
+  suites, check sign-in, sync between two browsers, sign-out and delete on localhost:8000 and a phone, then push.
+  Also update alephb-site's "no account" lines (`index.html`, `about-the-ritz-affair.html`) to "no account needed".
+
 - ~~AdSense audit before the fourth review~~ Done 2026-11-12/14 (owner: "Double check everything, I want this Adsense review to pass"). Crawl of alephb.uk clean (37 pages 200, no broken asset, desk noindex, 390 px without overflow); an Opus read of the 28 public pages (findings in the gitignored `docs/audits/2026-11-12-adsense-content-audit.md`, on the Mac only). Fixed in 0d44b6a: the game asked Google for the ad while the opaque landing card covered it (a hidden ad), now `initAds({ slot: false })` at boot (script and consent path) and `showAd()` in `enterGame`; the article's 0.1 + 0.2 claim (true in PostgreSQL); ILIKE and string_agg named PostgreSQL's, not standard; the static masthead's "of VIII"; privacy.html lists step_solve, hint_where and try_here; index, database and grammar slips. 5177b50: the article's queries one clause per line (15 of 22 blocks were cut at 390 px). Root pages fixed by the Supermain (661736a, owner's push). Leftovers done 2026-11-14 (owner): a string literal reads `unknown` in the function error lines, as in PostgreSQL; the date refusal suggests `d >= 'YYYY-MM-DD'`; the footer link reads "The Clerk's Desk (teachers)". Search Console 2026-11-14: the article indexed, admin.html "Excluded by noindex". The article's indexing was requested in Search Console on 2026-11-12.
 - ~~Handbook article: PostgreSQL vs SQLite~~ Done 2026-11-12 (09aa9f9; owner, after the third AdSense refusal for low-value content): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
   when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,

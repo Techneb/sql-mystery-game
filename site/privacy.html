@@ -26,9 +26,9 @@
 </header>
 <main class="notice">
   <h1>What the paper knows about you</h1>
-  <p class="dateline muted">Privacy notice &mdash; last updated 31 October 2026</p>
+  <p class="dateline muted">Privacy notice &mdash; last updated 14 November 2026</p>
 
-  <p>The Ritz Affair is a browser game for learning SQL. It has no accounts. The whole game, database
+  <p>The Ritz Affair is a browser game for learning SQL. You need no account to play it; signing in with Google, only to carry your progress to another device, is optional (see Saved progress). The whole game, database
   included, runs in your browser. It is served from <a href="https://alephb.uk/ritz-affair/">alephb.uk/ritz-affair/</a>
   and its handbook, The Clerk's Handbook, from <a href="https://alephb.uk/learn/">alephb.uk/learn/</a>; this notice
   covers both. The page shows advertising from Google AdSense in one box under the schema
@@ -44,7 +44,7 @@
   (<code>ritz.learn</code>, <code>ritz.compete</code>, <code>ritz.theme</code>) so you can pick up where you
   left off; the handbook, the Clerk's Desk and the leaderboard read and write the same day/night choice
   (<code>ritz.theme</code>). Only you can see them; clearing this site's data in your browser erases them. None of it is sent
-  anywhere.</p>
+  anywhere, unless you sign in (see Saved progress).</p>
   <p>Until 31 October 2026 the game lived at mystery.alephb.uk. That address now only forwards you here. On the
   way, its page reads what your browser kept for it (the keys starting with <code>ritz.</code> listed in this
   notice) and hands them to the game in the part of the address after <code>#</code>, which your browser never
@@ -52,7 +52,7 @@
   that key (a saved game is replaced only by one further along), and removes it from the address.</p>
   <p>The handbook's exercises page works the same way: your queries run in your browser, and the list of
   questions you have solved and its own query history are kept in its local storage (<code>ritz.exercises</code>,
-  <code>ritz.exercises.history</code>, separate from the game's), never sent. It carries the same advertising
+  <code>ritz.exercises.history</code>, separate from the game's), never sent unless you sign in (see Saved progress). It carries the same advertising
   box as the game (see Advertising). Every handbook page asks the game's question about usage statistics and
   loads them under the same rules (see Usage statistics). One answer, kept in <code>ritz.consent</code>, covers
   the game and the handbook.</p>
@@ -198,6 +198,26 @@
   owner presses Send. Please do not put other personal details in the message.
   To have a message deleted, write to the address below.</p>
 
+  <h2>Saved progress (Sign in with Google)</h2>
+  <p>Signing in is optional and only for learning mode: it keeps a copy of your progress so you can continue on
+  another device. The game's front page offers a <i>Sign in with Google</i> button. Google's sign-in script
+  (from accounts.google.com) is loaded only when you press it, and Google then asks you to choose your account.
+  The page receives a token from Google that says which Google account signed in, and sends it once to a Google
+  Apps Script of the course owner. The script checks it with Google and keeps one thing from it, a code computed
+  from your account's Google id with a secret key. It cannot be turned back into your id, and your email address
+  and name are never kept. The script answers with its own sign-in token, valid for 60 days, which your browser
+  keeps in its local storage (<code>ritz.account</code>) and sends instead of Google's from then on.</p>
+  <p>While you are signed in, the page sends a copy of your learning-mode save (<code>ritz.learn</code>: progress,
+  answers, notes, queries and badges) and the exercises page's solved list and history (<code>ritz.exercises</code>,
+  <code>ritz.exercises.history</code>) to that script after you solve a chapter or an exercise, earn a badge, or
+  leave the page, and reads it back when a page opens. Compete progress, your statistics choice and anything else are never sent.
+  The script keeps one row per account in the owner's Google Sheet: the code above, when the row was created and
+  last updated, your browser's clock at the last update, and the saves. When two devices disagree, the save further
+  along is kept, so a device that is behind never wipes your progress; <i>New investigation</i> also starts the saved copy afresh.</p>
+  <p><i>Sign out</i> (the <i>Saved</i> button beside the case board's Suspects, or <i>Manage</i> on the front page)
+  forgets the sign-in on this device. <i>Delete my saved progress</i>, in the same place, removes your row from the
+  Sheet at once and signs you out; the copy in your browser stays until you clear it.</p>
+
   <h2>What the page loads from elsewhere</h2>
   <ul>
     <li>The site is hosted on GitHub Pages, which, like any web host, may log your IP address.</li>
@@ -210,11 +230,13 @@
     script from googletagmanager.com, and its measurements sent to google-analytics.com (none once you
     refuse).</li>
     <li>Only when you send feedback: the form's message to script.google.com (see Feedback above), which sees your IP address.</li>
+    <li>Only when you press <i>Sign in with Google</i>: Google's sign-in script and window from accounts.google.com; and,
+    while you are signed in, your saves to and from script.google.com (see Saved progress), which sees your IP address.</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>
   <p>Write to <a href="mailto:contact@alephb.uk">contact@alephb.uk</a>: to ask what is stored about
-  your pseudo, or to have your leaderboard rows removed.</p>
+  your pseudo, or to have your leaderboard rows removed. Your saved progress you can delete yourself (see Saved progress).</p>
   <p class="muted landing-foot"><a href="admin.html">The Clerk's Desk (teachers)</a> &middot; <a href="https://alephb.uk">AlephB</a> &middot; <a href="mailto:contact@alephb.uk">Contact</a></p>
 </main>
 </body>

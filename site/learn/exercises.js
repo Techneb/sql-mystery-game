@@ -8,6 +8,7 @@ import { openBakery, sameResult, checkOptions } from "./bakery.js";
 import { btnLike, erdButtonHtml, setIconButton, showCallouts, NARROW } from "../ui.js";
 import { initAds, track, trackOnce, useFeature, queryFail } from "../stats.js";
 import { escapeHtml } from "../shared.js";
+import { startSync, schedulePush } from "../account.js";
 
 const STORE = "ritz.exercises";                  // the questions solved
 const HISTORY_STORE = "ritz.exercises.history";   // the queries run (the game keeps its own in ritz.learn)
@@ -43,6 +44,7 @@ function load(key, fallback) { try { return JSON.parse(localStorage.getItem(key)
 function save(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private window: kept this visit only */ } }
 
 async function boot() {
+  await startSync();   // signed in on the game (account.js): the solved list and history follow, silently
   const $ = id => document.getElementById(id);
   const bench = $("workbench");
   const items = [...document.querySelectorAll("p.exercise")].map(p => {
@@ -149,7 +151,7 @@ async function boot() {
     const hits = items.filter(e => sameResult(res, solutions[e.slug], e.opts));
     hits.forEach(e => { if (!solved.includes(e.slug)) solved.push(e.slug); });
     hits.forEach(e => trackOnce("solve:" + e.slug, "exercise_solve", { exercise: e.slug, level: levelId(e.level), runs: runs[e.slug] || 0 }));
-    if (hits.length) { save(STORE, solved); refreshTicks(); markSolved(); }
+    if (hits.length) { save(STORE, solved); refreshTicks(); markSolved(); schedulePush(); }
     const rows = res ? res.values.length : 0, want = solutions[cur.slug] ? solutions[cur.slug].values.length : 0;
     if (hits.includes(cur)) status("", "");
     else if (hits.length) status("other", "Not this one, but that result answers " + hits.map(e => e.title).join(", ") + ".");
