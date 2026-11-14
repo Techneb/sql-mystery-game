@@ -334,7 +334,7 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-11-11).** Everything is deployed (feedback script @16); the repo has only
+**Open right now (2026-11-14).** Everything is deployed (feedback script @16); the repo has only
 `main`. Since 2026-10-26: the game moved to <https://alephb.uk/ritz-affair/> beside the handbook (2026-10-31,
 mystery.alephb.uk a bridge; runbook `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`, its rollback kept until
 the AdSense verdict); chapter I in two steps (2026-10-31); the second mutation run on strict.js (2026-11-03); the phone
@@ -346,12 +346,13 @@ passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of
 the handbook pass (plain words, glossary, three easier warm-ups, a Try it here task on every lesson). Waiting on Google:
 the AdSense review (requested 2026-11-02; refused again on 2026-11-12, 04:48 CET, "low-value content", the third refusal;
 review requested again the same day after the PostgreSQL vs SQLite article; ads.txt "Authorised"), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`) and the 24
-outreach emails (all sent by the owner at once). Done 2026-11-12 without waiting: the rollback's removal, the three phone changes.
+outreach emails (all sent by the owner at once). Done 2026-11-12 without waiting: the rollback's removal, the three phone changes. Done 2026-11-12 and 13 while the review runs: a pre-review audit of every public page (section 8, AdSense audit); alephb-site's own fixes by the Supermain (661736a). AdSense still "Getting ready" on 2026-11-14; earlier verdicts took 8 to 11 days.
 Waiting on the owner: a look at the desk charts with real data. Next: re-read
 GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is in `docs/research/2026-11-09-phone-first-query.md`). Not verified end to end since the module split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
+- ~~AdSense audit before the fourth review~~ Done 2026-11-12/14 (owner: "Double check everything, I want this Adsense review to pass"). Crawl of alephb.uk clean (37 pages 200, no broken asset, desk noindex, 390 px without overflow); an Opus read of the 28 public pages (findings kept outside the repo, in the session scratchpad). Fixed in 0d44b6a: the game asked Google for the ad while the opaque landing card covered it (a hidden ad), now `initAds({ slot: false })` at boot (script and consent path) and `showAd()` in `enterGame`; the article's 0.1 + 0.2 claim (true in PostgreSQL); ILIKE and string_agg named PostgreSQL's, not standard; the static masthead's "of VIII"; privacy.html lists step_solve, hint_where and try_here; index, database and grammar slips. 5177b50: the article's queries one clause per line (15 of 22 blocks were cut at 390 px). Root pages fixed by the Supermain (661736a, owner's push). Left: L4 (strict.js error lines say `text` where PostgreSQL says `unknown`), L5 (the shared strftime refusal suggests a 1912 date on handbook pages), L10 (the footer's Clerk's Desk link opens a passphrase gate). The article's indexing was requested in Search Console on 2026-11-12.
 - ~~Handbook article: PostgreSQL vs SQLite~~ Done 2026-11-12 (09aa9f9; owner, after the third AdSense refusal for low-value content): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
   when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,
   dates, `||`, GROUP BY, quotes, LIMIT, booleans, IFNULL, IIF, ROUND, RETURNING/upsert, windows and CTEs, concurrency),
