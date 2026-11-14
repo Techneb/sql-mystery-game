@@ -1754,7 +1754,7 @@ test("accounts: off while GOOGLE_CLIENT_ID is empty, no sign-in UI and no Google
     finally { globalThis.document = saved; }
   } finally { fs.unlinkSync(tmp); }
   // the corner square is added by account.js at run time: the pages' static .corners stay identical (test_handbook)
-  assert.equal(acc.accountButton(false).title, "Sign in with Google to save your progress across devices");
+  assert.equal(acc.accountButton(false).title, "Sign in to save your progress across devices");
   assert.match(acc.accountButton(false).html, /stroke="currentColor"[\s\S]*<span class="btn-text">Sign in<\/span>$/);
   assert.match(acc.accountButton(true).html, /class="btn-text">Saved<\/span>$/);
   assert.match(src0, /corners\.append\(corner\)/, "last in the corners box: right to left Sign in, Day/Night, Feedback");
@@ -1796,4 +1796,25 @@ test("accounts: a pull merges by the bridge's rule, the save further along wins,
   assert.deepEqual(acc.pullWrites({}, k => here[k] ?? null), {});
   assert.deepEqual(acc.pullWrites({ "ritz.learn": learn([], 0) }, () => null), { "ritz.learn": learn([], 0) }, "a fresh browser takes the server's");
   assert.equal(acc.savesText({ "ritz.exercises": "[]", "ritz.learn": "{}" }), acc.savesText({ "ritz.learn": "{}", "ritz.exercises": "[]" }), "key order never makes a push");
+});
+
+test("accounts: the email form's checks, and the password verifier derived in the browser (never the password)", async () => {
+  const acc = await import("./site/account.js");
+  const crypto = await import("node:crypto");
+  assert.equal(acc.normEmail("  Ann@Example.ORG "), "ann@example.org");
+  assert.equal(acc.emailError(""), "Type your email address.");
+  for (const bad of ["ann", "ann@", "a b@c.de", "a@b", "<a@b.cd>", "x".repeat(120) + "@a.bc"]) assert.ok(acc.emailError(bad), bad);
+  assert.equal(acc.emailError(" Ann@Example.org "), "");
+  assert.ok(acc.passwordError("1234567")); assert.equal(acc.passwordError("12345678"), "");
+  const v = await acc.passwordVerifier(" Ann@Example.org ", "correct horse");
+  assert.equal(v, await acc.passwordVerifier("ann@example.org", "correct horse"), "deterministic, the address in any case");
+  assert.equal(v, crypto.pbkdf2Sync("correct horse", "ritz-affair|ann@example.org", acc.VERIFIER_ITERATIONS, 32, "sha256").toString("base64url"), "PBKDF2-SHA256, salted by the address");
+  assert.match(v, /^[A-Za-z0-9_-]{43}$/, "the shape accounts_script.gs accepts");
+  assert.notEqual(v, await acc.passwordVerifier("bob@example.org", "correct horse"), "a different address, a different verifier");
+  assert.ok(!v.includes("horse"));
+  assert.ok(acc.VERIFIER_ITERATIONS >= 200000);
+  for (const e of ["wrong email or password", "wrong code", "code expired", "busy", "try later"]) assert.ok(acc.EMAIL_ERRORS[e], e + " has its plain words");
+  const src = fs.readFileSync("site/account.js", "utf8");
+  for (const ac of ["email", "current-password", "new-password", "one-time-code"]) assert.ok(src.includes('autocomplete="' + ac + '"'), ac);
+  assert.ok(!/action: "(signin|register|reset)", email: normEmail\(email\), (password|pw)\b/.test(src), "only the verifier is sent");
 });

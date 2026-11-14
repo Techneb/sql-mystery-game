@@ -47,6 +47,30 @@ export function pushBody(token, saves, now, replace) {
   return { body: JSON.stringify(b) };
 }
 
+// Email and password (owner, 2026-11-14): the password never leaves the browser. It becomes a verifier, PBKDF2-SHA256
+// with VERIFIER_ITERATIONS rounds salted by the address, and the server keeps only an HMAC of that (accounts_script.gs).
+export const VERIFIER_ITERATIONS = 200000, PASSWORD_MIN = 8, EMAIL_MAX = 120;
+export const normEmail = e => String(e || "").trim().toLowerCase();
+// The form's checks in plain words, "" when fine (the server checks the address again; it never sees the password).
+export function emailError(email) {
+  const e = normEmail(email);
+  if (!e) return "Type your email address.";
+  return e.length > EMAIL_MAX || !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e) ? "That email address does not look right." : "";
+}
+export const passwordError = pw => String(pw || "").length < PASSWORD_MIN ? "Use a password of at least " + PASSWORD_MIN + " characters." : "";
+export async function passwordVerifier(email, password, subtle = globalThis.crypto.subtle) {
+  const enc = new TextEncoder();
+  const k = await subtle.importKey("raw", enc.encode(String(password)), "PBKDF2", false, ["deriveBits"]);
+  const bits = await subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: enc.encode("ritz-affair|" + normEmail(email)), iterations: VERIFIER_ITERATIONS }, k, 256);
+  let bin = "";
+  for (const b of new Uint8Array(bits)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+// The server's refusals, as the form says them.
+export const EMAIL_ERRORS = { "wrong email or password": "That email and password do not match an account.", "wrong code": "That code is not right. Check the email and try again.",
+  "code expired": "That code has expired. Ask for a new one.", busy: "Too many tries. Wait a few minutes, then try again.", "try later": "No more codes can be sent today. Try again tomorrow.",
+  "bad email": "That email address does not look right." };
+
 // --- runtime ---
 let account = null, lastPushed = null, timer = 0, wired = false;
 const getItem = k => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -112,7 +136,7 @@ const SIGN_IN = ICON + '<path d="M9.5 2.5h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3"/><
 // The corner button's inner HTML, title and aria-label: Saved once signed in, else Sign in (tested).
 export const accountButton = signed => signed
   ? { html: CLOUD + '<span class="btn-text">Saved</span>', title: "Signed in, progress saved" }
-  : { html: SIGN_IN + '<span class="btn-text">Sign in</span>', title: "Sign in with Google to save your progress across devices" };
+  : { html: SIGN_IN + '<span class="btn-text">Sign in</span>', title: "Sign in to save your progress across devices" };
 const ask = (title, body, buttons) => `<form method="dialog">
   <div class="label">${title}</div>
   <p class="ask-msg"></p>${body}
@@ -120,10 +144,29 @@ const ask = (title, body, buttons) => `<form method="dialog">
 </form>`;
 const MANAGE = ask("YOUR SAVED PROGRESS", "", '<button value="" autofocus>Close</button> <button value="signout" class="quiet">Sign out</button> <button value="delete" class="quiet">Delete my saved progress</button>');
 const CONFIRM = ask("DELETE YOUR SAVED PROGRESS", "", '<button value="" autofocus>Cancel</button> <button value="delete" class="quiet">Delete it</button>');
-const SIGNIN = ask("SIGN IN", '<p class="gsi-box"></p>', '<button value="" class="quiet">Cancel</button>');
-const ACCOUNT_MSG = "Signed in with Google. Your progress in the game and on the handbook's exercises page is saved and follows you to any device where you sign in.";
-const DELETE_ASK = "Delete the progress saved with your Google account? This browser keeps its own copy, and you are signed out.";
-const SIGNIN_MSG = "Sign in with Google to keep your progress in the game and on the exercises page on every device you use.";
+// The corner's sign-in dialog: Google's button, then the email form; the code step replaces the email step.
+const SIGNIN = `<form method="dialog" novalidate>
+  <div class="label">SIGN IN</div>
+  <p class="ask-msg"></p>
+  <div class="gsi-box"></div>
+  <p class="acct-or muted">or with your email</p>
+  <div class="acct-step acct-email">
+    <p><label for="acct-email">Email</label><input id="acct-email" type="email" autocomplete="email" maxlength="${EMAIL_MAX}" spellcheck="false"></p>
+    <p><label for="acct-pass">Password</label><input id="acct-pass" type="password" autocomplete="current-password"></p>
+    <p class="acct-buttons"><button type="button" data-act="signin">Sign in</button> <button type="button" class="quiet" data-act="register">Create an account</button> <button type="button" class="quiet" data-act="forgot">Forgot password?</button></p>
+  </div>
+  <div class="acct-step acct-code" hidden>
+    <p class="acct-sent"></p>
+    <p><label for="acct-code">Code from the email</label><input id="acct-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></p>
+    <p class="acct-new" hidden><label for="acct-newpass">New password</label><input id="acct-newpass" type="password" autocomplete="new-password"></p>
+    <p class="acct-buttons"><button type="button" data-act="code">Confirm</button> <button type="button" class="quiet" data-act="back">Back</button></p>
+  </div>
+  <p class="acct-error" role="alert"></p>
+  <button value="" class="quiet">Cancel</button>
+</form>`;
+const ACCOUNT_MSG = "Signed in. Your progress in the game and on the handbook's exercises page is saved and follows you to any device where you sign in.";
+const DELETE_ASK = "Delete the progress saved with your account? This browser keeps its own copy, and you are signed out.";
+const SIGNIN_MSG = "Sign in to keep your progress in the game and on the exercises page on every device you use.";
 
 function loadGis() {
   if (globalThis.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -169,9 +212,18 @@ export function wireAccount(onChange) {
     line.textContent = msg ? msg + " " : "";
     if (account) line.insertAdjacentHTML("beforeend", '<span class="account-text">Signed in, progress saved.</span>');
     else {
-      line.insertAdjacentHTML("beforeend", '<span class="account-text">Save your progress across devices:</span> <span class="gsi-box">' + signinButtonHtml() + "</span>");
+      line.insertAdjacentHTML("beforeend", '<span class="account-main"><span class="account-text">Save your progress across devices:</span> <span class="gsi-box">' + signinButtonHtml() +
+        '</span></span> <button type="button" class="quiet account-email">or with your email</button>');
       line.querySelector(".gsi-btn").onclick = () => signIn(line.querySelector(".gsi-box"));
+      line.querySelector(".account-email").onclick = () => signInDialog(true);
     }
+  }
+  async function signedInWith(j) {
+    setAccount({ token: j.token, expires: j.expires });
+    useFeature("account_signin");
+    if (await pull(10000)) return onChange();
+    pushSaves();
+    render();
   }
   // Google's script loads only now (one press); its own button replaces ours in box (in case its prompt is not shown).
   async function signIn(box) {
@@ -181,14 +233,8 @@ export function wireAccount(onChange) {
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, use_fedcm_for_prompt: true, callback: async r => {
         const d = document.getElementById("account-signin");
         if (d && d.open) d.close();
-        try {
-          const j = await call(JSON.stringify({ action: "signin", idToken: r.credential }));
-          setAccount({ token: j.token, expires: j.expires });
-          useFeature("account_signin");
-          if (await pull(10000)) return onChange();
-          pushSaves();
-          render();
-        } catch { render("The sign-in did not go through. Try again later."); }
+        try { await signedInWith(await call(JSON.stringify({ action: "signin", idToken: r.credential }))); }
+        catch { render("The sign-in did not go through. Try again later."); }
       } });
     }
     box.replaceChildren();
@@ -197,11 +243,57 @@ export function wireAccount(onChange) {
     return true;
   }
   // The corner's Sign in: a small dialog holding Google's button, so the corner row never changes shape.
-  async function signInDialog() {
+  async function signInDialog(emailFirst = false) {
     const d = dialog("account-signin", SIGNIN);
+    if (!d.dataset.wired) { d.dataset.wired = "1"; wireEmail(d); }
     d.querySelector(".ask-msg").textContent = SIGNIN_MSG;
+    d.querySelector(".acct-error").textContent = "";
     if (d.showModal && !d.open) d.showModal();
+    if (emailFirst) d.querySelector("#acct-email").focus();
     await signIn(d.querySelector(".gsi-box"));
+  }
+  // The email form: Sign in, Create an account (a code by email, then Confirm), Forgot password? (a code and a new password).
+  function wireEmail(d) {
+    const $ = sel => d.querySelector(sel), err = t => { $(".acct-error").textContent = t; };
+    let pending = "";   // "register" or "reset" while the code step shows
+    const step = kind => {
+      pending = kind;
+      $(".acct-email").hidden = !!kind; $(".acct-code").hidden = !kind; $(".acct-new").hidden = kind !== "reset";
+      $(".acct-sent").textContent = kind ? "We sent a 6-digit code to " + normEmail($("#acct-email").value) + ". It works for 15 minutes." : "";
+      $("#acct-code").value = ""; $("#acct-newpass").value = "";
+      (kind ? $("#acct-code") : $("#acct-pass")).focus();
+    };
+    async function send(body, busy) {
+      busy.disabled = true; err("");
+      try { return await call(JSON.stringify(body)); }
+      catch (e) { err(EMAIL_ERRORS[e.message] || "That did not go through. Check the connection and try again."); return null; }
+      finally { busy.disabled = false; }
+    }
+    async function act(name, btn) {
+      const email = $("#acct-email").value, pw = $("#acct-pass").value;
+      const bad = emailError(email) || (name === "signin" || name === "register" ? passwordError(pw) : "");
+      if (name !== "code" && name !== "back" && bad) return err(bad);
+      if (name === "back") { err(""); return step(""); }
+      if (name === "forgot") { if (await send({ action: "resetcode", email: normEmail(email) }, btn)) step("reset"); return; }
+      if (name === "register") { if (await send({ action: "register", email: normEmail(email), verifier: await passwordVerifier(email, pw) }, btn)) step("register"); return; }
+      if (name === "signin") { const j = await send({ action: "signin", email: normEmail(email), verifier: await passwordVerifier(email, pw) }, btn); if (j) { d.close(); await signedInWith(j); } return; }
+      const code = $("#acct-code").value.trim();   // Confirm
+      if (!/^\d{6}$/.test(code)) return err("Type the 6 digits from the email.");
+      let j;
+      if (pending === "reset") {
+        const np = $("#acct-newpass").value;
+        if (passwordError(np)) return err(passwordError(np));
+        j = await send({ action: "reset", email: normEmail(email), code, verifier: await passwordVerifier(email, np) }, btn);
+      } else j = await send({ action: "verify", email: normEmail(email), code }, btn);
+      if (j) { step(""); d.close(); await signedInWith(j); }
+    }
+    d.querySelectorAll("button[data-act]").forEach(b => { b.onclick = () => act(b.dataset.act, b); });
+    d.addEventListener("keydown", e => {   // Enter in a field presses its step's first button
+      if (e.key !== "Enter" || e.target.tagName !== "INPUT") return;
+      e.preventDefault();
+      e.target.closest(".acct-step").querySelector("button[data-act]").click();
+    });
+    $('[data-act="register"]').addEventListener("pointerdown", () => $("#acct-pass").setAttribute("autocomplete", "new-password"));
   }
   render();
   return true;

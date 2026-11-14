@@ -6,28 +6,43 @@
 // keys and session tokens are HMACs under it), GOOGLE_CLIENT_ID (the OAuth client the page signs in with).
 // Actions (doPost, a JSON body sent as text/plain):
 //   signin {idToken}           Google's ID token, checked by Google's tokeninfo endpoint -> {token, expires}
+//   Email and password (owner, 2026-11-14), the password never leaving the browser: the page sends a verifier,
+//   PBKDF2-SHA256 of it (account.js passwordVerifier), and the row keeps only HMAC(verifier|salt) and a random salt.
+//   register  {email, verifier}       a 6-digit code mailed to the address (an existing account gets a note instead)
+//   verify    {email, code}           the code -> the account's row, {token, expires}
+//   signin    {email, verifier}       -> {token, expires}, or "wrong email or password"
+//   resetcode {email}                 a code mailed if the account exists; the same answer either way
+//   reset     {email, code, verifier} the code and a new password -> {token, expires}
+//   Codes: 15 minutes, 5 tries, kept only as HMACs in CacheService under the email key; the address is used only to
+//   send the mail at that moment.
 //   pull   {token}             -> {saves: {key: value}, token, expires} (a fresh 60-day token each time)
 //   push   {token, saves, clientAt, replace?}  merged into the stored copy (merge_), never a wipe unless replace names the key
 //   delete {token}             removes the account's row
-// Nothing about the person is stored: the row's key is HMAC(sub, SECRET), sub being Google's account id; never the
-// email or the name. A row: key, created, updated (ms numbers, never Date cells), clientAt, then the saves as one JSON
-// text split across saves1..saves4 (a Sheet cell holds 50,000 characters at most).
+// Nothing about the person is stored: the row's key is HMAC("account|" + sub, SECRET), sub being Google's account id,
+// or HMAC("email|" + the lowercased address, SECRET); never the email, the name or the password. A row: key, created,
+// updated (ms numbers, never Date cells), clientAt, the saves as one JSON text split across saves1..saves4 (a Sheet
+// cell holds 50,000 characters at most), then pwHash and pwSalt for an email account.
 
 var TAB = "Saves";
-var HEADERS = ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4"];
+var HEADERS = ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4", "pwHash", "pwSalt"];
 var SYNC_KEYS = ["ritz.learn", "ritz.exercises", "ritz.exercises.history"];   // the same list as account.js SYNC_KEYS
 var CELL_MAX = 45000, CHUNKS = 4, SAVES_MAX = CELL_MAX * CHUNKS;   // a full learn save measured ~32,000 (2026-11-14)
 var HISTORY_MAX = 20;                                               // shared.js HISTORY_MAX
 var SESSION_MS = 60 * 24 * 3600 * 1000;
 var RATE_LIMIT = 60, SIGNIN_LIMIT = 300, RATE_WINDOW_S = 600;      // per account, and every sign-in together, per 10 minutes
 var ISSUERS = ["accounts.google.com", "https://accounts.google.com"];
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/, EMAIL_MAX = 120;
+var CODE_S = 900, CODE_TRIES = 5;                                   // a code lasts 15 minutes and 5 tries
+var SENDS_PER_HOUR = 5, SENDS_PER_DAY = 80, FAILS_LIMIT = 10;       // per address per hour, all together per day (Gmail's quota), sign-in failures per 10 min
+var MAIL_FROM = "The Ritz Affair <contact@alephb.uk>", MAIL_REPLY = "contact@alephb.uk";
 
 function doPost(e) {
   var out;
   try {
     var b = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (!b || typeof b !== "object" || Array.isArray(b)) throw new Error("bad request");
-    var act = { signin: signin_, pull: pull_, push: push_, "delete": delete_ }[b.action];
+    var act = { signin: function (x) { return x.email != null ? emailSignin_(x) : signin_(x); }, pull: pull_, push: push_, "delete": delete_,
+      register: register_, verify: verify_, resetcode: resetcode_, reset: reset_ }[b.action];
     out = act ? act(b) : { ok: false, error: "unknown action" };
   } catch (err) { out = { ok: false, error: String(err && err.message || err) }; }
   return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
@@ -82,6 +97,7 @@ function tab_() {
   var ss = SpreadsheetApp.openById(prop_("SHEET_ID"));
   var s = ss.getSheetByName(TAB);
   if (!s) { s = ss.insertSheet(TAB); s.appendRow(HEADERS); }
+  else if (s.getRange(1, 9, 1, 2).getValues()[0].join("") === "") s.getRange(1, 9, 1, 2).setValues([HEADERS.slice(8)]);   // a tab from before the email option
   return s;
 }
 // The account's row number, or 0. ponytail: a linear scan of column A, fine for thousands of rows; a key index if it grows.
@@ -172,3 +188,137 @@ function delete_(b) {
 
 // Text cells start with an apostrophe: never a formula (a chunk may begin with "="), never coerced into a number.
 function text_(v) { return typeof v === "string" && v ? "'" + v : v; }
+
+// --- email and password ---
+function email_(v) {
+  var e = typeof v === "string" ? v.trim().toLowerCase() : "";
+  if (!e || e.length > EMAIL_MAX || !EMAIL_RE.test(e) || /[\r\n<>"]/.test(e)) throw new Error("bad email");
+  return e;
+}
+function verifier_(v) {
+  if (typeof v !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(v)) throw new Error("bad verifier");
+  return v;
+}
+function code_(v) { return typeof v === "string" && /^[0-9]{6}$/.test(v.trim()) ? v.trim() : ""; }
+function emailKey_(e) { return hmac_("email|" + e); }
+function pwHash_(verifier, salt) { return hmac_("password|" + verifier + "|" + salt); }
+// Equal strings, in time that depends only on their length.
+function same_(a, b) {
+  a = String(a); b = String(b);
+  var d = a.length ^ b.length;
+  for (var i = 0; i < Math.min(a.length, b.length); i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+}
+function count_(name) { return Number(CacheService.getScriptCache().get(name) || 0); }
+function bump_(name, ttl) { CacheService.getScriptCache().put(name, String(count_(name) + 1), ttl); }
+// The day's mails, every address together, in a Script Property (CacheService keeps 6 hours at most).
+function today_() { return String(Math.floor(Date.now() / 86400000)); }
+function sentToday_() {
+  var v = String(PropertiesService.getScriptProperties().getProperty("SENT_DAY") || "").split(":");
+  return v[0] === today_() ? Number(v[1]) || 0 : 0;
+}
+function hourKey_(key) { return "sends-" + key + "-" + Math.floor(Date.now() / 3600000); }
+// One mail to the address, within its hourly cap and the day's cap for every address together; an error, or "".
+function allowSend_(key) {
+  if (count_(hourKey_(key)) >= SENDS_PER_HOUR) return "busy";
+  var n = sentToday_();
+  if (n >= SENDS_PER_DAY) return "try later";   // Gmail's daily quota
+  PropertiesService.getScriptProperties().setProperty("SENT_DAY", today_() + ":" + (n + 1));
+  bump_(hourKey_(key), 3600);
+  return "";
+}
+
+// A code for the address, kept only as an HMAC with what verify or reset needs.
+function sendCode_(e, key, kind, extra) {
+  var err = allowSend_(key);
+  if (err) return { ok: false, error: err };
+  var code = String(parseInt(Utilities.getUuid().replace(/-/g, "").slice(0, 12), 16) % 1000000);
+  while (code.length < 6) code = "0" + code;
+  var p = { kind: kind, code: hmac_("code|" + key + "|" + code), tries: 0 };
+  for (var k in extra) p[k] = extra[k];
+  CacheService.getScriptCache().put("pending-" + key, JSON.stringify(p), CODE_S);
+  mail_(e, "Your code is " + code + ". It works for 15 minutes.\n\nIf you did not ask for it, you can ignore this email. Nothing happens without the code.");
+  return { ok: true, sent: true };
+}
+// Gmail from contact@alephb.uk (as feedback_script.gs confirm_), MailApp if the alias or the scope is missing.
+function mail_(to, text) {
+  var subject = "Your Ritz Affair code", body = "Hello,\n\n" + text + "\n\nAlephB\nhttps://alephb.uk/ritz-affair/\n";
+  try {
+    // to passed email_ (no spaces, no line breaks): no header injection
+    var mime = "From: " + MAIL_FROM + "\r\nTo: " + to + "\r\nSubject: " + subject + "\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n" + body;
+    Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(mime) }, "me");
+  } catch (err) {
+    MailApp.sendEmail({ to: to, name: "The Ritz Affair", replyTo: MAIL_REPLY, subject: subject, body: body });
+  }
+}
+// The pending code checked: {p}, or {error}. A wrong code counts a try; the fifth wrong one ends the code.
+function checkCode_(key, kind, raw) {
+  var cache = CacheService.getScriptCache(), name = "pending-" + key, p = null;
+  try { p = JSON.parse(cache.get(name) || "null"); } catch (err) {}
+  if (!p || p.kind !== kind) return { error: "code expired" };
+  var c = code_(raw);
+  if (c && same_(hmac_("code|" + key + "|" + c), p.code)) { cache.remove(name); return { p: p }; }
+  p.tries++;
+  if (p.tries >= CODE_TRIES) { cache.remove(name); return { error: "code expired" }; }
+  cache.put(name, JSON.stringify(p), CODE_S);
+  return { error: "wrong code" };
+}
+function salt_() { return Utilities.getUuid().replace(/-/g, ""); }
+function withLock_(f) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return { ok: false, error: "busy" };
+  try { return f(); } finally { lock.releaseLock(); }
+}
+function pwOf_(sheet, r) { return r ? sheet.getRange(r, 9, 1, 2).getValues()[0].map(String) : ["", ""]; }
+
+function register_(b) {
+  var e = email_(b.email), v = verifier_(b.verifier), key = emailKey_(e), sheet = tab_();
+  if (pwOf_(sheet, find_(sheet, key))[0]) {   // the account exists: the same answer, and a note instead of a code
+    var err = allowSend_(key);
+    if (err) return { ok: false, error: err };
+    mail_(e, "Someone, probably you, tried to create a Ritz Affair account with this address, but it already has one. " +
+      "Sign in, or choose Forgot password? to set a new password.");
+    return { ok: true, sent: true };
+  }
+  var salt = salt_();
+  return sendCode_(e, key, "register", { hash: pwHash_(v, salt), salt: salt });
+}
+function verify_(b) {
+  var key = emailKey_(email_(b.email)), c = checkCode_(key, "register", b.code);
+  if (c.error) return { ok: false, error: c.error };
+  return withLock_(function () {
+    var sheet = tab_(), r = find_(sheet, key), now = Date.now();
+    if (r) sheet.getRange(r, 9, 1, 2).setValues([[text_(c.p.hash), text_(c.p.salt)]]);
+    else sheet.appendRow([text_(key), now, now, "", "", "", "", "", text_(c.p.hash), text_(c.p.salt)]);
+    return session_(key);
+  });
+}
+function emailSignin_(b) {
+  var e = email_(b.email), v = verifier_(b.verifier), key = emailKey_(e);
+  var fails = "fails-" + key + "-" + Math.floor(Date.now() / (RATE_WINDOW_S * 1000));
+  if (count_(fails) >= FAILS_LIMIT) return { ok: false, error: "busy" };
+  var sheet = tab_(), pw = pwOf_(sheet, find_(sheet, key));
+  if (pw[0] && same_(pwHash_(v, pw[1]), pw[0])) return session_(key);
+  bump_(fails, RATE_WINDOW_S);
+  return { ok: false, error: "wrong email or password" };
+}
+function resetcode_(b) {
+  var e = email_(b.email), key = emailKey_(e), sheet = tab_();
+  if (!pwOf_(sheet, find_(sheet, key))[0]) {   // no such account: nothing sent, the same answer (and the same hourly cap)
+    if (count_(hourKey_(key)) >= SENDS_PER_HOUR) return { ok: false, error: "busy" };
+    if (sentToday_() >= SENDS_PER_DAY) return { ok: false, error: "try later" };
+    bump_(hourKey_(key), 3600);
+    return { ok: true, sent: true };
+  }
+  return sendCode_(e, key, "reset", {});
+}
+function reset_(b) {
+  var e = email_(b.email), v = verifier_(b.verifier), key = emailKey_(e), c = checkCode_(key, "reset", b.code);
+  if (c.error) return { ok: false, error: c.error };
+  return withLock_(function () {
+    var sheet = tab_(), r = find_(sheet, key), salt = salt_();
+    if (!r) return { ok: false, error: "code expired" };
+    sheet.getRange(r, 9, 1, 2).setValues([[text_(pwHash_(v, salt)), text_(salt)]]);
+    return session_(key);
+  });
+}

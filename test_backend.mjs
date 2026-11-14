@@ -681,7 +681,7 @@ test("feedback desk: a <script> in a draft reaches the email escaped in its HTML
 const CLIENT = "123-abc.apps.googleusercontent.com";
 function accountsBackend() {
   const props = new Map([["SHEET_ID", "sheet-1"], ["SECRET", "s3cret"], ["GOOGLE_CLIENT_ID", CLIENT]]);
-  const tabs = new Map(), cache = new Map(), lock = { busy: false }, fetched = [];
+  const tabs = new Map(), cache = new Map(), lock = { busy: false }, fetched = [], mails = [];
   const coerce = v => typeof v !== "string" ? v : v.startsWith("'") ? v.slice(1) : /^\d+(\.\d+)?$/.test(v) ? Number(v) : v;
   const sheet = () => {
     const rows = [];
@@ -693,12 +693,18 @@ function accountsBackend() {
   // tokeninfo: an id token "valid.google.id.token.<sub>" is valid; anything else Google refuses with a 400
   let info = t => t.startsWith("valid.google.id.token.") ? { aud: CLIENT, iss: "https://accounts.google.com", exp: String(Math.floor(Date.now() / 1000) + 3600), sub: t.slice(22) } : null;
   const ctx = vm.createContext({
-    PropertiesService: { getScriptProperties: () => ({ getProperty: k => props.get(k) ?? null }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: k => props.get(k) ?? null, setProperty: (k, v) => props.set(k, String(v)) }) },
     SpreadsheetApp: { openById: () => ({ getSheetByName: n => tabs.get(n) || null, insertSheet: n => { const s = sheet(); tabs.set(n, s); return s; } }), flush: () => {} },
     LockService: { getScriptLock: () => ({ tryLock: () => !lock.busy, releaseLock: () => {} }) },
-    CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v) }) },
+    CacheService: { getScriptCache: () => ({ get: k => cache.get(k) ?? null, put: (k, v) => cache.set(k, v), remove: k => cache.delete(k) }) },
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: s => ({ setMimeType: () => ({ text: s }) }) },
-    Utilities: { computeHmacSha256Signature: (v, k) => [...crypto.createHmac("sha256", k).update(v).digest()],
+    // Gmail decodes the raw message into {to, subject, body}; mails.gmailFail sends through MailApp instead
+    Gmail: { Users: { Messages: { send: (res, user) => { if (mails.gmailFail || user !== "me") throw new Error("no gmail");
+      const t = Buffer.from(res.raw, "base64url").toString("utf8"), [h, body] = t.split("\r\n\r\n");
+      const head = Object.fromEntries(h.split("\r\n").map(l => [l.split(": ")[0].toLowerCase(), l.slice(l.indexOf(": ") + 2)]));
+      mails.push({ to: head.to, from: head.from, subject: head.subject, body, gmail: true }); } } } },
+    MailApp: { sendEmail: m => mails.push(m) },
+    Utilities: { getUuid: () => crypto.randomUUID(), computeHmacSha256Signature: (v, k) => [...crypto.createHmac("sha256", k).update(v).digest()],
       base64EncodeWebSafe: b => Buffer.from(b).toString("base64").replace(/\+/g, "-").replace(/\//g, "_") },
     UrlFetchApp: { fetch: url => {
       fetched.push(url);
@@ -709,7 +715,7 @@ function accountsBackend() {
   vm.runInContext(fs.readFileSync(new URL("./accounts_script.gs", import.meta.url), "utf8"), ctx);
   const post = body => JSON.parse(ctx.doPost({ postData: { contents: typeof body === "string" ? body : JSON.stringify(body) } }).text);
   const signin = sub => post({ action: "signin", idToken: "valid.google.id.token." + sub }).token;
-  return { post, signin, props, tabs, cache, lock, fetched, ctx, setInfo: f => { info = f; }, rows: () => tabs.get("Saves").rows };
+  return { post, signin, props, tabs, cache, lock, fetched, ctx, mails, setInfo: f => { info = f; }, rows: () => tabs.get("Saves").rows };
 }
 const learnSave = (solved, totalQueries) => JSON.stringify({ solved, totalQueries, notes: "" });
 
@@ -742,7 +748,7 @@ test("accounts script: push then pull round-trips the saves; a pull renews the t
   assert.ok(p.token && p.expires > Date.now());
   assert.deepEqual(b.post({ action: "pull", token: p.token }).saves, saves, "the renewed token works");
   const row = b.rows()[1];
-  assert.deepEqual([...b.rows()[0]], ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4"]);
+  assert.deepEqual([...b.rows()[0]], ["key", "created", "updated", "clientAt", "saves1", "saves2", "saves3", "saves4", "pwHash", "pwSalt"]);
   assert.equal(row[0], t.split(".")[0]);
   assert.equal(typeof row[1], "number", "times are ms numbers, never Date cells");
   assert.equal(row[3], 1700000000000);
@@ -824,4 +830,99 @@ test("accounts script: a large save spans the cells; delete removes the row; bus
   assert.equal(n, 60, "60 calls per account per 10 minutes");
   assert.equal(b.post({ action: "pull", token: u }).error, "busy");
   assert.ok(b.post({ action: "pull", token: b.signin("11") }).ok, "another account is not limited by it");
+});
+
+// --- email and password accounts (accounts_script.gs register / verify / signin / resetcode / reset) ---
+const VER = n => crypto.createHash("sha256").update("verifier " + n).digest("base64url");   // 43 characters, like passwordVerifier
+const codeOf = m => (m.body.match(/\b(\d{6})\b/) || [])[1];
+function emailAccount(b, email = "Ann@Example.org", v = VER(1)) {
+  assert.deepEqual(b.post({ action: "register", email, verifier: v }), { ok: true, sent: true });
+  const m = b.mails.at(-1);
+  return b.post({ action: "verify", email, code: codeOf(m) });
+}
+
+test("email accounts: register mails a code from contact@ via Gmail; verify makes the row; nothing about the person is stored", () => {
+  const b = accountsBackend();
+  assert.deepEqual(b.post({ action: "register", email: " Ann@Example.org ", verifier: VER(1) }), { ok: true, sent: true });
+  const m = b.mails[0];
+  assert.equal(m.to, "ann@example.org"); assert.equal(m.subject, "Your Ritz Affair code"); assert.ok(m.gmail && /contact@alephb\.uk/.test(m.from));
+  assert.match(codeOf(m), /^\d{6}$/);
+  assert.ok(![...b.cache.values()].some(v => String(v).includes(codeOf(m))), "the code is kept only as an HMAC");
+  assert.ok(!b.tabs.get("Saves") || b.rows().length === 1, "no row before the code");
+  const s = b.post({ action: "verify", email: "ann@example.org", code: codeOf(m) });
+  assert.ok(s.ok && s.token && s.expires > Date.now());
+  const row = [...b.rows()[1]], text = JSON.stringify(row);
+  assert.equal(row.length, 10);
+  assert.ok(!/ann|example/i.test(text) && !text.includes(VER(1)), "never the address or the verifier");
+  assert.notEqual(row[0], b.signin("1").split(".")[0]);
+  assert.ok(b.post({ action: "push", token: s.token, saves: { "ritz.learn": "{\"solved\":[1]}" } }).ok, "the same token and sync as Google's");
+  assert.deepEqual(b.post({ action: "pull", token: s.token }).saves, { "ritz.learn": "{\"solved\":[1]}" });
+  assert.equal(b.rows()[1][8], row[8], "a push leaves the password columns alone");
+  b.mails.gmailFail = true;
+  b.post({ action: "register", email: "bob@example.org", verifier: VER(2) });
+  assert.ok(!b.mails.at(-1).gmail && b.mails.at(-1).to === "bob@example.org", "MailApp when Gmail fails");
+});
+
+test("email accounts: sign in with the right verifier only; the same error for a wrong password or no account; 10 failures then busy", () => {
+  const b = accountsBackend();
+  assert.ok(emailAccount(b).ok);
+  assert.ok(b.post({ action: "signin", email: "ANN@example.org", verifier: VER(1) }).token, "the address in any case");
+  assert.equal(b.post({ action: "signin", email: "ann@example.org", verifier: VER(9) }).error, "wrong email or password");
+  assert.equal(b.post({ action: "signin", email: "nobody@example.org", verifier: VER(1) }).error, "wrong email or password");
+  for (let i = 0; i < 9; i++) b.post({ action: "signin", email: "ann@example.org", verifier: VER(9) });
+  assert.equal(b.post({ action: "signin", email: "ann@example.org", verifier: VER(1) }).error, "busy", "ten failures in ten minutes");
+  for (const bad of [{ email: "no-at-sign", verifier: VER(1) }, { email: "a@b.c\r\nBcc: x@y.z", verifier: VER(1) }, { email: "x".repeat(120) + "@a.bc", verifier: VER(1) },
+    { email: "a@b.cd", verifier: "short" }, { email: "a@b.cd", verifier: 3 }, { email: 5, verifier: VER(1) }])
+    assert.equal(b.post({ action: "signin", ...bad }).ok, false, JSON.stringify(bad));
+  assert.equal(b.post({ action: "register", email: "a@b.cd", verifier: "x" }).error, "bad verifier");
+  assert.equal(b.post({ action: "register", email: "a b@c.de", verifier: VER(1) }).error, "bad email");
+});
+
+test("email accounts: a wrong code counts a try, the fifth ends it; an expired code is refused; registering twice sends a note", () => {
+  const b = accountsBackend();
+  b.post({ action: "register", email: "c@d.ef", verifier: VER(1) });
+  const code = codeOf(b.mails.at(-1)), wrong = code === "000000" ? "111111" : "000000";
+  for (let i = 1; i < 5; i++) assert.equal(b.post({ action: "verify", email: "c@d.ef", code: wrong }).error, "wrong code", "try " + i);
+  assert.equal(b.post({ action: "verify", email: "c@d.ef", code: wrong }).error, "code expired", "the fifth wrong try ends the code");
+  assert.equal(b.post({ action: "verify", email: "c@d.ef", code }).error, "code expired", "even the right one, then");
+  b.post({ action: "register", email: "c@d.ef", verifier: VER(1) });
+  const c2 = codeOf(b.mails.at(-1));
+  for (const k of [...b.cache.keys()]) if (k.startsWith("pending-")) b.cache.delete(k);   // CacheService dropped it after 15 minutes
+  assert.equal(b.post({ action: "verify", email: "c@d.ef", code: c2 }).error, "code expired");
+  assert.equal(b.post({ action: "verify", email: "c@d.ef", code: "12ab56" }).error, "code expired", "no pending code: nothing to try");
+  assert.ok(emailAccount(b, "e@f.gh").ok);
+  const n = b.mails.length;
+  assert.deepEqual(b.post({ action: "register", email: "e@f.gh", verifier: VER(5) }), { ok: true, sent: true }, "the same answer for an existing account");
+  assert.ok(b.mails.length === n + 1 && !codeOf(b.mails.at(-1)) && /already has one/.test(b.mails.at(-1).body), "a note, no code");
+  assert.ok(b.post({ action: "signin", email: "e@f.gh", verifier: VER(1) }).ok, "and the old password still works");
+});
+
+test("email accounts: reset mails a code only for an account, answers the same either way, sets the new password", () => {
+  const b = accountsBackend();
+  assert.ok(emailAccount(b, "g@h.ij", VER(1)).ok);
+  const n = b.mails.length;
+  assert.deepEqual(b.post({ action: "resetcode", email: "nobody@h.ij" }), { ok: true, sent: true });
+  assert.equal(b.mails.length, n, "no account: nothing sent");
+  assert.deepEqual(b.post({ action: "resetcode", email: "G@h.ij" }), { ok: true, sent: true }, "the same answer");
+  const code = codeOf(b.mails.at(-1));
+  assert.equal(b.post({ action: "reset", email: "g@h.ij", code: "999999" === code ? "888888" : "999999", verifier: VER(2) }).error, "wrong code");
+  assert.equal(b.post({ action: "verify", email: "g@h.ij", code }).error, "code expired", "a reset code never registers");
+  const s = b.post({ action: "reset", email: "g@h.ij", code, verifier: VER(2) });
+  assert.ok(s.ok && s.token);
+  assert.equal(b.post({ action: "signin", email: "g@h.ij", verifier: VER(1) }).error, "wrong email or password", "the old password is gone");
+  assert.ok(b.post({ action: "signin", email: "g@h.ij", verifier: VER(2) }).ok);
+  assert.ok(b.post({ action: "delete", token: s.token }).removed, "delete works the same");
+  assert.equal(b.post({ action: "signin", email: "g@h.ij", verifier: VER(2) }).error, "wrong email or password");
+});
+
+test("email accounts: 5 mails per address per hour, 80 a day in all, then try later", () => {
+  const b = accountsBackend();
+  for (let i = 0; i < 5; i++) assert.ok(b.post({ action: "register", email: "k@l.mn", verifier: VER(1) }).ok, "send " + i);
+  assert.equal(b.post({ action: "register", email: "k@l.mn", verifier: VER(1) }).error, "busy");
+  assert.equal(b.post({ action: "resetcode", email: "k@l.mn" }).error, "busy", "the same hourly cap for an address with no account");
+  for (let i = 0; i < 75; i++) assert.ok(b.post({ action: "register", email: "u" + i + "@l.mn", verifier: VER(1) }).ok);
+  assert.equal(b.mails.length, 80);
+  assert.equal(b.post({ action: "register", email: "late@l.mn", verifier: VER(1) }).error, "try later");
+  assert.equal(b.post({ action: "resetcode", email: "late2@l.mn" }).error, "try later", "the same for an address with no account");
+  assert.equal(b.mails.length, 80);
 });

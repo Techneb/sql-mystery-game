@@ -198,7 +198,7 @@
   owner presses Send. Please do not put other personal details in the message.
   To have a message deleted, write to the address below.</p>
 
-  <h2>Saved progress (Sign in with Google)</h2>
+  <h2>Saved progress (signing in)</h2>
   <p>Signing in is optional and only for learning mode: it keeps a copy of your progress so you can continue on
   another device. The game's front page and the <i>Sign in</i> button at the top right of the game and the handbook's pages offer it. Google's sign-in script
   (from accounts.google.com) is loaded only when you press one of them, and Google then asks you to choose your account.
@@ -207,6 +207,15 @@
   from your account's Google id with a secret key. It cannot be turned back into your id, and your email address
   and name are never kept. The script answers with its own sign-in token, valid for 60 days, which your browser
   keeps in its local storage (<code>ritz.account</code>) and sends instead of Google's from then on.</p>
+  <p>You can also sign in with an email address and a password instead of Google. Your password never leaves your
+  browser: the page turns it into a verifier (PBKDF2-SHA256, 200,000 rounds, mixed with your address) and sends only
+  that. To create an account or reset a password, the page sends your address to the same script, which emails a
+  6-digit code to it from contact@alephb.uk through the owner's Gmail. The address is used to send that email and is
+  not kept. While a code waits, for 15 minutes at most, the script holds only a code computed from it. The account's row
+  holds a code computed from your address with the secret key, in place of the address, and one computed from the
+  verifier with a random salt, in place of the password. Nobody can read your address or your password back from the
+  Sheet. Each email sent also stays in the Sent folder of the owner's Gmail. After that, sign-in works as with Google:
+  the same sign-in token and the same saved copy.</p>
   <p>While you are signed in, the page sends a copy of your learning-mode save (<code>ritz.learn</code>: progress,
   answers, notes, queries and badges) and the exercises page's solved list and history (<code>ritz.exercises</code>,
   <code>ritz.exercises.history</code>) to that script after you solve a chapter or an exercise, earn a badge, or
@@ -230,8 +239,8 @@
     script from googletagmanager.com, and its measurements sent to google-analytics.com (none once you
     refuse).</li>
     <li>Only when you send feedback: the form's message to script.google.com (see Feedback above), which sees your IP address.</li>
-    <li>Only when you press <i>Sign in with Google</i>: Google's sign-in script and window from accounts.google.com; and,
-    while you are signed in, your saves to and from script.google.com (see Saved progress), which sees your IP address.</li>
+    <li>Only when you press <i>Sign in with Google</i>: Google's sign-in script and window from accounts.google.com. Only when
+    you sign in with your email: the address and the password's verifier to script.google.com. And, while you are signed in, your saves to and from script.google.com (see Saved progress), which sees your IP address.</li>
   </ul>
 
   <h2>Questions, or removing your rows</h2>

@@ -448,11 +448,22 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
 .landing-warmup { display: inline-block; margin: 10px 0 10px; padding: 7px 14px; font-size: 17px; border: 1px solid var(--rule); border-left: 4px solid var(--rel); border-radius: var(--r-box); background: var(--shade); }
 /* Accounts (account.js, off while GOOGLE_CLIENT_ID is empty): the landing's line and Google's sign-in button, drawn to
    Google's branding rules (white, #747775 outline, the four-colour G, "Sign in with Google"), the same in both editions */
-.landing-account { margin: 6px 0 4px; font-size: 15px; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 6px 10px; }
+.landing-account { margin: 6px 0 4px; font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 10px; }
+.landing-account .account-main { display: inline-flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 10px; }   /* the text and Google's button: one line */
+.landing-account .account-email { font-size: 14px; padding: 4px 12px; }
 .landing-account .gsi-box, .account-dialog .gsi-box { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; margin: 0; }
 .account-dialog .gsi-box { display: flex; margin: 12px 0; }   /* Google's own button, centred in the corner's dialog */
 .landing-account .gsi-box > div, .account-dialog .gsi-box > div { margin: 0 auto; }   /* Google's rendered button: its own block */
-@media (max-width: 600px) { .landing-account { flex-wrap: wrap; } }   /* the text and the button do not fit one phone line */
+@media (max-width: 600px) { .landing-account .account-main { flex-wrap: wrap; } }   /* the text and the button do not fit one phone line */
+/* the sign-in dialog's email form (account.js SIGNIN): labelled fields, the step's buttons, errors in plain words */
+.account-dialog .gsi-box:empty { display: none; }
+.account-dialog .acct-or { text-align: center; margin: 4px 0 10px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.account-dialog label { display: block; font-weight: 700; font-size: 15px; }
+.account-dialog input { width: 100%; box-sizing: border-box; margin-top: 4px; font-size: 16px; padding: 8px 10px; border-radius: var(--r-box); }   /* 16 px: no iOS zoom */
+.account-dialog .acct-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.account-dialog .acct-buttons button { padding: 8px 14px; }
+.account-dialog .acct-error { color: var(--rel); font-weight: 700; text-align: center; }
+.account-dialog .acct-error:empty { display: none; }
 .landing-account .account-manage { font-size: 14px; padding: 2px 10px; }
 .gsi-btn { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 1px solid #747775; border-radius: 4px;
   background: #fff; color: #1f1f1f; font: 500 14px/20px Roboto, Arial, sans-serif; letter-spacing: 0.25px; text-transform: none; box-shadow: none; cursor: pointer; }
