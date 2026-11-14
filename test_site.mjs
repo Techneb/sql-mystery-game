@@ -1757,7 +1757,7 @@ test("accounts: off while GOOGLE_CLIENT_ID is empty, no sign-in UI and no Google
   assert.equal(acc.accountButton(false).title, "Sign in with Google to save your progress across devices");
   assert.match(acc.accountButton(false).html, /stroke="currentColor"[\s\S]*<span class="btn-text">Sign in<\/span>$/);
   assert.match(acc.accountButton(true).html, /class="btn-text">Saved<\/span>$/);
-  assert.match(src0, /corners\.prepend\(corner\)/, "beside Feedback, in the corners box");
+  assert.match(src0, /corners\.append\(corner\)/, "last in the corners box: right to left Sign in, Day/Night, Feedback");
   assert.match(fs.readFileSync("site/learn/handbook.js", "utf8"), /wireAccount\(/, "the handbook pages carry it too");
   const files = execFileSync("git", ["ls-files", "site"], { encoding: "utf8" }).split("\n").filter(f => /\.(html|js)$/.test(f) && !["site/account.js", "site/privacy.html"].includes(f));   // the notice describes it
   for (const f of files) assert.ok(!/accounts\.google\.com\/gsi|Sign in with Google/.test(fs.readFileSync(f, "utf8")), f + ": the sign-in lives in account.js only");

@@ -148,7 +148,7 @@ export function wireAccount(onChange) {
   if (status) { line = document.createElement("p"); line.className = "landing-account muted"; status.after(line); }   // the game's landing
   const corner = document.createElement("button");
   corner.id = "btn-account"; corner.className = "quiet account-corner";
-  if (corners) corners.prepend(corner);
+  if (corners) corners.append(corner);
   corner.onclick = () => account ? manage() : signInDialog();
 
   async function manage() {

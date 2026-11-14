@@ -373,10 +373,11 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
      the stack stays two squares deep (78 px) and clear of the title; the empty middle lets clicks through */
   body:not(:has(#landing:not([hidden]))) .corners:has(.account-corner) { left: 8px; display: grid; grid-template-columns: 32px 1fr 32px; grid-auto-rows: 32px; gap: 6px; pointer-events: none; }
   .corners > * { pointer-events: auto; }
-  body:not(:has(#landing:not([hidden]))) .corners .theme-corner { grid-area: 1 / 3; }
-  body:not(:has(#landing:not([hidden]))) .corners .feedback-corner { grid-area: 2 / 3; }
-  body:not(:has(#landing:not([hidden]))) .corners .account-corner { grid-area: 2 / 1; }
-  body:not(:has(#landing:not([hidden]), #btn-reset)) .corners .account-corner { grid-area: 1 / 1; }   /* the handbook has no New investigation: take its top-left slot */
+  /* owner, 2026-11-14: right to left Sign in, Day/Night, Feedback; here Sign in top right, Day/Night under it, Feedback on the left */
+  body:not(:has(#landing:not([hidden]))) .corners .account-corner { grid-area: 1 / 3; }
+  body:not(:has(#landing:not([hidden]))) .corners .theme-corner { grid-area: 2 / 3; }
+  body:not(:has(#landing:not([hidden]))) .corners .feedback-corner { grid-area: 2 / 1; }
+  body:not(:has(#landing:not([hidden]), #btn-reset)) .corners .feedback-corner { grid-area: 1 / 1; }   /* the handbook has no New investigation: take its top-left slot */
   body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }   /* again: the grid rule above outranks the first */
   .landing-card h1 { font-size: 22px; }
   .landing-photo { margin: 10px 0 12px; }
