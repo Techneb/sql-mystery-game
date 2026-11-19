@@ -95,6 +95,7 @@ let syncSql = () => {};   // the query box's redraw, once boot has wired it (wir
 function clearTerminal() { $("sql").value = starterSql(state); syncSql(); $("results").innerHTML = ""; $("run-info").textContent = ""; }
 function reviewChapter(n) { reviewing = n; clearTerminal(); renderChapter(); }
 function backToInvestigation() {
+  if (nextPending) $("reply").textContent = "";   // the solved chapter's "Correct" stays behind
   reviewing = null; nextPending = 0; clearTerminal(); renderChapter();
   if (pendingReveal.length) { renderErd(pendingReveal); pendingReveal = []; }
 }
@@ -524,7 +525,7 @@ function afterSolve(ch, event) {
   if (event === "solve" && !ending) { reviewing = nextPending = ch.n; pendingReveal = newTables; }
   else renderErd(newTables);
   renderBoard(); renderChapter();
-  if (nextPending) $("btn-next").scrollIntoView({ block: "nearest" });
+  if (nextPending) { $("reply").textContent += " Press Next chapter below to go on."; $("btn-next").scrollIntoView({ block: "nearest" }); }
   if (event === "solve") {
     award(detectBadges(ctx({ event: "solve", chapter: ch.n }), state.badges));
     if (ch.n === 8 || ch.n === 12) track("game_finish", { part: ch.n === 8 ? 1 : 2, mode: state.mode });
