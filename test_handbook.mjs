@@ -146,11 +146,10 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
   assert.match(js, /"ritz\.theme"/, "the game's key");
 });
 
-test("AlephB back link: the same link, top left, on privacy and every handbook page; none on the game, the desk or the board", () => {
+test("AlephB back link: top left on privacy only; none on the game, the handbook, the desk or the board (owner)", () => {
   const link = '<a class="home-link" href="https://alephb.uk/">&larr; AlephB</a>\n';
-  const after = '</div>\n' + link;   // right after the static .corners, so that box stays first and identical
   assert.ok(fs.readFileSync("site/privacy.html", "utf8").includes("<body>\n" + link), "privacy: first in the body");
-  for (const [f, html] of Object.entries(learnHtml)) assert.ok(html.includes(after) && html.split(link).length === 2, f + ": once, after the corners");
+  for (const [f, html] of Object.entries(learnHtml)) assert.doesNotMatch(html, /home-link/, f + " has no back link");
   for (const f of ["index.html", "admin.html", "leaderboard.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html", "inbox.html"])
     assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /home-link/, f + " has no back link");
 });
