@@ -126,7 +126,7 @@ test("landing and privacy: the handbook's header nav under the masthead, its foo
   const privacyNav = one(privacy, /<nav class="landing-nav muted">([\s\S]*?)<\/nav>/, "privacy nav");
   assert.deepEqual(navItems(privacyNav), nav);
   assert.deepEqual(navCurrent(privacyNav), [], "privacy.html is neither section");
-  assert.deepEqual(labels(one(privacy, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "privacy footer")), foot.filter((t) => t !== "Statistics" && t !== "Privacy notice"));
+  assert.deepEqual(labels(one(privacy, /<p class="muted landing-foot">([\s\S]*?)<\/p>/, "privacy footer")), foot.filter((t) => t !== "Statistics" && t !== "Privacy notice" && !t.startsWith("The Clerk's Desk")));
 });
 
 test("Day/Night button: the game's button on every handbook page, the desk and the board, theme.js draws the game's icons", () => {
