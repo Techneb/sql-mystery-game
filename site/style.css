@@ -38,8 +38,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
 /* fixed, above the landing overlay (z-index 20), so it works on the landing page and in the game */
 .corners { position: absolute; right: 16px; top: 12px; z-index: 21; display: flex; gap: 6px; }   /* Send feedback, then Day/Night */
-/* "<- AlephB" back to the site on the handbook and privacy.html (owner, 2026-11-22; not the game): its own 44 px row
-   above the masthead, in flow; the corner buttons move down with the masthead */
+/* "<- AlephB" back to the site on privacy.html only (owner, 2026-11-22): its own 44 px row above the masthead, in flow */
 .home-link { display: block; width: fit-content; padding: 12px 16px; font-size: 15px; line-height: 20px; color: inherit; opacity: .75; text-decoration: none; }
 .home-link:hover { opacity: 1; text-decoration: underline; }
 .theme-corner, .feedback-corner, .account-corner { font-size: 13px; padding: 2px 10px; background: var(--paper); }
