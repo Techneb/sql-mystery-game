@@ -85,12 +85,12 @@ test("handbook: every page carries the same masthead nav and footer; the generat
     assert.equal(cur.length, 1, f + ": one current item");
     assert.equal((menu.match(/class="current"/g) || []).length, chapters.includes(f) ? 2 : 1, f + ": Learning chapters is current on a learning page only");
     if (chapters.includes(f)) assert.ok(menu.includes(`<summary class="current">Learning chapters: ${cur[0][1]}</summary>`), f + " summary names the page");
-    return menu.replace(cur[0][0], `<a href="${f}">${cur[0][1]}</a>`).replace(/<summary class="current">[^<]*<\/summary>/, "<summary>Learning chapters</summary>");
+    return menu.replace(cur[0][0], `<a href="${f === "index.html" ? "./" : f}">${cur[0][1]}</a>`).replace(/<summary class="current">[^<]*<\/summary>/, "<summary>Learning chapters</summary>");
   };
   const ref = linked("index.html");
   assert.match(ref, /<details class="learn-chapters"><summary>Learning chapters<\/summary><ol>/, "a native disclosure, no script needed");
   const items = [...ref.matchAll(/<a href="([^"]+)">([^<]*)<\/a>/g)];
-  assert.deepEqual(items.map((m) => m[1]), ["index.html", ...chapters, "exercises.html", "grammar.html", "glossary.html"], "menu in table of contents order");
+  assert.deepEqual(items.map((m) => m[1]), ["./", ...chapters, "exercises.html", "grammar.html", "glossary.html"], "menu in table of contents order");
   assert.deepEqual(items.map((m) => m[2]).filter((t) => !/^\d/.test(t)), ["Index", "Exercises", "Grammar", "Glossary"]);
   items.slice(1, -3).forEach((m, i) => assert.ok(m[2].startsWith(`${i + 1}. `), "chapters numbered from 1: " + m[2]));
   // the game's consent banner and Statistics link, asked by handbook.js (one ritz.consent answer site-wide)
@@ -148,13 +148,14 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
 
 test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
   readingOrder.forEach((f, i) => {
+    assert.ok(!learnHtml[f].includes('href="index.html"'), f + ": the index is linked as ./, its canonical address");
     const pager = one(learnHtml[f], /<nav class="learn-pager">([\s\S]*?)<\/nav>/, f + " pager");
     for (const [cls, want, word] of [["prev", readingOrder[i - 1], "Previous"], ["next", readingOrder[i + 1], "Next"]]) {
       const m = pager.match(new RegExp(`<a class="${cls}" href="([^"]+)">([^<]*)</a>`));
       if (!want) { assert.equal(m, null, `${f} has no ${cls}`); continue; }
       assert.ok(m, `${f} ${cls}`);
-      assert.equal(m[1], want, `${f} ${cls} (so A's next is B exactly when B's previous is A)`);
-      assert.ok(fs.existsSync(LEARN + m[1]), m[1]);
+      assert.equal(m[1], want === "index.html" ? "./" : want, `${f} ${cls} (so A's next is B exactly when B's previous is A)`);
+      assert.ok(fs.existsSync(LEARN + want), want);
       assert.equal(m[2], `${word}: ${one(learnHtml[want], /<h1>([^<]*)<\/h1>/, want + " h1")}`, `${f} ${cls} label`);
     }
   });

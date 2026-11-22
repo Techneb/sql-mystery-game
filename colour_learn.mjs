@@ -63,7 +63,9 @@ const fill = (html, name, body, f) => {
   return html.replace(re, (_, a, b) => a + body + b);
 };
 const h1 = (html, f) => { const m = html.match(/<h1>([^<]*)<\/h1>/); if (!m) throw new Error(f + ": no plain <h1>"); return m[1]; };
-const item = (f, href, label) => (f === href ? `<span class="current" aria-current="page">${label}</span>` : `<a href="${href}">${label}</a>`);
+// Links to the index use "./", its canonical address, never "index.html" (a second URL for the same page).
+const url = (href) => (href === "index.html" ? "./" : href);
+const item = (f, href, label) => (f === href ? `<span class="current" aria-current="page">${label}</span>` : `<a href="${url(href)}">${label}</a>`);
 
 // The menu row: Index, the Learning chapters dropdown (its summary current, naming the page, on a chapter page),
 // Exercises, Grammar, Glossary.
@@ -77,7 +79,7 @@ export function menuHtml(f) {
 // The previous/next pager in reading order, each label naming the target's <h1> (the index keeps an empty prev slot).
 export function pagerHtml(f, pages) {
   const i = READING.indexOf(f), prev = READING[i - 1], next = READING[i + 1];
-  return '<nav class="learn-pager">' + (prev ? `<a class="prev" href="${prev}">Previous: ${h1(pages[prev], prev)}</a>` : "<span></span>") +
+  return '<nav class="learn-pager">' + (prev ? `<a class="prev" href="${url(prev)}">Previous: ${h1(pages[prev], prev)}</a>` : "<span></span>") +
     (next ? `<a class="next" href="${next}">Next: ${h1(pages[next], next)}</a>` : "") + "</nav>\n";
 }
 // The side menu of a learning chapter: all fourteen, and under the current one its h2 sections (handbook.js marks the
