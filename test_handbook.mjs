@@ -146,6 +146,18 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
   assert.match(js, /"ritz\.theme"/, "the game's key");
 });
 
+test("AlephB back link: the same link, top left, on the game, privacy and every handbook page; none on the desk or the board", () => {
+  const link = '<a class="home-link" href="https://alephb.uk/">&larr; AlephB</a>\n';
+  const after = '</div>\n' + link;   // right after the static .corners, so that box stays first and identical
+  assert.ok(fs.readFileSync("site/index.html", "utf8").includes('<div class="corners">') && fs.readFileSync("site/index.html", "utf8").split(link).length === 2, "the game: once");
+  assert.ok(fs.readFileSync("site/index.html", "utf8").includes(after), "the game: after the corners");
+  assert.ok(fs.readFileSync("site/privacy.html", "utf8").includes("<body>\n" + link), "privacy: first in the body");
+  for (const [f, html] of Object.entries(learnHtml)) assert.ok(html.includes(after) && html.split(link).length === 2, f + ": once, after the corners");
+  for (const f of ["admin.html", "leaderboard.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html", "inbox.html"])
+    assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /home-link/, f + " has no back link");
+  assert.match(fs.readFileSync("site/app.js", "utf8"), /\.home-link"\);\n\s*home\.hidden = !!seasonId;/, "hidden with a season (compete)");
+});
+
 test("handbook: the previous/next pager follows the table of contents, links resolve, labels name the target's title", () => {
   readingOrder.forEach((f, i) => {
     assert.ok(!learnHtml[f].includes('href="index.html"'), f + ": the index is linked as ./, its canonical address");

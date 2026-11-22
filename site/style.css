@@ -38,6 +38,13 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 .reset-corner { position: absolute; left: 16px; top: 12px; font-size: 13px; padding: 2px 10px; }
 /* fixed, above the landing overlay (z-index 20), so it works on the landing page and in the game */
 .corners { position: absolute; right: 16px; top: 12px; z-index: 21; display: flex; gap: 6px; }   /* Send feedback, then Day/Night */
+/* "<- AlephB" back to the site (owner, 2026-11-22): its own 44 px row above the masthead, in flow; above the landing
+   overlay too (z-index), whose top padding leaves it room; the corner buttons move down with the masthead */
+.home-link { display: block; width: fit-content; position: relative; z-index: 21; padding: 12px 16px; font-size: 15px; line-height: 20px; color: inherit; opacity: .75; text-decoration: none; }
+.home-link:hover { opacity: 1; text-decoration: underline; }
+.home-link[hidden] { display: none; }
+body:has(> .home-link:not([hidden])) .corners { top: 56px; }
+body:has(#landing:not([hidden])) .corners { top: 12px; }
 .theme-corner, .feedback-corner, .account-corner { font-size: 13px; padding: 2px 10px; background: var(--paper); }
 .mast-sub { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
 .theme-corner svg, .feedback-corner svg, .account-corner svg, .reset-corner svg { vertical-align: -3px; margin-right: 6px; }
@@ -45,7 +52,7 @@ input, textarea { font: inherit; background: var(--card); color: var(--ink); bor
 /* landing */
 /* scrolls when the card is taller than the window; the card's auto margins centre it only when it fits
    (flex centring would push the overflow above the top, out of reach) */
-#landing { position: fixed; inset: 0; background: var(--paper); z-index: 20; display: flex; overflow: auto; padding: 16px; }
+#landing { position: fixed; inset: 0; background: var(--paper); z-index: 20; display: flex; overflow: auto; padding: 48px 16px 16px; }
 #landing[hidden] { display: none; }
 .landing-card { max-width: 640px; margin: auto; text-align: center; border: 2px solid var(--ink); border-radius: var(--r-card); padding: 24px; }
 .landing-card h1 { font: 700 26px/1.15 "Playfair Display", serif; margin: 12px 0 0; padding-top: 12px; border-top: 3px double var(--ink); }
@@ -282,7 +289,7 @@ body:has(.erd.large) #btn-erd { position: fixed; top: 24px; right: 36px; z-index
 #btn-extra, #btn-extra2, #btn-replay { margin-top: 8px; padding: 8px 22px; }
 .suspects-close { position: fixed; top: 16px; right: 16px; }
 /* the Day/Night button shares that corner: step aside while a panel with its own Close is open */
-body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
+body:has(.suspects:not([hidden]), .erd.large) :is(.corners, .home-link) { display: none; }
 .suspect { width: 180px; text-align: center; position: relative; }
 .suspect img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 50% / 40%;
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 6px 14px rgba(0,0,0,.25); position: relative; }
@@ -356,7 +363,8 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
   .mast-title { font-size: 24px; }
   /* icon-only 32px squares in the top corners: the 24px title (~262px at 430px) clears both */
   .reset-corner, .theme-corner, .feedback-corner, .account-corner { width: 32px; height: 32px; padding: 0; top: 8px; display: flex; align-items: center; justify-content: center; }
-  .reset-corner { left: 8px; } .corners { right: 8px; top: 8px; flex-direction: column-reverse; }   /* Feedback under Day/Night: side by side they met the title */
+  .reset-corner { left: 8px; } .corners { right: 8px; top: 8px; flex-direction: column-reverse; }
+  body:has(> .home-link:not([hidden])) .corners { top: 52px; }   /* Feedback under Day/Night: side by side they met the title */
   .theme-corner svg, .feedback-corner svg, .account-corner svg, .reset-corner svg { margin: 0; }
   .reset-corner .btn-text, .theme-corner .btn-text, .feedback-corner .btn-text, .account-corner .btn-text { display: none; }   /* Run, Badges and Suspects keep their text */
   .mast-sub { letter-spacing: 1px; font-size: 10px; }   /* the bold numeral widened the line: keep it on one line at 430 px */
@@ -367,7 +375,7 @@ body:has(.suspects:not([hidden]), .erd.large) .corners { display: none; }
      side above the card, the photograph is cropped shorter, the text is ragged-right, and what a lone visitor cannot
      use (Compete without a season link, the idle status line) is hidden */
   #landing { padding-top: 48px; }
-  body:has(#landing:not([hidden])) .corners { flex-direction: row; }   /* up to four squares in a row (148 px), above the card */
+  body:has(#landing:not([hidden])) .corners { flex-direction: row; top: 8px; }   /* up to four squares in a row (148 px), above the card */
   /* off the landing (the game, the handbook), with the account square (account.js): a grid over the masthead's top
      corners, Day/Night and Feedback down the right as before, Sign in / Saved on the left under New investigation, so
      the stack stays two squares deep (78 px) and clear of the title; the empty middle lets clicks through */
