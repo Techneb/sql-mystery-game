@@ -869,8 +869,6 @@ async function boot() {
   const savedLive = saved.mode === "compete" && saved.team && saved.token && saved.db > 0;
   if (!seasonId && savedLive && !part1Done(saved) && !saved.over && !debugChapter) seasonId = saved.season;
   let resuming = !!(savedLive && saved.season === seasonId && !debugChapter);
-  const home = document.querySelector(".home-link");
-  home.hidden = !!seasonId;   // no way out of a timed season by accident
   if (resuming && !boardUrl) boardUrl = saved.board || "";
   if (seasonId) {
     try { seasonMeta = await fetchMeta(seasonId); } catch { metaUnreachable = true; }
@@ -879,7 +877,7 @@ async function boot() {
   // unreachable); a closed or unknown one is set over, so the landing shows. The save stays (the Sheet has the rows).
   if (!linked && resuming && !metaUnreachable && (!seasonMeta || seasonMeta.state === "closed")) {
     try { localStorage.setItem(storageKey("compete"), JSON.stringify({ ...saved, over: true })); } catch {}
-    resuming = false; seasonId = ""; seasonMeta = null; home.hidden = false;
+    resuming = false; seasonId = ""; seasonMeta = null;
   }
   // debugChapter is gated by unlockAdmin() (same passphrase as the ?admin panel): only asked when
   // ?chapter=N is actually present, so a plain ?season= link never prompts for anything.
