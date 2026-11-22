@@ -148,7 +148,7 @@ test("Day/Night button: the game's button on every handbook page, the desk and t
 
 test("AlephB back link: top left on privacy only; none on the game, the handbook, the desk or the board (owner)", () => {
   const link = '<a class="home-link" href="https://alephb.uk/">&larr; AlephB</a>\n';
-  assert.ok(fs.readFileSync("site/privacy.html", "utf8").includes("<body>\n" + link), "privacy: first in the body");
+  assert.ok(fs.readFileSync("site/privacy.html", "utf8").includes('<header class="masthead">\n' + link), "privacy: first in the masthead, level with the title");
   for (const [f, html] of Object.entries(learnHtml)) assert.doesNotMatch(html, /home-link/, f + " has no back link");
   for (const f of ["index.html", "admin.html", "leaderboard.html", "monitor.html", "monitor-game.html", "monitor-handbook.html", "explore.html", "inbox.html"])
     assert.doesNotMatch(fs.readFileSync("site/" + f, "utf8"), /home-link/, f + " has no back link");
