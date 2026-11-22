@@ -184,6 +184,7 @@ test("search and previews: every indexed page has its own title, a description, 
     const h = fs.readFileSync(f, "utf8"), meta = (re) => (h.match(re) || [])[1];
     const title = meta(/<title>([^<]+)<\/title>/);
     assert.ok(title && !titles.has(title), f + " has a unique title");
+    if (f.startsWith("site/learn/")) assert.ok(title.endsWith(" -- AlephB") && meta(/<meta property="og:title" content="([^"]+)">/) === title, f + " title and og:title end -- AlephB (owner, 2026-11-22)");
     titles.add(title);
     assert.equal(meta(/<link rel="canonical" href="([^"]+)">/), loc, f + " canonical is its sitemap URL");
     if (rel === "privacy.html") continue;

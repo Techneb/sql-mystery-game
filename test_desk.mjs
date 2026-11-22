@@ -844,6 +844,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const titles = ["<i>LIKE -- The Ritz Affair", "B", "C", "D", "E", "F", "G"].map((t, i) => [t, 10 - i]);
   const pages = monitor.handbookPagesHtml({ rows: titles, totals: [30] }, "visitors");
   assert.ok(pages.includes("&#60;i&#62;LIKE</span>") && !pages.includes("<i>LIKE") && !pages.includes("Ritz Affair"));
+  assert.deepEqual(["LIKE -- The Ritz Affair", "LIKE -- AlephB", "LIKE"].map(monitor.pageName), ["LIKE", "LIKE", "LIKE"], "the old and the new suffix dropped (2026-11-22), so GA history keeps one name per page");
   assert.ok(pages.includes("<td>Other (sum of 2 rows)</td><td class=\"num\">9</td>") && centres(pages)[0].includes("<b>30</b>") && pages.includes("the slices add up to 49"));
   assert.deepEqual(monitor.PANELS.handbook.pages.requests(monitor.context("handbook", { m: "ran" })).pages, { days: 7, dimensions: ["pageTitle"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
   const ch = monitor.choicesHtml({ levels: { rows: [["challenge", 2, 5], ["warm-up", 4, 9]], totals: [5] }, outcomes: { rows: [["ok", 7], ["refused", 2]], totals: [9] } });

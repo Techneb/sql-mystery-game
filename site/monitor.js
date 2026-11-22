@@ -37,7 +37,7 @@ export const daysFrom = res => (res.rows || []).map(([date, users]) => ({ date, 
 // counts twice: a ranking, not a head count), in --c1..--c5, over the page's own users-per-day total as a neutral line.
 export const TOP = 5;
 // A GA value as a label; page titles lose the site's own suffix.
-export const pageName = v => gaText(v).replace(/ -- The Ritz Affair$/, "");
+export const pageName = v => gaText(v).replace(/ -- (The Ritz Affair|AlephB)$/, "");
 // The dimensions that make sense per day (names from shared.js DIMENSIONS), and the plural the note uses.
 export const BREAKDOWNS = { country: "countries", deviceCategory: "devices", sessionDefaultChannelGroup: "channels", sessionSource: "sources",
   operatingSystem: "operating systems", browser: "browsers", language: "languages", newVsReturning: "values", "customEvent:mode": "modes", pageTitle: "pages" };
