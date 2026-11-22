@@ -983,9 +983,9 @@ test("desk: the board URL sealed under the passphrase opens only with it; a stor
     assert.match(fs.readFileSync("site/" + f, "utf8"), /deskBoardOpened\(/, f + " opens the sealed board after the gate");
 });
 
-test("repo: no tracked file holds an Apps Script /exec URL in plain text (the feedback script's excepted)", async () => {
+test("repo: no tracked file holds an Apps Script /exec URL in plain text (the feedback and accounts scripts excepted)", async () => {
   const { execFileSync } = await import("node:child_process");
-  const hits = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(f => f && f !== "site/feedback.js" && fs.existsSync(f))
+  const hits = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(f => f && !["site/feedback.js", "site/account.js"].includes(f) && fs.existsSync(f))
     .filter(f => /script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}/.test(fs.readFileSync(f, "latin1")));
   assert.deepEqual(hits, []);
 });

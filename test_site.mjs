@@ -1480,7 +1480,7 @@ test("GA feature names are literals the monitor lists", async () => {
       for (const l of lits) assert.ok(JSON.parse(l) in known, f + ": " + l + " is not listed in monitor.js");
     }
   };
-  check(["site/app.js", "site/endings.js", "site/onboarding.js", "site/ui.js", "site/terminal.js", "site/badges.js", "site/suspects.js", "site/state.js"], monitor.GAME_FEATURES);
+  check(["site/app.js", "site/endings.js", "site/onboarding.js", "site/ui.js", "site/terminal.js", "site/badges.js", "site/suspects.js", "site/state.js", "site/account.js"], monitor.GAME_FEATURES);
   check(fs.readdirSync("site/learn").filter(f => f.endsWith(".js")).map(f => "site/learn/" + f), monitor.HANDBOOK_FEATURES);
 });
 
@@ -1735,4 +1735,100 @@ test("chapter I: its two steps count their Where to look apart (hint_where carri
   assert.deepEqual(whereOpened({ ...s, step1: "18 May 1912" }, ch1, 1), ["1b", { chapter: 1, mode: "learn", step: 2 }]);
   assert.deepEqual(whereOpened(s, ch2, 2), [2, { chapter: 2, mode: "learn" }], "other chapters unchanged");
   assert.match(fs.readFileSync("site/app.js", "utf8"), /const \[key, params\] = whereOpened\(state, data\.chapters\.find\(c => c\.n === n\), n\);\n\s+if \(state\.hintsWhere\.includes\(key\)\) return;/);
+});
+
+// --- Accounts (owner, 2026-11-14): Sign in with Google, shipped dark until GOOGLE_CLIENT_ID and ACCOUNTS_URL are set.
+test("accounts: off while GOOGLE_CLIENT_ID is empty, no sign-in UI and no Google script anywhere", async () => {
+  const acc = await import("./site/account.js");
+  assert.equal(acc.ACCOUNTS_ON, acc.GOOGLE_CLIENT_ID !== "" && acc.ACCOUNTS_URL !== "", "the client id and the URL are the whole switch");
+  // the same module with both constants emptied (a copy beside it, so its imports resolve): it touches no page at all
+  const src0 = fs.readFileSync("site/account.js", "utf8").replace(/(export const (GOOGLE_CLIENT_ID|ACCOUNTS_URL) = )"[^"]*"/g, '$1""');
+  const tmp = "site/.account-dark-" + process.pid + ".mjs";
+  fs.writeFileSync(tmp, src0);
+  try {
+    const dark = await import("./" + tmp);
+    assert.equal(dark.ACCOUNTS_ON, false);
+    const trap = new Proxy({}, { get() { throw new Error("touched the page while accounts are off"); } });
+    const saved = globalThis.document; globalThis.document = trap;
+    try { assert.equal(dark.wireAccount(() => {}), false); assert.equal(await dark.startSync(), false); assert.equal(dark.signedIn(), false); }
+    finally { globalThis.document = saved; }
+  } finally { fs.unlinkSync(tmp); }
+  // the corner square is added by account.js at run time: the pages' static .corners stay identical (test_handbook)
+  assert.equal(acc.accountButton(false).title, "Sign in to save your progress across devices");
+  assert.match(acc.accountButton(false).html, /stroke="currentColor"[\s\S]*<span class="btn-text">Sign in<\/span>$/);
+  assert.match(acc.accountButton(true).html, /class="btn-text">Saved<\/span>$/);
+  assert.match(src0, /corners\.append\(corner\)/, "last in the corners box: right to left Sign in, Day/Night, Feedback");
+  assert.match(fs.readFileSync("site/learn/handbook.js", "utf8"), /wireAccount\(/, "the handbook pages carry it too");
+  const files = execFileSync("git", ["ls-files", "site"], { encoding: "utf8" }).split("\n").filter(f => /\.(html|js)$/.test(f) && !["site/account.js", "site/privacy.html"].includes(f));   // the notice describes it
+  for (const f of files) assert.ok(!/accounts\.google\.com\/gsi|Sign in with Google/.test(fs.readFileSync(f, "utf8")), f + ": the sign-in lives in account.js only");
+  const src = fs.readFileSync("site/account.js", "utf8");
+  assert.equal(src.match(/loadGis\(\)/g).length, 2, "Google's script is loaded in one place: the sign-in button's press");
+  assert.match(fs.readFileSync("site/app.js", "utf8"), /if \(!seasonId\) wireAccount\(/, "never in compete");
+});
+
+test("accounts: the stored session, the synced keys, the size cap", async () => {
+  const acc = await import("./site/account.js");
+  assert.deepEqual(acc.readAccount(JSON.stringify({ token: "k.1.s", expires: 2000 }), 1000), { token: "k.1.s", expires: 2000 });
+  assert.equal(acc.readAccount(JSON.stringify({ token: "k.1.s", expires: 900 }), 1000), null, "expired");
+  for (const bad of [null, "", "nope", "{}", '{"token":""}', '{"token":3,"expires":9e15}']) assert.equal(acc.readAccount(bad, 1000), null);
+  const store = { "ritz.learn": "{}", "ritz.compete": "{}", "ritz.consent": "yes", "ritz.admin.board": "x", "ritz.exercises": "[]", "ritz.account": "{}" };
+  assert.deepEqual(Object.keys(acc.localSaves(k => store[k] ?? null)), ["ritz.learn", "ritz.exercises"], "learn and the exercises only, never compete, consent or the desk");
+  const ok = acc.pushBody("t", store, 5, ["ritz.learn"]);
+  assert.deepEqual(JSON.parse(ok.body), { action: "push", token: "t", saves: { "ritz.learn": "{}", "ritz.exercises": "[]" }, clientAt: 5, replace: ["ritz.learn"] });
+  assert.equal(acc.pushBody("t", { "ritz.learn": JSON.stringify({ notes: "x".repeat(acc.SAVES_MAX) }) }, 5).error, "saves too large");
+  // a full learn save (twelve chapters, their walkthroughs and winning queries, 20 history queries, 2,000 characters of
+  // notes) measured 32,345 characters on 2026-11-14: well under the cap
+  const s = freshState();
+  for (let n = 1; n <= 12; n++) { s.solved.push(n); s.cracked[n] = "SELECT ".repeat(50); s.howto[n] = { steps: ["step ".repeat(60)], sql: [["note ".repeat(20), "SELECT ".repeat(150)]] }; }
+  s.history = Array(20).fill("SELECT ".repeat(40)); s.notes = "x".repeat(2000);
+  assert.ok(JSON.stringify(acc.localSaves(k => k === "ritz.learn" ? JSON.stringify(s) : null)).length < acc.SAVES_MAX / 2);
+});
+
+test("accounts: a pull merges by the bridge's rule, the save further along wins, lists are a union", async () => {
+  const acc = await import("./site/account.js");
+  const learn = (solved, totalQueries) => JSON.stringify({ ...freshState(), solved, totalQueries });
+  const here = { "ritz.learn": learn([1, 2], 30), "ritz.exercises": '["a","b"]' };
+  const w = acc.pullWrites({ "ritz.learn": learn([1, 2, 3], 10), "ritz.exercises": '["b","c"]', "ritz.compete": "{}", "ritz.consent": "no" }, k => here[k] ?? null);
+  assert.deepEqual(Object.keys(w).sort(), ["ritz.exercises", "ritz.learn"], "never compete or consent");
+  assert.equal(JSON.parse(w["ritz.learn"]).solved.length, 3);
+  assert.deepEqual(JSON.parse(w["ritz.exercises"]), ["a", "b", "c"]);
+  assert.deepEqual(acc.pullWrites({ "ritz.learn": learn([1], 99) }, k => here[k] ?? null), {}, "a save behind this browser's is never written: no wipe");
+  assert.deepEqual(acc.pullWrites({}, k => here[k] ?? null), {});
+  assert.deepEqual(acc.pullWrites({ "ritz.learn": learn([], 0) }, () => null), { "ritz.learn": learn([], 0) }, "a fresh browser takes the server's");
+  assert.equal(acc.savesText({ "ritz.exercises": "[]", "ritz.learn": "{}" }), acc.savesText({ "ritz.learn": "{}", "ritz.exercises": "[]" }), "key order never makes a push");
+});
+
+test("accounts: the email form's checks, and the password verifier derived in the browser (never the password)", async () => {
+  const acc = await import("./site/account.js");
+  const crypto = await import("node:crypto");
+  assert.equal(acc.normEmail("  Ann@Example.ORG "), "ann@example.org");
+  assert.equal(acc.emailError(""), "Type your email address.");
+  for (const bad of ["ann", "ann@", "a b@c.de", "a@b", "<a@b.cd>", "x".repeat(120) + "@a.bc"]) assert.ok(acc.emailError(bad), bad);
+  assert.equal(acc.emailError(" Ann@Example.org "), "");
+  assert.ok(acc.passwordError("1234567")); assert.equal(acc.passwordError("12345678"), "");
+  const v = await acc.passwordVerifier(" Ann@Example.org ", "correct horse");
+  assert.equal(v, await acc.passwordVerifier("ann@example.org", "correct horse"), "deterministic, the address in any case");
+  assert.equal(v, crypto.pbkdf2Sync("correct horse", "ritz-affair|ann@example.org", acc.VERIFIER_ITERATIONS, 32, "sha256").toString("base64url"), "PBKDF2-SHA256, salted by the address");
+  assert.match(v, /^[A-Za-z0-9_-]{43}$/, "the shape accounts_script.gs accepts");
+  assert.notEqual(v, await acc.passwordVerifier("bob@example.org", "correct horse"), "a different address, a different verifier");
+  assert.ok(!v.includes("horse"));
+  assert.ok(acc.VERIFIER_ITERATIONS >= 200000);
+  for (const e of ["wrong email or password", "wrong code", "code expired", "busy", "try later"]) assert.ok(acc.EMAIL_ERRORS[e], e + " has its plain words");
+  const src = fs.readFileSync("site/account.js", "utf8");
+  for (const ac of ["email", "current-password", "new-password", "one-time-code"]) assert.ok(src.includes('autocomplete="' + ac + '"'), ac);
+  assert.ok(!/action: "(signin|register|reset)", email: normEmail\(email\), (password|pw)\b/.test(src), "only the verifier is sent");
+});
+
+test("accounts: the news opt-in is unticked, separate from signing in, and kept with the session", async () => {
+  const acc = await import("./site/account.js");
+  const a = acc.sessionOf({ token: "t", expires: 9, email: "a@b.cd", emailSig: "s", updates: true, saves: {} });
+  assert.deepEqual(a, { token: "t", expires: 9, email: "a@b.cd", emailSig: "s", updates: true }, "nothing else from the answer");
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10 }, a), { ...a, token: "u", expires: 10 }, "a pull renews the token and keeps the address");
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10, updates: false }, a).updates, false);
+  assert.deepEqual(acc.sessionOf({ token: "u", expires: 10, email: 3, updates: "yes" }), { token: "u", expires: 10 }, "wrong types dropped");
+  assert.equal(acc.UPDATES_LABEL, "Email me about new games and updates (about once a month at most; unsubscribe anytime)");
+  const src = fs.readFileSync("site/account.js", "utf8");
+  assert.equal((src.match(/type="checkbox"/g) || []).length, 2, "on the registration form and in Manage");
+  assert.ok(!/type="checkbox"[^>]*checked/.test(src), "never ticked by default");
+  assert.match(src, /updates: \$\("#acct-news"\)\.checked/, "registration sends the box as it is");
 });
