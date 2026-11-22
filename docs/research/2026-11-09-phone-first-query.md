@@ -61,3 +61,23 @@ The same GA exploration, event x device category, active users, on 10-11 Nov (th
 | 10-11 Nov (after) | 22 / 13 / 5 | 59% | 49 / 34 / 17 | 69% |
 
 On phones, prologue done / skipped went from 20 / 25 to 8 / 8. Reading: the share of phone openers who run a query rose from 35% to 59%, the change the fixes aimed at, but it rests on 22 people over a day and a half. Desktop fell at the same time, which suggests noise. `try_here` (live 11 Nov evening) has no data yet. Read again with a full week, about 2026-11-15.
+
+## Re-read, 2026-11-22 (12-21 Nov, ten full days after the fixes)
+
+The same exploration (event x device category, active users), 12-21 Nov:
+
+| Window | Mobile opened / ran / step 1 | Ran / opened | Step 1 / opened | Desktop opened / ran / step 1 | Ran / opened | Step 1 / opened |
+|---|---|---|---|---|---|---|
+| 4-7 Nov (before) | 68 / 24 / 13 | 35% | 19% | 215 / 171 / 99 | 80% | 46% |
+| 12-21 Nov (after) | 59 / 35 / 20 | 59% | 34% | 213 / 164 / 103 | 77% | 48% |
+
+Reading: the phone gain of the early read holds over ten days (ran 35% -> 59%, the date step 19% -> 34%) while desktop
+stays flat, so the 2026-11-09 fixes worked. Phones still trail desktop by about 20 points at each stage.
+
+Other figures, same window (users): prologue done 138 / skipped 88; tour done 253 / skipped 53; chapter_solve 117,
+game_finish 18. Handbook: exercise_run 131, exercise_solve 121; the lesson tasks' Try it here 23 users (37 presses),
+the Try it links to exercises 27. Accounts went live on 22 Nov, so no account_* events yet.
+
+New leak: 673 mobile visitors but only 61 pressed Investigate or Join (9%), against 199 of 823 on desktop (24%).
+Not yet split by page: many phone visitors may land on handbook pages, not the game. Next read: landing_begin over
+page views of the game's landing, by device, before acting.
