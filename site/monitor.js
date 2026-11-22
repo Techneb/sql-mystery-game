@@ -38,11 +38,49 @@ export const daysFrom = res => (res.rows || []).map(([date, users]) => ({ date, 
 export const TOP = 5;
 // A GA value as a label; page titles lose the site's own suffix.
 export const pageName = v => gaText(v).replace(/ -- (The Ritz Affair|AlephB)$/, "");
+// Pages are grouped by pagePath (2026-11-22: the handbook's title suffix changed, so one page had two titles). A path
+// names its page: the query and hash dropped, the game and desk's /ritz-affair/ prefix (the old subdomain served them at
+// the root), "index" and ".html" folded, so "/learn/like" and "/learn/like.html" are one page. LEARN_PAGES is each
+// handbook page's <h1> by slug (a test keeps it in step with site/learn/*.html); an unknown path shows the path itself.
+export const LEARN_PAGES = { "case-when": "CASE WHEN", ctes: "CTEs and WITH RECURSIVE", database: "The bakery database",
+  "dates-times": "Dates and times stored as text or numbers", exercises: "SQL exercises with solutions", glossary: "SQL glossary",
+  grammar: "The Grammar of SQL", "group-by-having": "GROUP BY, aggregates and HAVING", index: "The Clerk's Handbook",
+  joins: "JOIN, LEFT JOIN and self-joins", like: "LIKE and text patterns", nulls: "NULL and missing values", "order-by-limit": "ORDER BY and LIMIT",
+  "postgresql-vs-sqlite": "PostgreSQL vs SQLite", schema: "Tables, keys and the schema", "select-where": "SELECT and WHERE",
+  "set-operations": "UNION, INTERSECT and EXCEPT", subqueries: "Subqueries", "window-functions": "Window functions: RANK and LAG" };
+const SITE_PAGES = { "/": "The game", "/privacy": "Privacy notice", "/leaderboard": "Leaderboard", "/admin": "Desk: Setup",
+  "/monitor": "Desk: Global", "/monitor-game": "Desk: Game", "/monitor-handbook": "Desk: Handbook", "/explore": "Desk: Pivot table", "/inbox": "Desk: Feedback" };
+export const pageKey = p => {
+  const k = String(p ?? "").split(/[?#]/)[0].replace(/^\/ritz-affair(?=\/|$)/, "").replace(/\.html$/, "").replace(/(^|\/)index$/, "$1");
+  return k === "" ? "/" : k === "/learn" || k === "/learn/" ? "/learn/index" : k;
+};
+export const pageLabel = p => {
+  if (p == null || p === "") return gaText(p);
+  const k = pageKey(p), m = k.match(/^\/learn\/([a-z0-9-]+)$/);
+  return (m && LEARN_PAGES[m[1]]) || SITE_PAGES[k] || gaText(p);
+};
+// A reply with pagePath among its dimensions, with each path replaced by its page's name. Rows whose paths share a name
+// (and whose other dimensions match) are never added here: GA is asked again once per such page, the request filtered
+// on its paths without the pagePath dimension, so a person who loaded two of the paths counts once. totals stay GA's.
+export async function pageRows(req, res, report) {
+  const i = (req.dimensions || []).indexOf("pagePath");
+  if (i < 0 || !res) return res;
+  const groups = new Map();
+  for (const r of res.rows || []) { const n = pageLabel(r[i]); (groups.get(n) || groups.set(n, []).get(n)).push(r); }
+  const parts = await Promise.all([...groups].map(async ([n, rs]) => {
+    const paths = [...new Set(rs.map(r => String(r[i])))], put = r => [...r.slice(0, i), n, ...r.slice(i)];
+    if (paths.length < 2) return rs.map(r => put([...r.slice(0, i), ...r.slice(i + 1)]));
+    const again = await report(withFilters({ ...req, dimensions: req.dimensions.filter((_, j) => j !== i) }, { pagePath: paths }));
+    return ((again && again.rows) || []).map(put);
+  }));
+  const nd = req.dimensions.length;
+  return { ...res, rows: parts.flat().sort((a, b) => (Number(b[nd]) || 0) - (Number(a[nd]) || 0)) };
+}
 // The dimensions that make sense per day (names from shared.js DIMENSIONS), and the plural the note uses.
 export const BREAKDOWNS = { country: "countries", deviceCategory: "devices", sessionDefaultChannelGroup: "channels", sessionSource: "sources",
-  operatingSystem: "operating systems", browser: "browsers", language: "languages", newVsReturning: "values", "customEvent:mode": "modes", pageTitle: "pages" };
+  operatingSystem: "operating systems", browser: "browsers", language: "languages", newVsReturning: "values", "customEvent:mode": "modes", pagePath: "pages" };
 // Each view's choice: the game is one page, the handbook has no mode.
-export const VIEW_BREAKDOWNS = { global: Object.keys(BREAKDOWNS), game: Object.keys(BREAKDOWNS).filter(k => k !== "pageTitle"),
+export const VIEW_BREAKDOWNS = { global: Object.keys(BREAKDOWNS), game: Object.keys(BREAKDOWNS).filter(k => k !== "pagePath"),
   handbook: Object.keys(BREAKDOWNS).filter(k => k !== "customEvent:mode") };
 // scope: the view's pagePath filter (Game "/", Handbook /learn/), none on Global.
 export const breakdownRequest = (days, dim, m, scope) => scoped(countRequest(days, ["date", dim], m), scope);
@@ -420,7 +458,7 @@ export const PANELS = {
   handbook: {
     users: usersPanel,
     countries: countriesPanel,
-    pages: { deps: ["m"], requests: c => ({ pages: scoped(countRequest(c.days, ["pageTitle"], c.m), LEARN) }) },
+    pages: { deps: ["m"], requests: c => ({ pages: scoped(countRequest(c.days, ["pagePath"], c.m), LEARN) }) },
     devices: donutPanel("devices"),
     channels: donutPanel("channels"),
     exercises: { deps: [], requests: c => ({ ran: ev(c.days, ["customEvent:exercise"], ["totalUsers"], { eventName: ["exercise_run"] }),
@@ -603,7 +641,7 @@ export function exercisesHtml({ ran, outcomes, solved }, w) {
     raw("exercises", tableHtml(["Exercise", "Ran", "Solved", "Solve rate", "Avg runs to solve", "Ran: ok", "Ran: error", "Ran: refused"],
       rows.map(r => [r.label, r.values[0], r.values[1], pct(r.values[1], r.values[0]), r.values[1] ? avg(r.runs) : "-", ...["ok", "error", "refused"].map(o => out.get(r.key + "|" + o) || 0)])));
 }
-// The handbook's pages by title (top 5 + Other, its suffix dropped), the page's Count, GA's total in the centre.
+// The handbook's pages by path, each named (pageRows; top 5 + Other), the page's Count, GA's total in the centre.
 export function handbookPagesHtml(res, m) {
   const d = metricOf(m), items = ((res && res.rows) || []).map(([t, v]) => ({ label: pageName(t), value: Number(v) || 0 }));
   return donutBody(items, d.unit, d.label + " by handbook page", res, d.note + " on the /learn/ pages: " + (isViews(d) ? "each view is of one page." : "a person who read two pages counts in both slices."), "handbook-pages", "Page", d.label);
@@ -736,7 +774,8 @@ async function main() {
     if (!r || !r.ok) throw new Error((r && r.error) || "no numbers");
     return r;
   };
-  // One loader for every panel: its named replies in parallel (or its own load); a reply for an older context (the
+  // One loader for every panel: its named replies in parallel (or its own load), a reply by pagePath named per page
+  // (pageRows); a reply for an older context (the
   // period load, or a choice the panel's deps name) is dropped.
   const loadPanel = async id => {
     const p = panels[id], now = () => [c.gen, ...p.deps.map(d => c[d])].join("|"), want = now(), still = () => want === now();
@@ -745,7 +784,7 @@ async function main() {
     const show = res => { if (still()) { st.res = res; draw(); } };
     try {
       show(p.load ? await p.load(c, report, show)
-        : Object.fromEntries(await Promise.all(Object.entries(p.requests(c)).map(async ([k, q]) => [k, q ? await report(q) : null]))));
+        : Object.fromEntries(await Promise.all(Object.entries(p.requests(c)).map(async ([k, q]) => [k, q ? await pageRows(q, await report(q), report) : null]))));
     } catch (e) { if (still()) { st.error = e.message; draw(); } }
   };
   // A choice changed: every panel that depends on it reloads.

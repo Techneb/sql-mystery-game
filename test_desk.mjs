@@ -759,10 +759,10 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   const wideG = monitor.gameHtml(null, 1000, emptyPanels("game"));
   assert.ok(wideG.includes('<div class="side-pair"><div>') && wideG.indexOf("FEATURE USE") < wideG.indexOf("ADSENSE") && !g.includes('class="side-pair"'), "side by side when wide, stacked at 390 px");
   assert.equal(emptyRings(g), 3, "the failure kind and both mode donuts: empty rings");
-  assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pageTitle"'), "users per day first, the game's breakdowns");
+  assert.ok(g.indexOf("USERS PER DAY") < g.indexOf("CHAPTER FUNNEL") && g.includes('<option value="customEvent:mode">Mode</option>') && !g.includes('value="pagePath"'), "users per day first, the game's breakdowns");
   const h = monitor.handbookHtml(390, emptyPanels("handbook", { m: "ran" }), { m: "ran" });
   assert.ok(!bad.test(visible(h)) && heads(h, "23. Word of mouth") === 2 && h.includes("<td>1. Meet the staff</td>"), "every exercise at zero");
-  assert.ok(h.includes('value="pageTitle"') && !h.includes('value="customEvent:mode"') && figsOf(h)[0].layout.yaxis.title.text === "Readers who ran an exercise", "the handbook's breakdowns and Count");
+  assert.ok(h.includes('value="pagePath"') && !h.includes('value="customEvent:mode"') && figsOf(h)[0].layout.yaxis.title.text === "Readers who ran an exercise", "the handbook's breakdowns and Count");
   assert.equal(emptyRings(h), 5, "pages, devices, channels, level and outcome donuts: empty rings");
   // Global's layout on /learn/: the countries map, then PAGES, devices and channels on one row, all following the Count
   assert.ok(h.indexOf("USERS PER DAY") < h.indexOf("COUNTRIES (TOP 10)") && h.indexOf("COUNTRIES (TOP 10)") < h.indexOf('<div class="donuts three"><div>') &&
@@ -846,7 +846,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.ok(pages.includes("&#60;i&#62;LIKE</span>") && !pages.includes("<i>LIKE") && !pages.includes("Ritz Affair"));
   assert.deepEqual(["LIKE -- The Ritz Affair", "LIKE -- AlephB", "LIKE"].map(monitor.pageName), ["LIKE", "LIKE", "LIKE"], "the old and the new suffix dropped (2026-11-22), so GA history keeps one name per page");
   assert.ok(pages.includes("<td>Other (sum of 2 rows)</td><td class=\"num\">9</td>") && centres(pages)[0].includes("<b>30</b>") && pages.includes("the slices add up to 49"));
-  assert.deepEqual(monitor.PANELS.handbook.pages.requests(monitor.context("handbook", { m: "ran" })).pages, { days: 7, dimensions: ["pageTitle"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
+  assert.deepEqual(monitor.PANELS.handbook.pages.requests(monitor.context("handbook", { m: "ran" })).pages, { days: 7, dimensions: ["pagePath"], metrics: ["totalUsers"], filters: { eventName: ["exercise_run"], pagePath: { beginsWith: ["/learn/"] } } });
   const ch = monitor.choicesHtml({ levels: { rows: [["challenge", 2, 5], ["warm-up", 4, 9]], totals: [5] }, outcomes: { rows: [["ok", 7], ["refused", 2]], totals: [9] } });
   assert.ok(ch.indexOf("Warm-up") < ch.indexOf("Practice") && ch.includes("9 Warm-up, 0 Practice, 5 Challenge presses") && hasTip(ch, "Ran", "7 runs\t78%"));
   // Global's PAGES: a donut over the four sections, GA's unfiltered total in the centre, the overlap said
@@ -857,7 +857,7 @@ test("monitor charts for the new events: GA's numbers only, empty frames and zer
   assert.deepEqual(monitor.sectionRequests(7, "opened")[4], { days: 7, dimensions: [], metrics: ["totalUsers"], filters: { eventName: ["chapter_open"] } }, "the total is requested unfiltered");
   assert.ok(!("topPagesHtml" in monitor) && !("topPages" in monitor.PANELS.global), "the top pages table is gone");
   // the views' users per day are scoped to their pages
-  assert.deepEqual(monitor.breakdownRequest(7, "pageTitle", "visitors", monitor.SCOPES.handbook).filters, { pagePath: { beginsWith: ["/learn/"] } });
+  assert.deepEqual(monitor.breakdownRequest(7, "pagePath", "visitors", monitor.SCOPES.handbook).filters, { pagePath: { beginsWith: ["/learn/"] } });
   assert.deepEqual(monitor.breakdownRequest(7, "deviceCategory", "solved", monitor.SCOPES.game).filters, { eventName: ["chapter_solve"], pagePath: ["/", "/ritz-affair/", "/index.html", "/ritz-affair/index.html"] });
   for (const v of ["game", "handbook"]) for (const k of monitor.VIEW_COUNTS[v]) assert.ok(monitor.metricOf(k).label, v + " " + k);
   assert.ok(monitor.panel("X", { error: "<q>" }, () => "").includes("&#60;q&#62;") && monitor.panel("X", null, () => "").includes("Reading..."));
@@ -989,4 +989,36 @@ test("repo: no tracked file holds an Apps Script /exec URL in plain text (the fe
   const hits = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(f => f && !["site/feedback.js", "site/account.js"].includes(f) && fs.existsSync(f))
     .filter(f => /script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}/.test(fs.readFileSync(f, "latin1")));
   assert.deepEqual(hits, []);
+});
+
+test("monitor: pages group by pagePath, each path named by its page, and paths of one page asked of GA as one", async () => {
+  const same = (paths, name) => paths.forEach(p => assert.equal(monitor.pageLabel(p), name, p));
+  same(["/learn/like.html", "/learn/like", "/learn/like.html?x=1#y"], "LIKE and text patterns");
+  same(["/learn/", "/learn", "/learn/index.html", "/learn/index"], "The Clerk's Handbook");
+  same(["/", "/index.html", "/ritz-affair/", "/ritz-affair/index.html", "/ritz-affair", "/?season=3"], "The game");
+  same(["/monitor.html", "/ritz-affair/monitor.html", "/ritz-affair/monitor"], "Desk: Global");
+  same(["/privacy.html", "/ritz-affair/privacy.html"], "Privacy notice");
+  assert.equal(monitor.pageLabel("/learn/nope.html"), "/learn/nope.html", "an unknown path shows itself");
+  assert.equal(monitor.pageLabel(null), "(empty)");
+  // every handbook page and every desk page has its name; LEARN_PAGES is each page's <h1>
+  const slugs = fs.readdirSync("site/learn").filter(f => f.endsWith(".html")).map(f => f.slice(0, -5)).sort();
+  assert.deepEqual(Object.keys(monitor.LEARN_PAGES).sort(), slugs);
+  for (const s of slugs) assert.equal(monitor.LEARN_PAGES[s], fs.readFileSync("site/learn/" + s + ".html", "utf8").match(/<h1>([^<]*)<\/h1>/)[1].replace(/&#39;/g, "'"), s);
+  for (const p of monitor.DESK_PATHS) assert.notEqual(monitor.pageLabel(p), p, p);
+  // the donut: two paths of one page are asked again as one request (GA's count), never added
+  const req = monitor.PANELS.handbook.pages.requests(monitor.context("handbook")).pages, asked = [];
+  const report = async q => { asked.push(q); return { rows: [[7]] }; };
+  const res = await monitor.pageRows(req, { rows: [["/learn/like.html", 5], ["/learn/nulls.html", 4], ["/learn/like", 3]], totals: [10] }, report);
+  assert.deepEqual(res, { rows: [["LIKE and text patterns", 7], ["NULL and missing values", 4]], totals: [10] });
+  assert.deepEqual(asked, [{ days: 7, dimensions: [], metrics: ["activeUsers"], filters: { pagePath: ["/learn/like.html", "/learn/like"] } }]);
+  const html = monitor.handbookPagesHtml(res, "visitors");
+  assert.ok(html.includes('<td>LIKE and text patterns</td><td class="num">7</td>') && !html.includes("<td>/learn/like"), "one row per page");
+  // the breakdown: [date, pagePath] rows, a page on two paths asked again on [date]
+  const breq = monitor.breakdownRequest(7, "pagePath", "visitors", null), basked = [];
+  const b = await monitor.pageRows(breq, { rows: [["20261121", "/learn/", 2], ["20261122", "/learn/index.html", 1], ["20261122", "/", 4]] },
+    async q => { basked.push(q); return { rows: [["20261121", 2], ["20261122", 2]] }; });
+  assert.deepEqual(basked.map(q => [q.dimensions, q.filters.pagePath]), [[["date"], ["/learn/", "/learn/index.html"]]]);
+  const p = monitor.pivotSeries(b.rows, ["20261121", "20261122"]);
+  assert.deepEqual(p.series.map(s => [s.label, s.values]), [["The Clerk's Handbook", [2, 2]], ["The game", [0, 4]]]);
+  assert.equal(await monitor.pageRows({ dimensions: ["country"] }, "same", report), "same", "other replies untouched");
 });
