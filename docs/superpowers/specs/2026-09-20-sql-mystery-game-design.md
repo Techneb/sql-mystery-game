@@ -334,25 +334,30 @@ handbook review (Part 1) and bakery v2 with twenty exercises (Part 2) of `2026-1
 Since then (2026-10-21/25): Nick's video (2026-10-21), the GA monitoring desk (Global, Game, Handbook, Pivot table),
 GA on the handbook, the site's own dialogs, and the Strix audit and its fixes, and Tab completion in both terminals (2026-10-25: tables, columns and the strict terminal's functions, revealed tables only).
 
-**Open right now (2026-11-15).** Everything is deployed (feedback script @16); the repo has only
-`main`. Since 2026-10-26: the game moved to <https://alephb.uk/ritz-affair/> beside the handbook (2026-10-31,
-mystery.alephb.uk a bridge; runbook `docs/superpowers/plans/2026-10-31-move-game-to-alephb.md`, its rollback kept until
-the AdSense verdict); chapter I in two steps (2026-10-31); the second mutation run on strict.js (2026-11-03); the phone
-fixes for chapter I and the landing (2026-11-03, `docs/research/2026-11-03-chapter-1-phones.md`); the desk opened by the
-passphrase alone (2026-11-08, the board URL sealed). The chapter I GA re-read of 2026-11-08
-(`docs/research/2026-10-25-chapter-1-diagnosis.md` section 6): step 1 (the date) is the hurdle; phones solve 15% and only
-35% of phone openers run a query. Phone fixes for it live 2026-11-09 (`docs/research/2026-11-09-phone-first-query.md`).
-2026-11-11, from two readers' feedback (section 8): the consent fix outside Europe, the desk's robots lines dropped, and
-the handbook pass (plain words, glossary, three easier warm-ups, a Try it here task on every lesson). Waiting on Google:
-the AdSense review (requested 2026-11-02; refused again on 2026-11-12, 04:48 CET, "low-value content", the third refusal;
-review requested again the same day after the PostgreSQL vs SQLite article; ads.txt "Authorised"), which gates the consent-message items, the LinkedIn post (`docs/drafts/2026-11-01-linkedin-post.md`) and the 24
-outreach emails (all sent by the owner at once). Done 2026-11-12 without waiting: the rollback's removal, the three phone changes. Done 2026-11-12 and 13 while the review runs: a pre-review audit of every public page (section 8, AdSense audit); alephb-site's own fixes by the Supermain (661736a). AdSense still "Getting ready" on 2026-11-14; earlier verdicts took 8 to 11 days. Ready on a branch, held for the verdict: accounts (section 8).
-Waiting on the owner: a look at the desk charts with real data. Next: re-read
-GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is in `docs/research/2026-11-09-phone-first-query.md`). Not verified end to end since the module split: a real compete season.
+**Open right now (2026-11-22).** Everything is deployed; the repo has only `main`. Since 2026-11-15: accounts
+live 2026-11-22 (owner, after the fourth refusal; OAuth app published, the 13 Nov reader emailed); the Next chapter line
+after a correct answer (feedback of 19 Nov); handbook titles end " -- AlephB" and the monitor groups pages by path; the
+handbook links its index as `./`; privacy.html has a meta description, a "<- AlephB" back link level with its title (on
+no other page, owner) and no desk link in its footer; every footer adds About (alephb.uk/about.html). AdSense refused a
+fourth time on 2026-11-22 ("low-value content"); the same day the Supermain shipped alephb.uk's content pass (About,
+Contact, a 404 page with the artwork of `docs/mockups/404-prompts.md`, eight longer articles, canonical and OG on every
+root page) and What's my size's product page replaced its "coming soon" subdomain page. Next (section 8, AdSense fifth
+review): resubmit the sitemaps in Search Console once the 404 art is live, then wait two to three weeks before the fifth
+request. The first creator email (Stephen) went out 2026-11-22; the other 23 wait. Waiting on the owner: a look at the
+desk charts with real data; a full forgot-password test with a real account. Not verified end to end since the module
+split: a real compete season.
 
 ## 8. Backlog (not scheduled)
 
-- **Accounts (Sign in with Google)** (owner, 2026-11-14, after a reader's feedback of 13 Nov asking to continue on PC or phone): optional sign-in, learn progress and solved exercises synced through a new Apps Script and Sheet, saves keyed by an HMAC of Google's id (no email or name stored). Then (owner, 2026-11-14) email and password accounts too (codes by email from contact@, a PBKDF2 verifier from the browser) and an opt-in list of addresses for news of updates and new games (Updates tab, one-click unsubscribe; plaintext email only there, only for those who tick it). Built and tested end to end on localhost on branch `worktree-agent-a003d99d4384ebf27` (Google and email sign-in, register, reset, opt-in and unsubscribe, delete, 390 px, day and night; Sheet left empty), with a spinner and a Sending line while the script answers (about 10 s); site text keeps "we" (owner, 2026-11-15). Script "Ritz Affair accounts" @3 (clasp in the gitignored `assets-source/clasp-accounts/`); the OAuth app is still in Testing. Nothing pushed to main until the AdSense verdict (owner); then merge, publish the OAuth app, deploy. The owner allowed Claude to create the OAuth client and the Apps Script project. **When it goes live:** email the reader of 13 Nov (Feedback tab, row 11; the owner's reply of 14 Nov promised it) and anyone else who asked for accounts meanwhile; alephb-site's "no account" lines go to the Supermain.
+- ~~**Accounts (Sign in with Google)**~~ Live 2026-11-22 (merge 24578d6, owner, after the fourth AdSense refusal; OAuth app "In production", the 13 Nov reader emailed). (owner, 2026-11-14, after a reader's feedback of 13 Nov asking to continue on PC or phone): optional sign-in, learn progress and solved exercises synced through a new Apps Script and Sheet, saves keyed by an HMAC of Google's id (no email or name stored). Then (owner, 2026-11-14) email and password accounts too (codes by email from contact@, a PBKDF2 verifier from the browser) and an opt-in list of addresses for news of updates and new games (Updates tab, one-click unsubscribe; plaintext email only there, only for those who tick it). Built and tested end to end on localhost on branch `worktree-agent-a003d99d4384ebf27` (Google and email sign-in, register, reset, opt-in and unsubscribe, delete, 390 px, day and night; Sheet left empty), with a spinner and a Sending line while the script answers (about 10 s); site text keeps "we" (owner, 2026-11-15). Script "Ritz Affair accounts" @3 (clasp in the gitignored `assets-source/clasp-accounts/`); the OAuth app is still in Testing. Nothing pushed to main until the AdSense verdict (owner); then merge, publish the OAuth app, deploy. The owner allowed Claude to create the OAuth client and the Apps Script project. **When it goes live:** email the reader of 13 Nov (Feedback tab, row 11; the owner's reply of 14 Nov promised it) and anyone else who asked for accounts meanwhile; alephb-site's "no account" lines go to the Supermain.
+- **AdSense fifth review** (2026-11-22, after the fourth "low-value content" refusal): shipped the same day, the
+  Supermain's alephb.uk content pass (About, Contact, 404 page, eight articles of about 1,850 words without visible dates
+  (owner), a home intro, canonical and OG on root pages), What's my size's 1,000-word product page, and here the
+  handbook's `./` index links and privacy.html's description. Audit notes (local, gitignored):
+  `docs/audits/alephb-audit-2026-11-22.md`; indexing and links were clean, the root site was the thin part. Left: resubmit the
+  three sitemaps in Search Console once the 404 art (alephb-site branch 404-art) is live, then wait two to three weeks
+  before requesting the fifth review (the last requests came too soon after changes). The owner kept the ad box off
+  the lesson pages.
 - ~~AdSense audit before the fourth review~~ Done 2026-11-12/14 (owner: "Double check everything, I want this Adsense review to pass"). Crawl of alephb.uk clean (37 pages 200, no broken asset, desk noindex, 390 px without overflow); an Opus read of the 28 public pages (findings in the gitignored `docs/audits/2026-11-12-adsense-content-audit.md`, on the Mac only). Fixed in 0d44b6a: the game asked Google for the ad while the opaque landing card covered it (a hidden ad), now `initAds({ slot: false })` at boot (script and consent path) and `showAd()` in `enterGame`; the article's 0.1 + 0.2 claim (true in PostgreSQL); ILIKE and string_agg named PostgreSQL's, not standard; the static masthead's "of VIII"; privacy.html lists step_solve, hint_where and try_here; index, database and grammar slips. 5177b50: the article's queries one clause per line (15 of 22 blocks were cut at 390 px). Root pages fixed by the Supermain (661736a, owner's push). Leftovers done 2026-11-14 (owner): a string literal reads `unknown` in the function error lines, as in PostgreSQL; the date refusal suggests `d >= 'YYYY-MM-DD'`; the footer link reads "The Clerk's Desk (teachers)". Search Console 2026-11-14: the article indexed, admin.html "Excluded by noindex". The article's indexing was requested in Search Console on 2026-11-12.
 - ~~Handbook article: PostgreSQL vs SQLite~~ Done 2026-11-12 (09aa9f9; owner, after the third AdSense refusal for low-value content): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
   when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,
@@ -748,6 +753,8 @@ GA about 2026-11-15 (phone leak, `try_here` use; an early read of 10-11 Nov is i
   in the four weeks to 31 October", signed AlephB; companies, magazines, course businesses and competing products
   dropped (reasons in `creators.md`). Owner, 2026-11-02: all 24 go out together, the three large channels and the two
   agency addresses (Matt Mike, Arjay) included, only once ads are active; the school is not named.
+  Changed 2026-11-22 (owner): the first email, to Stephen, sent before ads are live, with the link to Nick's Instagram
+  video; the other 23 still wait.
 - ~~Handbook ideas from SQLBolt~~ Done 2026-10-18 (owner asked to implement them): sqlbolt.com, a free 18-lesson SQL tutorial, is a
   complement, not a rival. Ideas worth taking, never its text or exercises: (a) a page on `UNION` / `INTERSECT` /
   `EXCEPT`, which the handbook does not cover; (b) a findable "order of execution" page or anchor (only mentioned
