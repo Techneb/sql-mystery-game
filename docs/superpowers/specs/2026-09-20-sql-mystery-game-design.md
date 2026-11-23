@@ -354,10 +354,12 @@ split: a real compete season.
   Supermain's alephb.uk content pass (About, Contact, 404 page, eight articles of about 1,850 words without visible dates
   (owner), a home intro, canonical and OG on root pages), What's my size's 1,000-word product page, and here the
   handbook's `./` index links and privacy.html's description. Audit notes (local, gitignored):
-  `docs/audits/alephb-audit-2026-11-22.md`; indexing and links were clean, the root site was the thin part. Left: resubmit the
-  three sitemaps in Search Console once the 404 art (alephb-site branch 404-art) is live, then wait two to three weeks
-  before requesting the fifth review (the last requests came too soon after changes). The owner kept the ad box off
-  the lesson pages.
+  `docs/audits/alephb-audit-2026-11-22.md`; indexing and links were clean, the root site was the thin part. Sitemaps resubmitted
+  2026-11-22; by 2026-11-23 every content-pass page was indexed (crawls requested for About, Contact and two articles),
+  and the owner had the fifth review requested that day rather than wait (status Getting ready). Forum and policy research
+  (`docs/research/2026-11-23-adsense-forum-research.md`) suggested the ad box off the game and exercises until approval,
+  a stronger home page and noindex on mystery.alephb.uk: the owner skipped all three for now. The owner kept the ad box
+  off the lesson pages.
 - ~~AdSense audit before the fourth review~~ Done 2026-11-12/14 (owner: "Double check everything, I want this Adsense review to pass"). Crawl of alephb.uk clean (37 pages 200, no broken asset, desk noindex, 390 px without overflow); an Opus read of the 28 public pages (findings in the gitignored `docs/audits/2026-11-12-adsense-content-audit.md`, on the Mac only). Fixed in 0d44b6a: the game asked Google for the ad while the opaque landing card covered it (a hidden ad), now `initAds({ slot: false })` at boot (script and consent path) and `showAd()` in `enterGame`; the article's 0.1 + 0.2 claim (true in PostgreSQL); ILIKE and string_agg named PostgreSQL's, not standard; the static masthead's "of VIII"; privacy.html lists step_solve, hint_where and try_here; index, database and grammar slips. 5177b50: the article's queries one clause per line (15 of 22 blocks were cut at 390 px). Root pages fixed by the Supermain (661736a, owner's push). Leftovers done 2026-11-14 (owner): a string literal reads `unknown` in the function error lines, as in PostgreSQL; the date refusal suggests `d >= 'YYYY-MM-DD'`; the footer link reads "The Clerk's Desk (teachers)". Search Console 2026-11-14: the article indexed, admin.html "Excluded by noindex". The article's indexing was requested in Search Console on 2026-11-12.
 - ~~Handbook article: PostgreSQL vs SQLite~~ Done 2026-11-12 (09aa9f9; owner, after the third AdSense refusal for low-value content): `learn/postgresql-vs-sqlite.html`, about 3,400 words, a server against a file,
   when to use which, why the handbook writes PostgreSQL's SQL, and the differences a learner meets (types, LIKE/ILIKE,
